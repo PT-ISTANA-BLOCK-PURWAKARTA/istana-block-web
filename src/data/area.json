@@ -1,0 +1,65 @@
+{
+  "intro": "Semua pesanan dikirim langsung dari pabrik di Pasawahan, Purwakarta, dengan truk crane dan truk flatbed milik sendiri. Pabrik punya akses ke Tol Cipularang, Tol Jakarta–Cikampek, dan Tol Cipali. Lama pengiriman bergantung pada stok, volume, dan jarak; admin mencantumkan perkiraan jadwal kirim di penawaran.",
+  "ongkir": [
+    "Ongkir tidak termasuk dalam harga produk dan ditulis terpisah di penawaran.",
+    "Jarak: dihitung dari pabrik di Pasawahan ke titik bongkar.",
+    "Volume: makin penuh muatan satu truk, makin rendah ongkir per unit.",
+    "Akses di titik bongkar: apakah truk bisa masuk dan ada ruang untuk menurunkan barang.",
+    "Kota yang tidak tercantum di daftar perlu dikonfirmasi admin lebih dulu."
+  ],
+  "langkah": [
+    "Tentukan produk dan perkiraan volume dalam m², pcs, atau meter.",
+    "Siapkan alamat lengkap atau titik lokasi di peta.",
+    "Jelaskan akses truk di lokasi bongkar.",
+    "Kirim lewat WhatsApp. Admin membalas dengan penawaran berisi harga produk, ongkir, dan perkiraan jadwal kirim.",
+    "Jika setuju, terbitkan PO dan bayar DP. Admin mengonfirmasi jadwal kirim, dan pelunasan dilakukan saat barang tiba di lokasi."
+  ],
+  "wilayah": [
+    {
+      "nama": "Kabupaten Purwakarta",
+      "ringkas": "Seluruh kecamatan, termasuk Pasawahan, Purwakarta, Babakancikao, Bungursari, Campaka, Cibatu, Jatiluhur, Plered, Sukatani, Darangdan, dan Wanayasa. Area paling mudah dijadwalkan."
+    },
+    {
+      "nama": "Karawang & Cikampek",
+      "slug": "paving-block-karawang-cikampek",
+      "ringkas": "Karawang Barat dan Timur, Telukjambe, Klari, Cikampek, Kotabaru, Jatisari, Purwasari, Rengasdengklok, Cilamaya; KIIC dan Suryacipta.",
+      "jarak": "±29 km ke Cikampek, ±48 km ke Karawang Barat"
+    },
+    {
+      "nama": "Subang",
+      "slug": "paving-block-subang",
+      "ringkas": "Kalijati, Cipeundeuy, Pabuaran, Purwadadi, Cibogo, Pagaden, Subang kota, Jalancagak, Pamanukan.",
+      "jarak": "±51 km lewat Kalijati, ±72 km lewat Tol Cipali (ke Subang kota)"
+    },
+    {
+      "nama": "Bekasi & Cikarang",
+      "slug": "paving-block-bekasi-cikarang",
+      "ringkas": "Khusus pesanan skala proyek. Cikarang, Cibitung, Tambun, Setu, Serang Baru, Kota Bekasi; Jababeka, EJIP, MM2100, Delta Silicon.",
+      "jarak": "±63 km ke Cikarang, ±88 km ke Kota Bekasi"
+    },
+    {
+      "nama": "Jabodetabek",
+      "ringkas": "Jakarta, Bogor, Depok, dan Tangerang. Khusus pesanan skala proyek dengan volume minimal yang disepakati per proyek."
+    },
+    {
+      "nama": "Cirebon & Indramayu",
+      "ringkas": "Konfirmasi jadwal dan ongkir ke admin sebelum memesan."
+    },
+    {
+      "nama": "Bandung"
+    },
+    {
+      "nama": "Cimahi"
+    },
+    {
+      "nama": "Bandung Barat"
+    },
+    {
+      "nama": "Cianjur"
+    },
+    {
+      "nama": "Sumedang"
+    }
+  ],
+  "catatanJabodetabek": "Pengiriman ke Jakarta, Bogor, Depok, Tangerang, dan Bekasi hanya untuk pesanan skala proyek dengan volume minimal yang disepakati per proyek. Layanan ini ditujukan untuk kontraktor, pengembang perumahan, pengelola kawasan dan gudang, serta proyek pemerintah atau desa. Kirim lokasi dan perkiraan volume lewat WhatsApp; admin menyampaikan ketentuan minimal order dan ongkirnya bersama penawaran."
+}

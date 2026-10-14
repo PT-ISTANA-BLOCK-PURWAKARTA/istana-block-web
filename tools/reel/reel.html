@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="__CSS__">
+<style>
+  html, body { margin: 0; padding: 0; overflow: hidden; background: #F1F1EE; }
+  #stage { position: relative; overflow: hidden; background-color: #F1F1EE; font-family: "Plus Jakarta Sans", sans-serif; color: #14213D; }
+  .land #stage { width: 1920px; height: 1080px; }
+  .vert #stage { width: 1080px; height: 1920px; }
+  .abs { position: absolute; }
+  #bg { inset: 0; }
+  .blob { position: absolute; will-change: transform; }
+
+  /* Hook */
+  #hookText { position: absolute; margin: 0; font-family: "Poppins", sans-serif; font-weight: 700; color: #0E2A6B; letter-spacing: -0.02em; line-height: 1.04; }
+  .land #hookText { left: 110px; top: 330px; width: 880px; font-size: 92px; }
+  .vert #hookText { left: 90px; top: 250px; width: 900px; font-size: 100px; }
+  #hookText .l { display: block; will-change: transform, opacity; }
+  #hookText .o { color: #D63F12; }
+  #tiles { position: absolute; }
+  #tiles svg { position: absolute; will-change: transform, opacity; }
+
+  /* Captions */
+  .cap { position: absolute; display: flex; flex-direction: column; gap: 22px; will-change: transform, opacity; }
+  .land .cap { left: 110px; top: 0; width: 500px; height: 1080px; justify-content: center; }
+  .vert .cap { left: 90px; top: 96px; width: 900px; gap: 18px; }
+  .kick { align-self: flex-start; background: #FE5722; color: #fff; font-weight: 700; border-radius: 999px; }
+  .land .kick { font-size: 24px; padding: 10px 22px; }
+  .vert .kick { font-size: 28px; padding: 10px 24px; }
+  .cap h2 { margin: 0; font-family: "Poppins", sans-serif; font-weight: 700; color: #0E2A6B; letter-spacing: -0.015em; line-height: 1.08; }
+  .land .cap h2 { font-size: 62px; }
+  .vert .cap h2 { font-size: 64px; }
+  .cap p { margin: 0; color: #3E4A63; line-height: 1.45; }
+  .land .cap p { font-size: 30px; }
+  .vert .cap p { font-size: 34px; }
+
+  /* Window / phone */
+  #win { position: absolute; overflow: hidden; will-change: transform, opacity; }
+  .land #win { left: 670px; top: 120px; width: 1170px; height: 840px; border-radius: 22px; background: #fff; box-shadow: 0 30px 80px rgba(14,42,107,.20), 0 0 0 1px rgba(14,42,107,.08); }
+  .vert #win { left: 126px; top: 520px; width: 828px; height: 1360px; border-radius: 72px; background: #0E2A6B; box-shadow: 0 40px 90px rgba(14,42,107,.28); }
+  #bar { position: absolute; left: 0; right: 0; top: 0; height: 46px; background: #E9ECF2; display: flex; align-items: center; gap: 9px; padding: 0 18px; box-sizing: border-box; }
+  .vert #bar { display: none; }
+  #bar i { width: 13px; height: 13px; border-radius: 50%; display: inline-block; }
+  #url { margin-left: 22px; flex: 1; height: 28px; border-radius: 9px; background: #fff; display: flex; align-items: center; padding: 0 14px; font-size: 15px; color: #4B5568; }
+  #url b { color: #14213D; font-weight: 600; }
+  #view { position: absolute; overflow: hidden; background: #F1F1EE; }
+  .land #view { left: 0; top: 46px; width: 1170px; height: 794px; }
+  .vert #view { left: 24px; top: 24px; width: 780px; height: 1312px; border-radius: 50px; }
+  iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #F1F1EE; }
+  .land iframe { width: 936px; height: 635px; transform: scale(1.25); }
+  .vert iframe { width: 390px; height: 656px; transform: scale(2); }
+
+  /* Overlay */
+  #ring, #hl { position: absolute; border-radius: 22px; pointer-events: none; }
+  #ring { border: 4px solid #FE5722; box-shadow: 0 0 0 10px rgba(254,87,34,.18); }
+  #hl { border: 4px solid #FE5722; background: rgba(254,87,34,.08); box-shadow: 0 0 0 10px rgba(254,87,34,.14); border-radius: 14px; }
+  #hlTag { position: absolute; background: #FE5722; color: #fff; font-weight: 700; border-radius: 999px; white-space: nowrap; }
+  .land #hlTag { font-size: 20px; padding: 8px 16px; }
+  .vert #hlTag { font-size: 28px; padding: 10px 20px; }
+  #cursor { position: absolute; left: 0; top: 0; width: 44px; height: 44px; will-change: transform; filter: drop-shadow(0 4px 8px rgba(14,42,107,.35)); }
+  .vert #cursor { width: 64px; height: 64px; }
+  #click { position: absolute; border-radius: 50%; border: 3px solid #FE5722; pointer-events: none; }
+
+  #wa { position: absolute; background: #fff; border-radius: 26px 26px 26px 8px; box-shadow: 0 24px 60px rgba(14,42,107,.25); display: flex; flex-direction: column; gap: 12px; will-change: transform, opacity; }
+  .land #wa { width: 560px; padding: 22px 26px; }
+  .vert #wa { width: 840px; padding: 30px 34px; border-radius: 34px 34px 34px 10px; }
+  #wa .h { display: flex; align-items: center; gap: 12px; font-weight: 700; color: #1d6b3a; }
+  .land #wa .h { font-size: 20px; }
+  .vert #wa .h { font-size: 28px; }
+  #wa .h span.ic { width: 38px; height: 38px; border-radius: 50%; background: #25a35a; display: grid; place-items: center; color: #fff; flex: none; }
+  .vert #wa .h span.ic { width: 52px; height: 52px; }
+  #wa .msg { background: #E7F7EC; border-radius: 16px; color: #14213D; line-height: 1.45; }
+  .land #wa .msg { font-size: 21px; padding: 14px 18px; }
+  .vert #wa .msg { font-size: 30px; padding: 20px 24px; }
+  #wa .meta { text-align: right; color: #4B5568; }
+  .land #wa .meta { font-size: 15px; margin-top: -6px; }
+  .vert #wa .meta { font-size: 22px; margin-top: -4px; }
+
+  /* Outro */
+  #outro { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .land #outro { gap: 26px; }
+  .vert #outro { gap: 34px; padding: 0 70px; }
+  #outro .o-el { will-change: transform, opacity; }
+  #oname { font-family: "Poppins", sans-serif; font-weight: 700; color: #0E2A6B; letter-spacing: -0.02em; line-height: 1.05; }
+  .land #oname { font-size: 76px; }
+  .vert #oname { font-size: 84px; }
+  #oline { color: #3E4A63; font-weight: 500; }
+  .land #oline { font-size: 38px; }
+  .vert #oline { font-size: 44px; line-height: 1.35; }
+  #ochips { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+  .chip2 { display: inline-flex; align-items: center; gap: 12px; background: #fff; border-radius: 999px; font-weight: 600; color: #0E2A6B; box-shadow: 0 6px 20px rgba(14,42,107,.08); }
+  .land .chip2 { font-size: 26px; padding: 14px 26px; }
+  .vert .chip2 { font-size: 34px; padding: 18px 32px; }
+  #ourl { font-family: "Poppins", sans-serif; font-weight: 700; color: #D63F12; }
+  .land #ourl { font-size: 36px; }
+  .vert #ourl { font-size: 44px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg" class="abs hexpat-light"></div>
+  <svg class="blob" id="b1" viewBox="0 0 100 112"><polygon points="50,4 96,30 96,82 50,108 4,82 4,30" fill="#E3E9F5" stroke="#E3E9F5" stroke-width="10" stroke-linejoin="round"/></svg>
+  <svg class="blob" id="b2" viewBox="0 0 100 112"><polygon points="50,4 96,30 96,82 50,108 4,82 4,30" fill="#FFE6DC" stroke="#FFE6DC" stroke-width="10" stroke-linejoin="round"/></svg>
+
+  <div id="tiles"></div>
+  <h1 id="hookText"><span class="l" id="h1">Halaman 12 × 8 m.</span><span class="l" id="h2">Butuh <span class="o">berapa paving?</span></span></h1>
+
+  <div class="cap" id="c1"><span class="kick">Kalkulator paving</span><h2>Butuh berapa blok? Langsung ketahuan.</h2><p>Isi panjang dan lebar. Sudah termasuk cadangan 5%.</p></div>
+  <div class="cap" id="c2"><span class="kick">Pesan lewat WhatsApp</span><h2>Kirim ke admin, sekali klik.</h2><p>Pesan WhatsApp terisi otomatis.</p></div>
+  <div class="cap" id="c3"><span class="kick">Daftar harga</span><h2>Harga per ukuran, terbuka.</h2><p>12 ukuran U-Ditch dan 5 cover, lengkap dengan berat.</p></div>
+
+  <div id="win">
+    <div id="bar"><i style="background:#FF6058"></i><i style="background:#FFBD2E"></i><i style="background:#28CA41"></i><div id="url"></div></div>
+    <div id="view">
+      <iframe id="f1" src="/"></iframe>
+      <iframe id="f2" src="/produk/u-ditch"></iframe>
+    </div>
+  </div>
+
+  <div id="ring"></div>
+  <div id="hl"></div>
+
+  <div id="wa">
+    <div class="h"><span class="ic"><svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-13.2 7.9L3 21l1.2-4.6A9 9 0 1 1 21 12z"/></svg></span><span id="waTo">WhatsApp ke admin Istana Block</span></div>
+    <div class="msg" id="waMsg"></div>
+    <div class="meta">siap dikirim ✓</div>
+  </div>
+
+  <div id="click"></div>
+  <svg id="cursor" viewBox="0 0 32 32"><path d="M6 3 L6 25 L11.5 19.8 L15.2 28.2 L19 26.6 L15.4 18.4 L23 18.4 Z" fill="#0E2A6B" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>
+
+  <div id="outro">
+    <div class="o-el" id="ologo"></div>
+    <div class="o-el" id="oname">Istana Block Purwakarta</div>
+    <div class="o-el" id="oline">Hitung, cek harga, pesan — dari satu situs.</div>
+    <div class="o-el" id="ochips"></div>
+    <div class="o-el" id="ourl">istanablockpurwakarta.com</div>
+  </div>
+</div>
+
+<script>
+const FMT = new URLSearchParams(location.search).get("fmt") || "land";
+document.body.className = FMT;
+const L = FMT === "land";
+const $ = (id) => document.getElementById(id);
+const HEXPTS = "50,4 96,30 96,82 50,108 4,82 4,30";
+const LOGO = `<svg viewBox="0 0 100 112" width="${L ? 150 : 190}" height="${L ? 168 : 213}"><path d="M50 2 L97 29 L97 83 L50 110 L3 83 L3 29 Z" fill="#254186"/><path d="M50 9 L91 32.5 L91 79.5 L50 103 L9 79.5 L9 32.5 Z" fill="none" stroke="#FFFFFF" stroke-width="2.6"/><circle cx="50" cy="29" r="5.6" fill="#FFFFFF"/><g fill="none" stroke="#FFFFFF" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"><path d="M46.5 70 C35 61 30.5 50 33 43 C35.5 36.5 44 36.5 46 43 L46.5 70"/><path d="M53.5 70 C65 61 69.5 50 67 43 C64.5 36.5 56 36.5 54 43 L53.5 70"/><path d="M29 70 C19.5 63 15.5 53 18 46 C20.5 39.5 27 39 29.5 43.5"/><path d="M71 70 C80.5 63 84.5 53 82 46 C79.5 39.5 73 39 70.5 43.5"/><path d="M30 79 Q50 75.5 70 79"/></g></svg>`;
+$("ologo").innerHTML = LOGO;
+const hexIcon = (c, s) => `<svg width="${s}" height="${Math.round(s * 1.12)}" viewBox="0 0 100 112"><polygon points="${HEXPTS}" fill="${c}" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
+$("ochips").innerHTML = [["#FE5722", "Kalkulator paving"], ["#254186", "Harga per ukuran"], ["#B5B4AF", "Pesan via WhatsApp"]]
+  .map(([c, t]) => `<span class="chip2">${hexIcon(c, L ? 22 : 28)}${t}</span>`).join("");
+
+/* ---------- math ---------- */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const eio = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const eo = (x) => 1 - Math.pow(1 - x, 3);
+const ei = (x) => x * x * x;
+const back = (x) => { const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const lerp = (a, b, x) => a + (b - a) * x;
+function rnd(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+/* ---------- geometry ---------- */
+const VIEW = L ? { x: 670, y: 120 + 46, s: 1.25 } : { x: 126 + 24, y: 520 + 24, s: 2 };
+const VIEW_H = L ? 635 : 656; // logical iframe viewport height
+
+/* ---------- hook tiles ---------- */
+const TILE = L ? { cols: 7, rows: 7, w: 118, x0: 1010, y0: 150 } : { cols: 7, rows: 8, w: 150, x0: 22, y0: 880 };
+const tiles = [];
+(function buildTiles() {
+  const host = $("tiles");
+  const u = TILE.w / 100, sx = 96 * u, sy = 81 * u;
+  let i = 0;
+  for (let r = 0; r < TILE.rows; r++) for (let c = 0; c < TILE.cols; c++) {
+    const x = TILE.x0 + c * sx + (r % 2 ? 48 * u : 0), y = TILE.y0 + r * sy;
+    const k = rnd(i + 3);
+    const color = k < 0.68 ? "#D6D6D6" : k < 0.84 ? "#B5B4AF" : k < 0.93 ? "#254186" : "#FE5722";
+    // skip a few edge tiles for an unfinished, laid-by-hand edge
+    const edge = r === 0 || c === TILE.cols - 1 || r === TILE.rows - 1;
+    if (edge && rnd(i + 9) < 0.35) { i++; continue; }
+    const el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    el.setAttribute("viewBox", "0 0 100 112"); el.setAttribute("width", TILE.w); el.setAttribute("height", TILE.w * 1.12);
+    el.innerHTML = `<polygon points="${HEXPTS}" fill="${color}" stroke="${color}" stroke-width="7" stroke-linejoin="round"/>`;
+    el.style.left = x + "px"; el.style.top = y + "px";
+    host.appendChild(el);
+    tiles.push({ el, order: r * TILE.cols + c, j: rnd(i + 17) });
+    i++;
+  }
+})();
+
+/* ---------- iframe helpers ---------- */
+const f1 = $("f1"), f2 = $("f2");
+const W1 = () => f1.contentWindow, D1 = () => f1.contentDocument, D2 = () => f2.contentDocument, W2 = () => f2.contentWindow;
+const raf = (w) => new Promise((r) => w.requestAnimationFrame(() => w.requestAnimationFrame(r)));
+function setNative(el, value) {
+  const proto = el.tagName === "SELECT" ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
+  const P = el.ownerDocument.defaultView[proto === HTMLSelectElement.prototype ? "HTMLSelectElement" : "HTMLInputElement"].prototype;
+  if (el.value === value) return;
+  Object.getOwnPropertyDescriptor(P, "value").set.call(el, value);
+  el.dispatchEvent(new el.ownerDocument.defaultView.Event(el.tagName === "SELECT" ? "change" : "input", { bubbles: true }));
+}
+const docTop = (el) => el.getBoundingClientRect().top + el.ownerDocument.defaultView.scrollY;
+function toStage(r) { return { x: VIEW.x + r.left * VIEW.s, y: VIEW.y + r.top * VIEW.s, w: r.width * VIEW.s, h: r.height * VIEW.s }; }
+
+let calc, sel, inL, inW, btn, resBox, resNum, calcTarget, tableTarget, row600, rowPrice, waText;
+function measure() {
+  const d = D1();
+  calc = d.querySelector(".calc-form");
+  sel = calc.querySelector("select");
+  const inputs = calc.querySelectorAll("input");
+  inL = inputs[0]; inW = inputs[1];
+  btn = calc.querySelector(".calc-result a");
+  resBox = calc.querySelector(".calc-result");
+  resNum = resBox.querySelector("b");
+  const band = d.querySelector(".calc-band");
+  calcTarget = L ? docTop(band) - 24 : docTop(calc) - 60;
+  const d2 = D2();
+  const harga = d2.querySelector("#harga");
+  const rows0 = [...d2.querySelectorAll("#harga tbody tr")];
+  const r600 = rows0.find((r) => r.textContent.includes("600 × 600 × 1200"));
+  const reserve = L ? 110 : 190; // keep the row clear of the bottom edge / mobile contact bar
+  tableTarget = Math.max(docTop(harga) - (L ? 20 : 12), docTop(r600) + r600.getBoundingClientRect().height - VIEW_H + reserve);
+  const rows = [...d2.querySelectorAll("#harga tbody tr")];
+  row600 = rows.find((r) => r.textContent.includes("600 × 600 × 1200"));
+  rowPrice = row600.querySelector("td.num");
+}
+
+/* ---------- interaction script (pure function of t) ---------- */
+const T = { hookOut: 2.5, winIn: 2.8, scrollA: 3.3, scrollB: 4.4, s3: 9.7, s4: 14.0, s5: 18.6, end: 22.0 };
+function calcState(t) {
+  return {
+    type: t >= 5.0 ? "hex" : "bata",
+    len: t < 5.55 ? "10" : t < 5.7 ? "" : t < 5.85 ? "1" : "12",
+    wid: t < 6.55 ? "5" : t < 6.72 ? "" : "8",
+    focus: t >= 4.9 && t < 5.4 ? "sel" : t >= 5.4 && t < 6.4 ? "len" : t >= 6.4 && t < 8.6 ? "wid" : null,
+    press: t >= 10.3 && t < 10.45,
+  };
+}
+function stagePoint(el, fx = 0.5, fy = 0.5) {
+  const r = toStage(el.getBoundingClientRect());
+  return { x: r.x + r.w * fx, y: r.y + r.h * fy };
+}
+
+const focusCss = "outline: 3px solid #FE5722; outline-offset: 1px; border-color: #254186;";
+let lastFocus = null;
+function applyIframes(t) {
+  // --- iframe 1: home / calculator
+  const y1 = t < T.scrollA ? 0 : lerp(0, calcTarget, eio(seg(t, T.scrollA, T.scrollB)));
+  W1().scrollTo({ top: y1, behavior: "instant" });
+  const s = calcState(t);
+  setNative(sel, s.type); setNative(inL, s.len); setNative(inW, s.wid);
+  for (const [k, el] of [["sel", sel], ["len", inL], ["wid", inW]]) el.style.cssText = s.focus === k ? focusCss : "";
+  btn.style.transform = s.press ? "scale(0.95)" : "";
+  btn.style.background = s.press ? "#B8350E" : "";
+  // --- iframe 2: U-Ditch price table
+  const y2 = lerp(0, tableTarget, eio(seg(t, 14.7, 15.9)));
+  W2().scrollTo({ top: y2, behavior: "instant" });
+}
+
+function setT(el, x, y, sc = 1, op = 1, rot = 0) {
+  el.style.transform = `translate(${x}px, ${y}px) scale(${sc}) rotate(${rot}deg)`;
+  el.style.opacity = op;
+}
+
+function cursorAt(t) {
+  // keyframes: [time, point-fn]
+  const pts = [
+    [4.2, () => ({ x: (L ? 1500 : 760), y: (L ? 760 : 1500) })],
+    [4.85, () => stagePoint(sel, 0.62, 0.55)],
+    [5.35, () => stagePoint(inL, 0.35, 0.55)],
+    [6.35, () => stagePoint(inW, 0.35, 0.55)],
+    [9.6, () => stagePoint(inW, 0.35, 0.55)],
+    [10.25, () => stagePoint(btn, 0.55, 0.6)],
+    [13.9, () => stagePoint(btn, 0.55, 0.6)],
+    [15.9, () => (L ? { x: 1500, y: 640 } : { x: 760, y: 1500 })],
+    [16.4, () => stagePoint(rowPrice, 0.55, 0.62)],
+  ];
+  if (t <= pts[0][0]) return pts[0][1]();
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [ta, fa] = pts[i], [tb, fb] = pts[i + 1];
+    if (t <= tb) { const a = fa(), b = fb(), x = eio(seg(t, ta, tb)); return { x: lerp(a.x, b.x, x), y: lerp(a.y, b.y, x) }; }
+  }
+  return pts[pts.length - 1][1]();
+}
+const CLICKS = [4.9, 5.4, 6.4, 10.3];
+
+async function render(t, u = t) {
+  applyIframes(t);
+  await Promise.all([raf(W1()), raf(W2())]);
+
+  /* background blobs (slow drift) */
+  const bs = L ? 620 : 760;
+  $("b1").setAttribute("width", bs); $("b1").setAttribute("height", bs * 1.12);
+  $("b2").setAttribute("width", bs * 0.45); $("b2").setAttribute("height", bs * 0.45 * 1.12);
+  setT($("b1"), (L ? -180 : 520) + Math.sin(u * 0.35) * 14, (L ? 620 : -140) + Math.cos(u * 0.3) * 12, 1, 1, 8 + u * 0.6);
+  setT($("b2"), (L ? 1680 : -90) + Math.cos(u * 0.4) * 10, (L ? -90 : 1680) + Math.sin(u * 0.33) * 10, 1, 1, -6 - u * 0.8);
+
+  /* hook */
+  for (const tl of tiles) {
+    const start = 0.05 + tl.order * (L ? 0.022 : 0.019) + tl.j * 0.08;
+    const a = seg(t, start, start + 0.38);
+    const out = seg(t, T.hookOut + tl.j * 0.12, T.hookOut + 0.2 + tl.j * 0.12);
+    setT(tl.el, 0, lerp(-26, 0, eo(a)) + out * 16, lerp(0.82, 1, back(a)) * (1 - out * 0.15), a * (1 - out));
+  }
+  for (const [id, a0] of [["h1", 0.15], ["h2", 0.45]]) {
+    const a = eo(seg(t, a0, a0 + 0.4)), o = ei(seg(t, T.hookOut, T.hookOut + 0.25));
+    setT($(id), 0, lerp(40, 0, a) - o * 40, 1, a * (1 - o));
+  }
+
+  /* window */
+  const wIn = eo(seg(t, T.winIn, T.winIn + 0.5)), wOut = ei(seg(t, T.s5, T.s5 + 0.4));
+  setT($("win"), 0, lerp(70, 0, wIn) + wOut * 40, lerp(0.97, 1, wIn) - wOut * 0.04, wIn * (1 - wOut));
+  $("win").style.transformOrigin = "50% 50%";
+  // page switch: f1 out, then f2 in (dip through page background)
+  const sw1 = seg(t, T.s4, T.s4 + 0.25), sw2 = seg(t, T.s4 + 0.25, T.s4 + 0.5);
+  f1.style.opacity = 1 - sw1; f2.style.opacity = sw2;
+  f2.style.visibility = sw2 > 0 ? "visible" : "hidden";
+  $("url").innerHTML = t < T.s4 + 0.25 ? "<b>istanablockpurwakarta.com</b>" : "<b>istanablockpurwakarta.com</b>/produk/u-ditch";
+
+  /* captions: old out first, then new in */
+  const caps = [["c1", 3.0, T.s3], ["c2", T.s3 + 0.1, T.s4], ["c3", T.s4 + 0.1, T.s5]];
+  for (const [id, a0, b0] of caps) {
+    const el = $(id);
+    const kids = [...el.children];
+    const out = ei(seg(t, b0 - 0.2, b0));
+    kids.forEach((k, i) => {
+      const a = eo(seg(t, a0 + i * 0.12, a0 + i * 0.12 + 0.4));
+      setT(k, 0, lerp(26, 0, a) - out * 20, 1, a * (1 - out));
+    });
+    el.style.visibility = t >= a0 - 0.01 && t <= b0 + 0.01 ? "visible" : "hidden";
+  }
+
+  /* result ring */
+  const rr = toStage(resNum.parentElement.getBoundingClientRect());
+  const ringA = eo(seg(t, 6.9, 7.3)), ringOut = seg(t, T.s3 - 0.2, T.s3);
+  const pad = L ? 10 : 14;
+  Object.assign($("ring").style, { left: rr.x - pad + "px", top: rr.y - pad + "px", width: rr.w + pad * 2 + "px", height: rr.h + pad * 2 + "px" });
+  $("ring").style.opacity = ringA * (1 - ringOut);
+  $("ring").style.transform = `scale(${lerp(1.25, 1, back(ringA))})`;
+
+  /* WhatsApp bubble with the button's real prefilled text */
+  const waIn = back(seg(t, 10.5, 10.95)), waOut = ei(seg(t, T.s4 - 0.25, T.s4));
+  const wa = $("wa");
+  if (L) { wa.style.left = "1250px"; wa.style.top = "560px"; } else { wa.style.left = "120px"; wa.style.top = "1080px"; }
+  setT(wa, 0, lerp(40, 0, waIn) + waOut * 20, lerp(0.9, 1, waIn), clamp(seg(t, 10.5, 10.75)) * (1 - waOut));
+  wa.style.transformOrigin = "0% 100%";
+
+  /* price row highlight */
+  const pr = toStage(row600.getBoundingClientRect());
+  const hlA = eo(seg(t, 16.1, 16.45)), hlOut = seg(t, T.s5 - 0.2, T.s5);
+  const hp = L ? 6 : 8;
+  Object.assign($("hl").style, { left: pr.x - hp + "px", top: pr.y - hp + "px", width: pr.w + hp * 2 + "px", height: pr.h + hp * 2 + "px" });
+  $("hl").style.opacity = hlA * (1 - hlOut) * (t >= T.s4 ? 1 : 0);
+
+  /* cursor + click pulses */
+  const c = cursorAt(t);
+  const cVis = clamp(seg(t, 4.1, 4.35)) * (1 - seg(t, 13.85, 14.05)) + clamp(seg(t, 15.6, 15.85)) * (1 - seg(t, T.s5 - 0.2, T.s5));
+  const press = CLICKS.some((k) => t >= k && t < k + 0.12) ? 0.86 : 1;
+  setT($("cursor"), c.x - 6, c.y - 4, press, clamp(cVis));
+  $("cursor").style.transformOrigin = "6px 4px";
+  let pulse = 0, pk = 0;
+  for (const k of CLICKS) if (t >= k && t < k + 0.45) { pulse = seg(t, k, k + 0.45); pk = 1; }
+  const pr0 = L ? 10 : 14, pr1 = L ? 46 : 66, rad = lerp(pr0, pr1, eo(pulse));
+  Object.assign($("click").style, { left: c.x - rad + "px", top: c.y - rad + "px", width: rad * 2 + "px", height: rad * 2 + "px", opacity: pk ? (1 - pulse) * 0.9 : 0 });
+
+  /* outro */
+  const oels = ["ologo", "oname", "oline", "ochips", "ourl"];
+  const fade = ei(seg(t, 21.6, 22.0));
+  oels.forEach((id, i) => {
+    const a0 = T.s5 + 0.3 + i * 0.16;
+    const a = id === "ologo" ? back(seg(t, a0, a0 + 0.45)) : eo(seg(t, a0, a0 + 0.4));
+    const op = clamp(seg(t, a0, a0 + 0.3)) * (1 - fade);
+    setT($(id), 0, lerp(30, 0, a) - fade * 16, id === "ologo" ? lerp(0.6, 1, a) : 1, op);
+  });
+  $("outro").style.visibility = t >= T.s5 ? "visible" : "hidden";
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+}
+
+async function ready() {
+  await Promise.all([f1, f2].map((f) => new Promise((r) => (f.contentDocument && f.contentDocument.readyState === "complete" ? r() : f.addEventListener("load", r, { once: true })))));
+  await document.fonts.ready;
+  await D1().fonts.ready; await D2().fonts.ready;
+  // warm up lazy images by scrolling through both pages
+  for (const w of [W1(), W2()]) {
+    const h = w.document.documentElement.scrollHeight;
+    for (let y = 0; y < h; y += 500) { w.scrollTo({ top: y, behavior: "instant" }); await raf(w); }
+    w.scrollTo({ top: 0, behavior: "instant" });
+  }
+  await Promise.all([...D1().images, ...D2().images].map((im) => (im.complete ? 0 : new Promise((r) => { im.onload = im.onerror = r; }))));
+  // jangan merekam video fitur itu sendiri di dalam video
+  D1().querySelectorAll(".reel-section").forEach((el) => el.remove());
+  measure();
+  // compute the message the real button will produce in the final state
+  setNative(sel, "hex"); setNative(inL, "12"); setNative(inW, "8"); await raf(W1());
+  const href = btn.getAttribute("href");
+  waText = decodeURIComponent(new URL(href).searchParams.get("text") || "");
+  $("waMsg").textContent = waText;
+  window.__wa = { href, waText };
+  window.render = render;
+  window.reelReady = true;
+}
+ready();
+</script>
+</body>
+</html>

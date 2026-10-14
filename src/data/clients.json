@@ -1,0 +1,37 @@
+[
+  {
+    "id": "wika",
+    "name": "WIKA",
+    "logo": "/img/klien/wika.webp",
+    "w": 320,
+    "h": 120
+  },
+  {
+    "id": "waskita",
+    "name": "Waskita",
+    "logo": "/img/klien/waskita.webp",
+    "w": 320,
+    "h": 120
+  },
+  {
+    "id": "jco",
+    "name": "J.CO",
+    "logo": "/img/klien/jco.webp",
+    "w": 320,
+    "h": 120
+  },
+  {
+    "id": "pertamina",
+    "name": "Pertamina",
+    "logo": "/img/klien/pertamina.webp",
+    "w": 320,
+    "h": 120
+  },
+  {
+    "id": "indomaret",
+    "name": "Indomaret",
+    "logo": "/img/klien/indomaret.webp",
+    "w": 320,
+    "h": 120
+  }
+]

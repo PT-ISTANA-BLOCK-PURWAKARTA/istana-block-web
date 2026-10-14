@@ -1,0 +1,41 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "istana-block-web",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2026-09-01",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		// Ganti dengan domain produksi, dipakai untuk canonical, sitemap, dan Open Graph.
+		"SITE_URL": "https://istanablockpurwakarta.com"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "istana-block-db",
+			// Isi dengan hasil `npx wrangler d1 create istana-block-db`
+			"database_id": "61b62273-7543-468b-81b4-aa31f8a32b6a",
+			"migrations_dir": "drizzle"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "MEDIA",
+			"bucket_name": "istana-block-media"
+		},
+		{
+			"bucket_name": "istana-block-media",
+			"binding": "istana_block_media",
+			"remote": true
+		}
+	]
+}

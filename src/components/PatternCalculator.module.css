@@ -1,0 +1,235 @@
+/* Kalkulator pola & warna paving. Memakai token dari globals.css. */
+
+.wrap { display: flex; flex-direction: column; gap: 16px; }
+
+/* ---------- Penanda langkah ---------- */
+.stepper ol {
+  list-style: none; margin: 0; padding: 6px;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px;
+  background: #fff; border-radius: 22px;
+}
+.stepper a {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%;
+  padding: 8px 2px 6px; border-radius: 16px; min-width: 0;
+  color: var(--tinta); text-decoration: none; text-align: center;
+}
+.stepper a:hover { background: var(--latar); color: var(--biru-tua); }
+.sHex {
+  flex: none; width: 30px; height: 34px; display: grid; place-items: center;
+  background: var(--abu); color: var(--redup); font: 700 14px/1 var(--font-judul);
+}
+.done .sHex { background: var(--biru); color: #fff; }
+.sText { display: flex; flex-direction: column; min-width: 0; max-width: 100%; }
+.sLabel { font-size: 12px; font-weight: 700; line-height: 1.2; }
+.sVal { display: none; font-size: 13px; line-height: 1.3; color: var(--redup); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 760px) {
+  .stepper ol { padding: 8px; gap: 4px; }
+  .stepper a { flex-direction: row; gap: 10px; padding: 8px 12px; text-align: left; }
+  .sLabel { font-size: 14px; }
+  .sVal { display: block; }
+}
+
+/* ---------- Tata letak: satu kolom di ponsel, pratinjau lengket di kanan pada layar lebar ---------- */
+.root { display: flex; flex-direction: column; gap: 16px; }
+.flow { display: contents; }
+.oJenis { order: 1; }
+.oPola { order: 2; }
+.oWarna { order: 3; }
+.aside { order: 4; }
+.oUkuran { order: 5; }
+.oHasil { order: 6; }
+@media (min-width: 1000px) {
+  .root { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 430px); gap: 24px; align-items: start; }
+  .flow { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+  .aside { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+}
+
+/* ---------- Kartu langkah ---------- */
+.card {
+  background: #fff; border-radius: 26px; padding: 20px 16px 24px; min-width: 0;
+  display: flex; flex-direction: column; gap: 18px; scroll-margin-top: 16px;
+}
+@media (min-width: 600px) { .card { border-radius: 28px; padding: 26px 28px 30px; } }
+.head { display: flex; align-items: center; gap: 12px; }
+.no {
+  flex: none; width: 40px; height: 46px; display: grid; place-items: center;
+  background: var(--biru); color: #fff; font: 700 19px/1 var(--font-judul);
+}
+.head h2 { font-size: 21px; font-weight: 600; }
+@media (min-width: 600px) { .head h2 { font-size: 24px; } }
+.sub { margin-top: 3px; font-size: 14px; line-height: 1.45; color: var(--redup); }
+
+.fs { border: 0; margin: 0; padding: 0; min-width: 0; }
+.legend { padding: 0; margin-bottom: 8px; font-size: 15px; font-weight: 600; color: var(--tinta); }
+.legendHint { font-weight: 500; color: var(--redup); }
+.help { margin-top: 8px; font-size: 13px; line-height: 1.5; color: var(--redup); }
+.note { font-size: 14px; line-height: 1.5; color: var(--teks); background: var(--oranye-muda); border-radius: 14px; padding: 10px 14px; }
+.inlineNote { font-size: 15px; }
+.err { margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--bahaya); }
+
+/* ---------- Kartu pilihan (jenis & motif) ---------- */
+.grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
+.gridMotif { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); }
+@media (min-width: 600px) {
+  .grid { gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .gridMotif { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
+}
+/* Lima jenis paving dalam satu baris bila muat. */
+@media (min-width: 1100px) { .gridJenis { grid-template-columns: repeat(auto-fill, minmax(116px, 1fr)); } }
+.opt, .pill, .chip { position: relative; cursor: pointer; }
+.opt { display: flex; min-width: 0; }
+.opt > input, .pill > input, .chip > input {
+  position: absolute; top: 0; left: 0; width: 1px; height: 1px; margin: 0; opacity: 0; pointer-events: none;
+}
+.optBody {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;
+  padding: 7px 7px 12px; border: 1.5px solid var(--garis); border-radius: 20px; background: #fff;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+.opt:hover .optBody { border-color: #9aa6c4; }
+.opt > input:checked + .optBody { border-color: var(--biru); box-shadow: inset 0 0 0 1.5px var(--biru); background: #f4f7fd; }
+.opt > input:focus-visible + .optBody { outline: 3px solid var(--oranye); outline-offset: 2px; }
+.thumb {
+  position: relative; display: block; aspect-ratio: 3 / 2; margin-bottom: 4px;
+  border-radius: 14px; overflow: hidden; background: var(--beton);
+}
+.thumb svg { display: block; width: 100%; height: 100%; }
+.opt > input:checked + .optBody .thumb::after {
+  content: ""; position: absolute; top: 6px; right: 6px; width: 26px; height: 30px;
+  clip-path: var(--hex);
+  background: var(--biru) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 15px no-repeat;
+}
+.optName { padding: 0 4px; font: 600 15px/1.25 var(--font-judul); color: var(--biru-tua); }
+.optMeta { padding: 0 4px; font-size: 13px; line-height: 1.4; color: var(--redup); }
+.optMeta b { color: var(--tinta); }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; padding: 4px 4px 0; }
+.tags span { padding: 2px 8px; border-radius: 999px; background: var(--biru-muda); color: var(--biru-tua); font-size: 12px; font-weight: 600; }
+.tags .tagWarn { background: var(--oranye-muda); color: var(--oranye-cta-hover); }
+
+/* ---------- Pilihan pil (tebal, cara isi, cadangan) ---------- */
+.seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-flex; }
+.pill > span {
+  display: inline-flex; flex-direction: column; justify-content: center; min-height: 44px; padding: 6px 16px;
+  border: 1.5px solid #8a93a6; border-radius: 999px; background: #fff;
+  font-size: 15px; font-weight: 600; line-height: 1.2; color: var(--tinta);
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.pill small { font-size: 11.5px; font-weight: 500; color: var(--redup); }
+.pill:hover > span { border-color: var(--biru); }
+.pill > input:checked + span { background: var(--biru); border-color: var(--biru); color: #fff; }
+.pill > input:checked + span small { color: #d3dcef; }
+.pill > input:focus-visible + span { outline: 3px solid var(--oranye); outline-offset: 2px; }
+
+/* ---------- Warna ---------- */
+.roles { display: flex; flex-direction: column; gap: 16px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; }
+.chip > span {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 16px 6px 10px;
+  border: 1.5px solid var(--garis); border-radius: 999px; background: #fff;
+  font-size: 15px; font-weight: 600; color: var(--tinta); white-space: nowrap;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.chip:hover > span { border-color: #9aa6c4; }
+.chip > input:checked + span { border-color: var(--biru); box-shadow: inset 0 0 0 1.5px var(--biru); background: var(--biru-muda); color: var(--biru-tua); }
+.chip > input:focus-visible + span { outline: 3px solid var(--oranye); outline-offset: 2px; }
+.sw { flex: none; display: inline-block; width: 22px; height: 25px; }
+
+.shareBox { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 20px; background: var(--latar); }
+.shareTitle { font-size: 14px; font-weight: 600; color: var(--teks); }
+.bar { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--abu); }
+.bar span { height: 100%; }
+.bar span + span { border-left: 2px solid #fff; }
+.legendList { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; }
+.legendList li { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.legendList .sw { width: 16px; height: 18px; }
+.manual { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.manual > p { grid-column: 1 / -1; margin: 0; }
+
+/* ---------- Ukuran ---------- */
+.stack { display: flex; flex-direction: column; gap: 20px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.inputWrap { position: relative; }
+.unit { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--redup); pointer-events: none; }
+.extras { display: flex; flex-direction: column; gap: 8px; }
+.extra { padding: 2px 14px; border-radius: 18px; background: var(--latar); }
+.nested { display: flex; flex-direction: column; gap: 14px; padding: 4px 0 16px; }
+
+/* ---------- Hasil ---------- */
+.total { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border-radius: 22px; background: var(--biru-muda); }
+.totalLabel { font-size: 14px; font-weight: 600; color: var(--biru-tua); }
+.total b { font: 700 clamp(34px, 8vw, 46px)/1.1 var(--font-judul); color: var(--biru-tua); }
+.formula { font-size: 13px; line-height: 1.5; color: var(--teks); }
+.rows { margin: 0; padding: 0; list-style: none; }
+.rows b { white-space: nowrap; }
+.rowName { display: inline-flex; align-items: center; gap: 10px; }
+.rowSub { display: block; font-size: 12.5px; font-weight: 400; color: var(--redup); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.actions > * { flex: 1 1 auto; }
+.actions > :first-child { flex-basis: 100%; }
+.status { font-size: 14px; font-weight: 600; color: var(--sukses); }
+/* Tetap ada di pohon aksesibilitas (live region) tetapi tidak memakan tempat saat kosong. */
+.status:empty { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.disclaimer { font-size: 13px; line-height: 1.5; color: var(--redup); }
+
+/* ---------- Pratinjau ---------- */
+.aside { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.previewCard { display: flex; flex-direction: column; gap: 12px; padding: 14px 14px 18px; border-radius: 26px; background: #fff; }
+.prevHead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; padding: 4px 6px 0; }
+.prevHead h2 { font-size: 19px; font-weight: 600; }
+.prevHead span { font-size: 13px; color: var(--redup); }
+.stage { position: relative; aspect-ratio: 8 / 5; border-radius: 18px; overflow: hidden; background: var(--beton); }
+.stage svg { display: block; width: 100%; height: 100%; }
+.dims {
+  position: absolute; top: 10px; right: 10px; padding: 3px 10px; border-radius: 999px;
+  background: rgba(255, 255, 255, .92); color: var(--tinta); font-size: 12px; font-weight: 700;
+}
+.scale {
+  position: absolute; left: 5%; bottom: 8%; isolation: isolate;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  color: #fff; font-size: 12px; font-weight: 700; line-height: 1.1;
+}
+.scale::before { content: ""; position: absolute; inset: -5px -9px -6px; z-index: -1; border-radius: 10px; background: rgba(14, 42, 107, .82); }
+.scale i { display: block; align-self: stretch; height: 7px; border: 2px solid #fff; border-top: 0; }
+.prevTitle { padding: 0 6px; font-size: 14px; color: var(--teks); }
+.prevTitle b { font: 600 16px var(--font-judul); color: var(--biru-tua); }
+.previewCard .legendList { padding: 0 6px; }
+.quick { display: none; }
+@media (min-width: 1000px) {
+  .quick {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 16px 14px 20px; border-radius: 22px; background: var(--biru-tua); color: #fff;
+  }
+  .quick span { display: block; font-size: 13px; color: #d3dcef; }
+  .quick b { font: 700 26px/1.15 var(--font-judul); color: #fff; }
+  .quick .quickBtn { flex: none; background: #fff; color: var(--biru-tua); }
+  .quick .quickBtn:hover { background: var(--biru-muda); color: var(--biru-tua); }
+}
+
+/* ---------- Cetak: hanya ringkasan + pratinjau ---------- */
+.printOnly { display: none; }
+.printOnly b { display: block; font: 700 18px var(--font-judul); color: var(--biru-tua); }
+.printOnly span { display: block; font-size: 12px; color: var(--redup); }
+.printLink { word-break: break-all; }
+@page { margin: 12mm; }
+@media print {
+  :global(html):has(.wrap), :global(body):has(.wrap) { background: #fff !important; }
+  :global(body):has(.wrap) > :global(*:not(main)) { display: none !important; }
+  :global(body):has(.wrap) :global([data-pp-noprint]) { display: none !important; }
+  .wrap { gap: 10px; }
+  .wrap * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .printOnly { display: block; }
+  .root { display: flex; flex-direction: column; gap: 10px; }
+  .flow { display: contents; }
+  .aside { position: static; max-height: none; overflow: visible; }
+  .card, .previewCard { break-inside: avoid; border: 1px solid var(--beton); padding: 16px; }
+  .stage { max-width: 150mm; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .optBody, .pill > span, .chip > span { transition: none; }
+}
+@media (forced-colors: active) {
+  .opt > input:checked + .optBody, .pill > input:checked + span, .chip > input:checked + span { outline: 3px solid Highlight; outline-offset: 1px; }
+}

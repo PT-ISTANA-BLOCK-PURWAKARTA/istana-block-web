@@ -1,0 +1,50 @@
+{
+ "paving-block": [
+  {
+   "src": "/img/tkdn/paving-truepave.webp",
+   "title": "Truepave / bata",
+   "w": 1200,
+   "h": 1200,
+   "alt": "Lembar spesifikasi dan sertifikat TKDN Truepave / bata Istana Block"
+  },
+  {
+   "src": "/img/tkdn/paving-hexagon.webp",
+   "title": "Hexagon",
+   "w": 1200,
+   "h": 1200,
+   "alt": "Lembar spesifikasi dan sertifikat TKDN Hexagon Istana Block"
+  },
+  {
+   "src": "/img/tkdn/paving-fullpave.webp",
+   "title": "Fullpave / ubin",
+   "w": 1200,
+   "h": 1200,
+   "alt": "Lembar spesifikasi dan sertifikat TKDN Fullpave / ubin Istana Block"
+  },
+  {
+   "src": "/img/tkdn/paving-grass-block.webp",
+   "title": "Grass block",
+   "w": 1200,
+   "h": 1200,
+   "alt": "Lembar spesifikasi dan sertifikat TKDN Grass block Istana Block"
+  }
+ ],
+ "u-ditch": [
+  {
+   "src": "/img/tkdn/u-ditch.webp",
+   "title": "U-Ditch",
+   "w": 1200,
+   "h": 1200,
+   "alt": "Lembar spesifikasi dan sertifikat TKDN U-Ditch Istana Block"
+  }
+ ],
+ "buis-beton": [
+  {
+   "src": "/img/tkdn/buis-beton.webp",
+   "title": "Buis beton",
+   "w": 1200,
+   "h": 1200,
+   "alt": "Lembar spesifikasi dan sertifikat TKDN Buis beton Istana Block"
+  }
+ ]
+}
