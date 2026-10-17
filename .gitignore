@@ -7,3 +7,7 @@ node_modules
 !.env.example
 *.tsbuildinfo
 next-env.d.ts
+
+# cadangan database (berisi data pelanggan & hash password) — jangan masuk repo
+backup-*.sql
+*.sql.bak

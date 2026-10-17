@@ -260,7 +260,7 @@ Lalu sambungkan domain: **Cloudflare dashboard → Workers & Pages → istana-bl
 **Cadangan database.** Ekspor isi D1 produksi ke file SQL sebelum perubahan besar:
 
 ```powershell
-npx wrangler d1 export istana-block-db --remote --output backup-$(Get-Date -Format yyyyMMdd).sql   # bash: backup-$(date +%Y%m%d).sql
+npx wrangler d1 export istana-block-db --remote --output ../backup-$(Get-Date -Format yyyyMMdd).sql   # bash: ../backup-$(date +%Y%m%d).sql (di luar folder repo)
 ```
 
 ### Memperbarui situs
