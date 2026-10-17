@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getDb, getEnv, schema } from "@/db";
-import { canOpen, homeFor, normalizeRoles, type ModuleKey, type Role } from "./roles";
+import { can, canOpen, homeFor, normalizeRoles, type ModuleKey, type Perm, type Role } from "./roles";
 import { SESSION_COOKIE, verifySession } from "./session";
 
 export type CurrentUser = { id: number; email: string; name: string; roles: Role[] };
@@ -56,5 +56,12 @@ export async function requireOwner() {
 export async function requireAnyModule(...modules: ModuleKey[]) {
   const user = await requireUser();
   if (!modules.some((m) => canOpen(user.roles, m))) redirect(homeFor(user.roles) ?? "/admin/login?e=akses");
+  return user;
+}
+
+/** Wajib punya salah satu izin aksi (dipakai server action & halaman ubah di modul operasional). */
+export async function requirePerm(...perms: Perm[]) {
+  const user = await requireUser();
+  if (!perms.some((p) => can(user.roles, p))) redirect(homeFor(user.roles) ?? "/admin/login?e=akses");
   return user;
 }

@@ -8,7 +8,7 @@ import { formatQty, tgl } from "@/lib/erp/util";
 export const metadata = { title: "Penyesuaian stok" };
 
 export default async function Penyesuaian({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canStock: canEdit, canFinance } = await opsAccess();
   const { ok } = await searchParams;
   const db = await getDb();
   const rows = await db

@@ -2,15 +2,32 @@ import "server-only";
 import { and, eq, inArray } from "drizzle-orm";
 import { schema } from "@/db";
 import type { Delivery, OrderStatus } from "@/db/erp";
-import { requireAnyModule } from "@/lib/auth";
-import { canOpen } from "@/lib/roles";
+import { requirePerm } from "@/lib/auth";
+import { permsOf } from "@/lib/roles";
 import { deriveOrderStatus, orderProgress } from "./orders";
 import { chunk, deleteJournalOps, insertMany, inventoryAccount, isStockItem, journalOps, stockLevels, unitCost, type Accounts, type DB, type JLine } from "./server";
 
-/** Akses modul operasional: staf keuangan boleh melihat (hanya-baca), staf operasional boleh mengubah. */
+/**
+ * Akses modul operasional per izin: operasional (pesanan & pengiriman), gudang (stok & muat),
+ * keuangan (hanya melihat + nilai rupiah). Pemilik mendapat semuanya.
+ */
 export async function opsAccess() {
-  const user = await requireAnyModule("operasional", "keuangan");
-  return { user, canEdit: canOpen(user.roles, "operasional"), canFinance: canOpen(user.roles, "keuangan") };
+  const user = await requirePerm("lihat_ops");
+  const p = permsOf(user.roles);
+  return {
+    user,
+    perms: p,
+    /** Membuat/mengubah pesanan & pelanggan. */
+    canOrders: p.has("pesanan"),
+    /** Menjadwalkan surat jalan, armada, sopir, terkirim/batal. */
+    canShip: p.has("pengiriman"),
+    /** Menandai truk berangkat (barang keluar gudang). */
+    canLoad: p.has("muat"),
+    /** Hasil produksi & penyesuaian stok. */
+    canStock: p.has("stok"),
+    /** Melihat nilai rupiah (harga pokok, faktur, jurnal). */
+    canFinance: p.has("keuangan"),
+  };
 }
 
 export const POSTED: Delivery["status"][] = ["berangkat", "terkirim"];

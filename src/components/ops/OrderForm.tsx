@@ -1,16 +1,35 @@
 "use client";
 
+import { useState } from "react";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveOrder } from "@/app/operasional/actions/orders";
 import { LinesEditor, type EditorLine, type PickItem } from "@/components/erp/LinesEditor";
 import type { Order } from "@/db/erp";
+import { tgl } from "@/lib/erp/util";
 
 type Head = Partial<Pick<Order, "id" | "contactId" | "customerRef" | "project" | "address" | "mapsUrl" | "siteContact" | "requestedDate" | "ongkir" | "discount" | "taxable" | "note" | "status">> & { date: string };
 
 /** Formulir pesanan (PO) pelanggan. */
-export function OrderForm({ head, lines, contacts, items, taxRate }: { head: Head; lines: EditorLine[]; contacts: { id: string; name: string; company: string; address: string }[]; items: PickItem[]; taxRate: number }) {
+export function OrderForm({
+  head,
+  lines,
+  contacts,
+  items,
+  taxRate,
+  overdue = {},
+}: {
+  head: Head;
+  lines: EditorLine[];
+  contacts: { id: string; name: string; company: string; address: string }[];
+  items: PickItem[];
+  taxRate: number;
+  /** Pelanggan dengan faktur lewat jatuh tempo: jumlah faktur & tanggal tertua (tanpa nominal). */
+  overdue?: Record<string, { n: number; oldest: string }>;
+}) {
   const isNew = !head.id;
+  const [contactId, setContactId] = useState(head.contactId ?? "");
+  const late = overdue[contactId];
   return (
     <ActionForm action={saveOrder} className="stack" style={{ gap: 20 }}>
       {head.id && <input type="hidden" name="id" value={head.id} />}
@@ -19,10 +38,11 @@ export function OrderForm({ head, lines, contacts, items, taxRate }: { head: Hea
         <div className="form-grid cols-4">
           <div className="field span-2">
             <label htmlFor="po-contact">Pelanggan <a href="/operasional/pelanggan/baru" target="_blank" className="help">+ pelanggan baru ↗</a></label>
-            <select id="po-contact" name="contactId" defaultValue={head.contactId ?? ""} required>
+            <select id="po-contact" name="contactId" value={contactId} onChange={(e) => setContactId(e.target.value)} required>
               <option value="">— pilih —</option>
               {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}{c.company ? ` (${c.company})` : ""}</option>)}
             </select>
+            {late && <span className="flag flag-warn small" style={{ marginTop: 6 }}>Ada {late.n} faktur lewat jatuh tempo (tertua {tgl(late.oldest)}). Konfirmasi ke keuangan sebelum mengirim.</span>}
           </div>
           <div className="field"><label htmlFor="po-date">Tanggal pesanan</label><input id="po-date" name="date" type="date" defaultValue={head.date} required /></div>
           <div className="field"><label htmlFor="po-req">Minta dikirim <span className="help">opsional</span></label><input id="po-req" name="requestedDate" type="date" defaultValue={head.requestedDate ?? ""} /></div>

@@ -7,7 +7,7 @@ import { z } from "zod";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
 import { accountGroups, contactKinds, itemKinds } from "@/db/erp";
-import { requireAnyModule, requireModule } from "@/lib/auth";
+import { requireModule, requirePerm } from "@/lib/auth";
 import { FIN_DEFAULTS, guard, UserError } from "@/lib/erp/server";
 import { isDate, parseQty, parseRupiah } from "@/lib/erp/util";
 
@@ -28,7 +28,7 @@ const ContactInput = z.object({
 });
 
 export async function saveContact(back: string, _prev: FormState, form: FormData): Promise<FormState> {
-  await requireAnyModule("keuangan", "operasional");
+  await requirePerm("keuangan", "pesanan");
   const id = String(form.get("id") ?? "");
   const p = ContactInput.safeParse(Object.fromEntries(form));
   if (!p.success) return { error: p.error.issues[0]?.message ?? "Data tidak valid." };
@@ -40,7 +40,7 @@ export async function saveContact(back: string, _prev: FormState, form: FormData
 }
 
 export async function deleteContact(back: string, id: string) {
-  await requireAnyModule("keuangan", "operasional");
+  await requirePerm("keuangan", "pesanan");
   const db = await getDb();
   const used = await db.get<{ n: number }>(sql`
     select (select count(*) from fin_invoices where contact_id = ${id}) + (select count(*) from fin_bills where contact_id = ${id})
@@ -110,6 +110,22 @@ export async function deleteItem(id: string) {
   revalidatePath("/keuangan/barang");
 }
 
+/**
+ * Nama barang dari baris harga produk: "U-Ditch — 400 × 400 × 1200", "Kanstin KS 20", "Buis Beton — Tutup buis — Ø100 cm".
+ * Grup yang hanya mengulang nama produk dibuang. (Sama dengan scripts/demo/generate.mjs.)
+ */
+function itemNameFrom(productName: string, group: string, variant: string) {
+  const first = (x: string) => x.trim().toLowerCase().split(/[\s(/]+/)[0];
+  const p = productName.trim();
+  const g = group.trim();
+  const v = variant.trim();
+  if (v && first(v) === first(p)) return v;
+  const parts = [p];
+  if (g && first(g) !== first(p)) parts.push(g);
+  if (v && v !== p) parts.push(v);
+  return parts.join(" — ");
+}
+
 /** Buat barang dari tabel harga produk website (satu baris harga = satu barang). Barang yang kodenya sudah ada dilewati. */
 export async function importItemsFromProducts(_prev: FormState): Promise<FormState> {
   await requireModule("keuangan");
@@ -126,7 +142,7 @@ export async function importItemsFromProducts(_prev: FormState): Promise<FormSta
       const code = `${pre}-${String(p.id).padStart(2, "0")}${String(i + 1).padStart(2, "0")}`;
       if (existing.has(code)) return;
       existing.add(code);
-      const name = [p.name, r.group, r.variant].filter((x, j, a) => x && a.indexOf(x) === j && !(j > 0 && p.name.toLowerCase().includes(String(x).toLowerCase()))).join(" — ");
+      const name = itemNameFrom(p.name, r.group ?? "", r.variant ?? "");
       rows.push({ code, name: name.slice(0, 160), kind, unit: r.unit || p.unit, sellPrice: r.price ?? 0, buyPrice: 0, trackStock: kind !== "jasa", productId: p.id, note: r.detail ?? "" });
     });
   }

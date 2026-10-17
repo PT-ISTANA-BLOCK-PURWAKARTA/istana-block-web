@@ -13,7 +13,7 @@ import { formatQty, tgl } from "@/lib/erp/util";
 export const metadata = { title: "Hasil produksi" };
 
 export default async function ProduksiDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canStock: canEdit, canFinance } = await opsAccess();
   const { id } = await params;
   const { ok } = await searchParams;
   const db = await getDb();

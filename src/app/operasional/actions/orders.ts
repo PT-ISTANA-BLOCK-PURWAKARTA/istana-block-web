@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
-import { requireModule } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { docTotals } from "@/lib/erp/docs";
 import { refreshOrderStatus, reopenStatus } from "@/lib/erp/ops";
 import { orderProgress } from "@/lib/erp/orders";
@@ -15,7 +15,7 @@ const EPS = 1e-9;
 const text = (form: FormData, key: string, max: number) => String(form.get(key) ?? "").trim().slice(0, max);
 
 export async function saveOrder(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireModule("operasional");
+  const me = await requirePerm("pesanan");
   const res = await guard(async () => {
     const db = await getDb();
     const id = String(form.get("id") ?? "");
@@ -110,7 +110,7 @@ export async function saveOrder(_prev: FormState, form: FormData): Promise<FormS
 
 /** Ubah status pesanan: konfirmasi, selesai (tutup sisa), batal, atau buka kembali. */
 export async function setOrderStatus(id: string, to: "konfirmasi" | "selesai" | "batal" | "buka"): Promise<FormState> {
-  await requireModule("operasional");
+  await requirePerm("pesanan");
   const res = await guard(async () => {
     const db = await getDb();
     const o = await db.query.orders.findFirst({ where: eq(schema.orders.id, id) });
@@ -147,7 +147,7 @@ function o_label(to: string) {
 }
 
 export async function deleteOrder(id: string): Promise<FormState> {
-  await requireModule("operasional");
+  await requirePerm("pesanan");
   const res = await guard(async () => {
     const db = await getDb();
     const used = await db.get<{ d: number; i: number }>(sql`

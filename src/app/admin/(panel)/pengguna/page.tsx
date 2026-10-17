@@ -3,9 +3,22 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import { getDb, schema } from "@/db";
 import { requireOwner } from "@/lib/auth";
 import { tanggal } from "@/lib/format";
-import { normalizeRoles, ROLE_SHORT } from "@/lib/roles";
+import { normalizeRoles, ROLE_SHORT, ROLES, type Role } from "@/lib/roles";
 import { deleteUser } from "../../actions/users";
 import { NewUserForm, RolesForm } from "./UserForms";
+
+type Cell = "ya" | "lihat" | undefined;
+const MATRIX: [string, Partial<Record<Role, Cell>>][] = [
+  ["Produk, harga, artikel, halaman situs", { owner: "ya", web: "ya" }],
+  ["Faktur, penerimaan, pembelian, kas, jurnal, laporan", { owner: "ya", keuangan: "ya" }],
+  ["Membuat & mengubah pesanan (PO), data pelanggan", { owner: "ya", operasional: "ya", keuangan: "lihat", gudang: "lihat" }],
+  ["Menjadwalkan surat jalan, armada, sopir, konfirmasi terkirim", { owner: "ya", operasional: "ya", keuangan: "lihat", gudang: "lihat" }],
+  ["Menandai truk berangkat (barang keluar gudang)", { owner: "ya", operasional: "ya", gudang: "ya" }],
+  ["Hasil produksi, penyesuaian & saldo awal stok", { owner: "ya", gudang: "ya", keuangan: "lihat" }],
+  ["Melihat stok barang di gudang", { owner: "ya", gudang: "ya", operasional: "ya", keuangan: "ya" }],
+  ["Melihat harga pokok, nilai persediaan & nilai faktur", { owner: "ya", keuangan: "ya" }],
+  ["Mengelola pengguna & peran", { owner: "ya" }],
+];
 
 export const metadata = { title: "Pengguna & peran" };
 
@@ -16,12 +29,12 @@ export default async function Pengguna() {
   return (
     <>
       <div className="admin-head">
-        <h1>Pengguna &amp; peran</h1>
+        <div>
+          <h1>Pengguna &amp; peran</h1>
+          <p className="muted" style={{ marginTop: 4, maxWidth: 720 }}>Setiap staf cukup diberi peran sesuai pekerjaannya. Menu dan tombol yang bukan haknya tidak akan tampil. Satu orang boleh punya beberapa peran.</p>
+        </div>
       </div>
-      <p className="muted" style={{ marginTop: -12, marginBottom: 20, maxWidth: 720 }}>
-        Peran menentukan modul yang bisa dibuka: <b>Situs</b> (/admin), <b>Keuangan</b> (/keuangan), dan <b>Operasional</b> (/operasional). <b>Pemilik</b> bisa membuka semuanya dan mengelola pengguna.
-      </p>
-      <div className="stack" style={{ gap: 20 }}>
+      <div className="stack" style={{ gap: 16 }}>
         <div className="admin-table">
           <table>
             <thead>
@@ -50,6 +63,24 @@ export default async function Pengguna() {
           </table>
         </div>
         <NewUserForm />
+        <section className="admin-table">
+          <table className="perm-matrix">
+            <caption>Siapa bisa apa</caption>
+            <thead>
+              <tr><th>Pekerjaan</th>{ROLES.map((r) => <th key={r}>{ROLE_SHORT[r]}</th>)}</tr>
+            </thead>
+            <tbody>
+              {MATRIX.map(([label, cells]) => (
+                <tr key={label}>
+                  <td>{label}</td>
+                  {ROLES.map((r) => (
+                    <td key={r}>{cells[r] === "ya" ? <span className="perm-yes" aria-label="ya">✓</span> : cells[r] === "lihat" ? <span className="perm-view">lihat</span> : <span className="perm-view" aria-label="tidak">–</span>}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
       </div>
     </>
   );

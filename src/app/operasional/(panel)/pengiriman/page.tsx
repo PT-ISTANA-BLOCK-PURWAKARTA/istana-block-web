@@ -19,7 +19,7 @@ const TABS = [
 type Row = { id: string; number: string; date: string; status: string; orderId: string; orderNumber: string; contactName: string; project: string; address: string; plate: string | null; driver: string | null; receivedBy: string };
 
 export default async function Pengiriman({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; tanggal?: string; ok?: string }> }) {
-  const { canEdit } = await opsAccess();
+  const { canShip: canEdit } = await opsAccess();
   const sp = await searchParams;
   const status = TABS.some((t) => t.key === sp.status) ? (sp.status as string) : "";
   const q = (sp.q ?? "").trim();
@@ -67,7 +67,7 @@ export default async function Pengiriman({ searchParams }: { searchParams: Promi
               <tr key={r.id} className={r.status === "batal" ? "row-muted" : undefined}>
                 <td><Link href={`/operasional/pengiriman/${r.id}`}><b>{r.number}</b></Link><div className="small muted">{tgl(r.date)} · <Link href={`/operasional/pesanan/${r.orderId}`}>{r.orderNumber}</Link></div></td>
                 <td><b>{r.contactName}</b><div className="small muted clamp-2">{r.project || r.address}</div></td>
-                <td className="small">{(items.get(r.id) ?? []).map((x, i) => <div key={i}>{x.name} <b>{formatQty(x.qty)}</b> {x.unit}</div>)}</td>
+                <td className="small">{(items.get(r.id) ?? []).map((x, i) => <div key={i}><b className="tabular">{formatQty(x.qty)} {x.unit}</b> · {x.name}</div>)}</td>
                 <td className="small">{r.plate ?? <span className="muted">—</span>}<div className="muted">{r.driver ?? ""}</div></td>
                 <td><Status s={r.status} />{r.receivedBy && <div className="small muted">diterima {r.receivedBy}</div>}</td>
               </tr>

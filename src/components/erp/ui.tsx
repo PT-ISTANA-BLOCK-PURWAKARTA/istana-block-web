@@ -87,3 +87,28 @@ export function BackLink({ href, children }: { href: string; children: React.Rea
     <Link href={href} className="back-link">← {children}</Link>
   );
 }
+
+export type Kpi = { label: string; value: React.ReactNode; sub?: React.ReactNode; href?: string; tone?: "warn" | "bad" | "ok" };
+
+/** Deretan angka ringkas dalam satu panel bergaris (bukan kartu terpisah). */
+export function Kpis({ items }: { items: Kpi[] }) {
+  return (
+    <div className="kpis">
+      {items.map((k) => {
+        const cls = `kpi${k.tone ? ` is-${k.tone}` : ""}`;
+        const body = (
+          <>
+            <span className="k-label">{k.label}</span>
+            <span className="k-value">{k.value}</span>
+            {k.sub && <span className="k-sub">{k.sub}</span>}
+          </>
+        );
+        return k.href ? (
+          <Link key={k.label} href={k.href} className={cls}>{body}</Link>
+        ) : (
+          <div key={k.label} className={cls}>{body}</div>
+        );
+      })}
+    </div>
+  );
+}

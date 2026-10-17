@@ -52,11 +52,15 @@ Katalog lengkap: [docs/screenshots/katalog.webp](docs/screenshots/katalog.webp)
 |---|---|---|
 | ![Laba rugi](docs/screenshots/keu-laba-rugi.webp) | ![Neraca](docs/screenshots/keu-neraca.webp) | ![Ringkasan operasional](docs/screenshots/ops-ringkasan.webp) |
 
-| Pesanan (PO) | Surat jalan | Cetak surat jalan | Ponsel — surat jalan |
+| Pesanan (PO) | Surat jalan | Cetak surat jalan | Ponsel — surat jalan (gudang) |
 |---|---|---|---|
 | ![Pesanan](docs/screenshots/ops-pesanan.webp) | ![Surat jalan](docs/screenshots/ops-surat-jalan.webp) | ![Cetak surat jalan](docs/screenshots/ops-cetak-surat-jalan.webp) | ![Ponsel surat jalan](docs/screenshots/ponsel-surat-jalan.webp) |
 
-Data di gambar adalah data uji.
+| Ringkasan gudang | Pengguna & peran |
+|---|---|
+| ![Ringkasan gudang](docs/screenshots/gudang-ringkasan.webp) | ![Pengguna dan peran](docs/screenshots/admin-pengguna.webp) |
+
+Data di gambar adalah **data contoh fiktif** (lihat [Data contoh](#data-contoh-untuk-latihan)), bukan transaksi sungguhan.
 
 ## Fitur
 
@@ -98,22 +102,36 @@ Pesanan (PO) ─► Surat jalan ─► truk berangkat ─► terkirim + foto buk
    operasional      operasional     stok keluar & HPP otomatis            keuangan    piutang lunas
 ```
 
-**Peran pengguna.** Diatur pemilik di `/admin/pengguna`. Satu orang boleh punya beberapa peran; setelah login ia langsung masuk ke modulnya, dan bisa berpindah modul dari sidebar.
+**Peran pengguna.** Diatur pemilik di `/admin/pengguna` (di sana juga ada tabel *Siapa bisa apa* dan tombol reset password staf). Satu orang boleh punya beberapa peran; setelah login ia langsung masuk ke modulnya. Menu dan tombol yang bukan haknya tidak tampil, dan setiap server action memeriksa ulang haknya.
 
-| Peran | Bisa membuka |
-|---|---|
-| Pemilik | semua modul + mengatur pengguna & peran |
-| Situs | `/admin` (produk, artikel, halaman, info & kontak) |
-| Keuangan | `/keuangan`; melihat dokumen operasional (hanya baca) |
-| Operasional | `/operasional`; tidak melihat nilai rupiah persediaan maupun laporan keuangan |
+| Pekerjaan | Pemilik | Situs | Keuangan | Operasional | Gudang |
+|---|:-:|:-:|:-:|:-:|:-:|
+| Produk, harga, artikel, halaman situs | ✓ | ✓ | | | |
+| Faktur, penerimaan, pembelian, kas, jurnal, laporan | ✓ | | ✓ | | |
+| Membuat & mengubah pesanan (PO), data pelanggan | ✓ | | lihat | ✓ | lihat |
+| Menjadwalkan surat jalan, armada, sopir, konfirmasi terkirim | ✓ | | lihat | ✓ | lihat |
+| Menandai truk berangkat (barang keluar gudang) | ✓ | | | ✓ | ✓ |
+| Hasil produksi, penyesuaian & saldo awal stok | ✓ | | lihat | | ✓ |
+| Melihat stok barang di gudang | ✓ | | ✓ | ✓ | ✓ |
+| Melihat harga pokok, nilai persediaan & nilai faktur | ✓ | | ✓ | | |
+| Mengelola pengguna & peran | ✓ | | | | |
 
-Akun lama otomatis berperan *pemilik*.
+Contoh pembagian: admin penjualan = *Operasional*; kepala gudang = *Gudang*; staf akuntansi = *Keuangan*; orang yang memegang pesanan sekaligus gudang = *Operasional + Gudang*. Akun lama otomatis berperan *pemilik*.
+
+> **Sudah punya akun berperan Operasional?** Mulai versi ini, peran *Operasional* tidak lagi mencatat hasil produksi dan penyesuaian stok; pekerjaan itu pindah ke peran baru *Gudang*. Bila orang yang sama masih mengurus stok, centang juga *Gudang* di `/admin/pengguna`.
 
 **Operasional** (meniru aplikasi PO & pengiriman yang dipakai sekarang)
 - **Pesanan (PO):** pelanggan, nomor PO pelanggan, proyek, alamat & kontak lokasi, tautan Google Maps, tanggal minta kirim, barang & harga (otomatis dari harga jual), ongkir, diskon, PPN. Bisa disimpan sebagai draf. Status berjalan sendiri: *dikonfirmasi → dikirim sebagian → terkirim*, lalu bisa ditandai *selesai* atau *batal*. Halaman pesanan memperlihatkan per barang berapa yang dipesan, dijadwalkan, dikirim, diterima, dan sudah difaktur.
 - **Pengiriman (surat jalan):** dijadwalkan dari sisa pesanan (tidak bisa melebihi qty pesanan), pilih armada & sopir. Tombol *Truk berangkat* dan *Tandai terkirim* (nama penerima + foto bukti dari kamera ponsel). Surat jalan bisa dicetak (A4, tanda tangan pengirim–sopir–penerima). Foto bukti disimpan di R2 dan hanya bisa dibuka pengguna yang login.
-- **Stok:** stok per barang, yang sudah dijadwalkan kirim, stok bebas, kartu stok. **Hasil produksi** (barang jadi masuk, bahan baku keluar) dan **penyesuaian stok** (stok opname, rusak, atau saldo awal).
+- **Stok:** stok per barang, yang sudah dijadwalkan kirim, stok bebas, kartu stok. **Hasil produksi** (barang jadi masuk, bahan baku keluar) dan **penyesuaian stok** (stok opname, rusak, atau saldo awal). Peran *Gudang* mencatat jumlahnya saja; nilai rupiah dihitung sistem dan hanya terlihat oleh keuangan & pemilik.
 - **Pelanggan, armada, sopir.** Data pelanggan sama dengan kontak di modul keuangan.
+- **Ringkasan menyesuaikan peran.** Operasional melihat pesanan yang belum dijadwalkan dan muatan hari ini; gudang melihat *Ringkasan gudang*: muatan hari ini & besok dengan stok yang tersedia, stok di bawah minimum, hasil produksi terakhir, dan stok barang jadi.
+
+**Saling terhubung.** Data dari satu bagian langsung dipakai bagian lain, tanpa ketik ulang:
+- Saat membuat pesanan atau menjadwalkan kirim, kolom **stok bebas** (stok gudang dikurangi yang sudah dijadwalkan) tampil per barang, dan muncul peringatan bila pelanggan itu **punya faktur lewat jatuh tempo** (tanpa memperlihatkan nominalnya ke operasional).
+- **Muatan hari ini & besok** dihitung berurutan dari stok gudang; muatan yang stoknya kurang ditandai supaya gudang mencatat produksi dulu atau jadwalnya digeser.
+- Surat jalan yang sudah terkirim tapi belum difaktur muncul di ringkasan keuangan sebagai **Siap difaktur**, lengkap dengan tombol *Buat faktur* yang barisnya terisi otomatis.
+- Barang jadi keluar (truk berangkat) langsung membuat jurnal HPP; bahan baku di bawah stok minimum muncul di ringkasan keuangan sebagai **Bahan baku perlu dibeli**.
 
 **Keuangan** (konsep Zahir: semua transaksi menjadi jurnal berpasangan)
 - **Penjualan:** faktur penjualan (bisa dibuat dari pesanan; barisnya terisi dari barang yang sudah diterima pelanggan dan belum difaktur), PPN 11% (bisa diubah), ongkir, diskon, jatuh tempo dari termin pelanggan, cetak faktur A4 dengan terbilang & rekening. **Penerimaan** dialokasikan ke satu atau beberapa faktur; kelebihan atau DP sebelum faktur menjadi *uang muka pelanggan* yang nanti bisa dipakai melunasi faktur.
@@ -139,12 +157,48 @@ Harga pokok memakai **rata-rata bergerak**. Bila stok kosong, sistem memakai *ha
 > **Biaya produksi.** Saat hasil produksi dicatat tanpa angka biaya, sistem mengisinya supaya nilai barang jadi sama dengan harga pokok standarnya, lalu mengkreditkan akun *Upah Produksi*. Catat upah & biaya produksi yang benar-benar dibayar (lewat kas keluar) ke akun yang sama, supaya selisihnya kecil. Kalau tidak, laba bulan berjalan akan tampak lebih besar daripada kenyataannya.
 
 **Mulai memakai (sekali saja)**
-1. `/admin/pengguna`: beri peran *Keuangan* / *Operasional* ke staf.
+1. `/admin/pengguna`: buat akun tiap staf dan beri peran *Keuangan*, *Operasional*, atau *Gudang*.
 2. **Keuangan → Barang & jasa → Ambil dari daftar harga website**, lalu isi **harga pokok** (HPP standar) dan stok minimum tiap barang yang dijual.
 3. **Keuangan → Daftar akun:** ganti nama akun bank sesuai rekening. **Pengaturan:** NPWP, rekening untuk faktur, tarif PPN, termin.
 4. **Jurnal umum:** saldo awal kas/bank, piutang/hutang lama, modal (lawan akun *Saldo awal*).
 5. **Operasional → Penyesuaian stok → centang "Saldo awal stok"** untuk stok fisik tiap barang hari ini.
 6. Isi armada dan sopir. Setelah itu alur harian cukup: pesanan → jadwal kirim → berangkat → terkirim → faktur → penerimaan.
+
+## Data contoh (untuk latihan)
+
+`seed/demo-erp.sql` mengisi modul keuangan & operasional dengan kegiatan pabrik **1 Agustus – 17 Oktober 2026**, supaya staf bisa berlatih per peran dan laporan bisa dicoba sebelum data asli masuk. Isinya:
+
+- **Kontak fiktif:** 10 pelanggan (developer perumahan, kontraktor drainase & jalan, toko bangunan, panitia masjid, perorangan) dan 4 pemasok (semen; pasir, abu batu & split; besi & pigmen; bengkel cetakan). Telepon berformat `0811 0000 xxxx`. Tiga truk dan tiga sopir fiktif.
+- **Barang:** 18 barang jadi (paving, kanstin, U-Ditch, buis) dengan kode & nama yang sama seperti hasil *Ambil dari daftar harga website*, ditambah 6 bahan baku.
+- **Transaksi:** 19 pesanan dan 72 surat jalan (beberapa masih dijadwalkan atau di jalan per 17 Okt), DP, faktur ber-PPN dan non-PPN, penerimaan sebagian & lunas, piutang lewat jatuh tempo; 40 hasil produksi yang mengikuti jadwal kirim; 23 pembelian bahan baku & pembayarannya; upah mingguan, solar & uang jalan, listrik, gaji, penyusutan, setor PPN; stok opname akhir September; saldo awal per 31 Juli.
+- **Seimbang:** neraca balance, nilai persediaan sama dengan kartu stok, piutang & hutang sama dengan dokumen yang belum lunas.
+
+**Perlu diketahui**
+- Nama pelanggan, pemasok, armada, dan sopir **fiktif**. Harga jual paving & kanstin, harga pokok, harga bahan, gaji, dan biaya bulanan adalah **angka contoh**, bukan angka pabrik. Harga U-Ditch & buis mengikuti daftar harga website.
+- Tanggalnya tetap. Ringkasan "hari ini" paling pas dilihat sekitar 17 Oktober 2026; setelah itu tagihan makin banyak yang lewat jatuh tempo dan muatan hari ini kosong.
+- Semua id berawalan `demo-`. Barang dimasukkan dengan `INSERT OR IGNORE`: kalau barang berkode sama sudah ada, data contoh memakainya tanpa menimpa harganya.
+- **Pengaman:** file ini menolak dijalankan (`CHECK constraint failed: n = 0`) bila database sudah berisi transaksi sungguhan atau data contoh sudah pernah dimuat. Tidak ada data yang berubah.
+- Data contoh **tidak membuat akun pengguna**. Buat akun latihan di `/admin/pengguna`; jangan memakai password yang mudah ditebak di situs produksi.
+
+```powershell
+npm run demo:local              # muat ke D1 lokal (paling aman untuk mencoba)
+npm run demo:hapus:local        # hapus lagi
+
+npm run demo:remote             # muat ke D1 produksi, KHUSUS untuk masa latihan sebelum dipakai sungguhan
+npm run demo:hapus:remote       # hapus sebelum mulai mencatat transaksi asli
+npm run demo:generate           # buat ulang kedua file SQL setelah mengubah scripts/demo/generate.mjs
+```
+
+**Menghapus.** `seed/demo-erp-hapus.sql` menghapus semua dokumen contoh **beserta** jurnal, pergerakan stok, dan baris yang terbentuk ulang saat dokumen contoh diubah atau statusnya diganti lewat aplikasi, lalu menyusun ulang penomoran. Data asli tidak tersentuh. Ia berhenti tanpa mengubah apa pun bila ada transaksi **baru** (latihan) yang memakai pelanggan, barang, armada, pesanan, atau faktur contoh, karena menghapus induknya akan membuat pembukuan latihan itu timpang. Untuk kasus itu, dan untuk mengosongkan semua latihan sebelum mulai sungguhan, pakai `seed/erp-mulai-bersih.sql`:
+
+```powershell
+# Cadangkan dulu (lihat "Cadangan database"), lalu:
+npx wrangler d1 execute DB --remote --file=./seed/erp-mulai-bersih.sql
+```
+
+File itu menghapus **semua** transaksi keuangan & operasional (contoh maupun latihan): jurnal, faktur, penerimaan, pembelian, pembayaran, kas, pesanan, surat jalan, produksi, penyesuaian, stok, dan penomoran, serta kontak, armada, sopir, dan barang contoh. Bagan akun, barang asli & harganya, pengguna, dan pengaturan tetap.
+
+Setelah menghapus dengan file mana pun, jalankan lagi **Barang & jasa → Ambil dari daftar harga website** (barang yang dibuat data contoh ikut terhapus; barang yang sudah ada tidak diduplikasi), lalu lanjutkan langkah *Mulai memakai* di atas.
 
 ## Teknologi
 
@@ -175,18 +229,23 @@ src/
     reel/[file]/       menyajikan video fitur dengan dukungan Range (wajib untuk Safari/iOS)
     sitemap.ts, robots.ts
   components/          komponen situs (PatternCalculator, Gallery, ClientLogos, FaqList, …)
-                       + components/admin (form admin), components/panel (sidebar semua modul),
-                       components/erp (form & laporan keuangan), components/ops (form operasional)
+                       + components/admin (form admin), components/panel (sidebar & ikon semua modul),
+                       components/erp (form, grafik & laporan keuangan), components/ops (form operasional)
+  app/panel.css        tampilan panel admin, keuangan, operasional, dan halaman cetak
   data/                data statis: wilayah kirim, paket proyek, template WhatsApp, galeri,
                        logo klien, lembar spesifikasi, peta redirect alamat lama
   db/schema.ts         skema tabel D1 situs; db/erp.ts skema keuangan & operasional
   lib/                 auth, peran (roles.ts), sesi, password, pengaturan, query, format rupiah
-  lib/erp/             logika pembukuan: jurnal, nomor dokumen, harga pokok, laporan, alur pesanan
+  lib/erp/             logika pembukuan: jurnal, nomor dokumen, harga pokok, laporan, alur pesanan;
+                       insights.ts menghubungkan modul (siap difaktur, stok bebas, rencana muat, tunggakan)
   middleware.ts        redirect 301/410 alamat lama + penjaga /admin, /keuangan, /operasional
 drizzle/               file migrasi SQL (0000 awal, 0001 tabel halaman + pesan WhatsApp produk,
                        0002 tabel keuangan & operasional + peran pengguna, 0003 bagan akun awal)
 seed/seed.sql          data awal produk, harga, artikel, dan halaman dari situs lama
-scripts/create-admin.mjs  membuat/mereset akun admin
+seed/demo-erp.sql      data contoh keuangan & operasional; demo-erp-hapus.sql untuk menghapusnya,
+                       erp-mulai-bersih.sql untuk mengosongkan semua transaksi (lihat "Data contoh")
+scripts/create-admin.mjs  membuat/mereset akun dan perannya
+scripts/demo/          pembuat data contoh (menghasilkan ketiga file seed/demo-erp*.sql & erp-mulai-bersih.sql)
 public/brand/          logo resmi (biru & putih)
 public/img/            foto dari situs lama: pabrik, produk, galeri, logo klien, lembar TKDN
 public/reel/           poster & subtitle video fitur
@@ -305,7 +364,7 @@ Hal lain:
 
 ## Keamanan
 
-- Setiap halaman dan server action admin memanggil `requireAdmin()`; modul keuangan dan operasional memanggil `requireModule()` dengan peran yang sesuai. Fungsi ini memverifikasi token **dan** mengecek akun beserta perannya ke database, jadi middleware tidak dijadikan satu-satunya pengaman. Unduhan CSV dan foto bukti terima juga memeriksa peran.
+- Setiap halaman dan server action admin memanggil `requireAdmin()`; halaman dan server action keuangan memanggil `requireModule("keuangan")`, sedangkan server action operasional memanggil `requirePerm()` dengan hak yang dibutuhkan (misalnya `stok` untuk hasil produksi, `muat` untuk truk berangkat). Daftar hak per peran ada di `src/lib/roles.ts`. Fungsi ini memverifikasi token **dan** mengecek akun beserta perannya ke database, jadi middleware tidak dijadikan satu-satunya pengaman. Unduhan CSV dan foto bukti terima juga memeriksa peran.
 - Password: PBKDF2-SHA256 100.000 iterasi + salt acak; perbandingan hash waktu-konstan.
 - Server Actions Next.js menolak request dari origin lain (proteksi CSRF bawaan); cookie `SameSite=Lax`, `Secure` di produksi.
 - Unggahan dibatasi JPG/PNG/WebP/AVIF/GIF maksimal 5 MB, dengan nama file acak di R2.
@@ -323,4 +382,7 @@ Hal lain:
 | `npm run db:generate` | buat file migrasi dari perubahan `schema.ts` |
 | `npm run db:migrate:local` / `:remote` | jalankan migrasi |
 | `npm run db:seed:local` / `:remote` | isi data awal (**menghapus semua produk, artikel, dan halaman yang ada**) |
-| `npm run admin:create -- --email … --name … --password … [--remote]` | buat atau reset password admin |
+| `npm run admin:create -- --email … --name … --password … [--roles keuangan,gudang] [--remote]` | buat akun atau reset password; tanpa `--roles` akun baru menjadi pemilik dan peran akun lama tidak diubah |
+| `npm run demo:local` / `:remote` | muat data contoh (lihat *Data contoh*) |
+| `npm run demo:hapus:local` / `:remote` | hapus data contoh |
+| `npm run demo:generate` | buat ulang file data contoh dari `scripts/demo/generate.mjs` |

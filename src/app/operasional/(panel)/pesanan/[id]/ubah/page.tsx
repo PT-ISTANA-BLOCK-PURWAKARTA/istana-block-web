@@ -5,13 +5,14 @@ import { OrderForm } from "@/components/ops/OrderForm";
 import { getDb, schema } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
 import { orderProgress } from "@/lib/erp/orders";
+import { overdueByContact } from "@/lib/erp/insights";
 import { contactsOfKind, getFinSettings, pickLists } from "@/lib/erp/server";
-import { formatQty } from "@/lib/erp/util";
+import { formatQty, today } from "@/lib/erp/util";
 
 export const metadata = { title: "Ubah pesanan" };
 
 export default async function UbahPesanan({ params }: { params: Promise<{ id: string }> }) {
-  const { canEdit } = await opsAccess();
+  const { canOrders: canEdit } = await opsAccess();
   const { id } = await params;
   if (!canEdit) redirect(`/operasional/pesanan/${id}`);
   const db = await getDb();
@@ -19,7 +20,7 @@ export default async function UbahPesanan({ params }: { params: Promise<{ id: st
   if (!o) notFound();
   if (o.status === "batal" || o.status === "selesai") redirect(`/operasional/pesanan/${id}`);
   const prog = await orderProgress(db, id);
-  const [fin, lists, contacts] = await Promise.all([
+  const [fin, lists, contacts, overdue] = await Promise.all([
     getFinSettings(db),
     pickLists(db, prog.map((p) => p.itemId)),
     db
@@ -27,6 +28,7 @@ export default async function UbahPesanan({ params }: { params: Promise<{ id: st
       .from(schema.contacts)
       .where(contactsOfKind("pelanggan", o.contactId))
       .orderBy(asc(schema.contacts.name)),
+    overdueByContact(db, today()),
   ]);
   return (
     <>
@@ -45,6 +47,7 @@ export default async function UbahPesanan({ params }: { params: Promise<{ id: st
         contacts={contacts}
         items={lists.items.map((i) => ({ ...i, buyPrice: 0 }))}
         taxRate={fin.ppnRate}
+        overdue={Object.fromEntries(overdue)}
       />
     </>
   );

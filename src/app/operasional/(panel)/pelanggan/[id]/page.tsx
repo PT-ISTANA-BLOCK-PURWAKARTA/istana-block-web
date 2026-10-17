@@ -12,7 +12,7 @@ import { tgl } from "@/lib/erp/util";
 export const metadata = { title: "Pelanggan" };
 
 export default async function PelangganDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canOrders: canEdit, canFinance } = await opsAccess();
   const { id } = await params;
   const db = await getDb();
   const c = await db.query.contacts.findFirst({ where: eq(schema.contacts.id, id) });

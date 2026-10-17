@@ -9,7 +9,7 @@ import { tgl } from "@/lib/erp/util";
 export const metadata = { title: "Sopir" };
 
 export default async function Sopir({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
-  const { canEdit } = await opsAccess();
+  const { canShip: canEdit } = await opsAccess();
   const { ok } = await searchParams;
   const db = await getDb();
   const [rows, usage] = await Promise.all([

@@ -10,7 +10,7 @@ import { formatQty } from "@/lib/erp/util";
 export const metadata = { title: "Ubah hasil produksi" };
 
 export default async function UbahProduksi({ params }: { params: Promise<{ id: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canStock: canEdit, canFinance } = await opsAccess();
   const { id } = await params;
   if (!canEdit) redirect(`/operasional/produksi/${id}`);
   const db = await getDb();

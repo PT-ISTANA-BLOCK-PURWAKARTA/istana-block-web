@@ -5,14 +5,14 @@ import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
-import { requireModule } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 
 const str = (max: number) => z.string().trim().max(max).default("");
 
 const VehicleInput = z.object({ plate: z.string().trim().min(3, "Isi nomor polisi.").max(20), name: str(80), capacity: str(80), note: str(500) });
 
 export async function saveVehicle(_prev: FormState, form: FormData): Promise<FormState> {
-  await requireModule("operasional");
+  await requirePerm("pengiriman");
   const p = VehicleInput.safeParse(Object.fromEntries(form));
   if (!p.success) return { error: p.error.issues[0]?.message ?? "Data tidak valid." };
   const id = String(form.get("id") ?? "");
@@ -24,7 +24,7 @@ export async function saveVehicle(_prev: FormState, form: FormData): Promise<For
 }
 
 export async function deleteVehicle(id: string): Promise<FormState> {
-  await requireModule("operasional");
+  await requirePerm("pengiriman");
   const db = await getDb();
   const used = await db.get<{ n: number }>(sql`select count(*) n from ops_deliveries where vehicle_id = ${id}`);
   // Sudah dipakai surat jalan: nonaktifkan saja agar riwayat tetap utuh.
@@ -36,7 +36,7 @@ export async function deleteVehicle(id: string): Promise<FormState> {
 const DriverInput = z.object({ name: z.string().trim().min(2, "Nama minimal 2 huruf.").max(80), phone: str(40), note: str(500) });
 
 export async function saveDriver(_prev: FormState, form: FormData): Promise<FormState> {
-  await requireModule("operasional");
+  await requirePerm("pengiriman");
   const p = DriverInput.safeParse(Object.fromEntries(form));
   if (!p.success) return { error: p.error.issues[0]?.message ?? "Data tidak valid." };
   const id = String(form.get("id") ?? "");
@@ -48,7 +48,7 @@ export async function saveDriver(_prev: FormState, form: FormData): Promise<Form
 }
 
 export async function deleteDriver(id: string): Promise<FormState> {
-  await requireModule("operasional");
+  await requirePerm("pengiriman");
   const db = await getDb();
   const used = await db.get<{ n: number }>(sql`select count(*) n from ops_deliveries where driver_id = ${id}`);
   if (Number(used?.n ?? 0) > 0) await db.update(schema.drivers).set({ active: false, updatedAt: new Date() }).where(eq(schema.drivers.id, id));

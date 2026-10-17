@@ -4,17 +4,18 @@ import { BackLink, PageHead } from "@/components/erp/ui";
 import { OrderForm } from "@/components/ops/OrderForm";
 import { getDb, schema } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
+import { overdueByContact } from "@/lib/erp/insights";
 import { contactsOfKind, getFinSettings, pickLists } from "@/lib/erp/server";
 import { today } from "@/lib/erp/util";
 
 export const metadata = { title: "Pesanan baru" };
 
 export default async function PesananBaru({ searchParams }: { searchParams: Promise<{ kontak?: string }> }) {
-  const { canEdit } = await opsAccess();
+  const { canOrders: canEdit } = await opsAccess();
   if (!canEdit) redirect("/operasional/pesanan");
   const sp = await searchParams;
   const db = await getDb();
-  const [fin, lists, contacts] = await Promise.all([
+  const [fin, lists, contacts, overdue] = await Promise.all([
     getFinSettings(db),
     pickLists(db),
     db
@@ -22,6 +23,7 @@ export default async function PesananBaru({ searchParams }: { searchParams: Prom
       .from(schema.contacts)
       .where(contactsOfKind("pelanggan"))
       .orderBy(asc(schema.contacts.name)),
+    overdueByContact(db, today()),
   ]);
   const contact = sp.kontak ? contacts.find((c) => c.id === sp.kontak) : undefined;
   return (
@@ -34,6 +36,7 @@ export default async function PesananBaru({ searchParams }: { searchParams: Prom
         contacts={contacts}
         items={lists.items.filter((i) => i.kind === "barang_jadi" || i.kind === "jasa" || i.kind === "lainnya").map((i) => ({ ...i, buyPrice: 0 }))}
         taxRate={fin.ppnRate}
+        overdue={Object.fromEntries(overdue)}
       />
     </>
   );

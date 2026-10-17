@@ -47,6 +47,20 @@ export async function updateUserRoles(id: number, _prev: FormState, form: FormDa
   return { ok: `Peran ${user.email} diperbarui.` };
 }
 
+/** Pemilik mengatur ulang password staf yang lupa; semua sesi staf itu otomatis keluar. */
+export async function resetUserPassword(id: number, _prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireOwner();
+  if (id === me.id) return { error: "Ganti password Anda sendiri lewat Akun saya." };
+  const next = Password.safeParse(form.get("password"));
+  if (!next.success) return { error: next.error.issues[0]?.message };
+  const db = await getDb();
+  const user = await db.query.users.findFirst({ where: eq(schema.users.id, id) });
+  if (!user) return { error: "Pengguna tidak ditemukan." };
+  const now = new Date(Math.floor(Date.now() / 1000) * 1000);
+  await db.update(schema.users).set({ passwordHash: await hashPassword(next.data), updatedAt: now }).where(eq(schema.users.id, id));
+  return { ok: `Password ${user.email} diatur ulang. Berikan ke yang bersangkutan dan minta ia menggantinya.` };
+}
+
 export async function deleteUser(id: number) {
   const me = await requireOwner();
   if (me.id === id) return; // tidak bisa menghapus akun sendiri

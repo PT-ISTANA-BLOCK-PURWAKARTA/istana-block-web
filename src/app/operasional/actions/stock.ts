@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { and, eq, inArray } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
-import { requireModule } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { stockItemsById } from "@/lib/erp/ops";
 import {
   assertOpen,
@@ -35,7 +35,7 @@ import { parseQty, parseRupiah } from "@/lib/erp/util";
  * Bila biaya produksi dikosongkan, nilainya = harga pokok standar hasil − nilai bahan (minimal 0).
  */
 export async function saveProduction(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireModule("operasional");
+  const me = await requirePerm("stok");
   const res = await guard(async () => {
     const db = await getDb();
     const id = String(form.get("id") ?? "");
@@ -113,7 +113,7 @@ export async function saveProduction(_prev: FormState, form: FormData): Promise<
 }
 
 export async function deleteProduction(id: string): Promise<FormState> {
-  await requireModule("operasional");
+  await requirePerm("stok");
   const res = await guard(async () => {
     const db = await getDb();
     const p = await db.query.productions.findFirst({ where: eq(schema.productions.id, id) });
@@ -141,7 +141,7 @@ const ADJ_SOURCES = ["penyesuaian", "saldo_awal"] as const;
  * Tambah: Dr Persediaan / Cr Selisih persediaan (atau Saldo awal). Kurang: kebalikannya, dinilai harga pokok rata-rata.
  */
 export async function saveAdjustment(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireModule("operasional");
+  const me = await requirePerm("stok");
   const res = await guard(async () => {
     const db = await getDb();
     const id = String(form.get("id") ?? "");
@@ -196,7 +196,7 @@ export async function saveAdjustment(_prev: FormState, form: FormData): Promise<
 }
 
 export async function deleteAdjustment(id: string): Promise<FormState> {
-  await requireModule("operasional");
+  await requirePerm("stok");
   const res = await guard(async () => {
     const db = await getDb();
     const a = await db.query.adjustments.findFirst({ where: eq(schema.adjustments.id, id) });

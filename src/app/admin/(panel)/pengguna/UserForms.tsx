@@ -3,7 +3,7 @@
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { ROLE_LABEL, ROLES, type Role } from "@/lib/roles";
-import { changePassword, createUser, updateProfile, updateUserRoles } from "../../actions/users";
+import { changePassword, createUser, resetUserPassword, updateProfile, updateUserRoles } from "../../actions/users";
 
 function RoleChecks({ idPrefix, value }: { idPrefix: string; value: Role[] }) {
   return (
@@ -37,12 +37,23 @@ export function NewUserForm() {
 export function RolesForm({ userId, roles, self }: { userId: number; roles: Role[]; self: boolean }) {
   return (
     <details className="role-edit">
-      <summary>Ubah peran</summary>
-      <ActionForm action={updateUserRoles.bind(null, userId)} className="stack" style={{ gap: 10, paddingTop: 10 }}>
-        <RoleChecks idPrefix={`r${userId}`} value={roles} />
-        {self && <p className="small muted">Peran pemilik tidak bisa dilepas dari akun sendiri.</p>}
-        <div><SubmitButton className="btn btn-blue btn-sm">Simpan peran</SubmitButton></div>
-      </ActionForm>
+      <summary>Ubah peran{self ? "" : " / password"}</summary>
+      <div className="stack" style={{ gap: 14, paddingTop: 10 }}>
+        <ActionForm action={updateUserRoles.bind(null, userId)} className="stack" style={{ gap: 10 }}>
+          <RoleChecks idPrefix={`r${userId}`} value={roles} />
+          {self && <p className="small muted">Peran pemilik tidak bisa dilepas dari akun sendiri.</p>}
+          <div><SubmitButton className="btn btn-blue btn-sm">Simpan peran</SubmitButton></div>
+        </ActionForm>
+        {!self && (
+          <ActionForm action={resetUserPassword.bind(null, userId)} className="inline-form" resetOnOk>
+            <div className="field" style={{ flex: "1 1 220px" }}>
+              <label htmlFor={`rp${userId}`}>Atur ulang password</label>
+              <input id={`rp${userId}`} name="password" type="text" autoComplete="off" minLength={10} required placeholder="minimal 10 karakter" />
+            </div>
+            <SubmitButton className="btn btn-ghost btn-sm">Atur ulang</SubmitButton>
+          </ActionForm>
+        )}
+      </div>
     </details>
   );
 }

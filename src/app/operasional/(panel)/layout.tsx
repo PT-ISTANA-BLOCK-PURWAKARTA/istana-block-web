@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
-import { PanelShell } from "@/components/panel/PanelShell";
+import { PanelShell, type ShellItem } from "@/components/panel/PanelShell";
 import { opsAccess } from "@/lib/erp/ops";
 
 export const metadata: Metadata = { title: { default: "Operasional", template: "%s · Operasional Istana Block" }, robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
-const ITEMS = [
-  { href: "/operasional", label: "Ringkasan" },
-  { href: "/operasional/pesanan", label: "Pesanan (PO)", group: "Penjualan" },
-  { href: "/operasional/pengiriman", label: "Pengiriman", group: "Penjualan" },
-  { href: "/operasional/pelanggan", label: "Pelanggan", group: "Penjualan" },
-  { href: "/operasional/stok", label: "Stok barang", group: "Gudang" },
-  { href: "/operasional/produksi", label: "Hasil produksi", group: "Gudang" },
-  { href: "/operasional/stok/penyesuaian", label: "Penyesuaian stok", group: "Gudang" },
-  { href: "/operasional/armada", label: "Armada", group: "Data" },
-  { href: "/operasional/sopir", label: "Sopir", group: "Data" },
-  { href: "/operasional/profil", label: "Akun saya", group: "Data" },
+// Menu tanpa "perm" tampil untuk semua yang boleh membuka operasional (termasuk staf keuangan, hanya baca).
+const ITEMS: ShellItem[] = [
+  { href: "/operasional", label: "Ringkasan", icon: "home" },
+  { href: "/operasional/pesanan", label: "Pesanan (PO)", group: "Penjualan", icon: "clipboard" },
+  { href: "/operasional/pengiriman", label: "Pengiriman", group: "Penjualan", icon: "truck" },
+  { href: "/operasional/pelanggan", label: "Pelanggan", group: "Penjualan", icon: "users", perm: ["pesanan", "pengiriman", "keuangan"] },
+  { href: "/operasional/stok", label: "Stok barang", group: "Gudang", icon: "stack" },
+  { href: "/operasional/produksi", label: "Hasil produksi", group: "Gudang", icon: "factory", perm: ["stok", "keuangan"] },
+  { href: "/operasional/stok/penyesuaian", label: "Penyesuaian stok", group: "Gudang", icon: "adjust", perm: ["stok", "keuangan"] },
+  { href: "/operasional/armada", label: "Armada", group: "Data", icon: "car", perm: ["pengiriman", "keuangan"] },
+  { href: "/operasional/sopir", label: "Sopir", group: "Data", icon: "id", perm: ["pengiriman", "keuangan"] },
+  { href: "/operasional/profil", label: "Akun saya", group: "Data", icon: "user" },
 ];
 
 export default async function OperasionalLayout({ children }: { children: React.ReactNode }) {

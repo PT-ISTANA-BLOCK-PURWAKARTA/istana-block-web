@@ -49,8 +49,27 @@ function Cancel({ id, label }: { id: string; label: string }) {
   );
 }
 
-/** Tombol alur status surat jalan: dijadwalkan → berangkat → terkirim (atau batal). */
-export function DeliveryActions({ id, status }: { id: string; status: DeliveryStatus }) {
+/**
+ * Tombol alur status surat jalan: dijadwalkan → berangkat → terkirim (atau batal).
+ * Akun gudang (tanpa izin pengiriman) hanya bisa memberangkatkan truk atau membatalkan keberangkatan.
+ */
+export function DeliveryActions({ id, status, canShip }: { id: string; status: DeliveryStatus; canShip: boolean }) {
+  if (!canShip) {
+    if (status === "dijadwalkan")
+      return (
+        <div className="head-actions">
+          <Simple id={id} to="berangkat" label="Barang sudah dimuat, truk berangkat" className="btn btn-primary" note="Stok keluar dicatat hari ini." />
+        </div>
+      );
+    if (status === "berangkat")
+      return (
+        <div className="stack" style={{ gap: 8 }}>
+          <p className="small muted">Truk dalam perjalanan. Konfirmasi barang diterima dilakukan bagian pengiriman.</p>
+          <div className="head-actions"><Simple id={id} to="dijadwalkan" label="Batal berangkat (bongkar kembali)" className="btn btn-ghost btn-sm" /></div>
+        </div>
+      );
+    return null;
+  }
   if (status === "dijadwalkan")
     return (
       <div className="stack" style={{ gap: 14 }}>

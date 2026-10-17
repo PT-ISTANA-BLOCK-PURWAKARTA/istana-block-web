@@ -5,7 +5,8 @@ import { eq } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
 import type { DeliveryStatus } from "@/db/erp";
-import { requireModule } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
+import { can } from "@/lib/roles";
 import { deleteImage, saveImage, UploadError } from "@/lib/media";
 import { POSTED, postDeliveryOps, refreshOrderStatus, unpostDeliveryOps } from "@/lib/erp/ops";
 import { orderProgress } from "@/lib/erp/orders";
@@ -16,7 +17,7 @@ const EPS = 1e-9;
 
 /** Jadwalkan (atau ubah jadwal) surat jalan dari sisa pesanan yang belum dijadwalkan. */
 export async function saveDelivery(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireModule("operasional");
+  const me = await requirePerm("pengiriman");
   const res = await guard(async () => {
     const db = await getDb();
     const id = String(form.get("id") ?? "");
@@ -78,7 +79,7 @@ const NEXT: Record<DeliveryStatus, DeliveryStatus[]> = {
  * kembali ke dijadwalkan/batal = stok & jurnal dihapus.
  */
 export async function setDeliveryStatus(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireModule("operasional");
+  const me = await requirePerm("pengiriman", "muat");
   let uploaded: string | null = null;
   const res = await guard(async () => {
     const db = await getDb();
@@ -86,6 +87,9 @@ export async function setDeliveryStatus(_prev: FormState, form: FormData): Promi
     if (!d) throw new UserError("Surat jalan tidak ditemukan.");
     const to = String(form.get("to") ?? "") as DeliveryStatus;
     if (!NEXT[d.status]?.includes(to)) throw new UserError("Perubahan status ini tidak diizinkan.");
+    // Gudang (izin "muat") hanya memberangkatkan truk atau membatalkan keberangkatan.
+    const loadOnly = (d.status === "dijadwalkan" && to === "berangkat") || (d.status === "berangkat" && to === "dijadwalkan");
+    if (!can(me.roles, "pengiriman") && !loadOnly) throw new UserError("Akun Anda hanya bisa menandai truk berangkat. Status lain diubah oleh bagian pengiriman.");
     const fin = await getFinSettings(db);
     const wasPosted = POSTED.includes(d.status);
     const willPost = POSTED.includes(to);
@@ -169,7 +173,7 @@ export async function setDeliveryStatus(_prev: FormState, form: FormData): Promi
 }
 
 export async function deleteDelivery(id: string): Promise<FormState> {
-  await requireModule("operasional");
+  await requirePerm("pengiriman");
   const res = await guard(async () => {
     const db = await getDb();
     const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, id) });
