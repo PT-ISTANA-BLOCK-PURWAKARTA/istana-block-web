@@ -22,7 +22,9 @@ if (!DB || !BUCKET) {
 
 const isWin = process.platform === "win32";
 function wrangler(args, { show = false } = {}) {
-  const r = spawnSync(isWin ? "npx.cmd" : "npx", ["wrangler", ...args], { encoding: "utf8", shell: isWin, stdio: show ? "inherit" : "pipe" });
+  // Windows butuh shell untuk npx.cmd; argumennya konstanta dari skrip ini, jadi aman digabung jadi satu perintah.
+  const opts = { encoding: "utf8", stdio: show ? "inherit" : "pipe" };
+  const r = isWin ? spawnSync(`npx wrangler ${args.join(" ")}`, { ...opts, shell: true }) : spawnSync("npx", ["wrangler", ...args], opts);
   return { ok: r.status === 0, out: `${r.stdout ?? ""}${r.stderr ?? ""}` };
 }
 
