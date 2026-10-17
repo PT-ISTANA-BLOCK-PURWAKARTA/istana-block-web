@@ -5,7 +5,22 @@ import { useState } from "react";
 type Col = { key: string; label: string; type?: "text" | "number" | "textarea"; width?: string; placeholder?: string };
 
 /** Daftar baris yang bisa ditambah/hapus; hasilnya dikirim sebagai JSON di input tersembunyi. */
-export function Repeater({ name, columns, initial, addLabel }: { name: string; columns: Col[]; initial: Record<string, unknown>[]; addLabel: string }) {
+export function Repeater({
+  name,
+  columns,
+  initial,
+  addLabel,
+  format = (rows) => JSON.stringify(rows),
+  className,
+}: {
+  name: string;
+  columns: Col[];
+  initial: Record<string, unknown>[];
+  addLabel: string;
+  /** Cara menyimpan baris ke input tersembunyi (bawaan: JSON). */
+  format?: (rows: Record<string, unknown>[]) => string;
+  className?: string;
+}) {
   const empty = () => Object.fromEntries(columns.map((c) => [c.key, ""]));
   const [rows, setRows] = useState<Record<string, unknown>[]>(initial.length ? initial : []);
   const grid = columns.map((c) => c.width ?? "1fr").join(" ") + " 42px";
@@ -20,8 +35,8 @@ export function Repeater({ name, columns, initial, addLabel }: { name: string; c
     });
 
   return (
-    <div className="repeater">
-      <input type="hidden" name={name} value={JSON.stringify(rows)} />
+    <div className={`repeater${className ? ` ${className}` : ""}`}>
+      <input type="hidden" name={name} value={format(rows)} />
       {rows.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: grid, gap: 8, padding: "0 10px" }} className="small muted" aria-hidden="true">
           {columns.map((c) => (

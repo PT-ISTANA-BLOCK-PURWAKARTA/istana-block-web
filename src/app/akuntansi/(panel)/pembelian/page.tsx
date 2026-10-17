@@ -4,6 +4,7 @@ import { Ok, PageHead, payStatus, Rp, Status } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { requireModule } from "@/lib/auth";
 import { isDate, monthStart, tgl, today } from "@/lib/erp/util";
+import { DateField, Select } from "@/components/ui";
 
 export const metadata = { title: "Faktur pembelian" };
 
@@ -40,14 +41,10 @@ export default async function Pembelian({ searchParams }: { searchParams: Promis
         <div className="field grow"><label htmlFor="q">Cari</label><input id="q" name="q" defaultValue={sp.q} placeholder="nomor, no. faktur pemasok, atau pemasok" /></div>
         <div className="field">
           <label htmlFor="status">Status</label>
-          <select id="status" name="status" defaultValue={sp.status ?? ""}>
-            <option value="">Semua</option>
-            <option value="terbuka">Belum lunas</option>
-            <option value="lunas">Lunas</option>
-          </select>
+          <Select id="status" name="status" defaultValue={sp.status ?? ""} options={[{ value: "", label: "Semua" }, { value: "terbuka", label: "Belum lunas" }, { value: "lunas", label: "Lunas" }]} />
         </div>
-        <div className="field"><label htmlFor="from">Dari</label><input id="from" name="from" type="date" defaultValue={from === "2000-01-01" ? "" : from} /></div>
-        <div className="field"><label htmlFor="to">Sampai</label><input id="to" name="to" type="date" defaultValue={to} /></div>
+        <div className="field"><label htmlFor="from">Dari</label><DateField id="from" name="from" defaultValue={from === "2000-01-01" ? "" : from} /></div>
+        <div className="field"><label htmlFor="to">Sampai</label><DateField id="to" name="to" defaultValue={to} /></div>
         <button className="btn btn-blue btn-sm" type="submit">Tampilkan</button>
       </form>
       <div className="admin-table">

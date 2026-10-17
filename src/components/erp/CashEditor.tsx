@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatAmount, parseRupiah } from "@/lib/erp/util";
 import type { PickAccount } from "./LinesEditor";
+import { Select } from "@/components/ui";
 
 export type CRow = { accountId: string; memo: string; amount: string };
 
@@ -13,6 +14,7 @@ export function CashEditor({ accounts, initial, kind }: { accounts: PickAccount[
   const total = rows.reduce((a, r) => a + parseRupiah(r.amount), 0);
   const update = (i: number, patch: Partial<CRow>) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const json = JSON.stringify(rows.map((r) => ({ accountId: r.accountId, memo: r.memo.trim(), amount: parseRupiah(r.amount) })));
+  const accountOptions = accounts.map((a) => ({ value: a.id, label: `${a.code} · ${a.name}` }));
   return (
     <div className="lines">
       <input type="hidden" name="lines" value={json} />
@@ -25,12 +27,7 @@ export function CashEditor({ accounts, initial, kind }: { accounts: PickAccount[
         </div>
         {rows.map((r, i) => (
           <div className="lines-row" role="row" key={i}>
-            <select aria-label={`Akun baris ${i + 1}`} value={r.accountId} onChange={(e) => update(i, { accountId: e.target.value })} required>
-              <option value="">— pilih akun —</option>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
-              ))}
-            </select>
+            <Select aria-label={`Akun baris ${i + 1}`} value={r.accountId} onChange={(v) => update(i, { accountId: v })} required placeholder="Pilih akun…" searchable menuWidth={320} options={accountOptions} />
             <input aria-label={`Keterangan baris ${i + 1}`} value={r.memo} onChange={(e) => update(i, { memo: e.target.value })} />
             <input aria-label={`Jumlah baris ${i + 1}`} className="num" inputMode="numeric" value={r.amount} onChange={(e) => update(i, { amount: e.target.value })} />
             <button type="button" className="icon-btn" aria-label={`Hapus baris ${i + 1}`} onClick={() => setRows((rs) => (rs.length > 1 ? rs.filter((_, j) => j !== i) : [blank()]))}>×</button>

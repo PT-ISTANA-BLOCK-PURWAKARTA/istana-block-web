@@ -6,6 +6,7 @@ import { journalSources } from "@/db/erp";
 import { requireModule } from "@/lib/auth";
 import { SOURCE_LABEL, sourceHref } from "@/lib/erp/links";
 import { isDate, monthStart, tgl, today } from "@/lib/erp/util";
+import { DateField, Select } from "@/components/ui";
 
 export const metadata = { title: "Jurnal" };
 
@@ -33,14 +34,11 @@ export default async function Jurnal({ searchParams }: { searchParams: Promise<{
         <div className="field grow"><label htmlFor="q">Cari keterangan</label><input id="q" name="q" defaultValue={sp.q} /></div>
         <div className="field">
           <label htmlFor="sumber">Sumber</label>
-          <select id="sumber" name="sumber" defaultValue={source ?? ""}>
-            <option value="">Semua sumber</option>
-            {journalSources.map((s) => <option key={s} value={s}>{SOURCE_LABEL[s]}</option>)}
-          </select>
+          <Select id="sumber" name="sumber" defaultValue={source ?? ""} options={[{ value: "", label: "Semua sumber" }, ...journalSources.map((s) => ({ value: s, label: SOURCE_LABEL[s] }))]} />
         </div>
         <input type="hidden" name="semua" value="1" />
-        <div className="field"><label htmlFor="from">Dari</label><input id="from" name="from" type="date" defaultValue={from} /></div>
-        <div className="field"><label htmlFor="to">Sampai</label><input id="to" name="to" type="date" defaultValue={to} /></div>
+        <div className="field"><label htmlFor="from">Dari</label><DateField id="from" name="from" defaultValue={from} /></div>
+        <div className="field"><label htmlFor="to">Sampai</label><DateField id="to" name="to" defaultValue={to} /></div>
         <button className="btn btn-blue btn-sm" type="submit">Tampilkan</button>
       </form>
       <div className="admin-table">

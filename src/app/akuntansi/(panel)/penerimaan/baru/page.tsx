@@ -5,6 +5,7 @@ import { getDb, schema } from "@/db";
 import { requireModule } from "@/lib/auth";
 import { contactsOfKind, settleData } from "@/lib/erp/server";
 import { today } from "@/lib/erp/util";
+import { Select } from "@/components/ui";
 
 export const metadata = { title: "Penerimaan baru" };
 
@@ -22,10 +23,7 @@ export default async function Baru({ searchParams }: { searchParams: Promise<{ k
         <form method="get" className="form-section" style={{ maxWidth: 560 }}>
           <div className="field">
             <label htmlFor="kontak">Pelanggan</label>
-            <select id="kontak" name="kontak" required defaultValue="">
-              <option value="">— pilih —</option>
-              {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}{c.company ? ` (${c.company})` : ""}</option>)}
-            </select>
+            <Select id="kontak" name="kontak" required placeholder="Pilih pelanggan…" searchable options={contacts.map((c) => ({ value: c.id, label: c.name, hint: c.company && c.company !== c.name ? c.company : undefined }))} />
           </div>
           <div><button type="submit" className="btn btn-blue">Lanjut</button></div>
         </form>

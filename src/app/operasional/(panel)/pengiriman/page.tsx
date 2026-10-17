@@ -4,6 +4,7 @@ import { Ok, PageHead, Status } from "@/components/erp/ui";
 import { getDb } from "@/db";
 import { deliveryItems, opsAccess } from "@/lib/erp/ops";
 import { formatQty, isDate, tgl } from "@/lib/erp/util";
+import { DateField } from "@/components/ui";
 
 export const metadata = { title: "Pengiriman" };
 
@@ -55,7 +56,7 @@ export default async function Pengiriman({ searchParams }: { searchParams: Promi
           ))}
         </nav>
         {status && <input type="hidden" name="status" value={status} />}
-        <div className="field"><label htmlFor="tanggal">Tanggal</label><input id="tanggal" name="tanggal" type="date" defaultValue={date} /></div>
+        <div className="field"><label htmlFor="tanggal">Tanggal</label><DateField id="tanggal" name="tanggal" defaultValue={date} /></div>
         <div className="field grow"><label htmlFor="q">Cari</label><input id="q" name="q" defaultValue={q} placeholder="nomor, pelanggan, proyek, nopol, sopir" /></div>
         <button type="submit" className="btn btn-blue btn-sm">Tampilkan</button>
       </form>

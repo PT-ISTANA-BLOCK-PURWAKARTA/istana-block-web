@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatAmount, parseRupiah } from "@/lib/erp/util";
 import type { PickAccount } from "./LinesEditor";
+import { Select } from "@/components/ui";
 
 export type JRow = { accountId: string; memo: string; debit: string; credit: string };
 
@@ -14,6 +15,7 @@ export function JournalEditor({ accounts, initial }: { accounts: PickAccount[]; 
   const c = rows.reduce((a, r) => a + parseRupiah(r.credit), 0);
   const update = (i: number, patch: Partial<JRow>) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const json = JSON.stringify(rows.map((r) => ({ accountId: r.accountId, memo: r.memo.trim(), debit: parseRupiah(r.debit), credit: parseRupiah(r.credit) })));
+  const accountOptions = accounts.map((a) => ({ value: a.id, label: `${a.code} · ${a.name}` }));
   return (
     <div className="lines">
       <input type="hidden" name="lines" value={json} />
@@ -27,12 +29,7 @@ export function JournalEditor({ accounts, initial }: { accounts: PickAccount[]; 
         </div>
         {rows.map((r, i) => (
           <div className="lines-row" role="row" key={i}>
-            <select aria-label={`Akun baris ${i + 1}`} value={r.accountId} onChange={(e) => update(i, { accountId: e.target.value })} required>
-              <option value="">— pilih akun —</option>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
-              ))}
-            </select>
+            <Select aria-label={`Akun baris ${i + 1}`} value={r.accountId} onChange={(v) => update(i, { accountId: v })} required placeholder="Pilih akun…" searchable menuWidth={320} options={accountOptions} />
             <input aria-label={`Keterangan baris ${i + 1}`} value={r.memo} onChange={(e) => update(i, { memo: e.target.value })} />
             <input aria-label={`Debit baris ${i + 1}`} className="num" inputMode="numeric" value={r.debit} onChange={(e) => update(i, { debit: e.target.value, credit: e.target.value ? "" : r.credit })} />
             <input aria-label={`Kredit baris ${i + 1}`} className="num" inputMode="numeric" value={r.credit} onChange={(e) => update(i, { credit: e.target.value, debit: e.target.value ? "" : r.debit })} />

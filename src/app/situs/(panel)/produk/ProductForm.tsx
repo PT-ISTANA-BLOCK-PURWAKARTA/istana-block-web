@@ -6,7 +6,9 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { ImageField } from "@/components/admin/ImageField";
 import { Repeater } from "@/components/admin/Repeater";
 import { SubmitButton } from "@/components/admin/SubmitButton";
+import { RichEditor } from "@/components/editor/RichEditor";
 import { saveProduct } from "../../actions/products";
+import { Select, Switch } from "@/components/ui";
 
 export function ProductForm({ product, imageSrc }: { product?: Product; imageSrc: string | null }) {
   const p = product;
@@ -23,11 +25,7 @@ export function ProductForm({ product, imageSrc }: { product?: Product; imageSrc
           </div>
           <div className="field">
             <label htmlFor="category">Kategori</label>
-            <select id="category" name="category" defaultValue={p?.category ?? "Paving"}>
-              {categories.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            <Select id="category" name="category" defaultValue={p?.category ?? "Paving"} options={categories.map((c) => ({ value: c, label: c }))} />
           </div>
           <div className="field">
             <label htmlFor="slug">Slug URL <span className="help">kosongkan untuk dibuat dari nama</span></label>
@@ -62,8 +60,8 @@ export function ProductForm({ product, imageSrc }: { product?: Product; imageSrc
             <input id="sortOrder" name="sortOrder" type="number" min={0} defaultValue={p?.sortOrder ?? 0} />
           </div>
           <div className="full" style={{ display: "flex", flexWrap: "wrap", gap: 24 }}>
-            <label className="check"><input type="checkbox" name="published" defaultChecked={p?.published ?? true} /> Tampilkan di situs</label>
-            <label className="check"><input type="checkbox" name="featured" defaultChecked={p?.featured ?? true} /> Tampilkan di beranda</label>
+            <Switch name="published" defaultChecked={p?.published ?? true} label="Tampilkan di situs" />
+            <Switch name="featured" defaultChecked={p?.featured ?? true} label="Tampilkan di beranda" />
           </div>
         </div>
         <ImageField name="image" current={imageSrc} label="Foto produk" />
@@ -103,8 +101,8 @@ export function ProductForm({ product, imageSrc }: { product?: Product; imageSrc
       <section className="form-section">
         <h2>Deskripsi lengkap</h2>
         <div className="field">
-          <label htmlFor="description">Isi halaman produk <span className="help">mendukung Markdown: ## Judul, **tebal**, - daftar, [tautan](/produk/u-ditch)</span></label>
-          <textarea id="description" name="description" className="tall" defaultValue={p?.description} />
+          <span className="label" id="description-label">Isi halaman produk <span className="help">keunggulan, cara pasang, contoh pemakaian</span></span>
+          <RichEditor name="description" labelledBy="description-label" defaultValue={p?.description ?? ""} folder="produk" draftKey={`produk:${p?.id ?? "baru"}`} placeholder="Jelaskan produk ini: kegunaan, keunggulan, dan cara pemasangan." minHeight={320} maxLength={20000} />
         </div>
       </section>
 

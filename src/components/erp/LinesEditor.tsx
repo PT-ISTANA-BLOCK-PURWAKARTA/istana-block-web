@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { docTotals, lineAmount } from "@/lib/erp/docs";
 import { formatAmount, formatQty, parseQty, parseRupiah } from "@/lib/erp/util";
+import { Select, type SelectOption } from "@/components/ui";
 
 export type PickItem = { id: string; code: string; name: string; unit: string; sellPrice: number; buyPrice: number; kind: string };
 export type PickAccount = { id: string; code: string; name: string };
@@ -82,6 +83,15 @@ export function LinesEditor({
   };
   const groupLabel = { barang_jadi: "Barang jadi", jasa: "Jasa", bahan_baku: "Bahan baku", lainnya: "Lain-lain" } as const;
   const order = mode === "purchase" ? (["bahan_baku", "lainnya", "barang_jadi", "jasa"] as const) : (["barang_jadi", "jasa", "lainnya", "bahan_baku"] as const);
+  const refOptions: SelectOption[] = [
+    ...order.flatMap((g) =>
+      groups[g].map((it) => {
+        const price = mode === "purchase" ? it.buyPrice : it.sellPrice;
+        return { value: `item:${it.id}`, label: it.name, hint: [it.code, price ? `Rp ${formatAmount(price)}/${it.unit}` : it.unit].join(" · "), group: groupLabel[g] };
+      }),
+    ),
+    ...(mode === "purchase" ? accounts.map((a) => ({ value: `acc:${a.id}`, label: `${a.code} · ${a.name}`, group: "Biaya langsung ke akun" })) : []),
+  ];
 
   return (
     <div className="lines">
@@ -101,29 +111,7 @@ export function LinesEditor({
           const over = r.maxQty != null && parsed[i].qty > r.maxQty + 1e-9;
           return (
             <div className="lines-row" role="row" key={i}>
-              <select aria-label={`Barang baris ${i + 1}`} value={r.ref} onChange={(e) => pick(i, e.target.value)} required>
-                <option value="">— pilih —</option>
-                {order.map((g) =>
-                  groups[g].length ? (
-                    <optgroup key={g} label={groupLabel[g]}>
-                      {groups[g].map((it) => (
-                        <option key={it.id} value={`item:${it.id}`}>
-                          {it.code} · {it.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ) : null,
-                )}
-                {mode === "purchase" && accounts.length > 0 && (
-                  <optgroup label="Biaya langsung ke akun">
-                    {accounts.map((a) => (
-                      <option key={a.id} value={`acc:${a.id}`}>
-                        {a.code} · {a.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
+              <Select aria-label={`Barang baris ${i + 1}`} value={r.ref} onChange={(v) => pick(i, v)} required options={refOptions} placeholder="Pilih barang…" searchable menuWidth={340} />
               <input aria-label={`Keterangan baris ${i + 1}`} value={r.description} placeholder="opsional" onChange={(e) => update(i, { description: e.target.value })} />
               <div className="qty-cell">
                 <input aria-label={`Qty baris ${i + 1}`} className="num" inputMode="decimal" value={r.qty} onChange={(e) => update(i, { qty: e.target.value })} aria-invalid={over || undefined} />

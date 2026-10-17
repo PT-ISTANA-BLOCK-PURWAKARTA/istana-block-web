@@ -5,6 +5,8 @@ import type { Article } from "@/db/schema";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { ImageField } from "@/components/admin/ImageField";
 import { SubmitButton } from "@/components/admin/SubmitButton";
+import { RichEditor } from "@/components/editor/RichEditor";
+import { Switch } from "@/components/ui";
 import { saveArticle } from "../../actions/articles";
 
 export function ArticleForm({ article, coverSrc }: { article?: Article; coverSrc: string | null }) {
@@ -23,7 +25,7 @@ export function ArticleForm({ article, coverSrc }: { article?: Article; coverSrc
             <input id="slug" name="slug" defaultValue={a?.slug} />
           </div>
           <div className="field" style={{ justifyContent: "flex-end" }}>
-            <label className="check"><input type="checkbox" name="published" defaultChecked={a?.published ?? false} /> Terbitkan</label>
+            <Switch name="published" defaultChecked={a?.published ?? false} label="Terbitkan" help="Tampil di situs setelah disimpan" />
           </div>
           <div className="field full">
             <label htmlFor="excerpt">Ringkasan <span className="help">1–2 kalimat, tampil di daftar artikel</span></label>
@@ -32,8 +34,8 @@ export function ArticleForm({ article, coverSrc }: { article?: Article; coverSrc
         </div>
         <ImageField name="cover" current={coverSrc} label="Gambar sampul" />
         <div className="field">
-          <label htmlFor="content">Isi artikel <span className="help">Markdown: ## Subjudul, **tebal**, - daftar, [tautan](/produk/paving-block), ![alt](url gambar)</span></label>
-          <textarea id="content" name="content" className="tall" style={{ minHeight: 460 }} defaultValue={a?.content} />
+          <span className="label" id="content-label">Isi artikel <span className="help">pakai tombol di atas untuk judul, daftar, tautan, dan gambar</span></span>
+          <RichEditor name="content" labelledBy="content-label" defaultValue={a?.content ?? ""} folder="artikel" draftKey={`artikel:${a?.id ?? "baru"}`} placeholder="Tulis isi artikel. Mulai dengan paragraf pembuka, lalu tambahkan Judul untuk tiap bagian." minHeight={460} />
         </div>
       </section>
       <section className="form-section">

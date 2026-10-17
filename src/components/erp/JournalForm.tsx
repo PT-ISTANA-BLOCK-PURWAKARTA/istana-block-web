@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveJournal } from "@/app/akuntansi/actions/ledger";
 import { JournalEditor, type JRow } from "./JournalEditor";
 import type { PickAccount } from "./LinesEditor";
+import { DateField } from "@/components/ui";
 
 export function JournalForm({ head, lines, accounts }: { head: { id?: string; date: string; memo?: string }; lines: JRow[]; accounts: PickAccount[] }) {
   return (
@@ -12,7 +13,7 @@ export function JournalForm({ head, lines, accounts }: { head: { id?: string; da
       {head.id && <input type="hidden" name="id" value={head.id} />}
       <section className="form-section">
         <div className="form-grid cols-4">
-          <div className="field"><label htmlFor="jr-date">Tanggal</label><input id="jr-date" name="date" type="date" defaultValue={head.date} required /></div>
+          <div className="field"><label htmlFor="jr-date">Tanggal</label><DateField id="jr-date" name="date" defaultValue={head.date} required /></div>
           <div className="field span-3"><label htmlFor="jr-memo">Keterangan</label><input id="jr-memo" name="memo" defaultValue={head.memo} required placeholder="mis. Saldo awal per 1 Januari 2026 / penyusutan mesin Oktober" /></div>
         </div>
       </section>

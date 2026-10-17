@@ -4,6 +4,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveContact } from "@/app/akuntansi/actions/master";
 import type { Contact } from "@/db/erp";
+import { Select } from "@/components/ui";
 
 /** Formulir pelanggan/pemasok; dipakai di /keuangan/kontak dan /operasional/pelanggan. */
 export function ContactForm({ c, back, defaultKind = "pelanggan" }: { c?: Contact; back: string; defaultKind?: Contact["kind"] }) {
@@ -18,11 +19,7 @@ export function ContactForm({ c, back, defaultKind = "pelanggan" }: { c?: Contac
           </div>
           <div className="field">
             <label htmlFor="ct-kind">Jenis</label>
-            <select id="ct-kind" name="kind" defaultValue={c?.kind ?? defaultKind}>
-              <option value="pelanggan">Pelanggan</option>
-              <option value="pemasok">Pemasok</option>
-              <option value="keduanya">Pelanggan &amp; pemasok</option>
-            </select>
+            <Select id="ct-kind" name="kind" defaultValue={c?.kind ?? defaultKind} options={[{ value: "pelanggan", label: "Pelanggan", hint: "Membeli dari kita" }, { value: "pemasok", label: "Pemasok", hint: "Kita membeli darinya" }, { value: "keduanya", label: "Pelanggan & pemasok" }]} />
           </div>
           <div className="field"><label htmlFor="ct-company">Perusahaan / instansi <span className="help">opsional</span></label><input id="ct-company" name="company" defaultValue={c?.company} /></div>
           <div className="field"><label htmlFor="ct-phone">Telepon / WhatsApp</label><input id="ct-phone" name="phone" type="tel" defaultValue={c?.phone} /></div>

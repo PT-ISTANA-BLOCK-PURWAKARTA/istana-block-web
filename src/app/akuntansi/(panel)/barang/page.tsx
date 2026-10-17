@@ -8,6 +8,7 @@ import { requireModule } from "@/lib/auth";
 import { ITEM_KIND_LABEL } from "@/lib/erp/accounting";
 import { stockLevels, unitCost } from "@/lib/erp/server";
 import { formatQty } from "@/lib/erp/util";
+import { Select } from "@/components/ui";
 
 export const metadata = { title: "Barang & jasa" };
 
@@ -33,10 +34,7 @@ export default async function Barang({ searchParams }: { searchParams: Promise<{
         <div className="field grow"><label htmlFor="q">Cari</label><input id="q" name="q" defaultValue={q} placeholder="kode atau nama" /></div>
         <div className="field">
           <label htmlFor="jenis">Jenis</label>
-          <select id="jenis" name="jenis" defaultValue={jenis ?? ""}>
-            <option value="">Semua</option>
-            {itemKinds.map((k) => <option key={k} value={k}>{ITEM_KIND_LABEL[k]}</option>)}
-          </select>
+          <Select id="jenis" name="jenis" defaultValue={jenis ?? ""} options={[{ value: "", label: "Semua" }, ...itemKinds.map((k) => ({ value: k, label: ITEM_KIND_LABEL[k] }))]} />
         </div>
         <button className="btn btn-blue btn-sm" type="submit">Cari</button>
       </form>

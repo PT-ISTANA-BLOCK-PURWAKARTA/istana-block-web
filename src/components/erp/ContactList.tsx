@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Contact } from "@/db/erp";
 import { CONTACT_KIND_LABEL } from "@/lib/erp/accounting";
 import { Rp } from "./ui";
+import { Select } from "@/components/ui";
 
 export function ContactList({ rows, balances, base, q, jenis, nonaktif, showJenis = true }: { rows: Contact[]; balances?: Map<string, { ar: number; ap: number }>; base: string; q?: string; jenis?: string; nonaktif: boolean; showJenis?: boolean }) {
   return (
@@ -11,11 +12,7 @@ export function ContactList({ rows, balances, base, q, jenis, nonaktif, showJeni
         {showJenis && (
           <div className="field">
             <label htmlFor="jenis">Jenis</label>
-            <select id="jenis" name="jenis" defaultValue={jenis ?? ""}>
-              <option value="">Semua</option>
-              <option value="pelanggan">Pelanggan</option>
-              <option value="pemasok">Pemasok</option>
-            </select>
+            <Select id="jenis" name="jenis" defaultValue={jenis ?? ""} options={[{ value: "", label: "Semua" }, { value: "pelanggan", label: "Pelanggan" }, { value: "pemasok", label: "Pemasok" }]} />
           </div>
         )}
         <label className="check"><input type="checkbox" name="nonaktif" value="1" defaultChecked={nonaktif} /> Tampilkan nonaktif</label>

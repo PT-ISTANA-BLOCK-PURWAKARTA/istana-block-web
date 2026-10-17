@@ -34,6 +34,16 @@ Artikel: [docs/screenshots/artikel.webp](docs/screenshots/artikel.webp)
 |---|---|---|
 | ![Ubah produk](docs/screenshots/admin-ubah-produk.webp) | ![Tabel harga](docs/screenshots/admin-tabel-harga.webp) | ![Pengaturan](docs/screenshots/admin-pengaturan.webp) |
 
+**Editor isi & komponen form** (dipakai di Situs, Operasional, dan Keuangan)
+
+| Editor artikel (visual) | Tautan ke halaman situs |
+|---|---|
+| ![Editor artikel](docs/screenshots/situs-editor.webp) | ![Panel tautan editor](docs/screenshots/situs-editor-tautan.webp) |
+
+| Pilihan dengan pencarian | Kalender | Ponsel — pilihan | Ponsel — kalender |
+|---|---|---|---|
+| ![Pilihan barang](docs/screenshots/ui-pilihan.webp) | ![Kalender](docs/screenshots/ui-kalender.webp) | ![Ponsel pilihan](docs/screenshots/ponsel-pilihan.webp) | ![Ponsel kalender](docs/screenshots/ponsel-kalender.webp) |
+
 **Video fitur di beranda** (16:9 di desktop, 9:16 di ponsel)
 
 | Desktop | Ponsel |
@@ -103,12 +113,44 @@ Data di gambar adalah **data contoh fiktif** (lihat [Data contoh](#data-contoh-u
 - Alamat lama tetap jalan: `/admin` → `/internal`, `/admin/…` → `/situs/…`, `/keuangan/…` → `/akuntansi/…` (301).
 
 **Aplikasi Situs (`/situs`)**
-- **Produk & harga:** tambah, ubah, hapus; foto diunggah ke R2 (otomatis dikecilkan ke WebP ≤ 1600 px di browser); spesifikasi, tabel harga, dan FAQ bisa ditambah atau dihapus per baris; status tayang/draf dan tampil di beranda; urutan; SEO.
-- **Artikel:** editor Markdown (termasuk tabel), gambar sampul, terbit/draf, SEO.
-- **Halaman:** halaman statis di `/slug`, jenis *Area pengiriman* (tombol WhatsApp menanyakan ongkir ke lokasi itu) atau *Informasi*; Markdown, sampul, terbit/draf, SEO. Slug yang dipakai sistem (`produk`, `artikel`, `internal`, `situs`, `akuntansi`, …) atau oleh peta redirect lama ditolak.
+- **Produk & harga:** tambah, ubah, hapus; foto diunggah ke R2 (otomatis dikecilkan ke WebP ≤ 1600 px di browser); spesifikasi, tabel harga, dan FAQ bisa ditambah atau dihapus per baris; deskripsi lengkap memakai editor visual; status tayang/draf dan tampil di beranda; urutan; SEO.
+- **Artikel:** editor visual seperti di WordPress (lihat [Editor isi](#editor-isi)), gambar sampul, terbit/draf, SEO.
+- **Halaman:** halaman statis di `/slug`, jenis *Area pengiriman* (tombol WhatsApp menanyakan ongkir ke lokasi itu) atau *Informasi*; editor visual, sampul, terbit/draf, SEO. Slug yang dipakai sistem (`produk`, `artikel`, `internal`, `situs`, `akuntansi`, …) atau oleh peta redirect lama ditolak.
 - **Testimoni:** nama, keterangan, kutipan, rating, urutan. Bagian ulasan di beranda baru muncul kalau sudah ada testimoni.
-- **Info & kontak:** WhatsApp, telepon, telepon kantor, email, alamat, jam buka, link & peta embed Google Maps, rating Google, teks & FAQ beranda, syarat pembayaran, kota tujuan kirim, tautan katalog, info TKDN, SEO beranda.
+- **Info & kontak:** WhatsApp, telepon, telepon kantor, email, alamat, jam buka, link & peta embed Google Maps, rating Google, teks beranda, FAQ beranda (diisi per baris: pertanyaan dan jawaban), syarat pembayaran, kota tujuan kirim, tautan katalog, info TKDN, SEO beranda.
 - **Pengguna & peran** (khusus pemilik, `/internal/pengguna`): buat akun kantor (email) atau akun lapangan (nomor HP + PIN), atur peran, hubungkan akun sopir ke data sopir, atur ulang password/PIN. **Akun saya:** ganti nama dan password (atau PIN untuk akun lapangan); setelah diganti, sesi di perangkat lain otomatis keluar.
+
+### Editor isi
+
+Isi artikel, isi halaman, dan deskripsi produk ditulis dengan editor visual: yang tampil saat menulis sama dengan yang tampil di situs (huruf, ukuran judul, tabel, gambar).
+
+- **Bilah alat:** Paragraf / Judul / Subjudul, tebal, miring, coret, daftar berpoin & bernomor, kutipan, tautan, gambar, tabel, garis pemisah, urungkan/ulangi. Bilah alat menempel di atas saat menggulir isi yang panjang.
+- **Tautan:** ketik nama produk, artikel, atau halaman untuk memilih dari daftar (alamatnya terisi otomatis), atau tempel alamat luar. `istanablock.com` otomatis jadi `https://…`, nomor telepon jadi `tel:`, email jadi `mailto:`; alamat `javascript:` ditolak.
+- **Gambar:** pilih dari komputer/HP, tempel (Ctrl+V), atau seret ke dalam isi. Foto dikecilkan dulu di browser (WebP ≤ 1600 px), diunggah ke R2, lalu disisipkan. Klik gambar untuk mengisi keterangannya (teks alt untuk Google dan pembaca layar) atau menghapusnya.
+- **Tabel:** sisipkan tabel 3 × 3 berjudul kolom; saat kursor di dalam tabel muncul tombol tambah/hapus baris dan kolom.
+- **Ketik cepat:** `## ` jadi judul, `- ` jadi daftar, `1. ` jadi daftar bernomor, `> ` jadi kutipan, Ctrl+B/I/K.
+- **Mode Markdown** tetap ada untuk yang terbiasa; berpindah mode tidak mengubah isi.
+- **Draf otomatis:** ketikan disimpan di browser perangkat itu. Bila halaman tertutup sebelum disimpan, saat dibuka lagi muncul pilihan *Pulihkan* atau *Buang*.
+- Isi tetap disimpan sebagai **Markdown** di database, jadi tampilan situs dan data lama tidak berubah. Membuka lalu menyimpan tanpa mengedit tidak mengubah teks yang tersimpan.
+
+### Komponen form
+
+Semua aplikasi memakai komponen form yang sama dengan warna Istana Block (`src/components/ui`), bukan tampilan bawaan browser:
+
+- **`Select`**: daftar pilihan dengan kotak cari untuk daftar panjang (pelanggan, barang, akun), pengelompokan (mis. *Barang jadi*, *Bahan baku*, golongan akun), keterangan kecil di bawah pilihan (kode barang, harga, stok), dan navigasi keyboard. Di ponsel tampil sebagai lembar dari bawah layar.
+- **`DateField`**: tanggal ditulis `17/10/2026` (juga menerima `17-10-26`, `17 okt 2026`, `2026-10-17`) atau dipilih dari kalender: Senin di depan, nama bulan Indonesia, Minggu merah, hari ini bertanda oranye, tombol *Hari ini*.
+- **`Switch`**: sakelar untuk *Terbitkan*, *Tampilkan di situs*, *Tampilkan di beranda*. Kotak centang dan pilihan file (gambar sampul, foto bukti terima) juga diseragamkan.
+
+Nilai dikirim lewat input bernama seperti `<select>`/`<input type="date">` sebelumnya (tanggal tetap `YYYY-MM-DD`), jadi server action dan form filter (GET) tidak berubah. Validasi *wajib diisi* bawaan browser tetap jalan.
+
+```tsx
+import { DateField, Select, Switch } from "@/components/ui";
+
+<Select id="po-contact" name="contactId" required searchable placeholder="Pilih pelanggan…"
+  options={contacts.map((c) => ({ value: c.id, label: c.name, hint: c.company }))} />
+<DateField id="po-date" name="date" defaultValue={today} required />
+<Switch name="published" defaultChecked label="Terbitkan" />
+```
 
 ## Operasional (`/operasional`) & keuangan (`/akuntansi`)
 
@@ -242,6 +284,7 @@ Setelah menghapus dengan file mana pun, jalankan lagi **Barang & jasa → Ambil 
 | Penyimpanan gambar | Cloudflare R2, disajikan lewat `/media/...` dengan cache 1 tahun |
 | Auth | JWT HS256 (`jose`) di cookie `httpOnly`; password di-hash PBKDF2-SHA256 (WebCrypto) |
 | Validasi | Zod |
+| Editor isi | TipTap 3 (ProseMirror) + `@tiptap/markdown`; isi disimpan dan dirender sebagai Markdown (`react-markdown` + `remark-gfm`) |
 
 ## Struktur folder
 
@@ -258,6 +301,7 @@ src/
     operasional/       masuk/, (panel)/ pesanan, pengiriman, lacak truk, stok, produksi, pelanggan, armada, sopir;
                        tugas/ (tampilan ponsel sopir), actions/, cetak/ (surat jalan), bukti/ (foto bukti terima)
     api/lacak/         gps/ penerima posisi alat GPS, hp/ lokasi dari HP sopir, posisi/ data peta
+    api/situs/         unggah/ gambar dari editor isi, tautan/ daftar halaman untuk saran tautan
     media/[...key]/    menyajikan gambar dari R2
     reel/[file]/       menyajikan video fitur dengan dukungan Range (wajib untuk Safari/iOS)
     sitemap.ts, robots.ts
@@ -265,8 +309,10 @@ src/
                        + components/admin (form admin), components/panel (sidebar & ikon semua aplikasi),
                        components/auth (layar & form masuk, akun saya),
                        components/erp (form & grafik keuangan; erp/report: kop laporan, pilihan periode, batang),
-                       components/ops (form operasional, peta lacak truk, tugas sopir)
+                       components/ops (form operasional, peta lacak truk, tugas sopir),
+                       components/ui (Select, DateField, Switch), components/editor (editor isi)
   app/panel.css        tampilan portal, aplikasi internal, laporan berkop, dan halaman cetak
+  app/ui.css           komponen form, kalender, dan editor isi
   data/                data statis: wilayah kirim, paket proyek, template WhatsApp, galeri,
                        logo klien, lembar spesifikasi, peta redirect alamat lama
   db/schema.ts         skema tabel D1 situs; db/erp.ts skema keuangan & operasional
@@ -409,7 +455,7 @@ Hal lain:
 - Penerima GPS memakai kunci acak yang hanya disimpan hash-nya; kunci bisa diganti kapan saja. Lokasi dari HP sopir hanya diterima saat ia login dan punya surat jalan berstatus dalam perjalanan.
 - Password: PBKDF2-SHA256 100.000 iterasi + salt acak; perbandingan hash waktu-konstan.
 - Server Actions Next.js menolak request dari origin lain (proteksi CSRF bawaan); cookie `SameSite=Lax`, `Secure` di produksi.
-- Unggahan dibatasi JPG/PNG/WebP/AVIF/GIF maksimal 5 MB, dengan nama file acak di R2.
+- Unggahan dibatasi JPG/PNG/WebP/AVIF/GIF maksimal 5 MB, dengan nama file acak di R2. Unggahan dari editor isi (`/api/situs/unggah`) hanya diterima dari akun dengan akses Situs dan dari origin yang sama.
 - Markdown dirender tanpa HTML mentah, dan JSON-LD di-escape.
 - Header `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`; `/internal`, `/situs`, `/akuntansi`, dan `/operasional` diberi `X-Robots-Tag: noindex` dan ditolak di `robots.txt`.
 

@@ -5,6 +5,7 @@ import type { Testimonial } from "@/db/schema";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveTestimonial } from "../../actions/testimonials";
+import { Select, Switch } from "@/components/ui";
 
 export function TestimonialForm({ t }: { t?: Testimonial }) {
   return (
@@ -27,15 +28,13 @@ export function TestimonialForm({ t }: { t?: Testimonial }) {
           </div>
           <div className="field">
             <label htmlFor="rating">Rating</label>
-            <select id="rating" name="rating" defaultValue={t?.rating ?? 5}>
-              {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{n} bintang</option>)}
-            </select>
+            <Select id="rating" name="rating" defaultValue={String(t?.rating ?? 5)} options={[5, 4, 3, 2, 1].map((n) => ({ value: String(n), label: `${"★".repeat(n)}${"☆".repeat(5 - n)}  ${n} bintang` }))} />
           </div>
           <div className="field">
             <label htmlFor="sortOrder">Urutan tampil</label>
             <input id="sortOrder" name="sortOrder" type="number" min={0} defaultValue={t?.sortOrder ?? 0} />
           </div>
-          <label className="check"><input type="checkbox" name="published" defaultChecked={t?.published ?? true} /> Tampilkan di situs</label>
+          <Switch name="published" defaultChecked={t?.published ?? true} label="Tampilkan di situs" />
         </div>
       </section>
       <div className="form-actions">

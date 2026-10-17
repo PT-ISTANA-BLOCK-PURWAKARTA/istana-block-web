@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Preset } from "@/lib/erp/periods";
+import { DateField } from "@/components/ui";
 
 /**
  * Pilihan periode: tombol cepat (bulan ini, bulan lalu, …) + tanggal sendiri.
@@ -22,12 +23,12 @@ export function PeriodBar({ path, presets, from, to, single, extra, keep = {}, k
         {!single && (
           <label>
             <span>Dari</span>
-            <input name="from" type="date" defaultValue={from} />
+            <DateField name="from" defaultValue={from} />
           </label>
         )}
         <label>
           <span>{single ? "Per tanggal" : "Sampai"}</span>
-          <input name="to" type="date" defaultValue={to} />
+          <DateField name="to" defaultValue={to} />
         </label>
         {extra}
         <button type="submit" className="btn btn-ghost btn-sm">Tampilkan</button>

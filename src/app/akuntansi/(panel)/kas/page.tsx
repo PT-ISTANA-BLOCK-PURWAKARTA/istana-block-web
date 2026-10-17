@@ -7,6 +7,7 @@ import { requireModule } from "@/lib/auth";
 import { cashBalances } from "@/lib/erp/reports";
 import { loadAccounts } from "@/lib/erp/server";
 import { formatAmount, isDate, monthStart, tgl, today } from "@/lib/erp/util";
+import { DateField, Select } from "@/components/ui";
 
 export const metadata = { title: "Kas & bank" };
 
@@ -47,13 +48,10 @@ export default async function Kas({ searchParams }: { searchParams: Promise<{ ok
         <div className="field grow"><label htmlFor="q">Cari</label><input id="q" name="q" defaultValue={sp.q} placeholder="nomor atau keterangan" /></div>
         <div className="field">
           <label htmlFor="jenis">Jenis</label>
-          <select id="jenis" name="jenis" defaultValue={sp.jenis ?? ""}>
-            <option value="">Semua</option>
-            {cashKinds.map((k) => <option key={k} value={k}>{KIND[k]}</option>)}
-          </select>
+          <Select id="jenis" name="jenis" defaultValue={sp.jenis ?? ""} options={[{ value: "", label: "Semua" }, ...cashKinds.map((k) => ({ value: k, label: KIND[k] }))]} />
         </div>
-        <div className="field"><label htmlFor="from">Dari</label><input id="from" name="from" type="date" defaultValue={from} /></div>
-        <div className="field"><label htmlFor="to">Sampai</label><input id="to" name="to" type="date" defaultValue={to} /></div>
+        <div className="field"><label htmlFor="from">Dari</label><DateField id="from" name="from" defaultValue={from} /></div>
+        <div className="field"><label htmlFor="to">Sampai</label><DateField id="to" name="to" defaultValue={to} /></div>
         <button className="btn btn-blue btn-sm" type="submit">Tampilkan</button>
       </form>
       <div className="admin-table">

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as L from "leaflet";
 import type { TruckView } from "@/lib/erp/tracking";
+import { DateField } from "@/components/ui";
 
 type Route = { points: [number, number, number, number][]; km: number } | null;
 type Data = { trucks: TruckView[]; route: Route; now: number };
@@ -186,7 +187,7 @@ export function TruckTracker({ initial, today, canSetup }: { initial: Data; toda
               {data.route ? (data.route.points.length > 1 ? `· ${data.route.km.toLocaleString("id-ID")} km, ${data.route.points.length} titik` : "· belum ada rute di tanggal ini") : ""}
             </span>
             <label className="sr-only" htmlFor="rute-tgl">Tanggal rute</label>
-            <input id="rute-tgl" type="date" value={date} max={today} onChange={(e) => setDate(e.target.value || today)} />
+            <DateField id="rute-tgl" value={date} max={today} required onChange={(v) => setDate(v || today)} />
           </form>
         )}
         <div ref={mapEl} className="tracker-map" />

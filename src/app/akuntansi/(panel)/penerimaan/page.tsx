@@ -4,6 +4,7 @@ import { Ok, PageHead, Rp } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { requireModule } from "@/lib/auth";
 import { isDate, monthStart, tgl, today } from "@/lib/erp/util";
+import { DateField } from "@/components/ui";
 
 export const metadata = { title: "Penerimaan" };
 
@@ -31,8 +32,8 @@ export default async function Daftar({ searchParams }: { searchParams: Promise<{
       <Ok ok={sp.ok} />
       <form className="filter-bar" method="get">
         <div className="field grow"><label htmlFor="q">Cari</label><input id="q" name="q" defaultValue={sp.q} placeholder="nomor atau nama" /></div>
-        <div className="field"><label htmlFor="from">Dari</label><input id="from" name="from" type="date" defaultValue={from} /></div>
-        <div className="field"><label htmlFor="to">Sampai</label><input id="to" name="to" type="date" defaultValue={to} /></div>
+        <div className="field"><label htmlFor="from">Dari</label><DateField id="from" name="from" defaultValue={from} /></div>
+        <div className="field"><label htmlFor="to">Sampai</label><DateField id="to" name="to" defaultValue={to} /></div>
         <button className="btn btn-blue btn-sm" type="submit">Tampilkan</button>
       </form>
       <div className="admin-table">

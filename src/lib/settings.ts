@@ -3,7 +3,7 @@ import { getDb, schema } from "@/db";
 export type SettingField = {
   key: string;
   label: string;
-  type: "text" | "textarea" | "url" | "email";
+  type: "text" | "textarea" | "url" | "email" | "faq";
   help?: string;
   rows?: number;
   group: "Perusahaan" | "Kontak" | "Beranda" | "SEO";
@@ -42,10 +42,9 @@ export const SETTING_FIELDS = [
   {
     key: "home_faq",
     label: "FAQ beranda",
-    type: "textarea",
+    type: "faq",
     group: "Beranda",
-    rows: 8,
-    help: "Satu tanya-jawab per baris dengan format: Pertanyaan :: Jawaban",
+    help: "Pertanyaan yang sering ditanyakan calon pembeli, tampil di bagian bawah beranda",
   },
   { key: "seo_title", label: "Judul SEO beranda", type: "text", group: "SEO", help: "Ideal ≤ 60 karakter" },
   { key: "seo_description", label: "Deskripsi SEO beranda", type: "textarea", group: "SEO", help: "Ideal 120–155 karakter" },
@@ -99,16 +98,7 @@ export async function getSettings(): Promise<Settings> {
  * Ubah teks FAQ (satu baris per tanya-jawab, format "Pertanyaan :: Jawaban") menjadi daftar.
  * Baris kosong atau tanpa pemisah "::" diabaikan.
  */
-export function parseFaq(text: string | null | undefined): { q: string; a: string }[] {
-  return String(text ?? "")
-    .split(/\r?\n/)
-    .map((line) => {
-      const i = line.indexOf("::");
-      if (i < 0) return null;
-      return { q: line.slice(0, i).trim(), a: line.slice(i + 2).trim() };
-    })
-    .filter((x): x is { q: string; a: string } => !!x && !!x.q && !!x.a);
-}
+export { formatFaq, parseFaq } from "./faq";
 
 export const MAPS_EMBED_PREFIX = "https://www.google.com/maps/embed";
 

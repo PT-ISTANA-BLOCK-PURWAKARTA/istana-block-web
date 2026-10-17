@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatAmount, today } from "@/lib/erp/util";
+import { DateField } from "@/components/ui";
 
 export function PageHead({ title, sub, children }: { title: string; sub?: React.ReactNode; children?: React.ReactNode }) {
   return (
@@ -61,12 +62,12 @@ export function RangeForm({ from, to, extra, single }: { from?: string; to: stri
       {!single && (
         <div className="field">
           <label htmlFor="f-from">Dari</label>
-          <input id="f-from" name="from" type="date" defaultValue={from} />
+          <DateField id="f-from" name="from" defaultValue={from} />
         </div>
       )}
       <div className="field">
         <label htmlFor="f-to">{single ? "Per tanggal" : "Sampai"}</label>
-        <input id="f-to" name="to" type="date" defaultValue={to} />
+        <DateField id="f-to" name="to" defaultValue={to} />
       </div>
       {extra}
       <button type="submit" className="btn btn-blue btn-sm">Tampilkan</button>

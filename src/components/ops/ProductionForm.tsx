@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveProduction } from "@/app/operasional/actions/stock";
 import { parseQty } from "@/lib/erp/util";
+import { DateField, Select } from "@/components/ui";
 
 type Opt = { id: string; code: string; name: string; unit: string; kind: string };
 type Row = { itemId: string; qty: string };
@@ -17,10 +18,7 @@ function Rows({ title, help, rows, setRows, options }: { title: string; help: st
       <div className="lines-table plines">
         {rows.map((r, i) => (
           <div className="lines-row" key={i}>
-            <select aria-label={`${title} baris ${i + 1}`} value={r.itemId} onChange={(e) => setRows((rs) => rs.map((x, j) => (j === i ? { ...x, itemId: e.target.value } : x)))}>
-              <option value="">— pilih barang —</option>
-              {options.map((o) => <option key={o.id} value={o.id}>{o.code} · {o.name}</option>)}
-            </select>
+            <Select aria-label={`${title} baris ${i + 1}`} value={r.itemId} onChange={(v) => setRows((rs) => rs.map((x, j) => (j === i ? { ...x, itemId: v } : x)))} placeholder="Pilih barang…" searchable menuWidth={300} options={options.map((o) => ({ value: o.id, label: o.name, hint: o.code }))} />
             <div className="inline-form">
               <input aria-label={`Qty ${title} baris ${i + 1}`} className="num" inputMode="decimal" value={r.qty} placeholder="0" onChange={(e) => setRows((rs) => rs.map((x, j) => (j === i ? { ...x, qty: e.target.value } : x)))} />
               <span className="small muted" style={{ minWidth: 32 }}>{unit(r.itemId)}</span>
@@ -48,7 +46,7 @@ export function ProductionForm({ id, date, note, laborCost, hasil, bahan, items,
       <input type="hidden" name="bahan" value={ser(used)} />
       <section className="form-section">
         <div className="form-grid cols-4">
-          <div className="field"><label htmlFor="pr-date">Tanggal</label><input id="pr-date" name="date" type="date" defaultValue={date} required /></div>
+          <div className="field"><label htmlFor="pr-date">Tanggal</label><DateField id="pr-date" name="date" defaultValue={date} required /></div>
           {showCost && (
             <div className="field">
               <label htmlFor="pr-labor">Biaya produksi (Rp) <span className="help">upah, listrik, dll.</span></label>

@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState } from "react";
 import { waLink } from "@/lib/format";
+import { Select } from "@/components/ui";
 
 const TYPES = [
   { id: "bata", label: "Truepave / bata 21×10,5 cm (44 pcs/m²)", n: 44 },
@@ -29,11 +30,7 @@ export function Calculator({ whatsapp }: { whatsapp: string }) {
     <form className="calc-form" onSubmit={(e) => e.preventDefault()}>
       <div className="field full">
         <label htmlFor={`${id}-t`}>Jenis paving</label>
-        <select id={`${id}-t`} value={type} onChange={(e) => setType(e.target.value)}>
-          {TYPES.map((x) => (
-            <option key={x.id} value={x.id}>{x.label}</option>
-          ))}
-        </select>
+        <Select id={`${id}-t`} value={type} onChange={setType} options={TYPES.map((x) => ({ value: x.id, label: x.label }))} />
       </div>
       <div className="field">
         <label htmlFor={`${id}-l`}>Panjang (m)</label>
