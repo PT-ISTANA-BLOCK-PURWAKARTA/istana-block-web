@@ -42,6 +42,7 @@ DELETE FROM ops_deliveries WHERE id LIKE 'demo-%';
 DELETE FROM ops_order_lines WHERE id LIKE 'demo-%' OR order_id LIKE 'demo-%';
 DELETE FROM ops_orders WHERE id LIKE 'demo-%';
 DELETE FROM ops_positions WHERE vehicle_id LIKE 'demo-%';
+DELETE FROM settings WHERE key IN ('gps_ingest_key_hash', 'gps_ingest_key_hint') AND value IN ('80d105912f9eb22e4b09d4c8bf0215b60ebc217bc4ca3b882ee7a0e26f9c16c7', '…2026');
 UPDATE users SET driver_id = NULL WHERE driver_id LIKE 'demo-%';
 DELETE FROM fin_contacts WHERE id LIKE 'demo-%';
 DELETE FROM ops_vehicles WHERE id LIKE 'demo-%';

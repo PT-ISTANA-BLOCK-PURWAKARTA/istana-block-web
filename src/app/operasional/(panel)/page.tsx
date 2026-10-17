@@ -136,7 +136,7 @@ export default async function OpsDashboard() {
         {!warehouseFirst && (
           <section className="admin-card">
             <div className="card-head"><h2>Pesanan belum dijadwalkan penuh</h2><Link href="/operasional/pesanan">Semua pesanan</Link></div>
-            <table className="compact">
+            <table className="compact stack-sm">
               <tbody>
                 {unscheduled.slice(0, 8).map((o) => (
                   <tr key={o.id}>

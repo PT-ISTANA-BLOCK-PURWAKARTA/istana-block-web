@@ -85,11 +85,13 @@ export type LedgerLine = { journalId: string; number: string; date: string; memo
 /** Buku besar satu akun: saldo awal + mutasi + saldo berjalan (menurut saldo normal). */
 export async function ledger(db: DB, account: Account, from: string, to: string) {
   const open = await db.get<{ d: number; c: number }>(sql`select coalesce(sum(debit),0) d, coalesce(sum(credit),0) c from fin_journal_lines where account_id = ${account.id} and date < ${from}`);
+  // Dalam satu hari diurutkan menurut waktu dicatat, supaya saldo berjalan mengikuti urutan kejadian
+  // (bukan abjad awalan nomor: BYR sebelum TRF).
   const lines = await db.all<LedgerLine>(sql`
     select j.id as journalId, j.number, l.date, j.memo, l.memo as lineMemo, j.source, j.source_id as sourceId, l.debit, l.credit, c.name as contactName
     from fin_journal_lines l join fin_journals j on j.id = l.journal_id left join fin_contacts c on c.id = l.contact_id
     where l.account_id = ${account.id} and l.date >= ${from} and l.date <= ${to}
-    order by l.date, j.number, l.sort`);
+    order by l.date, j.created_at, j.number, l.sort`);
   const opening = normalBalance(account.group, Number(open?.d ?? 0), Number(open?.c ?? 0));
   let bal = opening;
   const rows = lines.map((l) => {

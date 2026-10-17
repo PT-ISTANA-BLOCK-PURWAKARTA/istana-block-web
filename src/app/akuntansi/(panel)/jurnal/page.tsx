@@ -19,7 +19,7 @@ export default async function Jurnal({ searchParams }: { searchParams: Promise<{
   const source = (journalSources as readonly string[]).includes(sp.sumber ?? "") ? (sp.sumber as (typeof journalSources)[number]) : sp.semua ? undefined : "manual";
   const db = await getDb();
   const rows = await db
-    .select({ j: schema.journals, total: sql<number>`(select coalesce(sum(debit),0) from fin_journal_lines where journal_id = ${schema.journals.id})` })
+    .select({ j: schema.journals, total: sql<number>`(select coalesce(sum(l.debit),0) from fin_journal_lines l where l.journal_id = fin_journals.id)` })
     .from(schema.journals)
     .where(and(gte(schema.journals.date, from), lte(schema.journals.date, to), source ? eq(schema.journals.source, source) : undefined, sp.q ? like(schema.journals.memo, `%${sp.q}%`) : undefined))
     .orderBy(desc(schema.journals.date), desc(schema.journals.number))

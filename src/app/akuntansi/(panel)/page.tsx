@@ -89,7 +89,7 @@ export default async function KeuanganHome() {
         </section>
         <section className="admin-card">
           <div className="card-head"><h2>Saldo kas & bank</h2><Link href="/akuntansi/kas">Mutasi</Link></div>
-          <table className="compact">
+          <table className="compact stack-sm">
             <tbody>
               {cash.map((r) => (
                 <tr key={r.account.id}>
@@ -106,7 +106,7 @@ export default async function KeuanganHome() {
       <div className="dash-grid" style={{ marginBottom: 16 }}>
         <section className="admin-card">
           <div className="card-head"><h2>Siap difaktur</h2><span className="small muted">dari surat jalan yang sudah terkirim</span></div>
-          <table className="compact">
+          <table className="compact stack-sm">
             <tbody>
               {unbilled.map((o) => (
                 <tr key={o.id}>
@@ -121,7 +121,7 @@ export default async function KeuanganHome() {
         </section>
         <section className="admin-card">
           <div className="card-head"><h2>Tagihan ke pelanggan</h2><Link href="/akuntansi/laporan/piutang">Umur piutang</Link></div>
-          <table className="compact">
+          <table className="compact stack-sm">
             <tbody>
               {overdueList.map((d) => (
                 <tr key={d.id}>
@@ -136,7 +136,7 @@ export default async function KeuanganHome() {
         </section>
         <section className="admin-card">
           <div className="card-head"><h2>Hutang jatuh tempo 14 hari</h2><Link href="/akuntansi/laporan/hutang">Umur hutang</Link></div>
-          <table className="compact">
+          <table className="compact stack-sm">
             <tbody>
               {dueSoon.map((b) => (
                 <tr key={b.id}>
@@ -151,7 +151,7 @@ export default async function KeuanganHome() {
         </section>
         <section className="admin-card">
           <div className="card-head"><h2>Bahan baku perlu dibeli</h2><Link href="/operasional/stok?jenis=bahan_baku">Stok bahan</Link></div>
-          <table className="compact">
+          <table className="compact stack-sm">
             <tbody>
               {lowMaterials.map((m) => (
                 <tr key={m.id}>
@@ -166,7 +166,7 @@ export default async function KeuanganHome() {
         </section>
         <section className="admin-card span-2">
           <div className="card-head"><h2>Transaksi terakhir</h2><Link href="/akuntansi/jurnal?semua=1">Semua jurnal</Link></div>
-          <table className="compact">
+          <table className="compact stack-sm">
             <tbody>
               {recent.map((j) => (
                 <tr key={j.id}>

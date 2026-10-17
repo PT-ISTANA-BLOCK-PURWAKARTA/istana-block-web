@@ -109,8 +109,10 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // (g) Lanjut seperti biasa.
-  return NextResponse.next();
+  // (g) Lanjut seperti biasa. Worker demo: semua halaman noindex.
+  const res = NextResponse.next();
+  if (process.env.DEMO_MODE === "1") res.headers.set("x-robots-tag", "noindex, nofollow");
+  return res;
 }
 
 // Semua path kecuali aset Next.js, media R2, video, gambar statis, dan file berekstensi

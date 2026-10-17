@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, gt, lte, ne } from "drizzle-orm";
 import { PrintDoc, Sign } from "@/components/erp/PrintDoc";
 import { getDb, schema } from "@/db";
 import { requireModule } from "@/lib/auth";
@@ -8,6 +8,25 @@ import { formatAmount, formatQty, terbilang, tglPanjang } from "@/lib/erp/util";
 import { getSettings } from "@/lib/settings";
 
 export const metadata = { title: "Cetak faktur", robots: { index: false } };
+
+/**
+ * Surat jalan yang ditagih faktur ini: yang sudah terkirim sampai tanggal faktur dan belum ditagih faktur
+ * sebelumnya untuk pesanan yang sama (faktur dibuat dari barang terkirim yang belum difaktur).
+ */
+async function invoiceDeliveries(db: Awaited<ReturnType<typeof getDb>>, inv: { id: string; orderId: string | null; date: string; number: string }) {
+  if (!inv.orderId) return [];
+  const others = await db
+    .select({ id: schema.invoices.id, date: schema.invoices.date, number: schema.invoices.number })
+    .from(schema.invoices)
+    .where(and(eq(schema.invoices.orderId, inv.orderId), eq(schema.invoices.void, false), ne(schema.invoices.id, inv.id)));
+  const prev = others.filter((o) => o.date < inv.date || (o.date === inv.date && o.number < inv.number)).map((o) => o.date).sort().at(-1);
+  const rows = await db
+    .select({ number: schema.deliveries.number, date: schema.deliveries.date })
+    .from(schema.deliveries)
+    .where(and(eq(schema.deliveries.orderId, inv.orderId), eq(schema.deliveries.status, "terkirim"), lte(schema.deliveries.date, inv.date), ...(prev ? [gt(schema.deliveries.date, prev)] : [])))
+    .orderBy(asc(schema.deliveries.date), asc(schema.deliveries.number));
+  return rows;
+}
 
 export default async function CetakFaktur({ params }: { params: Promise<{ id: string }> }) {
   await requireModule("keuangan");
@@ -21,9 +40,7 @@ export default async function CetakFaktur({ params }: { params: Promise<{ id: st
     db.query.contacts.findFirst({ where: eq(schema.contacts.id, inv.contactId) }),
     db.select().from(schema.invoiceLines).where(eq(schema.invoiceLines.invoiceId, id)).orderBy(asc(schema.invoiceLines.sort)),
     inv.orderId ? db.query.orders.findFirst({ where: eq(schema.orders.id, inv.orderId) }) : undefined,
-    inv.orderId
-      ? db.select({ number: schema.deliveries.number }).from(schema.deliveries).where(and(eq(schema.deliveries.orderId, inv.orderId), ne(schema.deliveries.status, "batal"))).orderBy(asc(schema.deliveries.date))
-      : [],
+    invoiceDeliveries(db, inv),
   ]);
   const left = inv.total - inv.paid;
   return (

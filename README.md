@@ -80,7 +80,7 @@ Katalog lengkap: [docs/screenshots/katalog.webp](docs/screenshots/katalog.webp)
 |---|---|---|---|---|
 | ![Tugas sopir](docs/screenshots/sopir-tugas.webp) | ![Surat jalan sopir](docs/screenshots/sopir-detail.webp) | ![Hub laporan](docs/screenshots/keu-laporan.webp) | ![Arus kas](docs/screenshots/keu-arus-kas.webp) | ![Umur piutang](docs/screenshots/keu-piutang.webp) |
 
-Contoh hasil cetak laporan dengan kop: [laba rugi (PDF)](docs/contoh-cetak/laba-rugi.pdf), [neraca (PDF)](docs/contoh-cetak/neraca.pdf).
+Contoh hasil cetak berkop dari data contoh: [semua dokumen & laporan dalam satu PDF](docs/contoh-cetak/contoh-cetakan.pdf) (faktur, surat jalan, laba rugi, neraca, arus kas, penjualan, umur piutang & hutang, neraca saldo, buku besar, beserta daftar angka yang saling cocok), atau satu per satu: [faktur](docs/contoh-cetak/faktur.pdf), [surat jalan](docs/contoh-cetak/surat-jalan.pdf), [laba rugi](docs/contoh-cetak/laba-rugi.pdf), [neraca](docs/contoh-cetak/neraca.pdf).
 
 Data di gambar adalah **data contoh fiktif** (lihat [Data contoh](#data-contoh-untuk-latihan)), bukan transaksi sungguhan. Peta lacak truk di gambar memakai titik uji; latar peta OpenStreetMap tidak termuat di lingkungan uji.
 
@@ -238,21 +238,27 @@ Harga pokok memakai **rata-rata bergerak**. Bila stok kosong, sistem memakai *ha
 5. **Operasional → Penyesuaian stok → centang "Saldo awal stok"** untuk stok fisik tiap barang hari ini.
 6. Isi armada (beserta ID perangkat GPS bila ada) dan sopir, lalu sambungkan GPS di **Lacak truk → Pengaturan GPS**. Setelah itu alur harian cukup: pesanan → jadwal kirim → berangkat → terkirim → faktur → penerimaan.
 
-## Data contoh (untuk latihan)
+## Data contoh (untuk latihan & presentasi)
 
-`seed/demo-erp.sql` mengisi modul keuangan & operasional dengan kegiatan pabrik **1 Agustus – 17 Oktober 2026**, supaya staf bisa berlatih per peran dan laporan bisa dicoba sebelum data asli masuk. Isinya:
+`seed/demo-erp.sql` mengisi modul keuangan & operasional dengan kegiatan pabrik **1 Januari 2026 sampai "hari ini"**, supaya staf bisa berlatih per peran, laporan bisa dicoba sebelum data asli masuk, dan aplikasi bisa ditunjukkan ke klien dengan angka yang saling cocok. File yang ada di repo dibuat untuk **Senin, 19 Oktober 2026**; buat ulang untuk tanggal lain dengan `node scripts/demo/generate.mjs --hari-ini 2026-10-21` (antara April–Desember 2026; tanpa `--hari-ini` dipakai tanggal hari ini WIB). Isinya:
 
-- **Kontak fiktif:** 10 pelanggan (developer perumahan, kontraktor drainase & jalan, toko bangunan, panitia masjid, perorangan) dan 4 pemasok (semen; pasir, abu batu & split; besi & pigmen; bengkel cetakan). Telepon berformat `0811 0000 xxxx`. Tiga truk dan tiga sopir fiktif.
-- **Barang:** 18 barang jadi (paving, kanstin, U-Ditch, buis) dengan kode & nama yang sama seperti hasil *Ambil dari daftar harga website*, ditambah 6 bahan baku.
-- **Transaksi:** 19 pesanan dan 72 surat jalan (beberapa masih dijadwalkan atau di jalan per 17 Okt), DP, faktur ber-PPN dan non-PPN, penerimaan sebagian & lunas, piutang lewat jatuh tempo; 40 hasil produksi yang mengikuti jadwal kirim; 23 pembelian bahan baku & pembayarannya; upah mingguan, solar & uang jalan, listrik, gaji, penyusutan, setor PPN; stok opname akhir September; saldo awal per 31 Juli.
-- **Seimbang:** neraca balance, nilai persediaan sama dengan kartu stok, piutang & hutang sama dengan dokumen yang belum lunas.
+- **Kontak fiktif:** 39 pelanggan dari tujuh kelompok (developer perumahan, kontraktor drainase & jalan, pelaksana proyek desa, kawasan industri, toko bangunan, lembaga, perorangan) dengan termin dan kebiasaan bayar masing-masing, dan 6 pemasok (semen; pasir, abu batu & split; besi & pigmen; bengkel cetakan; ban & aki; koperasi karyawan). Telepon berformat `0811 0000 xxxx`.
+- **Armada & sopir fiktif:** dua truk engkel, satu colt diesel (ketiganya ber-GPS), satu pickup tanpa GPS, dan empat sopir.
+- **Barang:** 24 barang jadi (paving, kanstin, genteng, U-Ditch & cover, buis & tutup) dengan kode & nama yang sama seperti hasil *Ambil dari daftar harga website*, ditambah 6 bahan baku. Harga pokok dihitung dari resep (semen, pasir, abu batu, split, besi, pigmen) ditambah upah borongan.
+- **Alur yang saling terhubung:** pesanan → jadwal kirim sesuai kapasitas kendaraan → surat jalan berangkat (stok keluar + HPP rata-rata) → terkirim → faktur mingguan & akhir bulan (PPN untuk pelanggan PKP) → penerimaan sesuai kebiasaan bayar. Produksi direncanakan dari stok & pesanan yang akan dikirim, bahan baku dibeli saat menipis, lalu dibayar sesuai termin pemasok.
+- **Musim & kalender:** libur nasional 2026, Ramadan, pabrik tutup Lebaran 16–28 Maret (THR dibayar sebelumnya), musim hujan Jan–Feb lebih sepi, kemarau Jun–Okt paling ramai.
+- **Biaya rutin:** gaji 14 karyawan, upah borongan produksi, solar & uang jalan per rit, listrik, internet, iklan, komisi, cicilan & bunga pinjaman bank, pencairan & pelunasan rekening koran, penyusutan, setor/kompensasi PPN tiap bulan, stok opname per kuartal, satu pembelian cetakan (aset) dan satu pembagian dividen.
+- **Saldo awal 31 Desember 2025:** kas, bank, persediaan, aset tetap, pinjaman, serta piutang & hutang lama yang dicatat sebagai faktur & tagihan 2025 sehingga ikut di umur piutang/hutang.
+- **"Hari ini":** dua truk sedang di jalan (terlihat bergerak di *Lacak truk*, riwayat GPS 7 hari terakhir), pickup pagi sudah kembali, colt dijadwalkan berangkat siang, rencana muat beberapa hari ke depan, satu pesanan draf menunggu DP, dan beberapa piutang lewat jatuh tempo (termasuk satu yang macet).
+- **Pengaturan contoh:** kunci penerima GPS `demo-istana-gps-2026`, buku dikunci sampai akhir bulan sebelum bulan lalu, dan catatan kaki faktur.
+- **Seimbang:** neraca balance, nilai persediaan sama dengan kartu stok, piutang & hutang sama dengan dokumen yang belum lunas, tidak ada stok minus di tanggal mana pun, sehingga cetakan faktur, surat jalan, dan semua laporan saling cocok.
 
 **Perlu diketahui**
-- Nama pelanggan, pemasok, armada, dan sopir **fiktif**. Harga jual paving & kanstin, harga pokok, harga bahan, gaji, dan biaya bulanan adalah **angka contoh**, bukan angka pabrik. Harga U-Ditch & buis mengikuti daftar harga website.
-- Tanggalnya tetap. Ringkasan "hari ini" paling pas dilihat sekitar 17 Oktober 2026; setelah itu tagihan makin banyak yang lewat jatuh tempo dan muatan hari ini kosong.
+- Nama pelanggan, pemasok, armada, dan sopir **fiktif**. Harga jual paving, kanstin & genteng, harga pokok, harga bahan, gaji, dan biaya bulanan adalah **angka perkiraan**, bukan angka pabrik. Harga U-Ditch & buis mengikuti daftar harga website.
+- Tanggalnya tetap setelah dibuat. Ringkasan "hari ini" paling pas dilihat pada tanggal `--hari-ini`; setelah itu tagihan makin banyak yang lewat jatuh tempo dan muatan hari ini kosong. Buat ulang dan muat ulang sebelum presentasi.
 - Semua id berawalan `demo-`. Barang dimasukkan dengan `INSERT OR IGNORE`: kalau barang berkode sama sudah ada, data contoh memakainya tanpa menimpa harganya.
 - **Pengaman:** file ini menolak dijalankan (`CHECK constraint failed: n = 0`) bila database sudah berisi transaksi sungguhan atau data contoh sudah pernah dimuat. Tidak ada data yang berubah.
-- Data contoh **tidak membuat akun pengguna** dan tidak berisi posisi GPS. Buat akun latihan di `/internal/pengguna` (sopir latihan bisa dihubungkan ke sopir contoh); jangan memakai password/PIN yang mudah ditebak di situs produksi.
+- Data contoh **tidak membuat akun pengguna**. Di lokal, buat akun latihan di `/internal/pengguna` (sopir latihan bisa dihubungkan ke sopir contoh); untuk Worker demo pakai `npm run demo:worker:akun` (lihat di bawah). Jangan memakai password/PIN yang mudah ditebak di situs produksi.
 
 ```powershell
 npm run demo:local              # muat ke D1 lokal (paling aman untuk mencoba)
@@ -260,10 +266,10 @@ npm run demo:hapus:local        # hapus lagi
 
 npm run demo:remote             # muat ke D1 produksi, KHUSUS untuk masa latihan sebelum dipakai sungguhan
 npm run demo:hapus:remote       # hapus sebelum mulai mencatat transaksi asli
-npm run demo:generate           # buat ulang kedua file SQL setelah mengubah scripts/demo/generate.mjs
+npm run demo:generate           # buat ulang file SQL (tambahkan -- --hari-ini YYYY-MM-DD untuk tanggal tertentu)
 ```
 
-**Menghapus.** `seed/demo-erp-hapus.sql` menghapus semua dokumen contoh **beserta** jurnal, pergerakan stok, dan baris yang terbentuk ulang saat dokumen contoh diubah atau statusnya diganti lewat aplikasi, lalu menyusun ulang penomoran. Riwayat posisi truk contoh ikut terhapus, dan akun sopir latihan dilepas dari sopir contoh. Data asli tidak tersentuh. Ia berhenti tanpa mengubah apa pun bila ada transaksi **baru** (latihan) yang memakai pelanggan, barang, armada, pesanan, atau faktur contoh, karena menghapus induknya akan membuat pembukuan latihan itu timpang. Untuk kasus itu, dan untuk mengosongkan semua latihan sebelum mulai sungguhan, pakai `seed/erp-mulai-bersih.sql`:
+**Menghapus.** `seed/demo-erp-hapus.sql` menghapus semua dokumen contoh **beserta** jurnal, pergerakan stok, dan baris yang terbentuk ulang saat dokumen contoh diubah atau statusnya diganti lewat aplikasi, lalu menyusun ulang penomoran. Riwayat posisi truk contoh dan kunci GPS contoh ikut terhapus, dan akun sopir latihan dilepas dari sopir contoh. Data asli tidak tersentuh. Ia berhenti tanpa mengubah apa pun bila ada transaksi **baru** (latihan) yang memakai pelanggan, barang, armada, pesanan, atau faktur contoh, karena menghapus induknya akan membuat pembukuan latihan itu timpang. Untuk kasus itu, dan untuk mengosongkan semua latihan sebelum mulai sungguhan, pakai `seed/erp-mulai-bersih.sql`:
 
 ```powershell
 # Cadangkan dulu (lihat "Cadangan database"), lalu:
@@ -273,6 +279,40 @@ npx wrangler d1 execute DB --remote --file=./seed/erp-mulai-bersih.sql
 File itu menghapus **semua** transaksi keuangan & operasional (contoh maupun latihan): jurnal, faktur, penerimaan, pembelian, pembayaran, kas, pesanan, surat jalan, produksi, penyesuaian, stok, penomoran, dan riwayat posisi truk, serta kontak, armada, sopir, dan barang contoh. Bagan akun, barang asli & harganya, pengguna, dan pengaturan tetap.
 
 Setelah menghapus dengan file mana pun, jalankan lagi **Barang & jasa → Ambil dari daftar harga website** (barang yang dibuat data contoh ikut terhapus; barang yang sudah ada tidak diduplikasi), lalu lanjutkan langkah *Mulai memakai* di atas.
+
+### Worker demo untuk presentasi
+
+Untuk menunjukkan aplikasi ke klien tanpa menyentuh situs produksi, jalankan salinan aplikasi sebagai Worker terpisah (`istana-block-demo`) dengan database & bucket sendiri (`wrangler.demo.jsonc`). Semua halamannya diberi `noindex`, `robots.txt` menolak semua, dan setiap halaman menampilkan pita "Versi demo".
+
+```powershell
+# Sekali di awal
+npx wrangler d1 create istana-block-demo-db --location=apac      # salin database_id ke wrangler.demo.jsonc
+npx wrangler r2 bucket create istana-block-demo-media --location=apac
+npx wrangler secret put AUTH_SECRET -c wrangler.demo.jsonc        # string acak baru, JANGAN sama dengan produksi
+npm run demo:worker:migrate
+npm run demo:worker:seed                                          # produk, artikel, halaman dari situs lama
+
+# Data contoh untuk tanggal presentasi, lalu akun per peran
+node scripts/demo/generate.mjs --hari-ini 2026-10-21
+npm run demo:worker:data
+npm run demo:worker:akun -- --password "sandi-demo-yang-panjang"   # cetak daftar akun + PIN sopir/gudang
+npm run demo:worker:deploy
+```
+
+Buka `https://istana-block-demo.<akun>.workers.dev/internal`. Akun kantor `pemilik@demo.istanablock`, `situs@…`, `keuangan@…`, `operasional@…` memakai password di atas; kepala gudang (`0811 0000 9001`) dan sopir (`0811 0000 4101`–`4104`) masuk di `/operasional/masuk` dengan PIN yang dicetak.
+
+**Truk bergerak saat presentasi.** Jalankan `npm run demo:gps -- --url https://istana-block-demo.<akun>.workers.dev` di laptop selama presentasi: skrip mengirim posisi tiga truk contoh ke penerima GPS aplikasi (format yang sama dengan alat GPS sungguhan) setiap 10 detik, sehingga *Operasional → Lacak truk* bergerak. Opsi: `--interval 5`, `--percepat 3` (kecepatan perjalanan), `--key` bila kunci GPS sudah diganti.
+
+**Memperbarui sebelum presentasi berikutnya.** Buat ulang data untuk tanggal baru lalu muat ulang:
+
+```powershell
+npm run demo:worker:hapus            # atau demo:worker:bersih bila sudah ada transaksi latihan di Worker demo
+node scripts/demo/generate.mjs --hari-ini 2026-11-02
+npm run demo:worker:data
+npm run demo:worker:akun -- --password "sandi-demo-yang-panjang"
+```
+
+Akun tidak ikut terhapus, tetapi akun sopir dilepas dari sopir contoh saat data dihapus. Jalankan lagi `npm run demo:worker:akun -- --password "…"` setelah memuat ulang supaya akun sopir tersambung lagi (PIN dibuat baru dan dicetak). Untuk memperbarui kode Worker demo setelah ada perubahan aplikasi, cukup `npm run demo:worker:deploy`.
 
 ## Teknologi
 
@@ -329,12 +369,14 @@ seed/demo-erp.sql      data contoh keuangan & operasional; demo-erp-hapus.sql un
                        erp-mulai-bersih.sql untuk mengosongkan semua transaksi (lihat "Data contoh")
 scripts/create-admin.mjs  membuat/mereset akun dan perannya
 scripts/demo/          pembuat data contoh (menghasilkan ketiga file seed/demo-erp*.sql & erp-mulai-bersih.sql)
+                       akun-demo.mjs (akun per peran) & simulasi-gps.mjs (truk bergerak saat presentasi)
+wrangler.demo.jsonc    Worker demo terpisah untuk presentasi (database & bucket sendiri, noindex)
 public/brand/          logo resmi (biru & putih)
 public/img/            foto dari situs lama: pabrik, produk, galeri, logo klien, lembar TKDN
 public/reel/           poster & subtitle video fitur
 public/reel-src/       file video fitur (MP4 H.264 + WebM VP9; senyap & bersuara)
 tools/reel/            skrip untuk merekam ulang video fitur dari UI asli (lihat tools/reel/README.md)
-docs/screenshots/      gambar untuk README ini; docs/contoh-cetak/ contoh PDF laporan berkop
+docs/screenshots/      gambar untuk README ini; docs/contoh-cetak/ contoh cetakan berkop dari data contoh
 ```
 
 ## Menjalankan di komputer sendiri
@@ -411,6 +453,16 @@ npx wrangler d1 export istana-block-db --remote --output ../backup-$(Get-Date -F
 npm run deploy
 ```
 
+**Deploy otomatis dari GitHub (Workers Builds).** Bila Worker disambungkan ke repo, isi pengaturannya di **Workers & Pages → istana-block-web → Settings → Build**:
+
+| Kolom | Isi |
+|---|---|
+| Build command | `npx opennextjs-cloudflare build` |
+| Deploy command | `npx opennextjs-cloudflare deploy` |
+| Non-production branch deploy command | `npx opennextjs-cloudflare upload` |
+
+Jangan memakai `npx wrangler deploy` atau `npx wrangler preview` sebagai perintah deploy: tanpa build OpenNext tidak ada `.open-next/worker.js` untuk diunggah, dan `wrangler preview` gagal dengan pesan *missing a `previews` block*. Migrasi database tetap dijalankan manual (`npm run db:migrate:remote`) **sebelum** perubahan yang membutuhkannya di-merge ke `main`.
+
 Kalau skema database diubah (`src/db/schema.ts`): `npm run db:generate`, lalu `npm run db:migrate:remote`, lalu deploy.
 
 > **Memperbarui ke versi portal `/internal` (migrasi `drizzle/0004_portal_gps.sql`).** Migrasi ini menambah tabel riwayat posisi truk, kolom ID perangkat GPS di armada, dan **membuat ulang tabel `users`** (email & password kini boleh kosong untuk akun nomor HP + PIN); semua akun lama disalin utuh beserta password dan perannya. Urutannya: cadangkan database → `npm run db:migrate:remote` → **baru** merge ke `main` / deploy. Kode lama tetap bisa login dengan tabel baru, tetapi kode baru tanpa migrasi ini akan gagal login. Setelah tayang, `/admin` dan `/keuangan` otomatis dialihkan ke alamat baru; beri tahu staf untuk membuka `/internal`.
@@ -474,4 +526,8 @@ Hal lain:
 | `npm run admin:create -- --phone 0812… --pin 6angka --name … --roles gudang [--driver ID_SOPIR] [--remote]` | buat akun lapangan (nomor HP + PIN) atau atur ulang PIN-nya; biasanya cukup lewat `/internal/pengguna` |
 | `npm run demo:local` / `:remote` | muat data contoh (lihat *Data contoh*) |
 | `npm run demo:hapus:local` / `:remote` | hapus data contoh |
-| `npm run demo:generate` | buat ulang file data contoh dari `scripts/demo/generate.mjs` |
+| `npm run demo:generate` | buat ulang file data contoh dari `scripts/demo/generate.mjs` (`-- --hari-ini YYYY-MM-DD`) |
+| `npm run demo:worker:migrate` / `:seed` / `:data` / `:hapus` / `:bersih` | migrasi, data awal, data contoh, hapus data contoh, kosongkan transaksi di **Worker demo** |
+| `npm run demo:worker:akun -- --password …` | buat akun demo per peran (kantor & lapangan) di Worker demo |
+| `npm run demo:worker:deploy` | build & deploy Worker demo |
+| `npm run demo:gps -- --url …` | simulasi alat GPS tiga truk contoh selama presentasi |

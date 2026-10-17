@@ -18,15 +18,24 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: "Istana Block Purwakarta", template: "%s | Istana Block Purwakarta" },
     applicationName: "Istana Block Purwakarta",
     openGraph: { siteName: "Istana Block Purwakarta", locale: "id_ID", type: "website" },
+    ...(env.DEMO_MODE === "1" ? { robots: { index: false, follow: false } } : {}),
   };
 }
 
 export const viewport: Viewport = { themeColor: "#0E2A6B" };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const env = await getEnv();
   return (
     <html lang="id">
-      <body>{children}</body>
+      <body>
+        {env.DEMO_MODE === "1" && (
+          <div className="demo-strip no-print" role="note">
+            <b>Versi demo</b> · semua pesanan, faktur, dan laporan di sini adalah data contoh fiktif. Situs resmi: istanablockpurwakarta.com
+          </div>
+        )}
+        {children}
+      </body>
     </html>
   );
 }
