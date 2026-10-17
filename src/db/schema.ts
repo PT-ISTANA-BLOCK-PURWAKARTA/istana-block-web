@@ -15,6 +15,8 @@ export const users = sqliteTable("users", {
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   passwordHash: text("password_hash").notNull(),
+  /** Peran: owner (semua modul), web (/admin), keuangan (/keuangan), operasional (/operasional). */
+  roles: text("roles", { mode: "json" }).$type<string[]>().notNull().default(sql`'["owner"]'`),
   ...timestamps,
 });
 
@@ -125,3 +127,5 @@ export type Product = typeof products.$inferSelect;
 export type Article = typeof articles.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type Page = typeof pages.$inferSelect;
+
+export * from "./erp";

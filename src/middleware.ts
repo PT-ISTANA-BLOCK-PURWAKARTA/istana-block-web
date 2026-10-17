@@ -76,16 +76,14 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
-  // Admin: hanya pengalihan cepat untuk kenyamanan. Pemeriksaan sesi yang sebenarnya
-  // (verifikasi token + cek ke database) dilakukan di setiap halaman dan server action admin.
-  if (path === "/admin" || path.startsWith("/admin/")) {
-    if (path === "/admin/login") return NextResponse.next();
-    if (!req.cookies.get(SESSION_COOKIE)?.value) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/admin/login";
-      url.search = "";
-      return NextResponse.redirect(url);
-    }
+  // Panel (situs, keuangan, operasional): hanya pengalihan cepat untuk kenyamanan. Pemeriksaan sesi
+  // dan peran yang sebenarnya dilakukan di setiap halaman dan server action (requireModule).
+  const panel = ["/admin", "/keuangan", "/operasional"].some((p) => path === p || path.startsWith(`${p}/`));
+  if (panel && path !== "/admin/login" && !req.cookies.get(SESSION_COOKIE)?.value) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/admin/login";
+    url.search = path === "/admin" ? "" : `?next=${encodeURIComponent(path)}`;
+    return NextResponse.redirect(url);
   }
 
   // (e) Lanjut seperti biasa.

@@ -3,10 +3,13 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getDb, getEnv, schema } from "@/db";
+import { canOpen, homeFor, normalizeRoles, type ModuleKey, type Role } from "./roles";
 import { SESSION_COOKIE, verifySession } from "./session";
 
-/** Ambil admin yang sedang login, atau null. Selalu cek ke database. */
-export async function getCurrentAdmin() {
+export type CurrentUser = { id: number; email: string; name: string; roles: Role[] };
+
+/** Ambil pengguna yang sedang login, atau null. Selalu cek ke database. */
+export async function getCurrentAdmin(): Promise<CurrentUser | null> {
   const env = await getEnv();
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const session = await verifySession(token, env.AUTH_SECRET);
@@ -17,12 +20,41 @@ export async function getCurrentAdmin() {
   // Token yang dibuat sebelum password diganti dianggap tidak berlaku.
   const changedAt = Math.floor(user.updatedAt.getTime() / 1000);
   if (session.iat && session.iat < changedAt) return null;
-  return { id: user.id, email: user.email, name: user.name };
+  return { id: user.id, email: user.email, name: user.name, roles: normalizeRoles(user.roles) };
 }
 
-/** Wajib dipanggil di setiap halaman admin dan setiap server action admin. */
+/** Wajib login (peran apa pun). */
+export async function requireUser() {
+  const user = await getCurrentAdmin();
+  if (!user) redirect("/admin/login");
+  return user;
+}
+
+/**
+ * Wajib dipanggil di setiap halaman dan server action sebuah modul.
+ * Pengguna tanpa akses diarahkan ke modul yang memang boleh ia buka.
+ */
+export async function requireModule(module: ModuleKey) {
+  const user = await requireUser();
+  if (!canOpen(user.roles, module)) redirect(homeFor(user.roles) ?? "/admin/login?e=akses");
+  return user;
+}
+
+/** Panel situs (/admin). */
 export async function requireAdmin() {
-  const admin = await getCurrentAdmin();
-  if (!admin) redirect("/admin/login");
-  return admin;
+  return requireModule("web");
+}
+
+/** Hanya pemilik: kelola pengguna & peran. */
+export async function requireOwner() {
+  const user = await requireUser();
+  if (!user.roles.includes("owner")) redirect(homeFor(user.roles) ?? "/admin/login?e=akses");
+  return user;
+}
+
+/** Boleh membuka salah satu dari beberapa modul (mis. data pelanggan dipakai keuangan & operasional). */
+export async function requireAnyModule(...modules: ModuleKey[]) {
+  const user = await requireUser();
+  if (!modules.some((m) => canOpen(user.roles, m))) redirect(homeFor(user.roles) ?? "/admin/login?e=akses");
+  return user;
 }

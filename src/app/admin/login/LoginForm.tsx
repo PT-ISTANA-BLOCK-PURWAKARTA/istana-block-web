@@ -4,9 +4,10 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { login } from "../actions/auth";
 
-export function LoginForm() {
+export function LoginForm({ next }: { next: string }) {
   return (
     <ActionForm action={login} className="stack" style={{ gap: 16 }}>
+      <input type="hidden" name="next" value={next} />
       <div className="field">
         <label htmlFor="email">Email</label>
         <input id="email" name="email" type="email" autoComplete="username" required />

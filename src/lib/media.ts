@@ -14,7 +14,7 @@ export const MAX_UPLOAD = 5 * 1024 * 1024;
 export class UploadError extends Error {}
 
 /** Simpan gambar ke R2. Mengembalikan key, atau null bila tidak ada file. */
-export async function saveImage(file: FormDataEntryValue | null, folder: "produk" | "artikel" | "halaman") {
+export async function saveImage(file: FormDataEntryValue | null, folder: "produk" | "artikel" | "halaman" | "pengiriman") {
   if (!file || typeof file === "string" || file.size === 0) return null;
   const ext = TYPES[file.type];
   if (!ext) throw new UploadError("Format gambar harus JPG, PNG, WebP, AVIF, atau GIF.");

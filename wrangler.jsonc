@@ -31,11 +31,6 @@
 		{
 			"binding": "MEDIA",
 			"bucket_name": "istana-block-media"
-		},
-		{
-			"bucket_name": "istana-block-media",
-			"binding": "istana_block_media",
-			"remote": true
 		}
 	]
 }
