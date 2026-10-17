@@ -26,7 +26,7 @@
     "demo:worker:hapus": "wrangler d1 execute DB --remote --config wrangler.demo.jsonc --file=./seed/demo-erp-hapus.sql",
     "demo:worker:bersih": "wrangler d1 execute DB --remote --config wrangler.demo.jsonc --file=./seed/erp-mulai-bersih.sql",
     "demo:worker:akun": "node scripts/demo/akun-demo.mjs --remote --config wrangler.demo.jsonc",
-    "demo:worker:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy -c wrangler.demo.jsonc",
+    "demo:worker:deploy": "opennextjs-cloudflare build -c wrangler.demo.jsonc && opennextjs-cloudflare deploy -c wrangler.demo.jsonc",
     "demo:gps": "node scripts/demo/simulasi-gps.mjs",
     "admin:create": "node scripts/create-admin.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
