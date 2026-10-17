@@ -6,16 +6,17 @@ import { ConfirmAction } from "@/components/erp/ConfirmAction";
 import { BackLink, Ok, PageHead, payStatus, Rp, Status } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { docTotals } from "@/lib/erp/docs";
+import { overdueByContact, stockPosition } from "@/lib/erp/insights";
 import { deliveryItems, opsAccess } from "@/lib/erp/ops";
 import { orderProgress } from "@/lib/erp/orders";
 import { depositBalance, getFinSettings, loadAccounts } from "@/lib/erp/server";
-import { formatAmount, formatQty, tgl } from "@/lib/erp/util";
+import { formatAmount, formatQty, tgl, today } from "@/lib/erp/util";
 
 export const metadata = { title: "Pesanan" };
 const EPS = 1e-9;
 
 export default async function PesananDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canOrders: canEdit, canShip, canFinance } = await opsAccess();
   const { id } = await params;
   const { ok } = await searchParams;
   const db = await getDb();
@@ -35,7 +36,9 @@ export default async function PesananDetail({ params, searchParams }: { params: 
     getFinSettings(db),
     loadAccounts(db),
   ]);
-  const items = await deliveryItems(db, deliveries.map((x) => x.d.id));
+  const [items, stock, overdue] = await Promise.all([deliveryItems(db, deliveries.map((x) => x.d.id)), stockPosition(db), overdueByContact(db, today())]);
+  const free = new Map(stock.map((s) => [s.id, s.free]));
+  const late = overdue.get(o.contactId);
   const deposit = canFinance ? await depositBalance(db, acc.sys("uang_muka_pelanggan"), o.contactId, "credit") : 0;
   const t = docTotals(prog, { discount: o.discount, ongkir: o.ongkir, taxable: o.taxable, taxRate: fin.ppnRate });
   const open = o.status === "dikonfirmasi" || o.status === "dikirim_sebagian" || o.status === "terkirim";
@@ -48,9 +51,9 @@ export default async function PesananDetail({ params, searchParams }: { params: 
     <>
       <BackLink href="/operasional/pesanan">Pesanan</BackLink>
       <PageHead title={o.number} sub={<Status s={o.status} />}>
-        {canEdit && canSchedule && <Link href={`/operasional/pengiriman/baru?pesanan=${o.id}`} className="btn btn-primary btn-sm">+ Jadwalkan pengiriman</Link>}
-        {canInvoice && <Link href={`/keuangan/penjualan/baru?pesanan=${o.id}`} className="btn btn-blue btn-sm">Buat faktur</Link>}
-        {canFinance && o.status !== "batal" && <Link href={`/keuangan/penerimaan/baru?kontak=${o.contactId}`} className="btn btn-ghost btn-sm">Catat DP / pembayaran</Link>}
+        {canShip && canSchedule && <Link href={`/operasional/pengiriman/baru?pesanan=${o.id}`} className="btn btn-primary btn-sm">+ Jadwalkan pengiriman</Link>}
+        {canInvoice && <Link href={`/akuntansi/penjualan/baru?pesanan=${o.id}`} className="btn btn-blue btn-sm">Buat faktur</Link>}
+        {canFinance && o.status !== "batal" && <Link href={`/akuntansi/penerimaan/baru?kontak=${o.contactId}`} className="btn btn-ghost btn-sm">Catat DP / pembayaran</Link>}
         {canEdit && o.status !== "batal" && o.status !== "selesai" && <Link href={`/operasional/pesanan/${o.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>}
       </PageHead>
       <Ok ok={ok} />
@@ -59,7 +62,12 @@ export default async function PesananDetail({ params, searchParams }: { params: 
           Pesanan masih draf. Konfirmasi dulu agar bisa dijadwalkan kirim.
         </p>
       )}
-      <div className="stack" style={{ gap: 20 }}>
+      {late && o.status !== "selesai" && o.status !== "batal" && (
+        <p className="flag flag-warn" style={{ marginBottom: 16 }}>
+          Pelanggan ini punya {late.n} faktur lewat jatuh tempo (tertua {tgl(late.oldest)}). Koordinasikan dengan bagian keuangan sebelum mengirim lagi.
+        </p>
+      )}
+      <div className="stack" style={{ gap: 16 }}>
         <section className="admin-card doc-head">
           <div><span className="muted small">Pelanggan</span><Link href={`/operasional/pelanggan/${contact?.id}`}><b>{contact?.name}</b></Link>{contact?.company && <div className="small">{contact.company}</div>}{contact?.phone && <div className="small"><a href={`tel:${contact.phone}`}>{contact.phone}</a></div>}</div>
           <div><span className="muted small">Tanggal pesanan</span><b>{tgl(o.date)}</b>{o.requestedDate && <div className="small">minta kirim {tgl(o.requestedDate)}</div>}</div>
@@ -77,13 +85,20 @@ export default async function PesananDetail({ params, searchParams }: { params: 
         <section className="admin-table">
           <table>
             <caption>Barang</caption>
-            <thead><tr><th>Barang</th><th className="num">Dipesan</th><th className="num">Dijadwalkan</th><th className="num">Dikirim</th><th className="num">Diterima</th><th className="num">Difaktur</th><th className="num">Harga</th><th className="num">Jumlah</th></tr></thead>
+            <thead><tr><th>Barang</th><th className="num">Dipesan</th><th className="num">Dijadwalkan</th><th className="num">Stok bebas</th><th className="num">Dikirim</th><th className="num">Diterima</th><th className="num">Difaktur</th><th className="num">Harga</th><th className="num">Jumlah</th></tr></thead>
             <tbody>
               {prog.map((p) => (
                 <tr key={p.id}>
                   <td><b>{p.name}</b>{p.description && <div className="small muted">{p.description}</div>}</td>
                   <td className="num">{formatQty(p.qty)} {p.unit}</td>
                   <td className="num">{formatQty(p.scheduled)}</td>
+                  <td className="num small">
+                    {free.has(p.itemId) ? (
+                      <span className={p.scheduled + EPS < p.qty && (free.get(p.itemId) ?? 0) < p.qty - p.scheduled ? "text-warn" : "muted"}>{formatQty(free.get(p.itemId) ?? 0)}</span>
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                  </td>
                   <td className="num">{formatQty(p.shipped)}</td>
                   <td className={`num${p.delivered + EPS >= p.qty ? " text-sukses" : ""}`}>{formatQty(p.delivered)}</td>
                   <td className="num">{formatQty(p.invoiced)}</td>
@@ -93,11 +108,11 @@ export default async function PesananDetail({ params, searchParams }: { params: 
               ))}
             </tbody>
             <tfoot>
-              <tr><td colSpan={7} className="num">Subtotal</td><td className="num"><Rp n={t.subtotal} /></td></tr>
-              {t.discount > 0 && <tr><td colSpan={7} className="num">Diskon</td><td className="num"><Rp n={-t.discount} /></td></tr>}
-              {t.ongkir > 0 && <tr><td colSpan={7} className="num">Ongkos kirim</td><td className="num"><Rp n={t.ongkir} /></td></tr>}
-              {o.taxable && <tr><td colSpan={7} className="num">PPN {formatQty(fin.ppnRate)}% (perkiraan)</td><td className="num"><Rp n={t.tax} /></td></tr>}
-              <tr><th colSpan={7} className="num">Nilai pesanan</th><th className="num"><Rp n={t.total} strong /></th></tr>
+              <tr><td colSpan={8} className="num">Subtotal</td><td className="num"><Rp n={t.subtotal} /></td></tr>
+              {t.discount > 0 && <tr><td colSpan={8} className="num">Diskon</td><td className="num"><Rp n={-t.discount} /></td></tr>}
+              {t.ongkir > 0 && <tr><td colSpan={8} className="num">Ongkos kirim</td><td className="num"><Rp n={t.ongkir} /></td></tr>}
+              {o.taxable && <tr><td colSpan={8} className="num">PPN {formatQty(fin.ppnRate)}% (perkiraan)</td><td className="num"><Rp n={t.tax} /></td></tr>}
+              <tr><th colSpan={8} className="num">Nilai pesanan</th><th className="num"><Rp n={t.total} strong /></th></tr>
             </tfoot>
           </table>
         </section>
@@ -112,12 +127,12 @@ export default async function PesananDetail({ params, searchParams }: { params: 
                 <tr key={d.id} className={d.status === "batal" ? "row-muted" : undefined}>
                   <td><Link href={`/operasional/pengiriman/${d.id}`}><b>{d.number}</b></Link></td>
                   <td>{tgl(d.date)}</td>
-                  <td className="small">{(items.get(d.id) ?? []).map((x, i) => <div key={i}>{x.name} <b>{formatQty(x.qty)}</b> {x.unit}</div>)}</td>
+                  <td className="small">{(items.get(d.id) ?? []).map((x, i) => <div key={i}><b className="tabular">{formatQty(x.qty)} {x.unit}</b> · {x.name}</div>)}</td>
                   <td className="small">{plate ?? "—"}<div className="muted">{driver ?? ""}</div></td>
                   <td><Status s={d.status} />{d.receivedBy && <div className="small muted">diterima {d.receivedBy}</div>}</td>
                 </tr>
               ))}
-              {deliveries.length === 0 && <tr><td colSpan={5} className="muted">Belum ada surat jalan.{canEdit && canSchedule && <> <Link href={`/operasional/pengiriman/baru?pesanan=${o.id}`}>Jadwalkan sekarang</Link>.</>}</td></tr>}
+              {deliveries.length === 0 && <tr><td colSpan={5} className="muted">Belum ada surat jalan.{canShip && canSchedule && <> <Link href={`/operasional/pengiriman/baru?pesanan=${o.id}`}>Jadwalkan sekarang</Link>.</>}</td></tr>}
             </tbody>
           </table>
         </section>
@@ -130,7 +145,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
               <tbody>
                 {invoices.map((iv) => (
                   <tr key={iv.id}>
-                    <td>{canFinance ? <Link href={`/keuangan/penjualan/${iv.id}`}><b>{iv.number}</b></Link> : <b>{iv.number}</b>}</td>
+                    <td>{canFinance ? <Link href={`/akuntansi/penjualan/${iv.id}`}><b>{iv.number}</b></Link> : <b>{iv.number}</b>}</td>
                     <td>{tgl(iv.date)}</td>
                     <td><Status s={payStatus(iv)} /></td>
                     <td className="num"><Rp n={iv.total} /></td>

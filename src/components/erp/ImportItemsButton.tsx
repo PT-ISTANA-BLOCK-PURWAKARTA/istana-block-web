@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { importItemsFromProducts } from "@/app/keuangan/actions/master";
+import { importItemsFromProducts } from "@/app/akuntansi/actions/master";
 
 export function ImportItemsButton() {
   const [state, run, pending] = useActionState(importItemsFromProducts, undefined);

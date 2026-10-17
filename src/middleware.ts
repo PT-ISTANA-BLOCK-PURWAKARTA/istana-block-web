@@ -51,6 +51,21 @@ function gone() {
   });
 }
 
+const PANELS = [
+  { base: "/situs", login: "/situs/masuk" },
+  { base: "/akuntansi", login: "/akuntansi/masuk" },
+  { base: "/operasional", login: "/operasional/masuk" },
+  { base: "/internal/pengguna", login: "/internal" },
+];
+
+function oldPanelPath(path: string) {
+  if (path === "/admin" || path === "/admin/login") return "/internal";
+  if (path === "/admin/pengguna") return "/internal/pengguna";
+  if (path.startsWith("/admin/")) return `/situs/${path.slice(7)}`;
+  if (path === "/keuangan" || path.startsWith("/keuangan/")) return `/akuntansi${path.slice(9)}`;
+  return null;
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   // (a) "/produk/" → "/produk" (kecuali beranda).
@@ -76,17 +91,25 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
-  // Panel (situs, keuangan, operasional): hanya pengalihan cepat untuk kenyamanan. Pemeriksaan sesi
-  // dan peran yang sebenarnya dilakukan di setiap halaman dan server action (requireModule).
-  const panel = ["/admin", "/keuangan", "/operasional"].some((p) => path === p || path.startsWith(`${p}/`));
-  if (panel && path !== "/admin/login" && !req.cookies.get(SESSION_COOKIE)?.value) {
+  // (e) Alamat panel lama: /admin → halaman pilih aplikasi, /admin/… → /situs/…, /keuangan/… → /akuntansi/….
+  const old = oldPanelPath(path);
+  if (old) {
     const url = req.nextUrl.clone();
-    url.pathname = "/admin/login";
-    url.search = path === "/admin" ? "" : `?next=${encodeURIComponent(path)}`;
+    url.pathname = old;
+    return NextResponse.redirect(url, 301);
+  }
+
+  // (f) Aplikasi internal: hanya pengalihan cepat ke halaman masuk aplikasi itu. Pemeriksaan sesi
+  // dan peran yang sebenarnya dilakukan di setiap halaman dan server action (requireModule/requirePerm).
+  const app = PANELS.find((p) => path === p.base || path.startsWith(`${p.base}/`));
+  if (app && path !== app.login && !req.cookies.get(SESSION_COOKIE)?.value) {
+    const url = req.nextUrl.clone();
+    url.pathname = app.login;
+    url.search = path === app.base ? "" : `?next=${encodeURIComponent(path + req.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
 
-  // (e) Lanjut seperti biasa.
+  // (g) Lanjut seperti biasa.
   return NextResponse.next();
 }
 

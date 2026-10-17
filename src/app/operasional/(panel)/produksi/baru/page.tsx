@@ -9,7 +9,7 @@ import { today } from "@/lib/erp/util";
 export const metadata = { title: "Catat hasil produksi" };
 
 export default async function ProduksiBaru() {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canStock: canEdit, canFinance } = await opsAccess();
   if (!canEdit) redirect("/operasional/produksi");
   const db = await getDb();
   const lists = await pickLists(db);

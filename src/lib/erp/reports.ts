@@ -156,3 +156,93 @@ export async function cashBalances(db: DB, accounts: Account[], to: string) {
   const sums = await sumsByAccount(db, { to });
   return rowsFor(accounts, sums, ["kas_bank"]).filter((r) => r.account.active || r.balance);
 }
+
+/** Ringkasan laba rugi per bulan (untuk grafik tren). */
+export async function monthlyProfit(db: DB, accounts: Account[], months: { from: string; to: string; label: string; long: string }[]) {
+  const out = [];
+  for (const m of months) {
+    const pl = await profitLoss(db, accounts, m.from, m.to);
+    out.push({ ...m, revenue: pl.revenue, cost: pl.cogs + pl.opex + pl.otherExpense - pl.otherIncome, net: pl.net });
+  }
+  return out;
+}
+
+/** Jurnal saldo awal (lawan akun "Ekuitas Saldo Awal") bukan uang yang benar-benar berpindah. */
+function openingJournals(accounts: Account[]) {
+  const id = accounts.find((a) => a.systemKey === "saldo_awal")?.id;
+  return id ? sql`and journal_id not in (select journal_id from fin_journal_lines where account_id = ${id})` : sql``;
+}
+
+export type CashFlowRow = { accountId: string; code: string; name: string; group: AccountGroup; amount: number };
+
+/**
+ * Arus kas metode langsung: uang masuk & keluar kas/bank dikelompokkan menurut akun lawannya
+ * (pelanggan membayar piutang, bayar pemasok, gaji, listrik, …). Transfer antar-rekening tidak dihitung.
+ */
+export async function cashFlow(db: DB, accounts: Account[], from: string, to: string) {
+  const cashIds = accounts.filter((a) => a.group === "kas_bank").map((a) => a.id);
+  if (!cashIds.length) return { opening: 0, closing: 0, inflow: [] as CashFlowRow[], outflow: [] as CashFlowRow[], totalIn: 0, totalOut: 0, perAccount: [] as { name: string; code: string; opening: number; closing: number }[] };
+  const inCash = sql.join(cashIds.map((i) => sql`${i}`), sql`, `);
+  const opening = openingJournals(accounts);
+  const rows = await db.all<{ accountId: string; amount: number }>(sql`
+    with cj as (
+      select journal_id from fin_journal_lines
+      where account_id in (${inCash}) and date >= ${from} and date <= ${to} ${opening}
+      group by journal_id having sum(debit - credit) <> 0
+    )
+    select l.account_id accountId, sum(l.credit - l.debit) amount
+    from fin_journal_lines l join cj on cj.journal_id = l.journal_id
+    where l.account_id not in (${inCash})
+    group by l.account_id`);
+  const byId = new Map(accounts.map((a) => [a.id, a]));
+  const flows = rows
+    .map((r) => {
+      const a = byId.get(r.accountId);
+      return a ? { accountId: a.id, code: a.code, name: a.name, group: a.group, amount: Number(r.amount) } : null;
+    })
+    .filter((r): r is CashFlowRow => !!r && r.amount !== 0);
+  const inflow = flows.filter((r) => r.amount > 0).sort((a, b) => b.amount - a.amount);
+  const outflow = flows.filter((r) => r.amount < 0).map((r) => ({ ...r, amount: -r.amount })).sort((a, b) => b.amount - a.amount);
+  // Saldo awal yang dicatat lewat jurnal saldo awal di dalam periode dihitung sebagai saldo awal, bukan uang masuk.
+  const saId = accounts.find((a) => a.systemKey === "saldo_awal")?.id;
+  const openIn = saId ? sql` or (date <= ${to} and journal_id in (select journal_id from fin_journal_lines where account_id = ${saId}))` : sql``;
+  const sums = await db.all<{ accountId: string; before: number; until: number }>(sql`
+    select account_id accountId,
+      coalesce(sum(case when date < ${from}${openIn} then debit - credit end), 0) before,
+      coalesce(sum(case when date <= ${to} then debit - credit end), 0) until
+    from fin_journal_lines where account_id in (${inCash}) group by account_id`);
+  const perAccount = accounts
+    .filter((a) => a.group === "kas_bank")
+    .map((a) => {
+      const s = sums.find((x) => x.accountId === a.id);
+      return { name: a.name, code: a.code, opening: Number(s?.before ?? 0), closing: Number(s?.until ?? 0) };
+    })
+    .filter((a) => a.opening || a.closing);
+  const open = perAccount.reduce((x, a) => x + a.opening, 0);
+  const closing = perAccount.reduce((x, a) => x + a.closing, 0);
+  return { opening: open, closing, inflow, outflow, totalIn: inflow.reduce((a, r) => a + r.amount, 0), totalOut: outflow.reduce((a, r) => a + r.amount, 0), perAccount };
+}
+
+/** Uang masuk & keluar kas/bank per bulan (tanpa transfer antar-rekening). */
+export async function monthlyCash(db: DB, accounts: Account[], months: { from: string; to: string; label: string; long: string }[]) {
+  const cashIds = accounts.filter((a) => a.group === "kas_bank").map((a) => a.id);
+  if (!cashIds.length || !months.length) return months.map((m) => ({ ...m, in: 0, out: 0 }));
+  const inCash = sql.join(cashIds.map((i) => sql`${i}`), sql`, `);
+  const rows = await db.all<{ journalId: string; date: string; net: number }>(sql`
+    select journal_id journalId, min(date) date, sum(debit - credit) net from fin_journal_lines
+    where account_id in (${inCash}) and date >= ${months[0].from} and date <= ${months[months.length - 1].to} ${openingJournals(accounts)}
+    group by journal_id having sum(debit - credit) <> 0`);
+  return months.map((m) => {
+    const inMonth = rows.filter((r) => r.date >= m.from && r.date <= m.to);
+    return { ...m, in: inMonth.filter((r) => r.net > 0).reduce((a, r) => a + Number(r.net), 0), out: inMonth.filter((r) => r.net < 0).reduce((a, r) => a - Number(r.net), 0) };
+  });
+}
+
+/** Penjualan (DPP, sebelum PPN) per bulan. */
+export async function monthlySales(db: DB, months: { from: string; to: string; label: string; long: string }[]) {
+  if (!months.length) return [];
+  const rows = await db.all<{ date: string; amount: number }>(sql`
+    select date, sum(subtotal - discount + ongkir) amount from fin_invoices
+    where void = 0 and date >= ${months[0].from} and date <= ${months[months.length - 1].to} group by date`);
+  return months.map((m) => ({ ...m, amount: rows.filter((r) => r.date >= m.from && r.date <= m.to).reduce((a, r) => a + Number(r.amount), 0) }));
+}

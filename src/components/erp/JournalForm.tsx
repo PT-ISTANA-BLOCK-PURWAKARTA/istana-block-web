@@ -2,7 +2,7 @@
 
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { saveJournal } from "@/app/keuangan/actions/ledger";
+import { saveJournal } from "@/app/akuntansi/actions/ledger";
 import { JournalEditor, type JRow } from "./JournalEditor";
 import type { PickAccount } from "./LinesEditor";
 

@@ -1,5 +1,6 @@
-import { PasswordForm, ProfileForm } from "@/app/admin/(panel)/pengguna/UserForms";
+import { PasswordForm, PinForm, ProfileForm } from "@/components/auth/AccountForms";
 import { PageHead } from "@/components/erp/ui";
+import { userHandle } from "@/lib/auth";
 import { opsAccess } from "@/lib/erp/ops";
 
 export const metadata = { title: "Akun saya" };
@@ -8,10 +9,10 @@ export default async function Profil() {
   const { user } = await opsAccess();
   return (
     <>
-      <PageHead title="Akun saya" sub={user.email} />
+      <PageHead title="Akun saya" sub={`${userHandle(user)} · masuk dengan ${user.via === "pin" ? "nomor HP & PIN" : "email & password"}`} />
       <div className="stack" style={{ gap: 20, maxWidth: 760 }}>
         <ProfileForm name={user.name} />
-        <PasswordForm />
+        {user.via === "pin" ? <PinForm /> : <PasswordForm />}
       </div>
     </>
   );

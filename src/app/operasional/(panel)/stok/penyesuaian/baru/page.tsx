@@ -10,7 +10,7 @@ import { today } from "@/lib/erp/util";
 export const metadata = { title: "Penyesuaian stok baru" };
 
 export default async function PenyesuaianBaru({ searchParams }: { searchParams: Promise<{ barang?: string; awal?: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canStock: canEdit, canFinance } = await opsAccess();
   if (!canEdit) redirect("/operasional/stok/penyesuaian");
   const sp = await searchParams;
   const db = await getDb();

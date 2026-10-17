@@ -6,7 +6,7 @@ import { opsAccess } from "@/lib/erp/ops";
 export const metadata = { title: "Pelanggan baru" };
 
 export default async function PelangganBaru() {
-  const { canEdit } = await opsAccess();
+  const { canOrders: canEdit } = await opsAccess();
   if (!canEdit) redirect("/operasional/pelanggan");
   return (
     <>

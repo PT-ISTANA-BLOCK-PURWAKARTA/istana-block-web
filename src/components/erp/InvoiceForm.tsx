@@ -2,8 +2,8 @@
 
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { saveInvoice } from "@/app/keuangan/actions/sales";
-import { saveBill } from "@/app/keuangan/actions/purchases";
+import { saveInvoice } from "@/app/akuntansi/actions/sales";
+import { saveBill } from "@/app/akuntansi/actions/purchases";
 import { LinesEditor, type EditorLine, type PickAccount, type PickItem } from "./LinesEditor";
 
 type Head = { id?: string; contactId?: string; date: string; dueDate?: string; note?: string; orderId?: string | null; supplierRef?: string; discount?: number; ongkir?: number; taxable?: boolean };

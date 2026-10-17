@@ -2,7 +2,7 @@
 
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { saveAccount } from "@/app/keuangan/actions/master";
+import { saveAccount } from "@/app/akuntansi/actions/master";
 import { accountGroups, type Account } from "@/db/erp";
 import { GROUP_LABEL } from "@/lib/erp/accounting";
 

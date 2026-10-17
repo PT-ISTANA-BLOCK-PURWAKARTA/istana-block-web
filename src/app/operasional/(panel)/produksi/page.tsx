@@ -9,7 +9,7 @@ import { formatQty, tgl } from "@/lib/erp/util";
 export const metadata = { title: "Hasil produksi" };
 
 export default async function Produksi({ searchParams }: { searchParams: Promise<{ ok?: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canStock: canEdit, canFinance } = await opsAccess();
   const { ok } = await searchParams;
   const db = await getDb();
   const rows = await db.select().from(schema.productions).orderBy(desc(schema.productions.date), desc(schema.productions.number)).limit(300);

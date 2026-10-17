@@ -2,7 +2,7 @@
 
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { saveContact } from "@/app/keuangan/actions/master";
+import { saveContact } from "@/app/akuntansi/actions/master";
 import type { Contact } from "@/db/erp";
 
 /** Formulir pelanggan/pemasok; dipakai di /keuangan/kontak dan /operasional/pelanggan. */

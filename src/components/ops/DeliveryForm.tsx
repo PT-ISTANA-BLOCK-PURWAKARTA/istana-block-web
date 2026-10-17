@@ -6,7 +6,17 @@ import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveDelivery } from "@/app/operasional/actions/deliveries";
 import { formatQty, parseQty } from "@/lib/erp/util";
 
-export type DeliveryLineInput = { orderLineId: string; name: string; unit: string; ordered: number; /** sisa yang masih bisa dijadwalkan di surat jalan ini */ left: number; qty: number };
+export type DeliveryLineInput = {
+  orderLineId: string;
+  name: string;
+  unit: string;
+  ordered: number;
+  /** sisa yang masih bisa dijadwalkan di surat jalan ini */
+  left: number;
+  qty: number;
+  /** stok bebas di gudang (null bila barang tidak dilacak stoknya) */
+  free?: number | null;
+};
 
 /** Formulir jadwal surat jalan: pilih armada, sopir, dan qty yang dikirim dari sisa pesanan. */
 export function DeliveryForm({
@@ -60,7 +70,7 @@ export function DeliveryForm({
       <section className="admin-table">
         <table>
           <caption>Barang yang dikirim</caption>
-          <thead><tr><th>Barang</th><th className="num">Dipesan</th><th className="num">Sisa bisa dikirim</th><th className="num">Kirim sekarang</th></tr></thead>
+          <thead><tr><th>Barang</th><th className="num">Dipesan</th><th className="num">Sisa bisa dikirim</th><th className="num">Stok bebas di gudang</th><th className="num">Kirim sekarang</th></tr></thead>
           <tbody>
             {lines.map((l) => {
               const v = parseQty(qty[l.orderLineId]);
@@ -71,6 +81,10 @@ export function DeliveryForm({
                   <td className="num">{formatQty(l.ordered)} {l.unit}</td>
                   <td className="num">{formatQty(l.left)} {l.unit}</td>
                   <td className="num">
+                    {l.free == null ? <span className="muted">—</span> : <span className={v > l.free + 1e-9 ? "text-warn" : undefined}>{formatQty(l.free)} {l.unit}</span>}
+                    {l.free != null && v > l.free + 1e-9 && <div className="small text-warn">stok belum cukup</div>}
+                  </td>
+                  <td className="num">
                     <div className="inline-form" style={{ justifyContent: "flex-end" }}>
                       <input aria-label={`Qty kirim ${l.name}`} className="num alloc-input" inputMode="decimal" value={qty[l.orderLineId] ?? ""} placeholder="0" aria-invalid={over || undefined} onChange={(e) => setQty((s) => ({ ...s, [l.orderLineId]: e.target.value }))} />
                       <span className="small muted">{l.unit}</span>
@@ -80,7 +94,7 @@ export function DeliveryForm({
                 </tr>
               );
             })}
-            {lines.length === 0 && <tr><td colSpan={4} className="muted">Semua barang pesanan ini sudah dijadwalkan.</td></tr>}
+            {lines.length === 0 && <tr><td colSpan={5} className="muted">Semua barang pesanan ini sudah dijadwalkan.</td></tr>}
           </tbody>
         </table>
       </section>

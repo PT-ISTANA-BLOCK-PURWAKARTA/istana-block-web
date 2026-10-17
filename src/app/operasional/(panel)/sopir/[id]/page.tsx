@@ -10,7 +10,7 @@ import { opsAccess } from "@/lib/erp/ops";
 export const metadata = { title: "Sopir" };
 
 export default async function SopirDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { canEdit } = await opsAccess();
+  const { canShip: canEdit } = await opsAccess();
   if (!canEdit) redirect("/operasional/sopir");
   const { id } = await params;
   const db = await getDb();

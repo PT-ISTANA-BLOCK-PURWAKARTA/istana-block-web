@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { asc, sql } from "drizzle-orm";
+import { asc, desc, sql } from "drizzle-orm";
 import { PageHead, Rp } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { ITEM_KIND_LABEL } from "@/lib/erp/accounting";
@@ -10,11 +10,11 @@ import { formatQty } from "@/lib/erp/util";
 export const metadata = { title: "Stok barang" };
 
 export default async function Stok({ searchParams }: { searchParams: Promise<{ jenis?: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canStock: canEdit, canFinance } = await opsAccess();
   const { jenis } = await searchParams;
   const db = await getDb();
   const [items, levels, pending] = await Promise.all([
-    db.select().from(schema.items).where(sql`${schema.items.trackStock} = 1 and (${schema.items.active} = 1 or exists (select 1 from inv_stock_moves m where m.item_id = ${schema.items.id}))`).orderBy(asc(schema.items.kind), asc(schema.items.code)),
+    db.select().from(schema.items).where(sql`${schema.items.trackStock} = 1 and (${schema.items.active} = 1 or exists (select 1 from inv_stock_moves m where m.item_id = ${schema.items.id}))`).orderBy(desc(schema.items.kind), asc(schema.items.code)),
     stockLevels(db),
     db.all<{ itemId: string; qty: number }>(sql`
       select dl.item_id itemId, sum(dl.qty) qty from ops_delivery_lines dl join ops_deliveries d on d.id = dl.delivery_id

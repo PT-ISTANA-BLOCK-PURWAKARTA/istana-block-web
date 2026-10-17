@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { saveItem } from "@/app/keuangan/actions/master";
+import { saveItem } from "@/app/akuntansi/actions/master";
 import type { Item } from "@/db/erp";
 import { itemKinds } from "@/db/erp";
 import { ITEM_KIND_LABEL } from "@/lib/erp/accounting";

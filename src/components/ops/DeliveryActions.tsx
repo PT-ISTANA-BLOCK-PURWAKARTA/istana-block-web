@@ -4,6 +4,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { setDeliveryStatus } from "@/app/operasional/actions/deliveries";
 import type { DeliveryStatus } from "@/db/erp";
+import { ProofInput } from "./ProofInput";
 
 function Delivered({ id, label }: { id: string; label: string }) {
   return (
@@ -13,10 +14,7 @@ function Delivered({ id, label }: { id: string; label: string }) {
       <h2>{label}</h2>
       <div className="form-grid">
         <div className="field"><label htmlFor="dv-recv">Diterima oleh</label><input id="dv-recv" name="receivedBy" placeholder="nama penerima di lokasi" /></div>
-        <div className="field">
-          <label htmlFor="dv-proof">Foto bukti terima <span className="help">surat jalan bertanda tangan / barang di lokasi; maks. 5 MB</span></label>
-          <input id="dv-proof" name="proof" type="file" accept="image/*" capture="environment" />
-        </div>
+        <ProofInput id="dv-proof" />
       </div>
       <div><SubmitButton className="btn btn-primary">Tandai terkirim</SubmitButton></div>
     </ActionForm>
@@ -49,8 +47,27 @@ function Cancel({ id, label }: { id: string; label: string }) {
   );
 }
 
-/** Tombol alur status surat jalan: dijadwalkan → berangkat → terkirim (atau batal). */
-export function DeliveryActions({ id, status }: { id: string; status: DeliveryStatus }) {
+/**
+ * Tombol alur status surat jalan: dijadwalkan → berangkat → terkirim (atau batal).
+ * Akun gudang (tanpa izin pengiriman) hanya bisa memberangkatkan truk atau membatalkan keberangkatan.
+ */
+export function DeliveryActions({ id, status, canShip }: { id: string; status: DeliveryStatus; canShip: boolean }) {
+  if (!canShip) {
+    if (status === "dijadwalkan")
+      return (
+        <div className="head-actions">
+          <Simple id={id} to="berangkat" label="Barang sudah dimuat, truk berangkat" className="btn btn-primary" note="Stok keluar dicatat hari ini." />
+        </div>
+      );
+    if (status === "berangkat")
+      return (
+        <div className="stack" style={{ gap: 8 }}>
+          <p className="small muted">Truk dalam perjalanan. Konfirmasi barang diterima dilakukan bagian pengiriman.</p>
+          <div className="head-actions"><Simple id={id} to="dijadwalkan" label="Batal berangkat (bongkar kembali)" className="btn btn-ghost btn-sm" /></div>
+        </div>
+      );
+    return null;
+  }
   if (status === "dijadwalkan")
     return (
       <div className="stack" style={{ gap: 14 }}>

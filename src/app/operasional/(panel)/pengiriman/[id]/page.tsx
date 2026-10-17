@@ -16,7 +16,7 @@ export const metadata = { title: "Surat jalan" };
 const jam = (d: Date | null) => (d ? new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(d) : "");
 
 export default async function PengirimanDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canShip: canEdit, canLoad, canFinance } = await opsAccess();
   const { id } = await params;
   const { ok } = await searchParams;
   const db = await getDb();
@@ -81,7 +81,7 @@ export default async function PengirimanDetail({ params, searchParams }: { param
           </section>
         )}
 
-        {canEdit && <DeliveryActions id={d.id} status={d.status} />}
+        {(canEdit || canLoad) && <DeliveryActions id={d.id} status={d.status} canShip={canEdit} />}
 
         {canFinance && <JournalView lines={journal} title="Jurnal harga pokok" />}
 

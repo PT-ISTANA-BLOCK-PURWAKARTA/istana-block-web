@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
-import { deleteContact } from "@/app/keuangan/actions/master";
+import { deleteContact } from "@/app/akuntansi/actions/master";
 import { ConfirmAction } from "@/components/erp/ConfirmAction";
 import { ContactForm } from "@/components/erp/ContactForm";
 import { BackLink, PageHead, Status } from "@/components/erp/ui";
@@ -12,7 +12,7 @@ import { tgl } from "@/lib/erp/util";
 export const metadata = { title: "Pelanggan" };
 
 export default async function PelangganDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canOrders: canEdit, canFinance } = await opsAccess();
   const { id } = await params;
   const db = await getDb();
   const c = await db.query.contacts.findFirst({ where: eq(schema.contacts.id, id) });
@@ -28,7 +28,7 @@ export default async function PelangganDetail({ params }: { params: Promise<{ id
       <BackLink href="/operasional/pelanggan">Pelanggan</BackLink>
       <PageHead title={c.name} sub={c.active ? c.company || undefined : "Nonaktif"}>
         {canEdit && <Link href={`/operasional/pesanan/baru?kontak=${c.id}`} className="btn btn-primary btn-sm">+ Pesanan</Link>}
-        {canFinance && <Link href={`/keuangan/kontak/${c.id}`} className="btn btn-ghost btn-sm">Lihat di keuangan</Link>}
+        {canFinance && <Link href={`/akuntansi/kontak/${c.id}`} className="btn btn-ghost btn-sm">Lihat di keuangan</Link>}
       </PageHead>
       <div className="stack" style={{ gap: 20 }}>
         {canEdit ? <ContactForm c={c} back="/operasional/pelanggan" /> : (

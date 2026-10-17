@@ -19,7 +19,7 @@ const TABS = [
 type Row = { id: string; number: string; date: string; status: string; customerRef: string; project: string; requestedDate: string | null; contactName: string; gross: number; value: number; deliveredValue: number; invoiced: number };
 
 export default async function Pesanan({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; ok?: string }> }) {
-  const { canEdit, canFinance } = await opsAccess();
+  const { canOrders: canEdit, canFinance } = await opsAccess();
   const sp = await searchParams;
   const status = TABS.some((t) => t.key === sp.status) ? (sp.status as string) : "";
   const q = (sp.q ?? "").trim();

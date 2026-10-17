@@ -8,7 +8,7 @@ import { opsAccess } from "@/lib/erp/ops";
 export const metadata = { title: "Pelanggan" };
 
 export default async function Pelanggan({ searchParams }: { searchParams: Promise<{ ok?: string; q?: string; nonaktif?: string }> }) {
-  const { canEdit } = await opsAccess();
+  const { canOrders: canEdit } = await opsAccess();
   const { ok, q, nonaktif } = await searchParams;
   const db = await getDb();
   const rows = await db

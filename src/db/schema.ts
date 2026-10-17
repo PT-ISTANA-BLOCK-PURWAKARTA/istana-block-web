@@ -12,10 +12,16 @@ const timestamps = {
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  email: text("email").notNull().unique(),
+  /** Akun kantor masuk dengan email + password. Akun lapangan boleh tanpa email. */
+  email: text("email").unique(),
   name: text("name").notNull(),
-  passwordHash: text("password_hash").notNull(),
-  /** Peran: owner (semua modul), web (/admin), keuangan (/keuangan), operasional (/operasional). */
+  passwordHash: text("password_hash"),
+  /** Akun lapangan (operasional, gudang, sopir): nomor HP (disimpan 62…) + PIN 6 digit. */
+  phone: text("phone").unique(),
+  pinHash: text("pin_hash"),
+  /** Akun sopir terhubung ke data sopir (ops_drivers.id) untuk melihat tugas antarnya sendiri. */
+  driverId: text("driver_id"),
+  /** Peran: owner, web (/situs), keuangan (/akuntansi), operasional, gudang, sopir. */
   roles: text("roles", { mode: "json" }).$type<string[]>().notNull().default(sql`'["owner"]'`),
   ...timestamps,
 });
