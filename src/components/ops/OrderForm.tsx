@@ -7,6 +7,7 @@ import { saveOrder } from "@/app/operasional/actions/orders";
 import { LinesEditor, type EditorLine, type PickItem } from "@/components/erp/LinesEditor";
 import type { Order } from "@/db/erp";
 import { tgl } from "@/lib/erp/util";
+import { DateField, Select } from "@/components/ui";
 
 type Head = Partial<Pick<Order, "id" | "contactId" | "customerRef" | "project" | "address" | "mapsUrl" | "siteContact" | "requestedDate" | "ongkir" | "discount" | "taxable" | "note" | "status">> & { date: string };
 
@@ -38,14 +39,11 @@ export function OrderForm({
         <div className="form-grid cols-4">
           <div className="field span-2">
             <label htmlFor="po-contact">Pelanggan <a href="/operasional/pelanggan/baru" target="_blank" className="help">+ pelanggan baru ↗</a></label>
-            <select id="po-contact" name="contactId" value={contactId} onChange={(e) => setContactId(e.target.value)} required>
-              <option value="">— pilih —</option>
-              {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}{c.company ? ` (${c.company})` : ""}</option>)}
-            </select>
+            <Select id="po-contact" name="contactId" value={contactId} onChange={setContactId} required searchable placeholder="Pilih pelanggan…" options={contacts.map((c) => ({ value: c.id, label: c.name, hint: c.company && c.company !== c.name ? c.company : undefined }))} />
             {late && <span className="flag flag-warn small" style={{ marginTop: 6 }}>Ada {late.n} faktur lewat jatuh tempo (tertua {tgl(late.oldest)}). Konfirmasi ke keuangan sebelum mengirim.</span>}
           </div>
-          <div className="field"><label htmlFor="po-date">Tanggal pesanan</label><input id="po-date" name="date" type="date" defaultValue={head.date} required /></div>
-          <div className="field"><label htmlFor="po-req">Minta dikirim <span className="help">opsional</span></label><input id="po-req" name="requestedDate" type="date" defaultValue={head.requestedDate ?? ""} /></div>
+          <div className="field"><label htmlFor="po-date">Tanggal pesanan</label><DateField id="po-date" name="date" defaultValue={head.date} required /></div>
+          <div className="field"><label htmlFor="po-req">Minta dikirim <span className="help">opsional</span></label><DateField id="po-req" name="requestedDate" defaultValue={head.requestedDate ?? ""} /></div>
           <div className="field span-2"><label htmlFor="po-ref">No. PO pelanggan <span className="help">bila ada</span></label><input id="po-ref" name="customerRef" defaultValue={head.customerRef} /></div>
           <div className="field span-2"><label htmlFor="po-project">Proyek <span className="help">opsional</span></label><input id="po-project" name="project" defaultValue={head.project} placeholder="mis. Perumahan Griya Asri blok C" /></div>
           <div className="field span-2"><label htmlFor="po-address">Alamat kirim</label><textarea id="po-address" name="address" rows={2} defaultValue={head.address} style={{ minHeight: 72 }} placeholder="Kosongkan bila diambil sendiri" /></div>

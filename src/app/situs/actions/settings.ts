@@ -16,7 +16,7 @@ export async function saveSettings(_prev: FormState, form: FormData): Promise<Fo
   await requireAdmin();
   const db = await getDb();
   const rows = SETTING_FIELDS.map((f) => {
-    let value = String(form.get(f.key) ?? "").trim().slice(0, f.type === "textarea" ? 8000 : 2000);
+    let value = String(form.get(f.key) ?? "").trim().slice(0, f.type === "textarea" || f.type === "faq" ? 8000 : 2000);
     if (f.key === "maps_embed_url" && value) value = embedSrc(value);
     return { key: f.key, value };
   });

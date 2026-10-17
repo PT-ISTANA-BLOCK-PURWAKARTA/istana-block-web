@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { FIELD_ROLES, ROLE_LABEL, ROLES, type Role } from "@/lib/roles";
 import { createUser, resetUserPassword, setUserPin, updateUserRoles } from "../actions/users";
+import { Select } from "@/components/ui";
 
 export type DriverOption = { id: string; name: string; phone: string; linkedTo: string | null };
 
@@ -39,14 +40,19 @@ function DriverSelect({ id, drivers, value, userName }: { id: string; drivers: D
   return (
     <div className="field">
       <label htmlFor={id}>Data sopir <span className="help">untuk menampilkan tugas antar & armadanya</span></label>
-      <select id={id} name="driverId" defaultValue={value ?? ""} required>
-        <option value="">Pilih sopir…</option>
-        {drivers.map((d) => (
-          <option key={d.id} value={d.id} disabled={!!d.linkedTo && d.linkedTo !== userName}>
-            {d.name}{d.phone ? ` · ${d.phone}` : ""}{d.linkedTo && d.linkedTo !== userName ? ` (sudah dipakai ${d.linkedTo})` : ""}
-          </option>
-        ))}
-      </select>
+      <Select
+        id={id}
+        name="driverId"
+        defaultValue={value ?? ""}
+        required
+        placeholder="Pilih sopir…"
+        options={drivers.map((d) => ({
+          value: d.id,
+          label: d.name,
+          hint: [d.phone, d.linkedTo && d.linkedTo !== userName ? `sudah dipakai ${d.linkedTo}` : ""].filter(Boolean).join(" · ") || undefined,
+          disabled: !!d.linkedTo && d.linkedTo !== userName,
+        }))}
+      />
       {drivers.length === 0 && <span className="help">Belum ada data sopir. Tambahkan dulu di Operasional → Sopir.</span>}
     </div>
   );

@@ -6,6 +6,7 @@ import { SubmitButton } from "@/components/admin/SubmitButton";
 import { savePayment } from "@/app/akuntansi/actions/purchases";
 import { saveReceipt } from "@/app/akuntansi/actions/sales";
 import { formatAmount, parseRupiah, tgl } from "@/lib/erp/util";
+import { DateField, Select } from "@/components/ui";
 
 export type OpenDoc = { id: string; number: string; date: string; dueDate: string; total: number; /** sisa yang masih bisa dialokasikan (termasuk alokasi dokumen ini sendiri saat diubah) */ left: number; alloc: number };
 
@@ -66,15 +67,22 @@ export function SettleForm({
       <section className="form-section">
         <div className="form-grid cols-4">
           <div className="field span-2"><span className="label">{receipt ? "Pelanggan" : "Pemasok"}</span><p style={{ margin: "10px 0", fontWeight: 700 }}>{contactName}</p></div>
-          <div className="field"><label htmlFor="st-date">Tanggal</label><input id="st-date" name="date" type="date" defaultValue={date} required /></div>
+          <div className="field"><label htmlFor="st-date">Tanggal</label><DateField id="st-date" name="date" defaultValue={date} required /></div>
           <div className="field">
             <label htmlFor="st-acc">{receipt ? "Masuk ke" : "Dibayar dari"}</label>
-            <select id="st-acc" name="accountId" value={accountId} onChange={(e) => setAccountId(e.target.value)} required>
-              {accounts.map((a) => <option key={a.id} value={a.id}>{a.code} · {a.name}</option>)}
-              {(depositBalance > 0 || initialAccountId === depositAccountId) && (
-                <option value={depositAccountId}>{receipt ? "Pakai uang muka pelanggan" : "Pakai uang muka ke pemasok"} (saldo {formatAmount(depositBalance)})</option>
-              )}
-            </select>
+            <Select
+              id="st-acc"
+              name="accountId"
+              value={accountId}
+              onChange={setAccountId}
+              required
+              options={[
+                ...accounts.map((a) => ({ value: a.id, label: `${a.code} · ${a.name}` })),
+                ...(depositBalance > 0 || initialAccountId === depositAccountId
+                  ? [{ value: depositAccountId, label: receipt ? "Pakai uang muka pelanggan" : "Pakai uang muka ke pemasok", hint: `Saldo ${formatAmount(depositBalance)}` }]
+                  : []),
+              ]}
+            />
           </div>
           <div className="field">
             <label htmlFor="st-amount">Jumlah {receipt ? "diterima" : "dibayar"}</label>

@@ -45,7 +45,14 @@ export function ProofInput({ id, required, label = "Foto bukti terima", help = "
       <label htmlFor={id}>
         {label} {help && <span className="help">{help}</span>}
       </label>
-      <input ref={ref} id={id} name="proof" type="file" accept="image/*" capture="environment" required={required} onChange={shrink} />
+      <div className="ui-file">
+        <input ref={ref} id={id} name="proof" type="file" accept="image/*" capture="environment" required={required} onChange={shrink} />
+        <label htmlFor={id} className="ui-file-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l1.5-2.5h7L17 8h3v11H4zM12 16.5a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+          {preview ? "Ambil ulang foto" : "Ambil foto"}
+        </label>
+        {!preview && <span className="ui-file-name">Belum ada foto</span>}
+      </div>
       {busy && <span className="help">Mengecilkan foto…</span>}
       {preview && (
         // eslint-disable-next-line @next/next/no-img-element

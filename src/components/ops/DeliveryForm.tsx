@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveDelivery } from "@/app/operasional/actions/deliveries";
 import { formatQty, parseQty } from "@/lib/erp/util";
+import { DateField, Select } from "@/components/ui";
 
 export type DeliveryLineInput = {
   orderLineId: string;
@@ -49,20 +50,14 @@ export function DeliveryForm({
       <input type="hidden" name="lines" value={json} />
       <section className="form-section">
         <div className="form-grid cols-4">
-          <div className="field"><label htmlFor="sj-date">Tanggal kirim</label><input id="sj-date" name="date" type="date" defaultValue={date} required /></div>
+          <div className="field"><label htmlFor="sj-date">Tanggal kirim</label><DateField id="sj-date" name="date" defaultValue={date} required /></div>
           <div className="field">
             <label htmlFor="sj-vehicle">Kendaraan</label>
-            <select id="sj-vehicle" name="vehicleId" defaultValue={vehicleId ?? ""}>
-              <option value="">— belum ditentukan —</option>
-              {vehicles.map((v) => <option key={v.id} value={v.id}>{v.plate}{v.name ? ` · ${v.name}` : ""}</option>)}
-            </select>
+            <Select id="sj-vehicle" name="vehicleId" defaultValue={vehicleId ?? ""} placeholder="Belum ditentukan" options={[{ value: "", label: "Belum ditentukan" }, ...vehicles.map((v) => ({ value: v.id, label: v.plate, hint: v.name || undefined }))]} />
           </div>
           <div className="field">
             <label htmlFor="sj-driver">Sopir</label>
-            <select id="sj-driver" name="driverId" defaultValue={driverId ?? ""}>
-              <option value="">— belum ditentukan —</option>
-              {drivers.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
+            <Select id="sj-driver" name="driverId" defaultValue={driverId ?? ""} placeholder="Belum ditentukan" options={[{ value: "", label: "Belum ditentukan" }, ...drivers.map((d) => ({ value: d.id, label: d.name }))]} />
           </div>
           <div className="field"><label htmlFor="sj-note">Catatan <span className="help">opsional</span></label><input id="sj-note" name="note" defaultValue={note} placeholder="mis. bongkar sisi kiri gerbang" /></div>
         </div>

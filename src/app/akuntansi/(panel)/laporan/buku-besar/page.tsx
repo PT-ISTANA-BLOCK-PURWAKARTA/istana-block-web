@@ -10,6 +10,7 @@ import { reportContext } from "@/lib/erp/reportctx";
 import { ledger } from "@/lib/erp/reports";
 import { formatAmount, isDate, monthStart, tgl, today } from "@/lib/erp/util";
 import { accountGroups } from "@/db/erp";
+import { Select } from "@/components/ui";
 
 export const metadata = { title: "Buku besar" };
 
@@ -43,13 +44,7 @@ export default async function BukuBesar({ searchParams }: { searchParams: Promis
           extra={
             <label className="grow">
               <span>Akun</span>
-              <select name="akun" defaultValue={account.id}>
-                {groups.map((x) => (
-                  <optgroup key={x.g} label={GROUP_LABEL[x.g]}>
-                    {x.list.map((a) => <option key={a.id} value={a.id}>{a.code} · {a.name}</option>)}
-                  </optgroup>
-                ))}
-              </select>
+              <Select name="akun" defaultValue={account.id} searchable menuWidth={320} options={groups.flatMap((x) => x.list.map((a) => ({ value: a.id, label: `${a.code} · ${a.name}`, group: GROUP_LABEL[x.g] })))} />
             </label>
           }
         />

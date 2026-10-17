@@ -5,7 +5,9 @@ import { PAGE_KIND_LABEL, pageKinds, type Page } from "@/db/schema";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { ImageField } from "@/components/admin/ImageField";
 import { SubmitButton } from "@/components/admin/SubmitButton";
+import { RichEditor } from "@/components/editor/RichEditor";
 import { savePage } from "../../actions/pages";
+import { Select, Switch } from "@/components/ui";
 
 export function PageForm({ page, coverSrc }: { page?: Page; coverSrc: string | null }) {
   const p = page;
@@ -24,14 +26,10 @@ export function PageForm({ page, coverSrc }: { page?: Page; coverSrc: string | n
           </div>
           <div className="field">
             <label htmlFor="kind">Jenis halaman <span className="help">Area = tombol WhatsApp menanyakan ongkir ke lokasi ini</span></label>
-            <select id="kind" name="kind" defaultValue={p?.kind ?? "info"}>
-              {pageKinds.map((k) => (
-                <option key={k} value={k}>{PAGE_KIND_LABEL[k]}</option>
-              ))}
-            </select>
+            <Select id="kind" name="kind" defaultValue={p?.kind ?? "info"} options={pageKinds.map((k) => ({ value: k, label: PAGE_KIND_LABEL[k] }))} />
           </div>
           <div className="field full">
-            <label className="check"><input type="checkbox" name="published" defaultChecked={p?.published ?? false} /> Terbitkan</label>
+            <Switch name="published" defaultChecked={p?.published ?? false} label="Terbitkan" help="Tampil di situs setelah disimpan" />
           </div>
           <div className="field full">
             <label htmlFor="excerpt">Ringkasan <span className="help">1–2 kalimat, tampil di bawah judul</span></label>
@@ -40,8 +38,8 @@ export function PageForm({ page, coverSrc }: { page?: Page; coverSrc: string | n
         </div>
         <ImageField name="cover" current={coverSrc} label="Gambar sampul (opsional)" />
         <div className="field">
-          <label htmlFor="content">Isi halaman <span className="help">Markdown: ## Subjudul, **tebal**, - daftar, tabel | Kolom | Kolom |, [tautan](/produk/paving-block)</span></label>
-          <textarea id="content" name="content" className="tall" style={{ minHeight: 460 }} defaultValue={p?.content} />
+          <span className="label" id="content-label">Isi halaman <span className="help">pakai tombol di atas untuk judul, daftar, tabel, tautan, dan gambar</span></span>
+          <RichEditor name="content" labelledBy="content-label" defaultValue={p?.content ?? ""} folder="halaman" draftKey={`halaman:${p?.id ?? "baru"}`} placeholder="Tulis isi halaman di sini." minHeight={460} />
         </div>
       </section>
       <section className="form-section">

@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveAccount } from "@/app/akuntansi/actions/master";
 import { accountGroups, type Account } from "@/db/erp";
 import { GROUP_LABEL } from "@/lib/erp/accounting";
+import { Select } from "@/components/ui";
 
 export function AccountForm({ a }: { a?: Account }) {
   return (
@@ -15,9 +16,7 @@ export function AccountForm({ a }: { a?: Account }) {
           <div className="field"><label htmlFor="ac-code">Kode</label><input id="ac-code" name="code" defaultValue={a?.code} required placeholder="mis. 6-2400" /></div>
           <div className="field">
             <label htmlFor="ac-group">Golongan {a?.systemKey && <span className="help">dikunci (akun sistem)</span>}</label>
-            <select id="ac-group" name="group" defaultValue={a?.group ?? "beban"} disabled={!!a?.systemKey}>
-              {accountGroups.map((g) => <option key={g} value={g}>{GROUP_LABEL[g]}</option>)}
-            </select>
+            <Select id="ac-group" name="group" defaultValue={a?.group ?? "beban"} disabled={!!a?.systemKey} options={accountGroups.map((g) => ({ value: g, label: GROUP_LABEL[g] }))} />
             {a?.systemKey && <input type="hidden" name="group" value={a.group} />}
           </div>
           <div className="field full"><label htmlFor="ac-name">Nama akun</label><input id="ac-name" name="name" defaultValue={a?.name} required /></div>

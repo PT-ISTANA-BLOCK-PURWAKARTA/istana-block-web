@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveAdjustment } from "@/app/operasional/actions/stock";
 import { formatAmount, formatQty } from "@/lib/erp/util";
+import { DateField, Select } from "@/components/ui";
 
 type Opt = { id: string; code: string; name: string; unit: string; onHand: number; avgCost: number };
 
@@ -38,13 +39,10 @@ export function AdjustmentForm({
     <ActionForm action={saveAdjustment} className="form-section">
       {id && <input type="hidden" name="id" value={id} />}
       <div className="form-grid cols-4">
-        <div className="field"><label htmlFor="adj-date">Tanggal</label><input id="adj-date" name="date" type="date" defaultValue={date} required /></div>
+        <div className="field"><label htmlFor="adj-date">Tanggal</label><DateField id="adj-date" name="date" defaultValue={date} required /></div>
         <div className="field span-3">
           <label htmlFor="adj-item">Barang</label>
-          <select id="adj-item" name="itemId" value={item} onChange={(e) => setItem(e.target.value)} required>
-            <option value="">— pilih barang —</option>
-            {items.map((i) => <option key={i.id} value={i.id}>{i.code} · {i.name} (stok {formatQty(i.onHand)} {i.unit})</option>)}
-          </select>
+          <Select id="adj-item" name="itemId" value={item} onChange={setItem} required searchable placeholder="Pilih barang…" options={items.map((i) => ({ value: i.id, label: i.name, hint: `${i.code} · stok ${formatQty(i.onHand)} ${i.unit}` }))} />
           {sel && <span className="help">Stok sekarang {formatQty(sel.onHand)} {sel.unit}{showCost && <> · harga pokok rata-rata Rp{formatAmount(Math.round(sel.avgCost))}</>}</span>}
         </div>
         <div className="field">

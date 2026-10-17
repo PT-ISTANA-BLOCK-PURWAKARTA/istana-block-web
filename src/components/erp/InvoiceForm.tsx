@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveInvoice } from "@/app/akuntansi/actions/sales";
 import { saveBill } from "@/app/akuntansi/actions/purchases";
 import { LinesEditor, type EditorLine, type PickAccount, type PickItem } from "./LinesEditor";
+import { DateField, Select } from "@/components/ui";
 
 type Head = { id?: string; contactId?: string; date: string; dueDate?: string; note?: string; orderId?: string | null; supplierRef?: string; discount?: number; ongkir?: number; taxable?: boolean };
 
@@ -37,15 +38,10 @@ export function InvoiceForm({
         <div className="form-grid cols-4">
           <div className="field span-2">
             <label htmlFor="iv-contact">{sales ? "Pelanggan" : "Pemasok"}</label>
-            <select id="iv-contact" name="contactId" defaultValue={head.contactId ?? ""} required>
-              <option value="">— pilih —</option>
-              {contacts.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}{c.company ? ` (${c.company})` : ""}</option>
-              ))}
-            </select>
+            <Select id="iv-contact" name="contactId" defaultValue={head.contactId ?? ""} required searchable placeholder={sales ? "Pilih pelanggan…" : "Pilih pemasok…"} options={contacts.map((c) => ({ value: c.id, label: c.name, hint: c.company && c.company !== c.name ? c.company : undefined }))} />
           </div>
-          <div className="field"><label htmlFor="iv-date">Tanggal</label><input id="iv-date" name="date" type="date" defaultValue={head.date} required /></div>
-          <div className="field"><label htmlFor="iv-due">Jatuh tempo <span className="help">kosong = termin kontak</span></label><input id="iv-due" name="dueDate" type="date" defaultValue={head.dueDate} /></div>
+          <div className="field"><label htmlFor="iv-date">Tanggal</label><DateField id="iv-date" name="date" defaultValue={head.date} required /></div>
+          <div className="field"><label htmlFor="iv-due">Jatuh tempo <span className="help">kosong = termin kontak</span></label><DateField id="iv-due" name="dueDate" defaultValue={head.dueDate} /></div>
           {!sales && <div className="field span-2"><label htmlFor="iv-ref">No. faktur pemasok</label><input id="iv-ref" name="supplierRef" defaultValue={head.supplierRef} /></div>}
           {orderLabel && <div className="field span-2"><span className="label">Dari pesanan</span><p className="tabular" style={{ margin: "10px 0" }}>{orderLabel}</p></div>}
         </div>

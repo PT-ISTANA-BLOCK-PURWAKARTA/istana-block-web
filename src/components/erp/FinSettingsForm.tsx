@@ -3,6 +3,7 @@
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveFinSettings } from "@/app/akuntansi/actions/master";
+import { DateField } from "@/components/ui";
 
 export function FinSettingsForm({ values }: { values: Record<string, string> }) {
   return (
@@ -40,7 +41,7 @@ export function FinSettingsForm({ values }: { values: Record<string, string> }) 
         <h2>Tutup buku</h2>
         <div className="field" style={{ maxWidth: 320 }}>
           <label htmlFor="fs-lock">Kunci transaksi sampai tanggal <span className="help">kosongkan bila belum</span></label>
-          <input id="fs-lock" name="fin_lock_date" type="date" defaultValue={values.fin_lock_date} />
+          <DateField id="fs-lock" name="fin_lock_date" defaultValue={values.fin_lock_date} />
         </div>
         <p className="small muted">Transaksi pada atau sebelum tanggal ini tidak bisa dibuat, diubah, atau dihapus, termasuk pengiriman dan produksi yang menghasilkan jurnal.</p>
       </section>
