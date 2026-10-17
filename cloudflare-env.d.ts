@@ -5,4 +5,6 @@ interface CloudflareEnv {
   MEDIA: R2Bucket;
   SITE_URL: string;
   AUTH_SECRET: string;
+  /** "1" di Worker demo: penanda data contoh + noindex. */
+  DEMO_MODE?: string;
 }

@@ -27,7 +27,7 @@ export function ContactForm({ c, back, defaultKind = "pelanggan" }: { c?: Contac
           <div className="field"><label htmlFor="ct-npwp">NPWP <span className="help">untuk faktur ber-PPN</span></label><input id="ct-npwp" name="npwp" defaultValue={c?.npwp} /></div>
           <div className="field full"><label htmlFor="ct-address">Alamat</label><textarea id="ct-address" name="address" rows={3} defaultValue={c?.address} style={{ minHeight: 80 }} /></div>
           <div className="field"><label htmlFor="ct-term">Termin bayar (hari) <span className="help">0 = tunai</span></label><input id="ct-term" name="termDays" type="number" min={0} max={365} defaultValue={c?.termDays ?? 0} /></div>
-          <div className="field"><span className="label">Status</span><label className="check"><input type="checkbox" name="active" defaultChecked={c?.active ?? true} /> Aktif</label></div>
+          <div className="field"><span className="label">Status</span><input type="hidden" name="active_field" value="1" /><label className="check"><input type="checkbox" name="active" defaultChecked={c?.active ?? true} /> Aktif</label></div>
           <div className="field full"><label htmlFor="ct-note">Catatan</label><textarea id="ct-note" name="note" rows={2} defaultValue={c?.note} style={{ minHeight: 64 }} /></div>
         </div>
       </section>

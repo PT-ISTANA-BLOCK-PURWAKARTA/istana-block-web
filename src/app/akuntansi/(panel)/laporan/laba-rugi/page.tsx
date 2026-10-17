@@ -90,17 +90,19 @@ export default async function LabaRugi({ searchParams }: { searchParams: Promise
               { name: "Biaya (HPP + beban)", color: C_COST, values: trend.map((m) => Math.max(0, m.cost)) },
             ]}
           />
-          <table className="trend-table">
-            <caption className="sr-only">Laba bersih per bulan</caption>
-            <tbody>
-              <tr>
-                <th scope="row">Laba bersih</th>
-                {trend.map((m) => (
-                  <td key={m.from} className="num"><span className="muted small">{m.label}</span><Amount n={m.net} /></td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
+          <div className="trend-wrap">
+            <table className="trend-table">
+              <caption className="sr-only">Laba bersih per bulan</caption>
+              <tbody>
+                <tr>
+                  <th scope="row">Laba bersih</th>
+                  {trend.map((m) => (
+                    <td key={m.from} className="num"><span className="muted small">{m.label}</span><Amount n={m.net} /></td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <ReadingNote>Selisih antara batang biru dan oranye adalah laba bulan itu. Bulan berjalan baru terhitung sampai hari ini.</ReadingNote>
         </section>
 

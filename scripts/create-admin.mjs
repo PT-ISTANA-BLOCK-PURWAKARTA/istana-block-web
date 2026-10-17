@@ -6,6 +6,7 @@
 // Akun lapangan (nomor HP & PIN, hanya aplikasi Operasional):
 //   npm run admin:create -- --phone 0812xxxxxxxx --pin <6 angka> --name "Nama" --roles gudang [--driver ID_SOPIR] [--remote]
 // Biasanya akun dibuat pemilik di /internal/pengguna; skrip ini untuk akun pertama atau saat lupa password.
+// Worker demo: tambahkan --config wrangler.demo.jsonc (dipakai juga oleh scripts/demo/akun-demo.mjs).
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -22,6 +23,7 @@ const email = get("email")?.trim().toLowerCase();
 const name = get("name") ?? "Admin";
 const password = get("password");
 const remote = args.includes("--remote");
+const config = get("config");
 const ROLES = ["owner", "web", "keuangan", "operasional", "gudang", "sopir"];
 const FIELD = ["operasional", "gudang", "sopir"];
 const phoneRaw = get("phone");
@@ -78,7 +80,7 @@ const dir = mkdtempSync(join(tmpdir(), "ib-admin-"));
 const file = join(dir, "admin.sql");
 writeFileSync(file, sql);
 const wrangler = join(fileURLToPath(new URL("..", import.meta.url)), "node_modules", "wrangler", "bin", "wrangler.js");
-const r = spawnSync(process.execPath, [wrangler, "d1", "execute", "DB", remote ? "--remote" : "--local", "--file", file], { stdio: "inherit" });
+const r = spawnSync(process.execPath, [wrangler, "d1", "execute", "DB", remote ? "--remote" : "--local", ...(config ? ["--config", config] : []), "--file", file], { stdio: process.env.ADMIN_QUIET ? "ignore" : "inherit" });
 rmSync(dir, { recursive: true, force: true });
-if (r.status === 0) console.log(`\nAkun ${phone ?? email} siap dipakai (${remote ? "produksi" : "lokal"})${roles ? ` dengan peran ${roles.join(", ")}` : ""}.`);
+if (r.status === 0) console.log(`${process.env.ADMIN_QUIET ? "" : "\n"}Akun ${phone ?? email} siap dipakai (${remote ? (config ? `remote, ${config}` : "produksi") : "lokal"})${roles ? ` dengan peran ${roles.join(", ")}` : ""}.`);
 process.exit(r.status ?? 1);

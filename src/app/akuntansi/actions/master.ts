@@ -33,7 +33,8 @@ export async function saveContact(back: string, _prev: FormState, form: FormData
   const p = ContactInput.safeParse(Object.fromEntries(form));
   if (!p.success) return { error: p.error.issues[0]?.message ?? "Data tidak valid." };
   const db = await getDb();
-  const values = { ...p.data, active: form.get("active") !== null ? form.get("active") === "on" : true, updatedAt: new Date() };
+  // Kotak centang yang tidak dicentang tidak terkirim; penanda active_field memastikan "Aktif" bisa dimatikan.
+  const values = { ...p.data, active: form.get("active_field") ? form.get("active") === "on" : true, updatedAt: new Date() };
   if (id) await db.update(schema.contacts).set(values).where(eq(schema.contacts.id, id));
   else await db.insert(schema.contacts).values(values);
   redirect(`${back}?ok=${encodeURIComponent(p.data.name)}`);

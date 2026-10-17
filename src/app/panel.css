@@ -344,7 +344,7 @@ a.kpi:hover .k-label { color: var(--biru); }
 }
 
 /* ---------- Laporan dengan kop (tampil sama di layar & cetak) ---------- */
-.report-sheet { page: laporan; background: #fff; border: 1px solid var(--p-line); border-radius: var(--p-radius); padding: 28px 32px 18px; max-width: 1140px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.report-sheet { background: #fff; border: 1px solid var(--p-line); border-radius: var(--p-radius); padding: 28px 32px 18px; max-width: 1140px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 .kop { display: flex; align-items: center; gap: 18px; }
 .kop-logo { width: 150px; height: auto; flex: none; }
 .kop-text { display: flex; flex-direction: column; gap: 1px; padding-left: 18px; border-left: 1px solid var(--p-line); font-size: 12.5px; line-height: 1.45; color: var(--p-ink-2); }
@@ -425,7 +425,6 @@ a.kpi:hover .k-label { color: var(--biru); }
 .aging-docs .is-late { color: #8a4b00; }
 .report td a.wa-remind, .wa-remind { display: inline-block; margin-top: 5px; font-size: 13px; font-weight: 600; color: #17643a; }
 
-@page laporan { size: A4; margin: 12mm 12mm 14mm; }
 @media (max-width: 760px) {
   .report-sheet { padding: 16px; }
   .kop { flex-direction: column; align-items: flex-start; gap: 10px; }
@@ -607,11 +606,13 @@ a.kpi:hover .k-label { color: var(--biru); }
 .print-sign span { white-space: pre-line; display: block; min-height: 2.9em; }
 .sign-line { height: 64px; border-bottom: 1px solid #333; margin: 0 12%; }
 @media print {
-  @page { size: A4; margin: 0; }
+  /* Satu ukuran halaman untuk semua cetakan. Halaman bernama (page: …) sengaja tidak dipakai: Chrome lalu
+     memindahkan tabel & keterangannya ke halaman terpisah dan menyisakan halaman kosong. */
+  @page { size: A4; margin: 12mm 12mm 14mm; }
   body { background: #fff; }
   .no-print, .print-tools { display: none !important; }
   .print-wrap { padding: 0; }
-  .print-page { box-shadow: none; max-width: none; min-height: 297mm; margin: 0; }
+  .print-page { box-shadow: none; max-width: none; min-height: 270mm; margin: 0; padding: 2mm 2mm 0; }
   .admin-side, .filter-bar, .head-actions, .back-link, .form-actions { display: none !important; }
   .admin { display: block; background: #fff; }
   .admin-main { padding: 0; }
@@ -621,6 +622,20 @@ a.kpi:hover .k-label { color: var(--biru); }
   .report-sheet { border: 0; border-radius: 0; padding: 0; max-width: none; gap: 10px; }
   .print-only { display: grid; }
   .report-chart, .stackbar, .kpis, .report-sign { break-inside: avoid; }
+  /* Daftar batang (sumber uang, pelanggan teratas, dst.) dicetak bersusun selebar halaman supaya nama tidak
+     terlipat per kata, dan boleh berlanjut ke halaman berikutnya di antara baris. */
+  .report-two:has(.barlist) { grid-template-columns: 1fr; }
+  .report-chart:has(.barlist) { break-inside: auto; }
+  .barlist li { break-inside: avoid; }
+  .report-chart h3, .admin caption { break-after: avoid; }
+  /* Tabel pendek (≤ 8 baris) jangan dipotong ke dua halaman. */
+  .admin-table:has(tbody > tr:last-child:nth-child(-n + 8)) { break-inside: avoid; }
+  /* Baris total dicetak sekali di akhir tabel (bawaan Chrome mengulangnya di setiap halaman). */
+  .report tfoot { display: table-row-group; }
+  /* Umur piutang/hutang: kolom nama lebih lebar supaya tiap faktur muat satu baris. */
+  .report td:has(> .aging-docs) { width: 36%; }
+  .aging-docs { gap: 0 10px; }
+  .aging-docs span { white-space: nowrap; }
   .report table { font-size: 11px; }
   .report td.small, .report td .small, .report th.small { font-size: inherit; }
   .report th, .report td { padding: 4px 8px; }

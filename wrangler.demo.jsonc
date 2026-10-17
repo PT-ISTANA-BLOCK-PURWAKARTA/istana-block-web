@@ -1,0 +1,40 @@
+/**
+ * Worker DEMO untuk presentasi ke klien: salinan aplikasi dengan database & bucket sendiri,
+ * diisi data contoh (scripts/demo/generate.mjs). Situs produksi tidak tersentuh.
+ *
+ * Langkah lengkap ada di README → "Worker demo untuk presentasi".
+ * Isi database_id setelah menjalankan:  npx wrangler d1 create istana-block-demo-db
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "istana-block-demo",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2026-09-01",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		// Canonical tetap ke situs resmi; semua halaman demo diberi noindex.
+		"SITE_URL": "https://istanablockpurwakarta.com",
+		"DEMO_MODE": "1"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "istana-block-demo-db",
+			"database_id": "ISI-DENGAN-ID-DARI-wrangler-d1-create",
+			"migrations_dir": "drizzle"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "MEDIA",
+			"bucket_name": "istana-block-demo-media"
+		}
+	]
+}
