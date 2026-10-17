@@ -3,7 +3,8 @@
  * diisi data contoh (scripts/demo/generate.mjs). Situs produksi tidak tersentuh.
  *
  * Langkah lengkap ada di README → "Worker demo untuk presentasi".
- * Isi database_id setelah menjalankan:  npx wrangler d1 create istana-block-demo-db
+ * Database & bucket dibuat dengan:  npm run demo:worker:siapkan
+ * database_id sengaja dikosongkan: Wrangler mencari database dari database_name.
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
@@ -27,7 +28,6 @@
 		{
 			"binding": "DB",
 			"database_name": "istana-block-demo-db",
-			"database_id": "ISI-DENGAN-ID-DARI-wrangler-d1-create",
 			"migrations_dir": "drizzle"
 		}
 	],

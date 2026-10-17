@@ -286,8 +286,7 @@ Untuk menunjukkan aplikasi ke klien tanpa menyentuh situs produksi, jalankan sal
 
 ```powershell
 # Sekali di awal
-npx wrangler d1 create istana-block-demo-db --location=apac      # salin database_id ke wrangler.demo.jsonc
-npx wrangler r2 bucket create istana-block-demo-media --location=apac
+npm run demo:worker:siapkan                                       # buat database D1 & bucket R2 demo (yang sudah ada dilewati)
 npx wrangler secret put AUTH_SECRET -c wrangler.demo.jsonc        # string acak baru, JANGAN sama dengan produksi
 npm run demo:worker:migrate
 npm run demo:worker:seed                                          # produk, artikel, halaman dari situs lama
@@ -527,6 +526,7 @@ Hal lain:
 | `npm run demo:local` / `:remote` | muat data contoh (lihat *Data contoh*) |
 | `npm run demo:hapus:local` / `:remote` | hapus data contoh |
 | `npm run demo:generate` | buat ulang file data contoh dari `scripts/demo/generate.mjs` (`-- --hari-ini YYYY-MM-DD`) |
+| `npm run demo:worker:siapkan` | buat database D1 & bucket R2 **Worker demo** (sekali) |
 | `npm run demo:worker:migrate` / `:seed` / `:data` / `:hapus` / `:bersih` | migrasi, data awal, data contoh, hapus data contoh, kosongkan transaksi di **Worker demo** |
 | `npm run demo:worker:akun -- --password …` | buat akun demo per peran (kantor & lapangan) di Worker demo |
 | `npm run demo:worker:deploy` | build & deploy Worker demo |
