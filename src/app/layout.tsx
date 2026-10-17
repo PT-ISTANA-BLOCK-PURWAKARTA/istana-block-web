@@ -24,6 +24,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = { themeColor: "#0E2A6B" };
 
+// Semua halaman membaca binding Cloudflare (env/D1) saat diminta, jadi tidak ada yang dirender saat build.
+// Tanpa ini Next merender /_not-found ketika build dan menyalakan runtime Workers lokal, yang bisa
+// crash di Windows ("access violation").
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const env = await getEnv();
   return (

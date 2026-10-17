@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
@@ -29,7 +30,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
-
-// Menyediakan binding D1 & R2 lokal (Miniflare) saat `next dev`.
-initOpenNextCloudflareForDev();
+export default function config(phase: string): NextConfig {
+  // Binding D1 & R2 lokal (Miniflare) hanya dibutuhkan saat `next dev`. Saat `next build` tidak
+  // dijalankan: tidak ada halaman yang membaca database ketika build, dan di Windows runtime
+  // Workers lokal bisa crash ("access violation") sehingga build gagal.
+  if (phase === PHASE_DEVELOPMENT_SERVER) initOpenNextCloudflareForDev();
+  return nextConfig;
+}
