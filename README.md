@@ -1,6 +1,6 @@
-# Istana Block Purwakarta — situs web & panel admin
+# Istana Block Purwakarta — situs web, panel admin, keuangan & operasional
 
-Situs web Istana Block Purwakarta yang dibangun ulang dengan **Next.js 15** dan berjalan di **Cloudflare Workers**. Data disimpan di **Cloudflare D1** dan gambar di **Cloudflare R2**. Panel `/admin` (wajib login) dipakai untuk mengelola produk, tabel harga, artikel, halaman, testimoni, dan informasi kontak tanpa menyentuh kode.
+Situs web Istana Block Purwakarta yang dibangun ulang dengan **Next.js 15** dan berjalan di **Cloudflare Workers**. Data disimpan di **Cloudflare D1** dan gambar di **Cloudflare R2**. Panel `/admin` (wajib login) dipakai untuk mengelola produk, tabel harga, artikel, halaman, testimoni, dan informasi kontak tanpa menyentuh kode. Di aplikasi yang sama ada `/keuangan` (pembukuan ala Zahir) dan `/operasional` (pesanan, pengiriman, dan stok), dengan akses per peran pengguna.
 
 ![Beranda](docs/screenshots/beranda-atas.webp)
 
@@ -42,6 +42,22 @@ Artikel: [docs/screenshots/artikel.webp](docs/screenshots/artikel.webp)
 
 Katalog lengkap: [docs/screenshots/katalog.webp](docs/screenshots/katalog.webp)
 
+**Keuangan & operasional**
+
+| Ringkasan keuangan | Faktur penjualan | Cetak faktur |
+|---|---|---|
+| ![Ringkasan keuangan](docs/screenshots/keu-ringkasan.webp) | ![Faktur](docs/screenshots/keu-faktur.webp) | ![Cetak faktur](docs/screenshots/keu-cetak-faktur.webp) |
+
+| Laba rugi | Neraca | Ringkasan operasional |
+|---|---|---|
+| ![Laba rugi](docs/screenshots/keu-laba-rugi.webp) | ![Neraca](docs/screenshots/keu-neraca.webp) | ![Ringkasan operasional](docs/screenshots/ops-ringkasan.webp) |
+
+| Pesanan (PO) | Surat jalan | Cetak surat jalan | Ponsel — surat jalan |
+|---|---|---|---|
+| ![Pesanan](docs/screenshots/ops-pesanan.webp) | ![Surat jalan](docs/screenshots/ops-surat-jalan.webp) | ![Cetak surat jalan](docs/screenshots/ops-cetak-surat-jalan.webp) | ![Ponsel surat jalan](docs/screenshots/ponsel-surat-jalan.webp) |
+
+Data di gambar adalah data uji.
+
 ## Fitur
 
 **Situs publik**
@@ -71,7 +87,64 @@ Katalog lengkap: [docs/screenshots/katalog.webp](docs/screenshots/katalog.webp)
 - **Halaman:** halaman statis di `/slug`, jenis *Area pengiriman* (tombol WhatsApp menanyakan ongkir ke lokasi itu) atau *Informasi*; Markdown, sampul, terbit/draf, SEO. Slug yang dipakai sistem (`produk`, `artikel`, `admin`, …) atau oleh peta redirect lama ditolak.
 - **Testimoni:** nama, keterangan, kutipan, rating, urutan. Bagian ulasan di beranda baru muncul kalau sudah ada testimoni.
 - **Info & kontak:** WhatsApp, telepon, telepon kantor, email, alamat, jam buka, link & peta embed Google Maps, rating Google, teks & FAQ beranda, syarat pembayaran, kota tujuan kirim, tautan katalog, info TKDN, SEO beranda.
-- **Pengguna admin:** tambah atau hapus admin lain. **Akun saya:** ganti nama dan password; setelah password diganti, sesi di perangkat lain otomatis keluar.
+- **Pengguna & peran** (khusus pemilik): tambah atau hapus pengguna dan atur perannya (lihat di bawah). **Akun saya:** ganti nama dan password; setelah password diganti, sesi di perangkat lain otomatis keluar.
+
+## Keuangan (`/keuangan`) & operasional (`/operasional`)
+
+Satu alur dari pesanan sampai pembukuan:
+
+```
+Pesanan (PO) ─► Surat jalan ─► truk berangkat ─► terkirim + foto bukti ─► Faktur ─► Penerimaan
+   operasional      operasional     stok keluar & HPP otomatis            keuangan    piutang lunas
+```
+
+**Peran pengguna.** Diatur pemilik di `/admin/pengguna`. Satu orang boleh punya beberapa peran; setelah login ia langsung masuk ke modulnya, dan bisa berpindah modul dari sidebar.
+
+| Peran | Bisa membuka |
+|---|---|
+| Pemilik | semua modul + mengatur pengguna & peran |
+| Situs | `/admin` (produk, artikel, halaman, info & kontak) |
+| Keuangan | `/keuangan`; melihat dokumen operasional (hanya baca) |
+| Operasional | `/operasional`; tidak melihat nilai rupiah persediaan maupun laporan keuangan |
+
+Akun lama otomatis berperan *pemilik*.
+
+**Operasional** (meniru aplikasi PO & pengiriman yang dipakai sekarang)
+- **Pesanan (PO):** pelanggan, nomor PO pelanggan, proyek, alamat & kontak lokasi, tautan Google Maps, tanggal minta kirim, barang & harga (otomatis dari harga jual), ongkir, diskon, PPN. Bisa disimpan sebagai draf. Status berjalan sendiri: *dikonfirmasi → dikirim sebagian → terkirim*, lalu bisa ditandai *selesai* atau *batal*. Halaman pesanan memperlihatkan per barang berapa yang dipesan, dijadwalkan, dikirim, diterima, dan sudah difaktur.
+- **Pengiriman (surat jalan):** dijadwalkan dari sisa pesanan (tidak bisa melebihi qty pesanan), pilih armada & sopir. Tombol *Truk berangkat* dan *Tandai terkirim* (nama penerima + foto bukti dari kamera ponsel). Surat jalan bisa dicetak (A4, tanda tangan pengirim–sopir–penerima). Foto bukti disimpan di R2 dan hanya bisa dibuka pengguna yang login.
+- **Stok:** stok per barang, yang sudah dijadwalkan kirim, stok bebas, kartu stok. **Hasil produksi** (barang jadi masuk, bahan baku keluar) dan **penyesuaian stok** (stok opname, rusak, atau saldo awal).
+- **Pelanggan, armada, sopir.** Data pelanggan sama dengan kontak di modul keuangan.
+
+**Keuangan** (konsep Zahir: semua transaksi menjadi jurnal berpasangan)
+- **Penjualan:** faktur penjualan (bisa dibuat dari pesanan; barisnya terisi dari barang yang sudah diterima pelanggan dan belum difaktur), PPN 11% (bisa diubah), ongkir, diskon, jatuh tempo dari termin pelanggan, cetak faktur A4 dengan terbilang & rekening. **Penerimaan** dialokasikan ke satu atau beberapa faktur; kelebihan atau DP sebelum faktur menjadi *uang muka pelanggan* yang nanti bisa dipakai melunasi faktur.
+- **Pembelian:** faktur pembelian (barang masuk stok atau biaya langsung ke akun), PPN masukan, **pembayaran** ke pemasok dengan alokasi & uang muka.
+- **Kas & bank:** kas masuk, kas keluar, transfer antar-rekening. **Jurnal umum** untuk saldo awal, penyusutan, koreksi.
+- **Laporan:** laba rugi, neraca, neraca saldo, buku besar per akun, umur piutang, umur hutang, penjualan per barang & pelanggan. Semua bisa dicetak dan diunduh CSV (pemisah titik koma, langsung rapi di Excel berbahasa Indonesia).
+- **Data:** bagan akun (48 akun awal, bisa ditambah), kontak, barang & jasa (bisa diambil dari daftar harga website), pengaturan (tarif PPN, termin, NPWP, rekening di faktur, **tanggal tutup buku**: transaksi sebelum tanggal itu tidak bisa diubah).
+
+**Jurnal otomatis**
+
+| Transaksi | Debit | Kredit |
+|---|---|---|
+| Faktur penjualan | Piutang usaha, Potongan penjualan | Penjualan (per barang), Pendapatan ongkir, PPN keluaran |
+| Penerimaan | Kas/bank (atau Uang muka pelanggan bila memakai DP) | Piutang usaha; kelebihan → Uang muka pelanggan |
+| Surat jalan berangkat/terkirim | Harga pokok penjualan | Persediaan barang jadi |
+| Faktur pembelian | Persediaan atau akun biaya, PPN masukan | Hutang usaha |
+| Pembayaran | Hutang usaha; kelebihan → Uang muka pembelian | Kas/bank |
+| Hasil produksi | Persediaan barang jadi | Persediaan bahan baku, Upah produksi (biaya yang diserap) |
+| Penyesuaian stok | Persediaan / Selisih persediaan | Selisih persediaan (atau Saldo awal) / Persediaan |
+
+Harga pokok memakai **rata-rata bergerak**. Bila stok kosong, sistem memakai *harga pokok standar* yang diisi di data barang. Mengubah atau menghapus dokumen membuat ulang jurnal dan pergerakan stoknya dalam satu transaksi database. Laba tahun berjalan dihitung otomatis di neraca, jadi tidak perlu jurnal penutup.
+
+> **Biaya produksi.** Saat hasil produksi dicatat tanpa angka biaya, sistem mengisinya supaya nilai barang jadi sama dengan harga pokok standarnya, lalu mengkreditkan akun *Upah Produksi*. Catat upah & biaya produksi yang benar-benar dibayar (lewat kas keluar) ke akun yang sama, supaya selisihnya kecil. Kalau tidak, laba bulan berjalan akan tampak lebih besar daripada kenyataannya.
+
+**Mulai memakai (sekali saja)**
+1. `/admin/pengguna`: beri peran *Keuangan* / *Operasional* ke staf.
+2. **Keuangan → Barang & jasa → Ambil dari daftar harga website**, lalu isi **harga pokok** (HPP standar) dan stok minimum tiap barang yang dijual.
+3. **Keuangan → Daftar akun:** ganti nama akun bank sesuai rekening. **Pengaturan:** NPWP, rekening untuk faktur, tarif PPN, termin.
+4. **Jurnal umum:** saldo awal kas/bank, piutang/hutang lama, modal (lawan akun *Saldo awal*).
+5. **Operasional → Penyesuaian stok → centang "Saldo awal stok"** untuk stok fisik tiap barang hari ini.
+6. Isi armada dan sopir. Setelah itu alur harian cukup: pesanan → jadwal kirim → berangkat → terkirim → faktur → penerimaan.
 
 ## Teknologi
 
@@ -94,17 +167,24 @@ src/
     admin/login/       halaman login
     admin/(panel)/     halaman admin (semua memanggil requireAdmin)
     admin/actions/     server action CRUD (semua memanggil requireAdmin)
+    keuangan/(panel)/  halaman pembukuan; keuangan/actions/ server action-nya;
+                       keuangan/cetak/ faktur siap cetak; keuangan/ekspor/ unduhan CSV laporan
+    operasional/(panel)/  pesanan, pengiriman, stok, produksi, pelanggan, armada, sopir;
+                       operasional/actions/, operasional/cetak/ (surat jalan), operasional/bukti/ (foto bukti terima)
     media/[...key]/    menyajikan gambar dari R2
     reel/[file]/       menyajikan video fitur dengan dukungan Range (wajib untuk Safari/iOS)
     sitemap.ts, robots.ts
   components/          komponen situs (PatternCalculator, Gallery, ClientLogos, FaqList, …)
-                       + components/admin untuk form admin
+                       + components/admin (form admin), components/panel (sidebar semua modul),
+                       components/erp (form & laporan keuangan), components/ops (form operasional)
   data/                data statis: wilayah kirim, paket proyek, template WhatsApp, galeri,
                        logo klien, lembar spesifikasi, peta redirect alamat lama
-  db/schema.ts         skema tabel D1
-  lib/                 auth, sesi, password, pengaturan, query, format rupiah
-  middleware.ts        redirect 301/410 alamat lama + penjaga /admin
-drizzle/               file migrasi SQL (0000 awal, 0001 tabel halaman + pesan WhatsApp produk)
+  db/schema.ts         skema tabel D1 situs; db/erp.ts skema keuangan & operasional
+  lib/                 auth, peran (roles.ts), sesi, password, pengaturan, query, format rupiah
+  lib/erp/             logika pembukuan: jurnal, nomor dokumen, harga pokok, laporan, alur pesanan
+  middleware.ts        redirect 301/410 alamat lama + penjaga /admin, /keuangan, /operasional
+drizzle/               file migrasi SQL (0000 awal, 0001 tabel halaman + pesan WhatsApp produk,
+                       0002 tabel keuangan & operasional + peran pengguna, 0003 bagan akun awal)
 seed/seed.sql          data awal produk, harga, artikel, dan halaman dari situs lama
 scripts/create-admin.mjs  membuat/mereset akun admin
 public/brand/          logo resmi (biru & putih)
@@ -117,7 +197,9 @@ docs/screenshots/      gambar untuk README ini
 
 ## Menjalankan di komputer sendiri
 
-Butuh **Node.js 20 atau lebih baru**. Perintah di bawah bisa dijalankan di PowerShell maupun terminal biasa.
+Butuh **Node.js 22 atau lebih baru** (Wrangler 4 mensyaratkan Node 22). Perintah di bawah bisa dijalankan di PowerShell maupun terminal biasa, tetapi OpenNext menyarankan **WSL** untuk Windows.
+
+> **Memakai WSL?** Pasang Node di dalam WSL (misalnya lewat nvm: `nvm install 22`), jangan memakai Node/npm Windows. Kalau `npm install` gagal dengan `exec: node: not found` dan path `/mnt/c/...`, itu tandanya WSL sedang memanggil npm Windows. Simpan proyek di folder Linux (`~/projects/...`), bukan di `/mnt/c/...`, supaya `npm install` dan build jauh lebih cepat.
 
 ```powershell
 npm install
@@ -136,22 +218,30 @@ D1 dan R2 lokal disimulasikan oleh Wrangler (datanya ada di folder `.wrangler/`)
 
 ## Deploy ke Cloudflare
 
-Domain sudah memakai Cloudflare, jadi semuanya bisa di satu akun.
+Domain sudah memakai Cloudflare, jadi semuanya bisa di satu akun. Sebelum mulai, aktifkan **R2** sekali di dashboard: **Storage & databases → R2 → Overview**, lalu selesaikan proses berlangganan R2 (gratis selama pemakaian di bawah kuota; Cloudflare bisa meminta kartu/PayPal sebagai verifikasi). D1 tidak perlu diaktifkan terpisah.
 
 ```powershell
-npx wrangler login
+npx wrangler login                  # di WSL: buka URL yang muncul di browser Windows
+npx wrangler whoami                 # pastikan akun yang benar
 
-# 1. Buat database D1, lalu salin "database_id" ke wrangler.jsonc (bagian d1_databases)
-npx wrangler d1 create istana-block-db
+# 1. Buat database D1 di region Asia-Pasifik, lalu salin "database_id" dari hasilnya
+#    ke wrangler.jsonc (bagian d1_databases). Kalau Wrangler menawarkan menambah
+#    binding ke config, pilih "No": binding DB sudah ada.
+npx wrangler d1 create istana-block-db --location=apac
 
-# 2. Buat bucket R2 untuk gambar
-npx wrangler r2 bucket create istana-block-media
+# 2. Buat bucket R2 untuk gambar (nama harus sama dengan wrangler.jsonc). Bucket
+#    dibiarkan privat: gambar disajikan Worker lewat /media/..., jadi tidak perlu
+#    akses publik, domain r2.dev, atau CORS.
+npx wrangler r2 bucket create istana-block-media --location=apac
 
-# 3. Isi tabel & data awal di database produksi
+# 3. Isi tabel & data awal di database produksi (seed HANYA sekali di awal:
+#    perintah ini menghapus produk, artikel, dan halaman yang ada)
 npm run db:migrate:remote
 npm run db:seed:remote
 
-# 4. Simpan kunci rahasia sesi (tempel string acak 64 karakter saat diminta)
+# 4. Simpan kunci rahasia sesi. Buat string acak dengan:
+#    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+#    Bila Worker belum ada, jawab "Yes" saat ditanya membuat Worker baru.
 npx wrangler secret put AUTH_SECRET
 
 # 5. Periksa "SITE_URL" di wrangler.jsonc (dipakai untuk canonical & sitemap), lalu deploy
@@ -161,9 +251,17 @@ npm run deploy
 npm run admin:create -- --email admin@istanablock.com --name "Admin" --password "GantiDenganPasswordKuat" --remote
 ```
 
+Cek setelah deploy: buka `https://<nama-worker>.<akun>.workers.dev/admin`, login, unggah satu foto produk, lalu pastikan gambarnya tampil di halaman produk dan file-nya muncul di bucket R2 (**Storage & databases → R2 → istana-block-media**).
+
 Lalu sambungkan domain: **Cloudflare dashboard → Workers & Pages → istana-block-web → Settings → Domains & Routes → Add → Custom domain** (`istanablockpurwakarta.com` dan `www`). Kalau Cloudflare menolak karena record DNS untuk nama itu sudah ada (A/CNAME ke hosting WordPress), hapus dulu record lama tersebut di menu DNS, lalu ulangi. Siapkan cadangan WordPress sebelumnya.
 
-> **Paket Workers.** Ukuran Worker ini sekitar 1,3 MB (gzip), masih di bawah batas paket gratis 3 MB. Paket gratis membatasi waktu CPU 10 ms per request; halaman biasa aman, tetapi proses login (hash password) bisa melewati batas itu. Kalau login sesekali gagal dengan pesan batas CPU, pakai **Workers Paid (USD 5/bulan)**.
+> **Paket Workers.** Bundle Worker ini sekitar 7,4 MB tanpa kompresi, jauh di bawah batas 64 MiB. Paket gratis membatasi waktu CPU 10 ms per request; halaman biasa aman, tetapi proses login (hash password) bisa melewati batas itu. Kalau login sesekali gagal dengan pesan batas CPU, pakai **Workers Paid (USD 5/bulan)**. Kuota gratis D1 (5 GB, 5 juta baris dibaca/hari) dan R2 (10 GB, 1 juta operasi tulis/bulan) jauh di atas kebutuhan situs ini.
+
+**Cadangan database.** Ekspor isi D1 produksi ke file SQL sebelum perubahan besar:
+
+```powershell
+npx wrangler d1 export istana-block-db --remote --output ../backup-$(Get-Date -Format yyyyMMdd).sql   # bash: ../backup-$(date +%Y%m%d).sql (di luar folder repo)
+```
 
 ### Memperbarui situs
 
@@ -172,6 +270,8 @@ npm run deploy
 ```
 
 Kalau skema database diubah (`src/db/schema.ts`): `npm run db:generate`, lalu `npm run db:migrate:remote`, lalu deploy.
+
+> **Memasang modul keuangan & operasional di situs yang sudah jalan.** Ada dua migrasi baru: `drizzle/0002_erp.sql` (tabel keuangan & operasional, kolom `users.roles`) dan `drizzle/0003_coa.sql` (bagan akun awal). Urutannya: cadangkan database (`wrangler d1 export`, lihat di atas) → `npm run db:migrate:remote` → **baru** push ke `main` / deploy. Kalau kode baru tayang duluan, login `/admin` ikut gagal karena kolom `users.roles` belum ada. Migrasinya hanya menambah tabel dan kolom, jadi aman dijalankan selagi versi lama masih tayang. Jangan jalankan `db:seed:remote` lagi.
 
 > **Sudah pernah deploy versi sebelumnya?** Versi ini menambah migrasi `drizzle/0001_pages.sql` (tabel `pages` dan kolom `products.wa_text`). Jalankan `npm run db:migrate:remote` sebelum `npm run deploy`. Halaman area & informasi ikut terisi lewat `npm run db:seed:remote`, tetapi perintah itu juga **menimpa produk & artikel**; kalau data produksi sudah diubah lewat admin, buat halaman-halamannya dari menu **Halaman** saja.
 
@@ -205,12 +305,12 @@ Hal lain:
 
 ## Keamanan
 
-- Setiap halaman dan server action admin memanggil `requireAdmin()`. Fungsi ini memverifikasi token **dan** mengecek akun ke database, jadi middleware tidak dijadikan satu-satunya pengaman.
+- Setiap halaman dan server action admin memanggil `requireAdmin()`; modul keuangan dan operasional memanggil `requireModule()` dengan peran yang sesuai. Fungsi ini memverifikasi token **dan** mengecek akun beserta perannya ke database, jadi middleware tidak dijadikan satu-satunya pengaman. Unduhan CSV dan foto bukti terima juga memeriksa peran.
 - Password: PBKDF2-SHA256 100.000 iterasi + salt acak; perbandingan hash waktu-konstan.
 - Server Actions Next.js menolak request dari origin lain (proteksi CSRF bawaan); cookie `SameSite=Lax`, `Secure` di produksi.
 - Unggahan dibatasi JPG/PNG/WebP/AVIF/GIF maksimal 5 MB, dengan nama file acak di R2.
 - Markdown dirender tanpa HTML mentah, dan JSON-LD di-escape.
-- Header `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`; `/admin` diberi `X-Robots-Tag: noindex`.
+- Header `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`; `/admin`, `/keuangan`, dan `/operasional` diberi `X-Robots-Tag: noindex` dan ditolak di `robots.txt`.
 
 ## Perintah
 

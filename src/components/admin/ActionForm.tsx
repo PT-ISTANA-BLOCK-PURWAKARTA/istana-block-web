@@ -37,7 +37,9 @@ export function ActionForm({
       style={style}
       onSubmit={(e) => {
         e.preventDefault();
-        const data = new FormData(e.currentTarget);
+        // Sertakan tombol yang diklik (name/value), mis. "Simpan sebagai draf" vs "Simpan & konfirmasi".
+        const submitter = (e.nativeEvent as SubmitEvent).submitter;
+        const data = new FormData(e.currentTarget, submitter instanceof HTMLButtonElement && submitter.name ? submitter : undefined);
         startTransition(() => dispatch(data));
       }}
     >

@@ -6,28 +6,49 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, getEnv, schema } from "@/db";
 import type { FormState } from "@/components/admin/FormMessage";
-import { requireAdmin } from "@/lib/auth";
+import { requireOwner, requireUser } from "@/lib/auth";
+import { normalizeRoles, type Role } from "@/lib/roles";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { SESSION_COOKIE, SESSION_MAX_AGE, signSession } from "@/lib/session";
 
 const Password = z.string().min(10, "Password minimal 10 karakter.").max(200);
 
+function rolesFrom(form: FormData): Role[] {
+  return normalizeRoles(form.getAll("roles").map(String));
+}
+
 export async function createUser(_prev: FormState, form: FormData): Promise<FormState> {
-  await requireAdmin();
+  await requireOwner();
   const parsed = z
     .object({ name: z.string().trim().min(2, "Nama wajib diisi.").max(80), email: z.email("Email tidak valid.").trim().toLowerCase(), password: Password })
     .safeParse(Object.fromEntries(form));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const roles = rolesFrom(form);
+  if (!roles.length) return { error: "Pilih minimal satu peran." };
   const db = await getDb();
   const exists = await db.query.users.findFirst({ where: eq(schema.users.email, parsed.data.email) });
   if (exists) return { error: "Email sudah terdaftar." };
-  await db.insert(schema.users).values({ name: parsed.data.name, email: parsed.data.email, passwordHash: await hashPassword(parsed.data.password) });
+  await db.insert(schema.users).values({ name: parsed.data.name, email: parsed.data.email, passwordHash: await hashPassword(parsed.data.password), roles });
   revalidatePath("/admin/pengguna");
-  return { ok: `Admin ${parsed.data.email} ditambahkan.` };
+  return { ok: `Pengguna ${parsed.data.email} ditambahkan.` };
+}
+
+export async function updateUserRoles(id: number, _prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireOwner();
+  const roles = rolesFrom(form);
+  if (!roles.length) return { error: "Pilih minimal satu peran." };
+  if (id === me.id && !roles.includes("owner")) return { error: "Peran pemilik tidak bisa dilepas dari akun sendiri." };
+  const db = await getDb();
+  const user = await db.query.users.findFirst({ where: eq(schema.users.id, id) });
+  if (!user) return { error: "Pengguna tidak ditemukan." };
+  // Jangan ubah updatedAt agar sesi pengguna tetap berlaku; peran dibaca ulang di setiap request.
+  await db.update(schema.users).set({ roles, updatedAt: user.updatedAt }).where(eq(schema.users.id, id));
+  revalidatePath("/admin/pengguna");
+  return { ok: `Peran ${user.email} diperbarui.` };
 }
 
 export async function deleteUser(id: number) {
-  const me = await requireAdmin();
+  const me = await requireOwner();
   if (me.id === id) return; // tidak bisa menghapus akun sendiri
   const db = await getDb();
   await db.delete(schema.users).where(eq(schema.users.id, id));
@@ -35,7 +56,7 @@ export async function deleteUser(id: number) {
 }
 
 export async function changePassword(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireAdmin();
+  const me = await requireUser();
   const current = String(form.get("current") ?? "");
   const next = Password.safeParse(form.get("next"));
   if (!next.success) return { error: next.error.issues[0]?.message };
@@ -53,7 +74,7 @@ export async function changePassword(_prev: FormState, form: FormData): Promise<
 }
 
 export async function updateProfile(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireAdmin();
+  const me = await requireUser();
   const name = String(form.get("name") ?? "").trim();
   if (name.length < 2) return { error: "Nama minimal 2 huruf." };
   const db = await getDb();
@@ -61,6 +82,6 @@ export async function updateProfile(_prev: FormState, form: FormData): Promise<F
   if (!user) return { error: "Akun tidak ditemukan." };
   // Jangan ubah updatedAt agar sesi tetap berlaku.
   await db.update(schema.users).set({ name, updatedAt: user.updatedAt }).where(eq(schema.users.id, me.id));
-  revalidatePath("/admin", "layout");
+  revalidatePath("/", "layout");
   return { ok: "Nama diperbarui." };
 }

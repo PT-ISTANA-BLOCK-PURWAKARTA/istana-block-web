@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { eq, sql } from "drizzle-orm";
 import { getDb, getEnv, schema } from "@/db";
 import { verifyPassword } from "@/lib/password";
+import { homeFor, normalizeRoles, safeNext } from "@/lib/roles";
 import { SESSION_COOKIE, SESSION_MAX_AGE, signSession } from "@/lib/session";
 
 const MAX_FAILS = 5;
@@ -44,9 +45,18 @@ export async function login(_prev: LoginState, form: FormData): Promise<LoginSta
     return { error: "Email atau password salah." };
   }
 
+  const roles = normalizeRoles(user.roles);
+  const home = safeNext(form.get("next"), roles) ?? homeFor(roles);
+  if (!home) return { error: "Akun ini belum diberi akses ke modul mana pun. Minta pemilik mengatur perannya." };
+
   await db.delete(schema.loginAttempts).where(eq(schema.loginAttempts.key, key));
   const env = await getEnv();
-  const token = await signSession({ sub: String(user.id), email: user.email, name: user.name }, env.AUTH_SECRET);
+  let token: string;
+  try {
+    token = await signSession({ sub: String(user.id), email: user.email, name: user.name }, env.AUTH_SECRET);
+  } catch {
+    return { error: "Server belum siap: kunci AUTH_SECRET belum dipasang atau kurang dari 32 karakter." };
+  }
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -54,7 +64,7 @@ export async function login(_prev: LoginState, form: FormData): Promise<LoginSta
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });
-  redirect("/admin");
+  redirect(home);
 }
 
 export async function logout() {

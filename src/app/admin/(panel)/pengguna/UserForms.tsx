@@ -2,19 +2,48 @@
 
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { changePassword, createUser, updateProfile } from "../../actions/users";
+import { ROLE_LABEL, ROLES, type Role } from "@/lib/roles";
+import { changePassword, createUser, updateProfile, updateUserRoles } from "../../actions/users";
+
+function RoleChecks({ idPrefix, value }: { idPrefix: string; value: Role[] }) {
+  return (
+    <fieldset className="role-checks">
+      <legend className="sr-only">Peran</legend>
+      {ROLES.map((r) => (
+        <label key={r} className="check" htmlFor={`${idPrefix}-${r}`}>
+          <input id={`${idPrefix}-${r}`} type="checkbox" name="roles" value={r} defaultChecked={value.includes(r)} />
+          {ROLE_LABEL[r]}
+        </label>
+      ))}
+    </fieldset>
+  );
+}
 
 export function NewUserForm() {
   return (
     <ActionForm action={createUser} className="form-section" resetOnOk>
-      <h2>Tambah admin</h2>
+      <h2>Tambah pengguna</h2>
       <div className="form-grid">
         <div className="field"><label htmlFor="nu-name">Nama</label><input id="nu-name" name="name" required /></div>
         <div className="field"><label htmlFor="nu-email">Email</label><input id="nu-email" name="email" type="email" required /></div>
         <div className="field full"><label htmlFor="nu-pass">Password awal <span className="help">minimal 10 karakter; minta ia menggantinya setelah masuk</span></label><input id="nu-pass" name="password" type="password" autoComplete="new-password" required minLength={10} /></div>
+        <div className="field full"><span className="label">Peran</span><RoleChecks idPrefix="nu-role" value={[]} /></div>
       </div>
-      <div><SubmitButton>Tambah admin</SubmitButton></div>
+      <div><SubmitButton>Tambah pengguna</SubmitButton></div>
     </ActionForm>
+  );
+}
+
+export function RolesForm({ userId, roles, self }: { userId: number; roles: Role[]; self: boolean }) {
+  return (
+    <details className="role-edit">
+      <summary>Ubah peran</summary>
+      <ActionForm action={updateUserRoles.bind(null, userId)} className="stack" style={{ gap: 10, paddingTop: 10 }}>
+        <RoleChecks idPrefix={`r${userId}`} value={roles} />
+        {self && <p className="small muted">Peran pemilik tidak bisa dilepas dari akun sendiri.</p>}
+        <div><SubmitButton className="btn btn-blue btn-sm">Simpan peran</SubmitButton></div>
+      </ActionForm>
+    </details>
   );
 }
 
