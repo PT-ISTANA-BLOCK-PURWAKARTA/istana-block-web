@@ -10,6 +10,8 @@ const ITEMS: ShellItem[] = [
   { href: "/operasional", label: "Ringkasan", icon: "home" },
   { href: "/operasional/pesanan", label: "Pesanan (PO)", group: "Penjualan", icon: "clipboard" },
   { href: "/operasional/pengiriman", label: "Pengiriman", group: "Penjualan", icon: "truck" },
+  { href: "/operasional/lacak", label: "Lacak truk", group: "Penjualan", icon: "pin", perm: "lacak" },
+  { href: "/operasional/tugas", label: "Tugas antar saya", group: "Penjualan", icon: "route", perm: "antar" },
   { href: "/operasional/pelanggan", label: "Pelanggan", group: "Penjualan", icon: "users", perm: ["pesanan", "pengiriman", "keuangan"] },
   { href: "/operasional/stok", label: "Stok barang", group: "Gudang", icon: "stack" },
   { href: "/operasional/produksi", label: "Hasil produksi", group: "Gudang", icon: "factory", perm: ["stok", "keuangan"] },

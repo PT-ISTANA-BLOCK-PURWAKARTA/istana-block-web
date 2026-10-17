@@ -15,7 +15,7 @@ function href(source: string, id: string | null) {
   if (!id) return null;
   if (source === "pengiriman") return `/operasional/pengiriman/${id}`;
   if (source === "produksi") return `/operasional/produksi/${id}`;
-  if (source === "pembelian") return `/keuangan/pembelian/${id}`;
+  if (source === "pembelian") return `/akuntansi/pembelian/${id}`;
   return `/operasional/stok/penyesuaian/${id}`;
 }
 

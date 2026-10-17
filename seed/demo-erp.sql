@@ -959,12 +959,12 @@ INSERT INTO inv_stock_moves (id, item_id, date, qty, value, source, source_id, n
 ('demo-sm-01856', (SELECT id FROM fin_items WHERE code = 'KST-0403'), '2026-10-13', -50, -438522, 'pengiriman', 'demo-po-o14-sj4', 'SJ/2610/0009', 1791853740, 1791853740),
 ('demo-sm-01867', (SELECT id FROM fin_items WHERE code = 'UDT-0209'), '2026-10-14', -12, -3538367, 'pengiriman', 'demo-po-o15-sj1', 'SJ/2610/0010', 1791941700, 1791941700),
 ('demo-sm-01868', (SELECT id FROM fin_items WHERE code = 'UDT-0215'), '2026-10-14', -12, -1260029, 'pengiriman', 'demo-po-o15-sj1', 'SJ/2610/0010', 1791942720, 1791942720),
-('demo-sm-01878', (SELECT id FROM fin_items WHERE code = 'PVG-0101'), '2026-10-15', -70, -2508011, 'pengiriman', 'demo-po-o16-sj1', 'SJ/2610/0011', 1792029480, 1792029480),
-('demo-sm-01879', (SELECT id FROM fin_items WHERE code = 'KST-0402'), '2026-10-15', -50, -295925, 'pengiriman', 'demo-po-o16-sj1', 'SJ/2610/0011', 1792027500, 1792027500),
-('demo-sm-01895', (SELECT id FROM fin_items WHERE code = 'PVG-0101'), '2026-10-16', -70, -2508011, 'pengiriman', 'demo-po-o16-sj2', 'SJ/2610/0012', 1792115160, 1792115160),
-('demo-sm-01896', (SELECT id FROM fin_items WHERE code = 'KST-0402'), '2026-10-16', -50, -295925, 'pengiriman', 'demo-po-o16-sj2', 'SJ/2610/0012', 1792114200, 1792114200),
-('demo-sm-01902', (SELECT id FROM fin_items WHERE code = 'UDT-0209'), '2026-10-17', -12, -3538367, 'pengiriman', 'demo-po-o15-sj2', 'SJ/2610/0013', 1792199460, 1792199460),
-('demo-sm-01903', (SELECT id FROM fin_items WHERE code = 'UDT-0215'), '2026-10-17', -12, -1260030, 'pengiriman', 'demo-po-o15-sj2', 'SJ/2610/0013', 1792199280, 1792199280);
+('demo-sm-01877', (SELECT id FROM fin_items WHERE code = 'PVG-0101'), '2026-10-15', -70, -2508011, 'pengiriman', 'demo-po-o16-sj1', 'SJ/2610/0011', 1792029480, 1792029480),
+('demo-sm-01878', (SELECT id FROM fin_items WHERE code = 'KST-0402'), '2026-10-15', -50, -295925, 'pengiriman', 'demo-po-o16-sj1', 'SJ/2610/0011', 1792027500, 1792027500),
+('demo-sm-01894', (SELECT id FROM fin_items WHERE code = 'PVG-0101'), '2026-10-16', -70, -2508011, 'pengiriman', 'demo-po-o16-sj2', 'SJ/2610/0012', 1792115160, 1792115160),
+('demo-sm-01895', (SELECT id FROM fin_items WHERE code = 'KST-0402'), '2026-10-16', -50, -295925, 'pengiriman', 'demo-po-o16-sj2', 'SJ/2610/0012', 1792114200, 1792114200),
+('demo-sm-01901', (SELECT id FROM fin_items WHERE code = 'UDT-0209'), '2026-10-17', -12, -3538367, 'pengiriman', 'demo-po-o15-sj2', 'SJ/2610/0013', 1792199460, 1792199460),
+('demo-sm-01902', (SELECT id FROM fin_items WHERE code = 'UDT-0215'), '2026-10-17', -12, -1260030, 'pengiriman', 'demo-po-o15-sj2', 'SJ/2610/0013', 1792199280, 1792199280);
 
 INSERT INTO fin_bills (id, number, supplier_ref, date, due_date, contact_id, subtotal, discount, taxable, tax_rate, tax, total, paid, note, void, created_by, created_at, updated_at) VALUES
 ('demo-pb-00145', 'PBL/2608/0001', 'NOTA 405', '2026-08-04', '2026-08-11', 'demo-ct-s2', 4570965, 0, 0, 0, 0, 4570965, 4570965, 'Dikirim per rit dump truck.', 0, NULL, 1785808800, 1785808800),
@@ -1037,8 +1037,8 @@ INSERT INTO fin_payments (id, number, date, contact_id, account_id, amount, memo
 ('demo-byr-01730', 'BYR/2610/0001', '2026-10-06', 'demo-ct-s1', 'acc_1-1300', 15369149, 'Transfer pelunasan PBL/2609/0006', NULL, 1791270000, 1791270000),
 ('demo-byr-01829', 'BYR/2610/0002', '2026-10-09', 'demo-ct-s2', 'acc_1-1100', 4595871, 'Bayar tunai ke sopir dump truck', NULL, 1791529200, 1791529200),
 ('demo-byr-01862', 'BYR/2610/0003', '2026-10-13', 'demo-ct-s2', 'acc_1-1100', 4230492, 'Bayar tunai ke sopir dump truck', NULL, 1791874800, 1791874800),
-('demo-byr-01885', 'BYR/2610/0004', '2026-10-15', 'demo-ct-s3', 'acc_1-1300', 12347640, 'Transfer pelunasan PBL/2609/0005', NULL, 1792047600, 1792047600),
-('demo-byr-01890', 'BYR/2610/0005', '2026-10-15', 'demo-ct-s2', 'acc_1-1100', 3662484, 'Bayar tunai ke sopir dump truck', NULL, 1792047600, 1792047600);
+('demo-byr-01884', 'BYR/2610/0004', '2026-10-15', 'demo-ct-s3', 'acc_1-1300', 12347640, 'Transfer pelunasan PBL/2609/0005', NULL, 1792047600, 1792047600),
+('demo-byr-01889', 'BYR/2610/0005', '2026-10-15', 'demo-ct-s2', 'acc_1-1100', 3662484, 'Bayar tunai ke sopir dump truck', NULL, 1792047600, 1792047600);
 
 INSERT INTO fin_payment_allocations (id, payment_id, bill_id, amount) VALUES
 ('demo-byra-00372', 'demo-byr-00371', 'demo-pb-00145', 4570965),
@@ -1060,8 +1060,8 @@ INSERT INTO fin_payment_allocations (id, payment_id, bill_id, amount) VALUES
 ('demo-byra-01731', 'demo-byr-01730', 'demo-pb-01331', 15369149),
 ('demo-byra-01830', 'demo-byr-01829', 'demo-pb-01598', 4595871),
 ('demo-byra-01863', 'demo-byr-01862', 'demo-pb-01706', 4230492),
-('demo-byra-01886', 'demo-byr-01885', 'demo-pb-01186', 12347640),
-('demo-byra-01891', 'demo-byr-01890', 'demo-pb-01770', 3662484);
+('demo-byra-01885', 'demo-byr-01884', 'demo-pb-01186', 12347640),
+('demo-byra-01890', 'demo-byr-01889', 'demo-pb-01770', 3662484);
 
 INSERT INTO fin_invoices (id, number, date, due_date, contact_id, order_id, subtotal, discount, ongkir, taxable, tax_rate, tax, total, paid, note, void, created_by, created_at, updated_at) VALUES
 ('demo-po-o3-inv1', 'INV/2608/0001', '2026-08-10', '2026-08-24', 'demo-ct-c3', 'demo-po-o3', 12300000, 0, 0, 0, 0, 0, 12300000, 12300000, '', 0, NULL, 1786353600, 1786353600),
@@ -1499,11 +1499,11 @@ INSERT INTO fin_journals (id, number, date, memo, source, source_id, created_by,
 ('demo-jr-01864', 'BYR/2610/0003', '2026-10-13', 'Pembayaran BYR/2610/0003 — UD Pasir Citarum Jaya', 'pembayaran', 'demo-byr-01862', NULL, 1791877980, 1791877980),
 ('demo-jr-01869', 'SJ/2610/0010', '2026-10-14', 'HPP surat jalan SJ/2610/0010 · PO/2610/0003', 'pengiriman', 'demo-po-o15-sj1', NULL, 1791942960, 1791942960),
 ('demo-ju-01874', 'JU/2610/0001', '2026-10-14', 'Kompensasi PPN masa September 2026', 'manual', 'demo-ju-01874', NULL, 1791947640, 1791947640),
-('demo-jr-01880', 'SJ/2610/0011', '2026-10-15', 'HPP surat jalan SJ/2610/0011 · PO/2610/0004', 'pengiriman', 'demo-po-o16-sj1', NULL, 1792027920, 1792027920),
-('demo-jr-01887', 'BYR/2610/0004', '2026-10-15', 'Pembayaran BYR/2610/0004 — CV Baja Prima Karawang', 'pembayaran', 'demo-byr-01885', NULL, 1792050720, 1792050720),
-('demo-jr-01892', 'BYR/2610/0005', '2026-10-15', 'Pembayaran BYR/2610/0005 — UD Pasir Citarum Jaya', 'pembayaran', 'demo-byr-01890', NULL, 1792048080, 1792048080),
-('demo-jr-01897', 'SJ/2610/0012', '2026-10-16', 'HPP surat jalan SJ/2610/0012 · PO/2610/0004', 'pengiriman', 'demo-po-o16-sj2', NULL, 1792115400, 1792115400),
-('demo-jr-01904', 'SJ/2610/0013', '2026-10-17', 'HPP surat jalan SJ/2610/0013 · PO/2610/0003', 'pengiriman', 'demo-po-o15-sj2', NULL, 1792199280, 1792199280);
+('demo-jr-01879', 'SJ/2610/0011', '2026-10-15', 'HPP surat jalan SJ/2610/0011 · PO/2610/0004', 'pengiriman', 'demo-po-o16-sj1', NULL, 1792027920, 1792027920),
+('demo-jr-01886', 'BYR/2610/0004', '2026-10-15', 'Pembayaran BYR/2610/0004 — CV Baja Prima Karawang', 'pembayaran', 'demo-byr-01884', NULL, 1792050720, 1792050720),
+('demo-jr-01891', 'BYR/2610/0005', '2026-10-15', 'Pembayaran BYR/2610/0005 — UD Pasir Citarum Jaya', 'pembayaran', 'demo-byr-01889', NULL, 1792048080, 1792048080),
+('demo-jr-01896', 'SJ/2610/0012', '2026-10-16', 'HPP surat jalan SJ/2610/0012 · PO/2610/0004', 'pengiriman', 'demo-po-o16-sj2', NULL, 1792115400, 1792115400),
+('demo-jr-01903', 'SJ/2610/0013', '2026-10-17', 'HPP surat jalan SJ/2610/0013 · PO/2610/0003', 'pengiriman', 'demo-po-o15-sj2', NULL, 1792199280, 1792199280);
 
 INSERT INTO fin_journal_lines (id, journal_id, date, account_id, debit, credit, memo, contact_id, sort) VALUES
 ('demo-jl-00002', 'demo-ju-00001', '2026-07-31', 'acc_1-1100', 12500000, 0, 'Kas kantor', NULL, 0),
@@ -2310,26 +2310,25 @@ INSERT INTO fin_journal_lines (id, journal_id, date, account_id, debit, credit, 
 ('demo-jl-01872', 'demo-jr-01869', '2026-10-14', 'acc_5-1100', 1260029, 0, 'U-Ditch — Cover heavy duty — 500 × 600', 'demo-ct-c5', 2),
 ('demo-jl-01873', 'demo-jr-01869', '2026-10-14', 'acc_1-3100', 0, 1260029, 'U-Ditch — Cover heavy duty — 500 × 600', NULL, 3),
 ('demo-jl-01875', 'demo-ju-01874', '2026-10-14', 'acc_2-2100', 0, 4335100, 'PPN keluaran masa ini', NULL, 0),
-('demo-jl-01876', 'demo-ju-01874', '2026-10-14', 'acc_1-4100', 1490139, 0, 'PPN masukan masa ini', NULL, 1),
-('demo-jl-01877', 'demo-ju-01874', '2026-10-14', 'acc_2-2400', 2844961, 0, 'PPN kurang bayar', NULL, 2);
+('demo-jl-01876', 'demo-ju-01874', '2026-10-14', 'acc_1-4100', 4335100, 0, 'Dikompensasi; lebih bayar dibawa ke masa berikutnya', NULL, 1),
+('demo-jl-01880', 'demo-jr-01879', '2026-10-15', 'acc_5-1100', 2508011, 0, 'Paving Block — Truepave / bata 21 × 10,5 cm', 'demo-ct-c2', 0);
 
 INSERT INTO fin_journal_lines (id, journal_id, date, account_id, debit, credit, memo, contact_id, sort) VALUES
-('demo-jl-01881', 'demo-jr-01880', '2026-10-15', 'acc_5-1100', 2508011, 0, 'Paving Block — Truepave / bata 21 × 10,5 cm', 'demo-ct-c2', 0),
-('demo-jl-01882', 'demo-jr-01880', '2026-10-15', 'acc_1-3100', 0, 2508011, 'Paving Block — Truepave / bata 21 × 10,5 cm', NULL, 1),
-('demo-jl-01883', 'demo-jr-01880', '2026-10-15', 'acc_5-1100', 295925, 0, 'Kanstin KS 20', 'demo-ct-c2', 2),
-('demo-jl-01884', 'demo-jr-01880', '2026-10-15', 'acc_1-3100', 0, 295925, 'Kanstin KS 20', NULL, 3),
-('demo-jl-01888', 'demo-jr-01887', '2026-10-15', 'acc_2-1100', 12347640, 0, '', 'demo-ct-s3', 0),
-('demo-jl-01889', 'demo-jr-01887', '2026-10-15', 'acc_1-1300', 0, 12347640, '', 'demo-ct-s3', 1),
-('demo-jl-01893', 'demo-jr-01892', '2026-10-15', 'acc_2-1100', 3662484, 0, '', 'demo-ct-s2', 0),
-('demo-jl-01894', 'demo-jr-01892', '2026-10-15', 'acc_1-1100', 0, 3662484, '', 'demo-ct-s2', 1),
-('demo-jl-01898', 'demo-jr-01897', '2026-10-16', 'acc_5-1100', 2508011, 0, 'Paving Block — Truepave / bata 21 × 10,5 cm', 'demo-ct-c2', 0),
-('demo-jl-01899', 'demo-jr-01897', '2026-10-16', 'acc_1-3100', 0, 2508011, 'Paving Block — Truepave / bata 21 × 10,5 cm', NULL, 1),
-('demo-jl-01900', 'demo-jr-01897', '2026-10-16', 'acc_5-1100', 295925, 0, 'Kanstin KS 20', 'demo-ct-c2', 2),
-('demo-jl-01901', 'demo-jr-01897', '2026-10-16', 'acc_1-3100', 0, 295925, 'Kanstin KS 20', NULL, 3),
-('demo-jl-01905', 'demo-jr-01904', '2026-10-17', 'acc_5-1100', 3538367, 0, 'U-Ditch — 600 × 600 × 1200', 'demo-ct-c5', 0),
-('demo-jl-01906', 'demo-jr-01904', '2026-10-17', 'acc_1-3100', 0, 3538367, 'U-Ditch — 600 × 600 × 1200', NULL, 1),
-('demo-jl-01907', 'demo-jr-01904', '2026-10-17', 'acc_5-1100', 1260030, 0, 'U-Ditch — Cover heavy duty — 500 × 600', 'demo-ct-c5', 2),
-('demo-jl-01908', 'demo-jr-01904', '2026-10-17', 'acc_1-3100', 0, 1260030, 'U-Ditch — Cover heavy duty — 500 × 600', NULL, 3);
+('demo-jl-01881', 'demo-jr-01879', '2026-10-15', 'acc_1-3100', 0, 2508011, 'Paving Block — Truepave / bata 21 × 10,5 cm', NULL, 1),
+('demo-jl-01882', 'demo-jr-01879', '2026-10-15', 'acc_5-1100', 295925, 0, 'Kanstin KS 20', 'demo-ct-c2', 2),
+('demo-jl-01883', 'demo-jr-01879', '2026-10-15', 'acc_1-3100', 0, 295925, 'Kanstin KS 20', NULL, 3),
+('demo-jl-01887', 'demo-jr-01886', '2026-10-15', 'acc_2-1100', 12347640, 0, '', 'demo-ct-s3', 0),
+('demo-jl-01888', 'demo-jr-01886', '2026-10-15', 'acc_1-1300', 0, 12347640, '', 'demo-ct-s3', 1),
+('demo-jl-01892', 'demo-jr-01891', '2026-10-15', 'acc_2-1100', 3662484, 0, '', 'demo-ct-s2', 0),
+('demo-jl-01893', 'demo-jr-01891', '2026-10-15', 'acc_1-1100', 0, 3662484, '', 'demo-ct-s2', 1),
+('demo-jl-01897', 'demo-jr-01896', '2026-10-16', 'acc_5-1100', 2508011, 0, 'Paving Block — Truepave / bata 21 × 10,5 cm', 'demo-ct-c2', 0),
+('demo-jl-01898', 'demo-jr-01896', '2026-10-16', 'acc_1-3100', 0, 2508011, 'Paving Block — Truepave / bata 21 × 10,5 cm', NULL, 1),
+('demo-jl-01899', 'demo-jr-01896', '2026-10-16', 'acc_5-1100', 295925, 0, 'Kanstin KS 20', 'demo-ct-c2', 2),
+('demo-jl-01900', 'demo-jr-01896', '2026-10-16', 'acc_1-3100', 0, 295925, 'Kanstin KS 20', NULL, 3),
+('demo-jl-01904', 'demo-jr-01903', '2026-10-17', 'acc_5-1100', 3538367, 0, 'U-Ditch — 600 × 600 × 1200', 'demo-ct-c5', 0),
+('demo-jl-01905', 'demo-jr-01903', '2026-10-17', 'acc_1-3100', 0, 3538367, 'U-Ditch — 600 × 600 × 1200', NULL, 1),
+('demo-jl-01906', 'demo-jr-01903', '2026-10-17', 'acc_5-1100', 1260030, 0, 'U-Ditch — Cover heavy duty — 500 × 600', 'demo-ct-c5', 2),
+('demo-jl-01907', 'demo-jr-01903', '2026-10-17', 'acc_1-3100', 0, 1260030, 'U-Ditch — Cover heavy duty — 500 × 600', NULL, 3);
 
 -- Lanjutkan penomoran dokumen setelah nomor terakhir data contoh.
 INSERT INTO sys_sequences (key, value) VALUES

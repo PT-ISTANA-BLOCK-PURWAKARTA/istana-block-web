@@ -2,7 +2,7 @@
 
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { saveFinSettings } from "@/app/keuangan/actions/master";
+import { saveFinSettings } from "@/app/akuntansi/actions/master";
 
 export function FinSettingsForm({ values }: { values: Record<string, string> }) {
   return (

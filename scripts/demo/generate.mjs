@@ -843,9 +843,14 @@ for (const [month, settle] of [["08", "2026-09-14"], ["09", "2026-10-14"]]) {
     const net = out - inn;
     const jid = id("ju");
     const name = month === "08" ? "Agustus" : "September";
+    // Kurang bayar → hutang pajak lalu disetor. Lebih bayar → hanya dikompensasikan sebesar PPN keluaran;
+    // sisa PPN masukan tetap di akunnya (aset) untuk masa berikutnya, bukan hutang pajak bersaldo minus.
     journal({
       number: nextNumber("JU", settle), date: settle, memo: `Kompensasi PPN masa ${name} 2026`, source: "manual", sourceId: jid, hour: 10,
-      lines: [{ account: A.ppnKeluaran, debit: out, memo: "PPN keluaran masa ini" }, { account: A.ppnMasukan, credit: inn, memo: "PPN masukan masa ini" }, { account: A.hutPajak, credit: net, memo: "PPN kurang bayar" }],
+      lines:
+        net >= 0
+          ? [{ account: A.ppnKeluaran, debit: out, memo: "PPN keluaran masa ini" }, { account: A.ppnMasukan, credit: inn, memo: "PPN masukan masa ini" }, { account: A.hutPajak, credit: net, memo: "PPN kurang bayar" }]
+          : [{ account: A.ppnKeluaran, debit: out, memo: "PPN keluaran masa ini" }, { account: A.ppnMasukan, credit: out, memo: "Dikompensasi; lebih bayar dibawa ke masa berikutnya" }],
     });
     if (net > 0) cashTxn(settle, "keluar", "bank", [{ account: A.hutPajak, amount: net, memo: `Setor PPN masa ${name} 2026` }], `Setoran PPN masa ${name} 2026`, null, null, 11);
   });
@@ -999,6 +1004,8 @@ DELETE FROM ops_delivery_lines WHERE id LIKE ${D} OR delivery_id LIKE ${D};
 DELETE FROM ops_deliveries WHERE id LIKE ${D};
 DELETE FROM ops_order_lines WHERE id LIKE ${D} OR order_id LIKE ${D};
 DELETE FROM ops_orders WHERE id LIKE ${D};
+DELETE FROM ops_positions WHERE vehicle_id LIKE ${D};
+UPDATE users SET driver_id = NULL WHERE driver_id LIKE ${D};
 ${DEMO_MASTER.map((t) => `DELETE FROM ${t} WHERE id LIKE ${D};`).join("\n")}
 DELETE FROM fin_items WHERE id LIKE ${D}
 ${["inv_stock_moves", "ops_order_lines", "inv_production_lines", "inv_adjustments", "fin_invoice_lines", "fin_bill_lines"].map((t) => `  AND NOT EXISTS (SELECT 1 FROM ${t} x WHERE x.item_id = fin_items.id)`).join("\n")};
@@ -1008,13 +1015,16 @@ ${RESEQ}
 writeFileSync(
   new URL("seed/erp-mulai-bersih.sql", ROOT),
   `-- MULAI BERSIH: menghapus SEMUA transaksi keuangan & operasional (data contoh MAUPUN data latihan/asli):
--- jurnal, faktur, penerimaan, pembelian, pembayaran, kas, pesanan, surat jalan, produksi, penyesuaian, stok, dan penomoran.
+-- jurnal, faktur, penerimaan, pembelian, pembayaran, kas, pesanan, surat jalan, produksi, penyesuaian, stok, penomoran,
+-- dan riwayat posisi truk (lacak).
 -- Yang tetap: bagan akun, barang & harga, pelanggan/pemasok, armada, sopir, pengguna, pengaturan.
 -- Data master contoh (pelanggan, pemasok, armada, sopir, barang berawalan "demo-") ikut dihapus.
 --
 -- Hanya untuk dijalankan SEKALI sebelum mulai mencatat transaksi sungguhan. Cadangkan database dulu.
 ${ORDER.filter((t) => !DEMO_MASTER.includes(t) && t !== "fin_items").reverse().map((t) => `DELETE FROM ${t};`).join("\n")}
 DELETE FROM sys_sequences;
+DELETE FROM ops_positions;
+UPDATE users SET driver_id = NULL WHERE driver_id LIKE 'demo-%';
 ${DEMO_MASTER.map((t) => `DELETE FROM ${t} WHERE id LIKE 'demo-%';`).join("\n")}
 DELETE FROM fin_items WHERE id LIKE 'demo-%';
 `,

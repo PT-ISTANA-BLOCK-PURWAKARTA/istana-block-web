@@ -12,18 +12,18 @@ export const SOURCE_LABEL: Record<string, string> = {
 };
 
 export function sourceHref(source: string, sourceId: string | null, journalId: string) {
-  if (!sourceId) return `/keuangan/jurnal/${journalId}`;
+  if (!sourceId) return `/akuntansi/jurnal/${journalId}`;
   switch (source) {
     case "faktur":
-      return `/keuangan/penjualan/${sourceId}`;
+      return `/akuntansi/penjualan/${sourceId}`;
     case "penerimaan":
-      return `/keuangan/penerimaan/${sourceId}`;
+      return `/akuntansi/penerimaan/${sourceId}`;
     case "pembelian":
-      return `/keuangan/pembelian/${sourceId}`;
+      return `/akuntansi/pembelian/${sourceId}`;
     case "pembayaran":
-      return `/keuangan/pembayaran/${sourceId}`;
+      return `/akuntansi/pembayaran/${sourceId}`;
     case "kas":
-      return `/keuangan/kas/${sourceId}`;
+      return `/akuntansi/kas/${sourceId}`;
     case "pengiriman":
       return `/operasional/pengiriman/${sourceId}`;
     case "produksi":
@@ -31,6 +31,6 @@ export function sourceHref(source: string, sourceId: string | null, journalId: s
     case "penyesuaian":
       return `/operasional/stok/penyesuaian/${sourceId}`;
     default:
-      return `/keuangan/jurnal/${journalId}`;
+      return `/akuntansi/jurnal/${journalId}`;
   }
 }

@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { savePayment } from "@/app/keuangan/actions/purchases";
-import { saveReceipt } from "@/app/keuangan/actions/sales";
+import { savePayment } from "@/app/akuntansi/actions/purchases";
+import { saveReceipt } from "@/app/akuntansi/actions/sales";
 import { formatAmount, parseRupiah, tgl } from "@/lib/erp/util";
 
 export type OpenDoc = { id: string; number: string; date: string; dueDate: string; total: number; /** sisa yang masih bisa dialokasikan (termasuk alokasi dokumen ini sendiri saat diubah) */ left: number; alloc: number };

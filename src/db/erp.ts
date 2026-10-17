@@ -142,15 +142,46 @@ export const journalLines = sqliteTable(
 
 /* ---------------------------------------------------------------- Operasional: armada, sopir, pesanan, pengiriman */
 
-export const vehicles = sqliteTable("ops_vehicles", {
-  id: id(),
-  plate: text("plate").notNull(),
-  name: text("name").notNull().default(""),
-  capacity: text("capacity").notNull().default(""),
-  active: integer("active", { mode: "boolean" }).notNull().default(true),
-  note: text("note").notNull().default(""),
-  ...created,
-});
+export const vehicles = sqliteTable(
+  "ops_vehicles",
+  {
+    id: id(),
+    plate: text("plate").notNull(),
+    name: text("name").notNull().default(""),
+    capacity: text("capacity").notNull().default(""),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    note: text("note").notNull().default(""),
+    /** ID perangkat GPS di truk (IMEI atau ID yang dikirim perangkat/gateway). */
+    gpsDeviceId: text("gps_device_id"),
+    ...created,
+  },
+  (t) => [uniqueIndex("ops_vehicles_gps_device").on(t.gpsDeviceId)],
+);
+
+export const positionSources = ["gps", "hp"] as const;
+export type PositionSource = (typeof positionSources)[number];
+
+/** Riwayat posisi truk: dari perangkat GPS atau HP sopir selama mengantar. */
+export const positions = sqliteTable(
+  "ops_positions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    vehicleId: text("vehicle_id").notNull(),
+    lat: real("lat").notNull(),
+    lng: real("lng").notNull(),
+    /** km/jam */
+    speed: real("speed"),
+    heading: real("heading"),
+    accuracy: real("accuracy"),
+    /** Waktu posisi direkam (unix detik). */
+    at: integer("at").notNull(),
+    receivedAt: integer("received_at").notNull(),
+    source: text("source", { enum: positionSources }).notNull().default("gps"),
+    /** Pengguna (sopir) yang mengirim dari HP. */
+    userId: integer("user_id"),
+  },
+  (t) => [index("ops_positions_vehicle_at").on(t.vehicleId, t.at)],
+);
 
 export const drivers = sqliteTable("ops_drivers", {
   id: id(),

@@ -1,5 +1,6 @@
 -- MULAI BERSIH: menghapus SEMUA transaksi keuangan & operasional (data contoh MAUPUN data latihan/asli):
--- jurnal, faktur, penerimaan, pembelian, pembayaran, kas, pesanan, surat jalan, produksi, penyesuaian, stok, dan penomoran.
+-- jurnal, faktur, penerimaan, pembelian, pembayaran, kas, pesanan, surat jalan, produksi, penyesuaian, stok, penomoran,
+-- dan riwayat posisi truk (lacak).
 -- Yang tetap: bagan akun, barang & harga, pelanggan/pemasok, armada, sopir, pengguna, pengaturan.
 -- Data master contoh (pelanggan, pemasok, armada, sopir, barang berawalan "demo-") ikut dihapus.
 --
@@ -25,6 +26,8 @@ DELETE FROM ops_deliveries;
 DELETE FROM ops_order_lines;
 DELETE FROM ops_orders;
 DELETE FROM sys_sequences;
+DELETE FROM ops_positions;
+UPDATE users SET driver_id = NULL WHERE driver_id LIKE 'demo-%';
 DELETE FROM fin_contacts WHERE id LIKE 'demo-%';
 DELETE FROM ops_vehicles WHERE id LIKE 'demo-%';
 DELETE FROM ops_drivers WHERE id LIKE 'demo-%';

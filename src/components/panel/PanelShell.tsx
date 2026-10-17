@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { logout } from "@/app/admin/actions/auth";
+import { logout } from "@/app/internal/actions/auth";
 import type { CurrentUser } from "@/lib/auth";
 import { can, canOpen, MODULES, ROLE_SHORT, type ModuleKey, type Perm } from "@/lib/roles";
 import { Icon } from "./Icon";
@@ -7,7 +7,7 @@ import { PanelNav, type NavItem } from "./PanelNav";
 
 export type ShellItem = NavItem & { perm?: Perm | Perm[] };
 
-/** Kerangka panel (sidebar + konten) yang dipakai /admin, /keuangan, dan /operasional. */
+/** Kerangka panel (sidebar + konten) yang dipakai /situs, /akuntansi, dan /operasional. */
 export function PanelShell({ module, tag, items, user, children }: { module: ModuleKey; tag: string; items: ShellItem[]; user: CurrentUser; children: React.ReactNode }) {
   const mods = MODULES.filter((m) => canOpen(user.roles, m.key) || m.key === module);
   // Menu yang tidak boleh dipakai akun ini tidak ditampilkan sama sekali.
@@ -18,7 +18,7 @@ export function PanelShell({ module, tag, items, user, children }: { module: Mod
     <div className={`admin panel-${module}`}>
       <aside className="admin-side hexpat">
         <div className="side-top">
-          <Link href={MODULES.find((m) => m.key === module)?.href ?? "/admin"} className="brand">
+          <Link href={MODULES.find((m) => m.key === module)?.href ?? "/internal"} className="brand">
             <img src="/brand/logo-istana-block-putih.webp" alt="Istana Block Purwakarta" width={147} height={44} />
           </Link>
           {mods.length > 1 ? (
@@ -43,9 +43,14 @@ export function PanelShell({ module, tag, items, user, children }: { module: Mod
                 <span>{user.roles.map((r) => ROLE_SHORT[r]).join(", ") || "Tanpa peran"}</span>
               </div>
               <div className="who-actions">
-                <Link href="/" target="_blank" className="who-link">
-                  <Icon name="external" size={16} /> Lihat situs
+                <Link href="/internal" className="who-link">
+                  <Icon name="home" size={16} /> Semua aplikasi
                 </Link>
+                {module === "web" && (
+                  <Link href="/" target="_blank" className="who-link">
+                    <Icon name="external" size={16} /> Lihat situs
+                  </Link>
+                )}
                 <form action={logout}>
                   <button type="submit" className="who-link">
                     <Icon name="logout" size={16} /> Keluar

@@ -1,6 +1,6 @@
-# Istana Block Purwakarta — situs web, panel admin, keuangan & operasional
+# Istana Block Purwakarta — situs web dan aplikasi internal (situs, operasional, keuangan)
 
-Situs web Istana Block Purwakarta yang dibangun ulang dengan **Next.js 15** dan berjalan di **Cloudflare Workers**. Data disimpan di **Cloudflare D1** dan gambar di **Cloudflare R2**. Panel `/admin` (wajib login) dipakai untuk mengelola produk, tabel harga, artikel, halaman, testimoni, dan informasi kontak tanpa menyentuh kode. Di aplikasi yang sama ada `/keuangan` (pembukuan ala Zahir) dan `/operasional` (pesanan, pengiriman, dan stok), dengan akses per peran pengguna.
+Situs web Istana Block Purwakarta yang dibangun ulang dengan **Next.js 15** dan berjalan di **Cloudflare Workers**. Data disimpan di **Cloudflare D1** dan gambar di **Cloudflare R2**. Pintu masuk staf ada di **`/internal`**: pilih aplikasi **Situs** (`/situs`, produk, harga, artikel, halaman), **Operasional** (`/operasional`, pesanan, pengiriman, stok, lacak truk), atau **Keuangan** (`/akuntansi`, pembukuan ala Zahir dan laporan). Situs & Keuangan masuk dengan email + password; gudang, sopir, dan staf lapangan masuk ke Operasional dengan nomor HP + PIN 6 angka.
 
 ![Beranda](docs/screenshots/beranda-atas.webp)
 
@@ -24,7 +24,7 @@ Situs web Istana Block Purwakarta yang dibangun ulang dengan **Next.js 15** dan 
 
 Artikel: [docs/screenshots/artikel.webp](docs/screenshots/artikel.webp)
 
-**Panel admin**
+**Aplikasi Situs (`/situs`)**
 
 | Login | Ringkasan | Daftar produk | Halaman |
 |---|---|---|---|
@@ -60,7 +60,19 @@ Katalog lengkap: [docs/screenshots/katalog.webp](docs/screenshots/katalog.webp)
 |---|---|
 | ![Ringkasan gudang](docs/screenshots/gudang-ringkasan.webp) | ![Pengguna dan peran](docs/screenshots/admin-pengguna.webp) |
 
-Data di gambar adalah **data contoh fiktif** (lihat [Data contoh](#data-contoh-untuk-latihan)), bukan transaksi sungguhan.
+**Portal, login lapangan, lacak truk, tugas sopir, laporan**
+
+| Pilih aplikasi (`/internal`) | Masuk Operasional (HP & PIN) | Lacak truk |
+|---|---|---|
+| ![Portal](docs/screenshots/portal.webp) | ![Masuk operasional](docs/screenshots/masuk-operasional.webp) | ![Lacak truk](docs/screenshots/lacak-truk.webp) |
+
+| Ponsel — tugas sopir | Ponsel — surat jalan sopir | Hub laporan | Arus kas | Umur piutang |
+|---|---|---|---|---|
+| ![Tugas sopir](docs/screenshots/sopir-tugas.webp) | ![Surat jalan sopir](docs/screenshots/sopir-detail.webp) | ![Hub laporan](docs/screenshots/keu-laporan.webp) | ![Arus kas](docs/screenshots/keu-arus-kas.webp) | ![Umur piutang](docs/screenshots/keu-piutang.webp) |
+
+Contoh hasil cetak laporan dengan kop: [laba rugi (PDF)](docs/contoh-cetak/laba-rugi.pdf), [neraca (PDF)](docs/contoh-cetak/neraca.pdf).
+
+Data di gambar adalah **data contoh fiktif** (lihat [Data contoh](#data-contoh-untuk-latihan)), bukan transaksi sungguhan. Peta lacak truk di gambar memakai titik uji; latar peta OpenStreetMap tidak termuat di lingkungan uji.
 
 ## Fitur
 
@@ -81,19 +93,24 @@ Data di gambar adalah **data contoh fiktif** (lihat [Data contoh](#data-contoh-u
 **SEO**
 - Halaman dirender di server (HTML lengkap untuk Google), `<title>`, meta description, canonical, dan Open Graph per halaman. Semua bisa diubah dari admin.
 - Data terstruktur JSON-LD: `HomeAndConstructionBusiness` (alamat, telepon kantor; tanpa `aggregateRating` karena rating milik sendiri tidak ditampilkan Google), `Product` + `AggregateOffer` (rentang harga IDR), `BreadcrumbList`, `FAQPage`, `Article`, `WebPage`.
-- `sitemap.xml` dan `robots.txt` otomatis dari database; `/admin` diberi `noindex`.
+- `sitemap.xml` dan `robots.txt` otomatis dari database; `/internal`, `/situs`, `/akuntansi`, dan `/operasional` diberi `noindex`.
 - Redirect 301 dari alamat WordPress lama (`/paving-block/`, `/u-ditch-istana-block-purwakarta/`, `/servis/`, dan lainnya) ke halaman baru dalam **satu kali** pengalihan, termasuk membuang `/` di akhir URL; alamat yang sengaja dihapus mendapat **410 Gone**. Ditangani `src/middleware.ts`, daftarnya ada di `src/data/legacy-redirects.json` (`{ "/lama": "/baru" }` atau `"410"`).
 
-**Panel admin (`/admin`)**
-- Login email + password, sesi cookie `httpOnly` 7 hari. Setelah 5 kali gagal, login dari alamat IP itu dikunci 15 menit.
+**Pintu masuk (`/internal`) & login**
+- `/internal` menampilkan tiga kartu: Situs, Operasional, Keuangan. Setelah dipilih, staf diarahkan ke halaman masuk aplikasi itu (`/situs/masuk`, `/operasional/masuk`, `/akuntansi/masuk`). Yang sudah login langsung masuk; kartu aplikasi yang bukan haknya tampil terkunci.
+- **Email + password** untuk Situs dan Keuangan, juga untuk pemilik/admin di Operasional. **Nomor HP + PIN 6 angka** untuk staf lapangan (gudang, sopir, operasional lapangan); sesi PIN hanya bisa membuka Operasional.
+- Sesi cookie `httpOnly` 7 hari. Lima kali salah untuk satu email/nomor HP (atau sepuluh kali dari satu alamat IP) dikunci 15 menit. PIN yang terlalu mudah (angka sama semua, berurutan, pola berulang) ditolak.
+- Alamat lama tetap jalan: `/admin` → `/internal`, `/admin/…` → `/situs/…`, `/keuangan/…` → `/akuntansi/…` (301).
+
+**Aplikasi Situs (`/situs`)**
 - **Produk & harga:** tambah, ubah, hapus; foto diunggah ke R2 (otomatis dikecilkan ke WebP ≤ 1600 px di browser); spesifikasi, tabel harga, dan FAQ bisa ditambah atau dihapus per baris; status tayang/draf dan tampil di beranda; urutan; SEO.
 - **Artikel:** editor Markdown (termasuk tabel), gambar sampul, terbit/draf, SEO.
-- **Halaman:** halaman statis di `/slug`, jenis *Area pengiriman* (tombol WhatsApp menanyakan ongkir ke lokasi itu) atau *Informasi*; Markdown, sampul, terbit/draf, SEO. Slug yang dipakai sistem (`produk`, `artikel`, `admin`, …) atau oleh peta redirect lama ditolak.
+- **Halaman:** halaman statis di `/slug`, jenis *Area pengiriman* (tombol WhatsApp menanyakan ongkir ke lokasi itu) atau *Informasi*; Markdown, sampul, terbit/draf, SEO. Slug yang dipakai sistem (`produk`, `artikel`, `internal`, `situs`, `akuntansi`, …) atau oleh peta redirect lama ditolak.
 - **Testimoni:** nama, keterangan, kutipan, rating, urutan. Bagian ulasan di beranda baru muncul kalau sudah ada testimoni.
 - **Info & kontak:** WhatsApp, telepon, telepon kantor, email, alamat, jam buka, link & peta embed Google Maps, rating Google, teks & FAQ beranda, syarat pembayaran, kota tujuan kirim, tautan katalog, info TKDN, SEO beranda.
-- **Pengguna & peran** (khusus pemilik): tambah atau hapus pengguna dan atur perannya (lihat di bawah). **Akun saya:** ganti nama dan password; setelah password diganti, sesi di perangkat lain otomatis keluar.
+- **Pengguna & peran** (khusus pemilik, `/internal/pengguna`): buat akun kantor (email) atau akun lapangan (nomor HP + PIN), atur peran, hubungkan akun sopir ke data sopir, atur ulang password/PIN. **Akun saya:** ganti nama dan password (atau PIN untuk akun lapangan); setelah diganti, sesi di perangkat lain otomatis keluar.
 
-## Keuangan (`/keuangan`) & operasional (`/operasional`)
+## Operasional (`/operasional`) & keuangan (`/akuntansi`)
 
 Satu alur dari pesanan sampai pembukuan:
 
@@ -102,30 +119,42 @@ Pesanan (PO) ─► Surat jalan ─► truk berangkat ─► terkirim + foto buk
    operasional      operasional     stok keluar & HPP otomatis            keuangan    piutang lunas
 ```
 
-**Peran pengguna.** Diatur pemilik di `/admin/pengguna` (di sana juga ada tabel *Siapa bisa apa* dan tombol reset password staf). Satu orang boleh punya beberapa peran; setelah login ia langsung masuk ke modulnya. Menu dan tombol yang bukan haknya tidak tampil, dan setiap server action memeriksa ulang haknya.
+**Peran pengguna.** Diatur pemilik di `/internal/pengguna` (di sana juga ada tabel *Siapa bisa apa* dan tombol reset password staf). Satu orang boleh punya beberapa peran; setelah login ia langsung masuk ke modulnya. Menu dan tombol yang bukan haknya tidak tampil, dan setiap server action memeriksa ulang haknya.
 
-| Pekerjaan | Pemilik | Situs | Keuangan | Operasional | Gudang |
-|---|:-:|:-:|:-:|:-:|:-:|
-| Produk, harga, artikel, halaman situs | ✓ | ✓ | | | |
-| Faktur, penerimaan, pembelian, kas, jurnal, laporan | ✓ | | ✓ | | |
-| Membuat & mengubah pesanan (PO), data pelanggan | ✓ | | lihat | ✓ | lihat |
-| Menjadwalkan surat jalan, armada, sopir, konfirmasi terkirim | ✓ | | lihat | ✓ | lihat |
-| Menandai truk berangkat (barang keluar gudang) | ✓ | | | ✓ | ✓ |
-| Hasil produksi, penyesuaian & saldo awal stok | ✓ | | lihat | | ✓ |
-| Melihat stok barang di gudang | ✓ | | ✓ | ✓ | ✓ |
-| Melihat harga pokok, nilai persediaan & nilai faktur | ✓ | | ✓ | | |
-| Mengelola pengguna & peran | ✓ | | | | |
+| Pekerjaan | Pemilik | Situs | Keuangan | Operasional | Gudang | Sopir |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| Cara masuk | email | email | email | email / HP | HP & PIN | HP & PIN |
+| Produk, harga, artikel, halaman situs | ✓ | ✓ | | | | |
+| Faktur, penerimaan, pembelian, kas, jurnal, laporan keuangan | ✓ | | ✓ | | | |
+| Membuat & mengubah pesanan (PO), data pelanggan | ✓ | | lihat | ✓ | lihat | |
+| Menjadwalkan surat jalan, armada, sopir, konfirmasi terkirim | ✓ | | lihat | ✓ | lihat | |
+| Menandai truk berangkat (barang keluar gudang) | ✓ | | | ✓ | ✓ | |
+| Hasil produksi, penyesuaian & saldo awal stok | ✓ | | lihat | | ✓ | |
+| Melihat stok barang di gudang | ✓ | | ✓ | ✓ | ✓ | |
+| Melihat posisi truk di peta | ✓ | | | ✓ | | |
+| Tugas antar sendiri: berangkat, terkirim + foto, bagikan lokasi | | | | | | ✓ |
+| Melihat harga pokok, nilai persediaan & nilai faktur | ✓ | | ✓ | | | |
+| Mengelola pengguna & peran | ✓ | | | | | |
 
-Contoh pembagian: admin penjualan = *Operasional*; kepala gudang = *Gudang*; staf akuntansi = *Keuangan*; orang yang memegang pesanan sekaligus gudang = *Operasional + Gudang*. Akun lama otomatis berperan *pemilik*.
+Contoh pembagian: admin penjualan = *Operasional* (email); kepala gudang = *Gudang* (HP & PIN); sopir = *Sopir* (HP & PIN, dihubungkan ke data sopirnya); staf akuntansi = *Keuangan*. Akun lama otomatis berperan *pemilik*.
 
-> **Sudah punya akun berperan Operasional?** Mulai versi ini, peran *Operasional* tidak lagi mencatat hasil produksi dan penyesuaian stok; pekerjaan itu pindah ke peran baru *Gudang*. Bila orang yang sama masih mengurus stok, centang juga *Gudang* di `/admin/pengguna`.
+> **Sudah punya akun berperan Operasional?** Mulai versi ini, peran *Operasional* tidak lagi mencatat hasil produksi dan penyesuaian stok; pekerjaan itu pindah ke peran baru *Gudang*. Bila orang yang sama masih mengurus stok, centang juga *Gudang* di `/internal/pengguna`.
 
 **Operasional** (meniru aplikasi PO & pengiriman yang dipakai sekarang)
 - **Pesanan (PO):** pelanggan, nomor PO pelanggan, proyek, alamat & kontak lokasi, tautan Google Maps, tanggal minta kirim, barang & harga (otomatis dari harga jual), ongkir, diskon, PPN. Bisa disimpan sebagai draf. Status berjalan sendiri: *dikonfirmasi → dikirim sebagian → terkirim*, lalu bisa ditandai *selesai* atau *batal*. Halaman pesanan memperlihatkan per barang berapa yang dipesan, dijadwalkan, dikirim, diterima, dan sudah difaktur.
 - **Pengiriman (surat jalan):** dijadwalkan dari sisa pesanan (tidak bisa melebihi qty pesanan), pilih armada & sopir. Tombol *Truk berangkat* dan *Tandai terkirim* (nama penerima + foto bukti dari kamera ponsel). Surat jalan bisa dicetak (A4, tanda tangan pengirim–sopir–penerima). Foto bukti disimpan di R2 dan hanya bisa dibuka pengguna yang login.
 - **Stok:** stok per barang, yang sudah dijadwalkan kirim, stok bebas, kartu stok. **Hasil produksi** (barang jadi masuk, bahan baku keluar) dan **penyesuaian stok** (stok opname, rusak, atau saldo awal). Peran *Gudang* mencatat jumlahnya saja; nilai rupiah dihitung sistem dan hanya terlihat oleh keuangan & pemilik.
-- **Pelanggan, armada, sopir.** Data pelanggan sama dengan kontak di modul keuangan.
+- **Pelanggan, armada, sopir.** Data pelanggan sama dengan kontak di modul keuangan. Armada punya kolom *ID perangkat GPS*.
+- **Lacak truk** (`/operasional/lacak`): peta posisi terakhir tiap truk (bergerak, berhenti sejak jam berapa, atau tanpa sinyal), surat jalan yang sedang diantar beserta jarak lurus ke tujuan (bila pesanan punya tautan Google Maps berkoordinat), dan rute per tanggal. Diperbarui otomatis tiap 30 detik. Peta memakai OpenStreetMap.
+- **Tugas sopir** (`/operasional/tugas`, tampilan ponsel): surat jalan milik sopir hari ini dan berikutnya, tombol buka peta & telepon kontak lokasi, *Barang sudah dimuat, saya berangkat*, lalu *Tandai terkirim* dengan nama penerima dan foto bukti (foto dikecilkan di HP sebelum diunggah). Sopir hanya melihat surat jalannya sendiri.
 - **Ringkasan menyesuaikan peran.** Operasional melihat pesanan yang belum dijadwalkan dan muatan hari ini; gudang melihat *Ringkasan gudang*: muatan hari ini & besok dengan stok yang tersedia, stok di bawah minimum, hasil produksi terakhir, dan stok barang jadi.
+
+**Menyambungkan GPS truk.** Pemilik membuat kunci di **Lacak truk → Pengaturan GPS**, lalu memakai alamat penerima `https://<domain>/api/lacak/gps?key=<kunci>` (atau `/api/lacak/gps/<kunci>`). Yang bisa mengirim ke alamat itu:
+- alat GPS, gateway, atau server pelacak (mis. Traccar) yang bisa meneruskan posisi lewat HTTP berformat **OsmAnd** (`id`, `lat`, `lon`, `timestamp`, `speed` dalam knot, `bearing`);
+- aplikasi gratis **Traccar Client** di HP sopir (tetap jalan di latar belakang): isi *Server URL* dengan alamat di atas dan *Device identifier* dengan ID perangkat truk;
+- sistem lain lewat JSON: `{ "id", "lat", "lng", "speed_kmh", "heading", "time" }` (satu objek atau daftar).
+
+`id` harus sama dengan *ID perangkat GPS* di data armada. Bila vendor GPS hanya punya aplikasi/web sendiri tanpa fitur meneruskan data, perlu akses **API vendor** dan sedikit kode penyesuaian. Tanpa alat apa pun, sopir bisa menekan **Bagikan lokasi** di halaman tugas (hanya selama halaman terbuka dan surat jalan sedang diantar). Riwayat posisi disimpan 120 hari.
 
 **Saling terhubung.** Data dari satu bagian langsung dipakai bagian lain, tanpa ketik ulang:
 - Saat membuat pesanan atau menjadwalkan kirim, kolom **stok bebas** (stok gudang dikurangi yang sudah dijadwalkan) tampil per barang, dan muncul peringatan bila pelanggan itu **punya faktur lewat jatuh tempo** (tanpa memperlihatkan nominalnya ke operasional).
@@ -137,7 +166,10 @@ Contoh pembagian: admin penjualan = *Operasional*; kepala gudang = *Gudang*; sta
 - **Penjualan:** faktur penjualan (bisa dibuat dari pesanan; barisnya terisi dari barang yang sudah diterima pelanggan dan belum difaktur), PPN 11% (bisa diubah), ongkir, diskon, jatuh tempo dari termin pelanggan, cetak faktur A4 dengan terbilang & rekening. **Penerimaan** dialokasikan ke satu atau beberapa faktur; kelebihan atau DP sebelum faktur menjadi *uang muka pelanggan* yang nanti bisa dipakai melunasi faktur.
 - **Pembelian:** faktur pembelian (barang masuk stok atau biaya langsung ke akun), PPN masukan, **pembayaran** ke pemasok dengan alokasi & uang muka.
 - **Kas & bank:** kas masuk, kas keluar, transfer antar-rekening. **Jurnal umum** untuk saldo awal, penyusutan, koreksi.
-- **Laporan:** laba rugi, neraca, neraca saldo, buku besar per akun, umur piutang, umur hutang, penjualan per barang & pelanggan. Semua bisa dicetak dan diunduh CSV (pemisah titik koma, langsung rapi di Excel berbahasa Indonesia).
+- **Laporan** (`/akuntansi/laporan`, disusun per pertanyaan: *untung atau rugi?*, *uang dari mana, untuk apa?*, *siapa yang belum bayar?*, …): laba rugi, **arus kas**, umur piutang, umur hutang, penjualan, neraca, buku besar, neraca saldo.
+  - Setiap laporan punya pilihan cepat (bulan ini, bulan lalu, 3 bulan, tahun ini, …), angka ringkas dengan perbandingan ke periode lalu (ditulis *naik/turun x%*), grafik yang mudah dibaca, dan catatan singkat "cara membaca".
+  - Laba rugi: tren 6 bulan pendapatan vs biaya, kolom % dari pendapatan dan periode pembanding. Neraca: komposisi aset dan sumber dana, pembanding akhir bulan lalu, cek keseimbangan. Arus kas: uang masuk per sumber dan keluar per keperluan (transfer antar-rekening & saldo awal tidak dihitung). Umur piutang: urut dari yang paling lama tertunggak, tombol pesan pengingat WhatsApp. Penjualan: barang terlaris & pelanggan terbesar.
+  - Dicetak / disimpan PDF dengan **kop perusahaan** (logo, nama badan usaha, alamat, telepon, email, NPWP), garis kop, judul & periode, kolom tanda tangan *Disiapkan oleh / Disetujui oleh* (laba rugi, neraca, arus kas), dan keterangan waktu cetak. Semua bisa diunduh CSV (pemisah titik koma, langsung rapi di Excel berbahasa Indonesia).
 - **Data:** bagan akun (48 akun awal, bisa ditambah), kontak, barang & jasa (bisa diambil dari daftar harga website), pengaturan (tarif PPN, termin, NPWP, rekening di faktur, **tanggal tutup buku**: transaksi sebelum tanggal itu tidak bisa diubah).
 
 **Jurnal otomatis**
@@ -157,12 +189,12 @@ Harga pokok memakai **rata-rata bergerak**. Bila stok kosong, sistem memakai *ha
 > **Biaya produksi.** Saat hasil produksi dicatat tanpa angka biaya, sistem mengisinya supaya nilai barang jadi sama dengan harga pokok standarnya, lalu mengkreditkan akun *Upah Produksi*. Catat upah & biaya produksi yang benar-benar dibayar (lewat kas keluar) ke akun yang sama, supaya selisihnya kecil. Kalau tidak, laba bulan berjalan akan tampak lebih besar daripada kenyataannya.
 
 **Mulai memakai (sekali saja)**
-1. `/admin/pengguna`: buat akun tiap staf dan beri peran *Keuangan*, *Operasional*, atau *Gudang*.
+1. `/internal/pengguna`: buat akun tiap staf. Kantor (pemilik, situs, keuangan, admin operasional) dengan email; gudang, sopir, dan staf lapangan dengan nomor HP + PIN. Untuk sopir, tambahkan dulu datanya di **Operasional → Sopir**, lalu hubungkan.
 2. **Keuangan → Barang & jasa → Ambil dari daftar harga website**, lalu isi **harga pokok** (HPP standar) dan stok minimum tiap barang yang dijual.
 3. **Keuangan → Daftar akun:** ganti nama akun bank sesuai rekening. **Pengaturan:** NPWP, rekening untuk faktur, tarif PPN, termin.
 4. **Jurnal umum:** saldo awal kas/bank, piutang/hutang lama, modal (lawan akun *Saldo awal*).
 5. **Operasional → Penyesuaian stok → centang "Saldo awal stok"** untuk stok fisik tiap barang hari ini.
-6. Isi armada dan sopir. Setelah itu alur harian cukup: pesanan → jadwal kirim → berangkat → terkirim → faktur → penerimaan.
+6. Isi armada (beserta ID perangkat GPS bila ada) dan sopir, lalu sambungkan GPS di **Lacak truk → Pengaturan GPS**. Setelah itu alur harian cukup: pesanan → jadwal kirim → berangkat → terkirim → faktur → penerimaan.
 
 ## Data contoh (untuk latihan)
 
@@ -178,7 +210,7 @@ Harga pokok memakai **rata-rata bergerak**. Bila stok kosong, sistem memakai *ha
 - Tanggalnya tetap. Ringkasan "hari ini" paling pas dilihat sekitar 17 Oktober 2026; setelah itu tagihan makin banyak yang lewat jatuh tempo dan muatan hari ini kosong.
 - Semua id berawalan `demo-`. Barang dimasukkan dengan `INSERT OR IGNORE`: kalau barang berkode sama sudah ada, data contoh memakainya tanpa menimpa harganya.
 - **Pengaman:** file ini menolak dijalankan (`CHECK constraint failed: n = 0`) bila database sudah berisi transaksi sungguhan atau data contoh sudah pernah dimuat. Tidak ada data yang berubah.
-- Data contoh **tidak membuat akun pengguna**. Buat akun latihan di `/admin/pengguna`; jangan memakai password yang mudah ditebak di situs produksi.
+- Data contoh **tidak membuat akun pengguna** dan tidak berisi posisi GPS. Buat akun latihan di `/internal/pengguna` (sopir latihan bisa dihubungkan ke sopir contoh); jangan memakai password/PIN yang mudah ditebak di situs produksi.
 
 ```powershell
 npm run demo:local              # muat ke D1 lokal (paling aman untuk mencoba)
@@ -189,14 +221,14 @@ npm run demo:hapus:remote       # hapus sebelum mulai mencatat transaksi asli
 npm run demo:generate           # buat ulang kedua file SQL setelah mengubah scripts/demo/generate.mjs
 ```
 
-**Menghapus.** `seed/demo-erp-hapus.sql` menghapus semua dokumen contoh **beserta** jurnal, pergerakan stok, dan baris yang terbentuk ulang saat dokumen contoh diubah atau statusnya diganti lewat aplikasi, lalu menyusun ulang penomoran. Data asli tidak tersentuh. Ia berhenti tanpa mengubah apa pun bila ada transaksi **baru** (latihan) yang memakai pelanggan, barang, armada, pesanan, atau faktur contoh, karena menghapus induknya akan membuat pembukuan latihan itu timpang. Untuk kasus itu, dan untuk mengosongkan semua latihan sebelum mulai sungguhan, pakai `seed/erp-mulai-bersih.sql`:
+**Menghapus.** `seed/demo-erp-hapus.sql` menghapus semua dokumen contoh **beserta** jurnal, pergerakan stok, dan baris yang terbentuk ulang saat dokumen contoh diubah atau statusnya diganti lewat aplikasi, lalu menyusun ulang penomoran. Riwayat posisi truk contoh ikut terhapus, dan akun sopir latihan dilepas dari sopir contoh. Data asli tidak tersentuh. Ia berhenti tanpa mengubah apa pun bila ada transaksi **baru** (latihan) yang memakai pelanggan, barang, armada, pesanan, atau faktur contoh, karena menghapus induknya akan membuat pembukuan latihan itu timpang. Untuk kasus itu, dan untuk mengosongkan semua latihan sebelum mulai sungguhan, pakai `seed/erp-mulai-bersih.sql`:
 
 ```powershell
 # Cadangkan dulu (lihat "Cadangan database"), lalu:
 npx wrangler d1 execute DB --remote --file=./seed/erp-mulai-bersih.sql
 ```
 
-File itu menghapus **semua** transaksi keuangan & operasional (contoh maupun latihan): jurnal, faktur, penerimaan, pembelian, pembayaran, kas, pesanan, surat jalan, produksi, penyesuaian, stok, dan penomoran, serta kontak, armada, sopir, dan barang contoh. Bagan akun, barang asli & harganya, pengguna, dan pengaturan tetap.
+File itu menghapus **semua** transaksi keuangan & operasional (contoh maupun latihan): jurnal, faktur, penerimaan, pembelian, pembayaran, kas, pesanan, surat jalan, produksi, penyesuaian, stok, penomoran, dan riwayat posisi truk, serta kontak, armada, sopir, dan barang contoh. Bagan akun, barang asli & harganya, pengguna, dan pengaturan tetap.
 
 Setelah menghapus dengan file mana pun, jalankan lagi **Barang & jasa → Ambil dari daftar harga website** (barang yang dibuat data contoh ikut terhapus; barang yang sudah ada tidak diduplikasi), lalu lanjutkan langkah *Mulai memakai* di atas.
 
@@ -218,29 +250,34 @@ src/
   app/
     (site)/            halaman publik: beranda, produk, pola-paving, paket-proyek, area-pengiriman,
                        galeri, artikel, kontak, dan [slug] untuk halaman dari admin
-    admin/login/       halaman login
-    admin/(panel)/     halaman admin (semua memanggil requireAdmin)
-    admin/actions/     server action CRUD (semua memanggil requireAdmin)
-    keuangan/(panel)/  halaman pembukuan; keuangan/actions/ server action-nya;
-                       keuangan/cetak/ faktur siap cetak; keuangan/ekspor/ unduhan CSV laporan
-    operasional/(panel)/  pesanan, pengiriman, stok, produksi, pelanggan, armada, sopir;
-                       operasional/actions/, operasional/cetak/ (surat jalan), operasional/bukti/ (foto bukti terima)
+    internal/          halaman pilih aplikasi, pengguna & peran (internal/pengguna),
+                       server action login (email & PIN) dan pengguna (internal/actions)
+    situs/             aplikasi situs: masuk/, (panel)/ produk, artikel, halaman, testimoni, info; actions/
+    akuntansi/         aplikasi keuangan: masuk/, (panel)/ pembukuan & laporan; actions/;
+                       cetak/ faktur siap cetak; ekspor/ unduhan CSV laporan
+    operasional/       masuk/, (panel)/ pesanan, pengiriman, lacak truk, stok, produksi, pelanggan, armada, sopir;
+                       tugas/ (tampilan ponsel sopir), actions/, cetak/ (surat jalan), bukti/ (foto bukti terima)
+    api/lacak/         gps/ penerima posisi alat GPS, hp/ lokasi dari HP sopir, posisi/ data peta
     media/[...key]/    menyajikan gambar dari R2
     reel/[file]/       menyajikan video fitur dengan dukungan Range (wajib untuk Safari/iOS)
     sitemap.ts, robots.ts
   components/          komponen situs (PatternCalculator, Gallery, ClientLogos, FaqList, …)
-                       + components/admin (form admin), components/panel (sidebar & ikon semua modul),
-                       components/erp (form, grafik & laporan keuangan), components/ops (form operasional)
-  app/panel.css        tampilan panel admin, keuangan, operasional, dan halaman cetak
+                       + components/admin (form admin), components/panel (sidebar & ikon semua aplikasi),
+                       components/auth (layar & form masuk, akun saya),
+                       components/erp (form & grafik keuangan; erp/report: kop laporan, pilihan periode, batang),
+                       components/ops (form operasional, peta lacak truk, tugas sopir)
+  app/panel.css        tampilan portal, aplikasi internal, laporan berkop, dan halaman cetak
   data/                data statis: wilayah kirim, paket proyek, template WhatsApp, galeri,
                        logo klien, lembar spesifikasi, peta redirect alamat lama
   db/schema.ts         skema tabel D1 situs; db/erp.ts skema keuangan & operasional
   lib/                 auth, peran (roles.ts), sesi, password, pengaturan, query, format rupiah
   lib/erp/             logika pembukuan: jurnal, nomor dokumen, harga pokok, laporan, alur pesanan;
-                       insights.ts menghubungkan modul (siap difaktur, stok bebas, rencana muat, tunggakan)
-  middleware.ts        redirect 301/410 alamat lama + penjaga /admin, /keuangan, /operasional
+                       insights.ts menghubungkan modul (siap difaktur, stok bebas, rencana muat, tunggakan);
+                       tracking.ts posisi truk; periods.ts periode laporan; driver.ts tugas sopir
+  middleware.ts        redirect 301/410 alamat lama (termasuk /admin & /keuangan) + penjaga aplikasi internal
 drizzle/               file migrasi SQL (0000 awal, 0001 tabel halaman + pesan WhatsApp produk,
-                       0002 tabel keuangan & operasional + peran pengguna, 0003 bagan akun awal)
+                       0002 tabel keuangan & operasional + peran pengguna, 0003 bagan akun awal,
+                       0004 akun nomor HP + PIN, ID perangkat GPS, riwayat posisi truk)
 seed/seed.sql          data awal produk, harga, artikel, dan halaman dari situs lama
 seed/demo-erp.sql      data contoh keuangan & operasional; demo-erp-hapus.sql untuk menghapusnya,
                        erp-mulai-bersih.sql untuk mengosongkan semua transaksi (lihat "Data contoh")
@@ -251,7 +288,7 @@ public/img/            foto dari situs lama: pabrik, produk, galeri, logo klien,
 public/reel/           poster & subtitle video fitur
 public/reel-src/       file video fitur (MP4 H.264 + WebM VP9; senyap & bersuara)
 tools/reel/            skrip untuk merekam ulang video fitur dari UI asli (lihat tools/reel/README.md)
-docs/screenshots/      gambar untuk README ini
+docs/screenshots/      gambar untuk README ini; docs/contoh-cetak/ contoh PDF laporan berkop
 ```
 
 ## Menjalankan di komputer sendiri
@@ -270,7 +307,7 @@ npm run db:migrate:local      # membuat tabel di D1 lokal
 npm run db:seed:local         # mengisi produk & harga awal
 npm run admin:create -- --email admin@istanablock.com --name "Admin" --password "GantiDenganPasswordKuat"
 
-npm run dev                   # http://localhost:3000, admin di http://localhost:3000/admin
+npm run dev                   # http://localhost:3000, aplikasi internal di http://localhost:3000/internal
 ```
 
 D1 dan R2 lokal disimulasikan oleh Wrangler (datanya ada di folder `.wrangler/`), jadi tidak perlu akun Cloudflare untuk mencoba. Untuk menguji persis seperti di Cloudflare, jalankan `npm run preview` (build Workers + `wrangler dev` di http://localhost:8787).
@@ -310,7 +347,7 @@ npm run deploy
 npm run admin:create -- --email admin@istanablock.com --name "Admin" --password "GantiDenganPasswordKuat" --remote
 ```
 
-Cek setelah deploy: buka `https://<nama-worker>.<akun>.workers.dev/admin`, login, unggah satu foto produk, lalu pastikan gambarnya tampil di halaman produk dan file-nya muncul di bucket R2 (**Storage & databases → R2 → istana-block-media**).
+Cek setelah deploy: buka `https://<nama-worker>.<akun>.workers.dev/internal`, pilih Situs, login, unggah satu foto produk, lalu pastikan gambarnya tampil di halaman produk dan file-nya muncul di bucket R2 (**Storage & databases → R2 → istana-block-media**).
 
 Lalu sambungkan domain: **Cloudflare dashboard → Workers & Pages → istana-block-web → Settings → Domains & Routes → Add → Custom domain** (`istanablockpurwakarta.com` dan `www`). Kalau Cloudflare menolak karena record DNS untuk nama itu sudah ada (A/CNAME ke hosting WordPress), hapus dulu record lama tersebut di menu DNS, lalu ulangi. Siapkan cadangan WordPress sebelumnya.
 
@@ -329,6 +366,8 @@ npm run deploy
 ```
 
 Kalau skema database diubah (`src/db/schema.ts`): `npm run db:generate`, lalu `npm run db:migrate:remote`, lalu deploy.
+
+> **Memperbarui ke versi portal `/internal` (migrasi `drizzle/0004_portal_gps.sql`).** Migrasi ini menambah tabel riwayat posisi truk, kolom ID perangkat GPS di armada, dan **membuat ulang tabel `users`** (email & password kini boleh kosong untuk akun nomor HP + PIN); semua akun lama disalin utuh beserta password dan perannya. Urutannya: cadangkan database → `npm run db:migrate:remote` → **baru** merge ke `main` / deploy. Kode lama tetap bisa login dengan tabel baru, tetapi kode baru tanpa migrasi ini akan gagal login. Setelah tayang, `/admin` dan `/keuangan` otomatis dialihkan ke alamat baru; beri tahu staf untuk membuka `/internal`.
 
 > **Memasang modul keuangan & operasional di situs yang sudah jalan.** Ada dua migrasi baru: `drizzle/0002_erp.sql` (tabel keuangan & operasional, kolom `users.roles`) dan `drizzle/0003_coa.sql` (bagan akun awal). Urutannya: cadangkan database (`wrangler d1 export`, lihat di atas) → `npm run db:migrate:remote` → **baru** push ke `main` / deploy. Kalau kode baru tayang duluan, login `/admin` ikut gagal karena kolom `users.roles` belum ada. Migrasinya hanya menambah tabel dan kolom, jadi aman dijalankan selagi versi lama masih tayang. Jangan jalankan `db:seed:remote` lagi.
 
@@ -364,12 +403,15 @@ Hal lain:
 
 ## Keamanan
 
-- Setiap halaman dan server action admin memanggil `requireAdmin()`; halaman dan server action keuangan memanggil `requireModule("keuangan")`, sedangkan server action operasional memanggil `requirePerm()` dengan hak yang dibutuhkan (misalnya `stok` untuk hasil produksi, `muat` untuk truk berangkat). Daftar hak per peran ada di `src/lib/roles.ts`. Fungsi ini memverifikasi token **dan** mengecek akun beserta perannya ke database, jadi middleware tidak dijadikan satu-satunya pengaman. Unduhan CSV dan foto bukti terima juga memeriksa peran.
+- Setiap halaman dan server action situs memanggil `requireAdmin()`; halaman dan server action keuangan memanggil `requireModule("keuangan")`, sedangkan server action operasional memanggil `requirePerm()` dengan hak yang dibutuhkan (misalnya `stok` untuk hasil produksi, `muat` untuk truk berangkat). Daftar hak per peran ada di `src/lib/roles.ts`. Fungsi ini memverifikasi token **dan** mengecek akun beserta perannya ke database, jadi middleware tidak dijadikan satu-satunya pengaman. Unduhan CSV dan foto bukti terima juga memeriksa peran; sopir hanya bisa membuka surat jalan dan foto bukti miliknya.
+- Login nomor HP + PIN: PIN disimpan sebagai hash PBKDF2 seperti password, dikunci 15 menit setelah 5 kali salah per nomor (10 per alamat IP), PIN mudah ditebak ditolak, dan **sesi PIN hanya membawa peran lapangan** sehingga tidak bisa membuka Situs atau Keuangan walau akunnya punya peran itu. Mengatur ulang PIN/password mengakhiri sesi lama akun itu.
+- Form tetap terkirim dengan POST ke server action walau JavaScript belum siap (sinyal lambat), jadi password/PIN tidak pernah masuk ke alamat URL.
+- Penerima GPS memakai kunci acak yang hanya disimpan hash-nya; kunci bisa diganti kapan saja. Lokasi dari HP sopir hanya diterima saat ia login dan punya surat jalan berstatus dalam perjalanan.
 - Password: PBKDF2-SHA256 100.000 iterasi + salt acak; perbandingan hash waktu-konstan.
 - Server Actions Next.js menolak request dari origin lain (proteksi CSRF bawaan); cookie `SameSite=Lax`, `Secure` di produksi.
 - Unggahan dibatasi JPG/PNG/WebP/AVIF/GIF maksimal 5 MB, dengan nama file acak di R2.
 - Markdown dirender tanpa HTML mentah, dan JSON-LD di-escape.
-- Header `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`; `/admin`, `/keuangan`, dan `/operasional` diberi `X-Robots-Tag: noindex` dan ditolak di `robots.txt`.
+- Header `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`; `/internal`, `/situs`, `/akuntansi`, dan `/operasional` diberi `X-Robots-Tag: noindex` dan ditolak di `robots.txt`.
 
 ## Perintah
 
@@ -382,7 +424,8 @@ Hal lain:
 | `npm run db:generate` | buat file migrasi dari perubahan `schema.ts` |
 | `npm run db:migrate:local` / `:remote` | jalankan migrasi |
 | `npm run db:seed:local` / `:remote` | isi data awal (**menghapus semua produk, artikel, dan halaman yang ada**) |
-| `npm run admin:create -- --email … --name … --password … [--roles keuangan,gudang] [--remote]` | buat akun atau reset password; tanpa `--roles` akun baru menjadi pemilik dan peran akun lama tidak diubah |
+| `npm run admin:create -- --email … --name … --password … [--roles keuangan] [--remote]` | buat akun kantor atau reset password; tanpa `--roles` akun baru menjadi pemilik dan peran akun lama tidak diubah |
+| `npm run admin:create -- --phone 0812… --pin 6angka --name … --roles gudang [--driver ID_SOPIR] [--remote]` | buat akun lapangan (nomor HP + PIN) atau atur ulang PIN-nya; biasanya cukup lewat `/internal/pengguna` |
 | `npm run demo:local` / `:remote` | muat data contoh (lihat *Data contoh*) |
 | `npm run demo:hapus:local` / `:remote` | hapus data contoh |
 | `npm run demo:generate` | buat ulang file data contoh dari `scripts/demo/generate.mjs` |

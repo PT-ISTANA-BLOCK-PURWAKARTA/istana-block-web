@@ -11,7 +11,7 @@ export function JournalView({ lines, title = "Jurnal otomatis" }: { lines: L[]; 
   return (
     <section className="admin-table">
       <table className="compact">
-        <caption>{title} · <Link href={`/keuangan/jurnal/${lines[0].journalId}`}>{lines[0].number}</Link></caption>
+        <caption>{title} · <Link href={`/akuntansi/jurnal/${lines[0].journalId}`}>{lines[0].number}</Link></caption>
         <thead><tr><th>Akun</th><th>Keterangan</th><th className="num">Debit</th><th className="num">Kredit</th></tr></thead>
         <tbody>
           {lines.map((l, i) => (

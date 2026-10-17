@@ -41,6 +41,8 @@ DELETE FROM ops_delivery_lines WHERE id LIKE 'demo-%' OR delivery_id LIKE 'demo-
 DELETE FROM ops_deliveries WHERE id LIKE 'demo-%';
 DELETE FROM ops_order_lines WHERE id LIKE 'demo-%' OR order_id LIKE 'demo-%';
 DELETE FROM ops_orders WHERE id LIKE 'demo-%';
+DELETE FROM ops_positions WHERE vehicle_id LIKE 'demo-%';
+UPDATE users SET driver_id = NULL WHERE driver_id LIKE 'demo-%';
 DELETE FROM fin_contacts WHERE id LIKE 'demo-%';
 DELETE FROM ops_vehicles WHERE id LIKE 'demo-%';
 DELETE FROM ops_drivers WHERE id LIKE 'demo-%';

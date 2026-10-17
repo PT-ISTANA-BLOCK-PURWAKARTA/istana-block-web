@@ -2,7 +2,7 @@
 
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { saveCash } from "@/app/keuangan/actions/ledger";
+import { saveCash } from "@/app/akuntansi/actions/ledger";
 import { CashEditor, type CRow } from "./CashEditor";
 import type { PickAccount } from "./LinesEditor";
 

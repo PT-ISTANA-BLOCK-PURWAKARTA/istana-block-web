@@ -79,7 +79,9 @@ const NEXT: Record<DeliveryStatus, DeliveryStatus[]> = {
  * kembali ke dijadwalkan/batal = stok & jurnal dihapus.
  */
 export async function setDeliveryStatus(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requirePerm("pengiriman", "muat");
+  const me = await requirePerm("pengiriman", "muat", "antar");
+  // Sopir (izin "antar" saja) hanya mengubah surat jalan miliknya: berangkat, lalu terkirim dengan foto.
+  const driverOnly = !can(me.roles, "pengiriman") && !can(me.roles, "muat");
   let uploaded: string | null = null;
   const res = await guard(async () => {
     const db = await getDb();
@@ -87,9 +89,16 @@ export async function setDeliveryStatus(_prev: FormState, form: FormData): Promi
     if (!d) throw new UserError("Surat jalan tidak ditemukan.");
     const to = String(form.get("to") ?? "") as DeliveryStatus;
     if (!NEXT[d.status]?.includes(to)) throw new UserError("Perubahan status ini tidak diizinkan.");
+    if (driverOnly) {
+      if (!me.driverId || d.driverId !== me.driverId) throw new UserError("Surat jalan ini bukan tugas Anda.");
+      const own = (d.status === "dijadwalkan" && to === "berangkat") || (d.status === "berangkat" && to === "terkirim");
+      if (!own) throw new UserError("Sopir hanya bisa menandai berangkat dan terkirim. Hubungi admin pengiriman untuk perubahan lain.");
+      if (to === "terkirim" && !(form.get("proof") instanceof File && (form.get("proof") as File).size > 0)) throw new UserError("Ambil foto bukti terima dulu (surat jalan bertanda tangan atau barang di lokasi).");
+      if (to === "terkirim" && !String(form.get("receivedBy") ?? "").trim()) throw new UserError("Isi nama penerima di lokasi.");
+    }
     // Gudang (izin "muat") hanya memberangkatkan truk atau membatalkan keberangkatan.
     const loadOnly = (d.status === "dijadwalkan" && to === "berangkat") || (d.status === "berangkat" && to === "dijadwalkan");
-    if (!can(me.roles, "pengiriman") && !loadOnly) throw new UserError("Akun Anda hanya bisa menandai truk berangkat. Status lain diubah oleh bagian pengiriman.");
+    if (!driverOnly && !can(me.roles, "pengiriman") && !loadOnly) throw new UserError("Akun Anda hanya bisa menandai truk berangkat. Status lain diubah oleh bagian pengiriman.");
     const fin = await getFinSettings(db);
     const wasPosted = POSTED.includes(d.status);
     const willPost = POSTED.includes(to);
@@ -169,7 +178,7 @@ export async function setDeliveryStatus(_prev: FormState, form: FormData): Promi
     return res;
   }
   const label: Record<string, string> = { berangkat: "Berangkat", terkirim: "Terkirim", batal: "Dibatalkan", dijadwalkan: "Dijadwalkan ulang" };
-  redirect(`/operasional/pengiriman/${res.id}?ok=${encodeURIComponent(`~Status surat jalan: ${label[res.to]}.`)}`);
+  redirect(`/operasional/${driverOnly ? "tugas" : "pengiriman"}/${res.id}?ok=${encodeURIComponent(`~Status surat jalan: ${label[res.to]}.`)}`);
 }
 
 export async function deleteDelivery(id: string): Promise<FormState> {

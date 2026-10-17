@@ -35,6 +35,9 @@ export function ActionForm({
       ref={ref}
       className={className}
       style={style}
+      // Sebelum JavaScript siap (sinyal lambat), form tetap terkirim lewat POST ke server action,
+      // bukan GET yang menaruh isian (mis. password/PIN) di alamat URL.
+      action={dispatch}
       onSubmit={(e) => {
         e.preventDefault();
         // Sertakan tombol yang diklik (name/value), mis. "Simpan sebagai draf" vs "Simpan & konfirmasi".

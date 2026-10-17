@@ -4,7 +4,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveDriver, saveVehicle } from "@/app/operasional/actions/fleet";
 
-type Vehicle = { id: string; plate: string; name: string; capacity: string; note: string; active: boolean };
+type Vehicle = { id: string; plate: string; name: string; capacity: string; note: string; active: boolean; gpsDeviceId: string | null };
 type Driver = { id: string; name: string; phone: string; note: string; active: boolean };
 
 export function VehicleForm({ v }: { v?: Vehicle }) {
@@ -17,6 +17,7 @@ export function VehicleForm({ v }: { v?: Vehicle }) {
         <div className="field"><label htmlFor="vh-name">Jenis / nama <span className="help">opsional</span></label><input id="vh-name" name="name" defaultValue={v?.name} placeholder="mis. Colt diesel bak" /></div>
         <div className="field"><label htmlFor="vh-cap">Kapasitas <span className="help">opsional</span></label><input id="vh-cap" name="capacity" defaultValue={v?.capacity} placeholder="mis. ± 60 m² paving / 4 ton" /></div>
         <div className="field"><label htmlFor="vh-note">Catatan <span className="help">opsional</span></label><input id="vh-note" name="note" defaultValue={v?.note} /></div>
+        <div className="field"><label htmlFor="vh-gps">ID perangkat GPS <span className="help">IMEI / ID yang dikirim alat GPS atau aplikasi pelacak; kosongkan bila belum ada</span></label><input id="vh-gps" name="gpsDeviceId" defaultValue={v?.gpsDeviceId ?? ""} placeholder="mis. 864895031234567" autoComplete="off" /></div>
         {v && <label className="check"><input type="checkbox" name="active" defaultChecked={v.active} /> Aktif</label>}
       </div>
       <div><SubmitButton>{v ? "Simpan" : "Tambah"}</SubmitButton></div>

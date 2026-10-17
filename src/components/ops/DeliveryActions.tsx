@@ -4,6 +4,7 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { setDeliveryStatus } from "@/app/operasional/actions/deliveries";
 import type { DeliveryStatus } from "@/db/erp";
+import { ProofInput } from "./ProofInput";
 
 function Delivered({ id, label }: { id: string; label: string }) {
   return (
@@ -13,10 +14,7 @@ function Delivered({ id, label }: { id: string; label: string }) {
       <h2>{label}</h2>
       <div className="form-grid">
         <div className="field"><label htmlFor="dv-recv">Diterima oleh</label><input id="dv-recv" name="receivedBy" placeholder="nama penerima di lokasi" /></div>
-        <div className="field">
-          <label htmlFor="dv-proof">Foto bukti terima <span className="help">surat jalan bertanda tangan / barang di lokasi; maks. 5 MB</span></label>
-          <input id="dv-proof" name="proof" type="file" accept="image/*" capture="environment" />
-        </div>
+        <ProofInput id="dv-proof" />
       </div>
       <div><SubmitButton className="btn btn-primary">Tandai terkirim</SubmitButton></div>
     </ActionForm>

@@ -52,8 +52,8 @@ export default async function PesananDetail({ params, searchParams }: { params: 
       <BackLink href="/operasional/pesanan">Pesanan</BackLink>
       <PageHead title={o.number} sub={<Status s={o.status} />}>
         {canShip && canSchedule && <Link href={`/operasional/pengiriman/baru?pesanan=${o.id}`} className="btn btn-primary btn-sm">+ Jadwalkan pengiriman</Link>}
-        {canInvoice && <Link href={`/keuangan/penjualan/baru?pesanan=${o.id}`} className="btn btn-blue btn-sm">Buat faktur</Link>}
-        {canFinance && o.status !== "batal" && <Link href={`/keuangan/penerimaan/baru?kontak=${o.contactId}`} className="btn btn-ghost btn-sm">Catat DP / pembayaran</Link>}
+        {canInvoice && <Link href={`/akuntansi/penjualan/baru?pesanan=${o.id}`} className="btn btn-blue btn-sm">Buat faktur</Link>}
+        {canFinance && o.status !== "batal" && <Link href={`/akuntansi/penerimaan/baru?kontak=${o.contactId}`} className="btn btn-ghost btn-sm">Catat DP / pembayaran</Link>}
         {canEdit && o.status !== "batal" && o.status !== "selesai" && <Link href={`/operasional/pesanan/${o.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>}
       </PageHead>
       <Ok ok={ok} />
@@ -145,7 +145,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
               <tbody>
                 {invoices.map((iv) => (
                   <tr key={iv.id}>
-                    <td>{canFinance ? <Link href={`/keuangan/penjualan/${iv.id}`}><b>{iv.number}</b></Link> : <b>{iv.number}</b>}</td>
+                    <td>{canFinance ? <Link href={`/akuntansi/penjualan/${iv.id}`}><b>{iv.number}</b></Link> : <b>{iv.number}</b>}</td>
                     <td>{tgl(iv.date)}</td>
                     <td><Status s={payStatus(iv)} /></td>
                     <td className="num"><Rp n={iv.total} /></td>
