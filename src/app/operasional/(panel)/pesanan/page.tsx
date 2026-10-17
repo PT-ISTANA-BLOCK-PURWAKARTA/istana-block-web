@@ -19,7 +19,7 @@ const TABS = [
 type Row = { id: string; number: string; date: string; status: string; customerRef: string; project: string; requestedDate: string | null; contactName: string; gross: number; value: number; deliveredValue: number; invoiced: number };
 
 export default async function Pesanan({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; ok?: string }> }) {
-  const { canEdit } = await opsAccess();
+  const { canEdit, canFinance } = await opsAccess();
   const sp = await searchParams;
   const status = TABS.some((t) => t.key === sp.status) ? (sp.status as string) : "";
   const q = (sp.q ?? "").trim();
@@ -55,7 +55,7 @@ export default async function Pesanan({ searchParams }: { searchParams: Promise<
       </form>
       <div className="admin-table">
         <table>
-          <thead><tr><th>Pesanan</th><th>Pelanggan</th><th>Minta kirim</th><th>Status</th><th className="num">Nilai</th><th className="num">Terkirim</th><th className="num">Difaktur</th></tr></thead>
+          <thead><tr><th>Pesanan</th><th>Pelanggan</th><th>Minta kirim</th><th>Status</th><th className="num">Nilai</th><th className="num">Terkirim</th>{canFinance && <th className="num">Difaktur</th>}</tr></thead>
           <tbody>
             {rows.map((r) => {
               const pct = r.gross > 0 ? Math.min(100, Math.round((Number(r.deliveredValue) / Number(r.gross)) * 100)) : 0;
@@ -67,7 +67,7 @@ export default async function Pesanan({ searchParams }: { searchParams: Promise<
                   <td><Status s={r.status} /></td>
                   <td className="num"><Rp n={Number(r.value)} /></td>
                   <td className="num"><span className="progress" aria-label={`${pct}% terkirim`}><span style={{ width: `${pct}%` }} /></span><div className="small muted">{pct}%</div></td>
-                  <td className="num small">{Number(r.invoiced) ? <Rp n={Number(r.invoiced)} /> : <span className="muted">—</span>}</td>
+                  {canFinance && <td className="num small">{Number(r.invoiced) ? <Rp n={Number(r.invoiced)} /> : <span className="muted">—</span>}</td>}
                 </tr>
               );
             })}

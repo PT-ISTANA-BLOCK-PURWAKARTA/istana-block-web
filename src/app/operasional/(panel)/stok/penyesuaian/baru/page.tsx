@@ -10,7 +10,7 @@ import { today } from "@/lib/erp/util";
 export const metadata = { title: "Penyesuaian stok baru" };
 
 export default async function PenyesuaianBaru({ searchParams }: { searchParams: Promise<{ barang?: string; awal?: string }> }) {
-  const { canEdit } = await opsAccess();
+  const { canEdit, canFinance } = await opsAccess();
   if (!canEdit) redirect("/operasional/stok/penyesuaian");
   const sp = await searchParams;
   const db = await getDb();
@@ -20,12 +20,12 @@ export default async function PenyesuaianBaru({ searchParams }: { searchParams: 
   ]);
   const opts = items
     .filter((i) => i.active && (i.kind === "barang_jadi" || i.kind === "bahan_baku"))
-    .map((i) => ({ id: i.id, code: i.code, name: i.name, unit: i.unit, onHand: levels.get(i.id)?.qty ?? 0, avgCost: unitCost(levels.get(i.id), i) }));
+    .map((i) => ({ id: i.id, code: i.code, name: i.name, unit: i.unit, onHand: levels.get(i.id)?.qty ?? 0, avgCost: canFinance ? unitCost(levels.get(i.id), i) : 0 }));
   return (
     <>
       <BackLink href="/operasional/stok/penyesuaian">Penyesuaian stok</BackLink>
       <PageHead title="Penyesuaian stok" />
-      <AdjustmentForm date={today()} itemId={sp.barang} opening={sp.awal === "1"} items={opts} />
+      <AdjustmentForm date={today()} itemId={sp.barang} opening={sp.awal === "1"} items={opts} showCost={canFinance} />
     </>
   );
 }

@@ -32,7 +32,7 @@ export default async function PesananBaru({ searchParams }: { searchParams: Prom
         head={{ date: today(), contactId: contact?.id, address: contact?.address ?? "" }}
         lines={[]}
         contacts={contacts}
-        items={lists.items.filter((i) => i.kind === "barang_jadi" || i.kind === "jasa" || i.kind === "lainnya")}
+        items={lists.items.filter((i) => i.kind === "barang_jadi" || i.kind === "jasa" || i.kind === "lainnya").map((i) => ({ ...i, buyPrice: 0 }))}
         taxRate={fin.ppnRate}
       />
     </>

@@ -63,12 +63,14 @@ export async function saveProduction(_prev: FormState, form: FormData): Promise<
       }
     }
     const prodId = existing?.id ?? crypto.randomUUID();
-    const levels = await stockLevels(db, undefined, { source: "produksi", sourceId: prodId });
+    const levels = await stockLevels(db, undefined, prodId);
     const usedValues = used.map((l) => Math.round(l.qty * unitCost(levels.get(l.itemId), items.get(l.itemId)!)));
     const materials = usedValues.reduce((a, v) => a + v, 0);
     const standard = out.reduce((a, l) => a + Math.round(l.qty * items.get(l.itemId)!.buyPrice), 0);
-    const laborRaw = String(form.get("laborCost") ?? "").trim();
-    const labor = laborRaw ? parseRupiah(laborRaw) : Math.max(0, standard - materials);
+    // Kolom biaya hanya tampil untuk staf keuangan; bila tidak dikirim saat mengubah, pakai nilai lama.
+    const laborField = form.get("laborCost");
+    const laborRaw = String(laborField ?? "").trim();
+    const labor = laborField === null && existing ? existing.laborCost : laborRaw ? parseRupiah(laborRaw) : Math.max(0, standard - materials);
     if (labor < 0) throw new UserError("Biaya produksi tidak boleh negatif.");
     const total = materials + labor;
 
@@ -162,9 +164,11 @@ export async function saveAdjustment(_prev: FormState, form: FormData): Promise<
     if (!reason && !opening) throw new UserError("Tulis alasan penyesuaian (mis. hasil stok opname, barang rusak).");
 
     const adjId = existing?.id ?? crypto.randomUUID();
-    const levels = await stockLevels(db, undefined, { source: opening ? "saldo_awal" : "penyesuaian", sourceId: adjId });
+    const levels = await stockLevels(db, undefined, adjId);
     const avg = unitCost(levels.get(item.id), item);
-    const typed = parseRupiah(form.get("unitCost"));
+    // Kolom nilai hanya tampil untuk staf keuangan; bila tidak dikirim saat mengubah, pakai nilai lama.
+    const costField = form.get("unitCost");
+    const typed = costField === null && existing && existing.qty > 0 ? existing.unitCost : parseRupiah(costField);
     const cost = qty > 0 ? typed || Math.round(avg) : Math.round(avg);
     const value = Math.round(qty * cost);
     const number = existing?.number ?? (await nextNumber(db, "ADJ", date));

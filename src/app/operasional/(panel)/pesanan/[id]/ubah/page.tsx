@@ -43,7 +43,7 @@ export default async function UbahPesanan({ params }: { params: Promise<{ id: st
           orderLineId: p.id,
         }))}
         contacts={contacts}
-        items={lists.items}
+        items={lists.items.map((i) => ({ ...i, buyPrice: 0 }))}
         taxRate={fin.ppnRate}
       />
     </>

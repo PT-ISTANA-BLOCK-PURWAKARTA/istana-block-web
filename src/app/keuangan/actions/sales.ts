@@ -8,6 +8,7 @@ import { requireModule } from "@/lib/auth";
 import { docTotals, lineAmount } from "@/lib/erp/docs";
 import {
   assertOpen,
+  chunk,
   deleteJournalOps,
   getFinSettings,
   guard,
@@ -46,6 +47,7 @@ export async function saveInvoice(_prev: FormState, form: FormData): Promise<For
     assertOpen(date, fin.lockDate, "Faktur");
     if (existing) assertOpen(existing.date, fin.lockDate, "Faktur");
     const contact = await customer(db, String(form.get("contactId") ?? ""));
+    if (existing && existing.paid > 0 && contact.id !== existing.contactId) throw new UserError("Faktur ini sudah dibayar sebagian/lunas, jadi pelanggannya tidak bisa diganti. Hapus penerimaannya dulu.");
     const dueDate = String(form.get("dueDate") ?? "") ? requireDate(form.get("dueDate"), "Jatuh tempo") : addDays(date, contact.termDays || fin.termDays);
     if (dueDate < date) throw new UserError("Jatuh tempo tidak boleh sebelum tanggal faktur.");
     const orderId = String(form.get("orderId") ?? "") || existing?.orderId || null;
@@ -79,8 +81,9 @@ export async function saveInvoice(_prev: FormState, form: FormData): Promise<For
       });
     if (!lines.length) throw new UserError("Isi minimal satu baris barang.");
 
-    // Cegah faktur ganda atas baris pesanan yang sama.
-    const olIds = lines.map((l) => l.orderLineId).filter((x): x is string => !!x);
+    // Cegah faktur ganda atas baris pesanan yang sama (qty dijumlah per baris pesanan).
+    const olIds = Array.from(new Set(lines.map((l) => l.orderLineId).filter((x): x is string => !!x)));
+    if (olIds.length && !orderId) throw new UserError("Baris pesanan tidak valid untuk faktur tanpa pesanan.");
     if (olIds.length) {
       const ordered = await db.select().from(schema.orderLines).where(inArray(schema.orderLines.id, olIds));
       const invoiced = await db
@@ -90,12 +93,17 @@ export async function saveInvoice(_prev: FormState, form: FormData): Promise<For
         .where(and(inArray(schema.invoiceLines.orderLineId, olIds), id ? ne(schema.invoices.id, id) : undefined))
         .groupBy(schema.invoiceLines.orderLineId);
       const inv = new Map(invoiced.map((r) => [r.orderLineId, Number(r.qty)]));
+      const want = new Map<string, number>();
       for (const l of lines) {
         if (!l.orderLineId) continue;
         const ol = ordered.find((o) => o.id === l.orderLineId);
-        if (!ol) continue;
-        const left = ol.qty - (inv.get(l.orderLineId) ?? 0);
-        if (l.qty > left + 1e-9) throw new UserError(`"${l.description}": qty ${l.qty} melebihi sisa pesanan yang belum difaktur (${Math.max(0, left)}).`);
+        if (!ol || ol.orderId !== orderId || ol.itemId !== l.itemId) throw new UserError(`"${l.description}": baris pesanan tidak cocok dengan pesanan/barang ini.`);
+        want.set(l.orderLineId, (want.get(l.orderLineId) ?? 0) + l.qty);
+      }
+      for (const [olId, qty] of want) {
+        const ol = ordered.find((o) => o.id === olId)!;
+        const left = ol.qty - (inv.get(olId) ?? 0);
+        if (qty > left + 1e-9) throw new UserError(`"${lines.find((l) => l.orderLineId === olId)?.description}": qty ${qty} melebihi sisa pesanan yang belum difaktur (${Math.max(0, left)}).`);
       }
     }
 
@@ -168,10 +176,15 @@ export async function deleteInvoice(id: string): Promise<FormState> {
 
 type Alloc = { docId: string; amount: number };
 
+/** Alokasi per faktur; baris dengan faktur sama digabung. */
 function parseAllocs(form: FormData): Alloc[] {
-  return parseRows(form.get("allocs"))
-    .map((r) => ({ docId: String(r.docId ?? ""), amount: parseRupiah(r.amount) }))
-    .filter((a) => a.docId && a.amount > 0);
+  const sum = new Map<string, number>();
+  for (const r of parseRows(form.get("allocs"))) {
+    const docId = String(r.docId ?? "");
+    const amount = parseRupiah(r.amount);
+    if (docId && amount > 0) sum.set(docId, (sum.get(docId) ?? 0) + amount);
+  }
+  return [...sum].map(([docId, amount]) => ({ docId, amount }));
 }
 
 export async function saveReceipt(_prev: FormState, form: FormData): Promise<FormState> {
@@ -185,7 +198,7 @@ export async function saveReceipt(_prev: FormState, form: FormData): Promise<For
     const date = requireDate(form.get("date"));
     assertOpen(date, fin.lockDate, "Penerimaan");
     if (existing) assertOpen(existing.date, fin.lockDate, "Penerimaan");
-    const contact = await customer(db, String(form.get("contactId") ?? existing?.contactId ?? ""));
+    const contact = await customer(db, existing?.contactId ?? String(form.get("contactId") ?? ""));
     const acc = await loadAccounts(db);
     const accountId = String(form.get("accountId") ?? "");
     const account = acc.byId.get(accountId);
@@ -208,10 +221,17 @@ export async function saveReceipt(_prev: FormState, form: FormData): Promise<For
       const left = inv.total - inv.paid + own;
       if (a.amount > left) throw new UserError(`Alokasi ke ${inv.number} (${a.amount}) melebihi sisa tagihan (${left}).`);
     }
-    if (accountId === deposit) {
-      if (allocTotal !== amount) throw new UserError("Pemakaian uang muka harus seluruhnya dialokasikan ke faktur.");
-      const bal = await depositBalance(db, deposit, contact.id, "credit", existing?.id);
-      if (amount > bal) throw new UserError(`Saldo uang muka pelanggan hanya ${bal}.`);
+    if (accountId === deposit && allocTotal !== amount) throw new UserError("Pemakaian uang muka harus seluruhnya dialokasikan ke faktur.");
+    // Saldo uang muka pelanggan sesudah transaksi ini tidak boleh minus (juga saat mengubah penerimaan lama
+    // yang uang mukanya sudah dipakai faktur lain).
+    const others = await depositBalance(db, deposit, contact.id, "credit", existing?.id);
+    const after = others + (amount - allocTotal) - (accountId === deposit ? amount : 0);
+    if (after < 0) {
+      throw new UserError(
+        accountId === deposit
+          ? `Saldo uang muka pelanggan hanya ${others}.`
+          : `Uang muka dari penerimaan ini sudah dipakai untuk faktur lain (kurang ${-after}). Ubah/hapus pemakaiannya dulu.`,
+      );
     }
 
     const receiptId = existing?.id ?? crypto.randomUUID();
@@ -230,7 +250,7 @@ export async function saveReceipt(_prev: FormState, form: FormData): Promise<For
         : db.insert(schema.receipts).values({ id: receiptId, ...header, createdBy: me.id }),
       ...insertMany(db, schema.receiptAllocations, allocs.map((a) => ({ receiptId, invoiceId: a.docId, amount: a.amount }))),
       ...journalOps(db, { number, date, memo: `Penerimaan ${number} — ${contact.name}`, source: "penerimaan", sourceId: receiptId, createdBy: me.id, lines: jl }),
-      affected.length ? recalcInvoicePaid(db, affected) : null,
+      ...recalcInvoicePaid(db, affected),
     ]);
     return { id: receiptId, number };
   });
@@ -239,10 +259,12 @@ export async function saveReceipt(_prev: FormState, form: FormData): Promise<For
 }
 
 function recalcInvoicePaid(db: DB, ids: string[]) {
-  return db
-    .update(schema.invoices)
-    .set({ paid: sql`(select coalesce(sum(a.amount),0) from fin_receipt_allocations a where a.invoice_id = ${schema.invoices.id})` })
-    .where(inArray(schema.invoices.id, ids));
+  return chunk(Array.from(new Set(ids))).map((part) =>
+    db
+      .update(schema.invoices)
+      .set({ paid: sql`(select coalesce(sum(a.amount),0) from fin_receipt_allocations a where a.invoice_id = ${schema.invoices.id})` })
+      .where(inArray(schema.invoices.id, part)),
+  );
 }
 
 export async function deleteReceipt(id: string): Promise<FormState> {
@@ -265,7 +287,7 @@ export async function deleteReceipt(id: string): Promise<FormState> {
       db.delete(schema.receiptAllocations).where(eq(schema.receiptAllocations.receiptId, id)),
       ...deleteJournalOps(db, "penerimaan", id),
       db.delete(schema.receipts).where(eq(schema.receipts.id, id)),
-      allocs.length ? recalcInvoicePaid(db, allocs.map((a) => a.invoiceId)) : null,
+      ...recalcInvoicePaid(db, allocs.map((a) => a.invoiceId)),
     ]);
     return { ok: "deleted" };
   });

@@ -5,7 +5,7 @@ import type { Delivery, OrderStatus } from "@/db/erp";
 import { requireAnyModule } from "@/lib/auth";
 import { canOpen } from "@/lib/roles";
 import { deriveOrderStatus, orderProgress } from "./orders";
-import { deleteJournalOps, insertMany, inventoryAccount, isStockItem, journalOps, stockLevels, unitCost, type Accounts, type DB, type JLine } from "./server";
+import { chunk, deleteJournalOps, insertMany, inventoryAccount, isStockItem, journalOps, stockLevels, unitCost, type Accounts, type DB, type JLine } from "./server";
 
 /** Akses modul operasional: staf keuangan boleh melihat (hanya-baca), staf operasional boleh mengubah. */
 export async function opsAccess() {
@@ -34,7 +34,7 @@ export async function postDeliveryOps(db: DB, acc: Accounts, d: Pick<Delivery, "
     .innerJoin(schema.items, eq(schema.items.id, schema.deliveryLines.itemId))
     .where(eq(schema.deliveryLines.deliveryId, d.id));
   const order = await db.query.orders.findFirst({ where: eq(schema.orders.id, d.orderId) });
-  const levels = await stockLevels(db, undefined, { source: "pengiriman", sourceId: d.id });
+  const levels = await stockLevels(db, undefined, d.id);
   const moves: (typeof schema.stockMoves.$inferInsert)[] = [];
   const jl: JLine[] = [];
   for (const { qty, item } of lines) {
@@ -68,7 +68,7 @@ export async function reopenStatus(db: DB, orderId: string): Promise<OrderStatus
 /** Barang yang dilacak stoknya, untuk validasi produksi/penyesuaian. */
 export async function stockItemsById(db: DB, ids: string[]) {
   if (!ids.length) return new Map<string, typeof schema.items.$inferSelect>();
-  const rows = await db.select().from(schema.items).where(inArray(schema.items.id, ids));
+  const rows = (await Promise.all(chunk(Array.from(new Set(ids))).map((part) => db.select().from(schema.items).where(inArray(schema.items.id, part))))).flat();
   return new Map(rows.map((r) => [r.id, r]));
 }
 
@@ -76,12 +76,17 @@ export async function stockItemsById(db: DB, ids: string[]) {
 export async function deliveryItems(db: DB, deliveryIds: string[]) {
   const out = new Map<string, { name: string; qty: number; unit: string }[]>();
   if (!deliveryIds.length) return out;
-  const rows = await db
-    .select({ deliveryId: schema.deliveryLines.deliveryId, qty: schema.deliveryLines.qty, unit: schema.orderLines.unit, itemUnit: schema.items.unit, name: schema.items.name })
-    .from(schema.deliveryLines)
-    .innerJoin(schema.orderLines, eq(schema.orderLines.id, schema.deliveryLines.orderLineId))
-    .leftJoin(schema.items, eq(schema.items.id, schema.deliveryLines.itemId))
-    .where(inArray(schema.deliveryLines.deliveryId, deliveryIds));
+  const parts = await Promise.all(
+    chunk(deliveryIds).map((part) =>
+      db
+        .select({ deliveryId: schema.deliveryLines.deliveryId, qty: schema.deliveryLines.qty, unit: schema.orderLines.unit, itemUnit: schema.items.unit, name: schema.items.name })
+        .from(schema.deliveryLines)
+        .innerJoin(schema.orderLines, eq(schema.orderLines.id, schema.deliveryLines.orderLineId))
+        .leftJoin(schema.items, eq(schema.items.id, schema.deliveryLines.itemId))
+        .where(inArray(schema.deliveryLines.deliveryId, part)),
+    ),
+  );
+  const rows = parts.flat();
   for (const r of rows) {
     const list = out.get(r.deliveryId) ?? [];
     list.push({ name: r.name ?? "", qty: r.qty, unit: r.unit || r.itemUnit || "" });

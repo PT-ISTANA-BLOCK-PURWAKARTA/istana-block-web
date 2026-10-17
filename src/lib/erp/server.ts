@@ -14,6 +14,13 @@ export class UserError extends Error {}
 
 /* ------------------------------------------------------------ batch & insert */
 
+/** Pecah daftar (mis. id untuk IN (...)) agar satu perintah D1 tidak melewati ±100 parameter. */
+export function chunk<T>(arr: T[], size = 90): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
 /** Jalankan beberapa perintah sebagai satu transaksi D1. */
 export async function runBatch(db: DB, ops: Op[]) {
   const list = ops.flat().filter(Boolean);
@@ -122,7 +129,7 @@ export function deleteJournalOps(db: DB, source: JournalSource, sourceId: string
 /* ------------------------------------------------------------ persediaan */
 
 /** Saldo kuantitas & nilai per barang (opsional sampai tanggal tertentu, inklusif). */
-export async function stockLevels(db: DB, upTo?: string, exclude?: { source: string; sourceId: string }) {
+export async function stockLevels(db: DB, upTo?: string, excludeSourceId?: string) {
   const rows = await db
     .select({ itemId: schema.stockMoves.itemId, qty: sql<number>`coalesce(sum(${schema.stockMoves.qty}),0)`, value: sql<number>`coalesce(sum(${schema.stockMoves.value}),0)` })
     .from(schema.stockMoves)
@@ -130,7 +137,7 @@ export async function stockLevels(db: DB, upTo?: string, exclude?: { source: str
       and(
         upTo ? sql`${schema.stockMoves.date} <= ${upTo}` : undefined,
         // Saat dokumen diubah, pergerakan lamanya tidak ikut menentukan harga pokok baru.
-        exclude ? sql`not (${schema.stockMoves.source} = ${exclude.source} and coalesce(${schema.stockMoves.sourceId}, '') = ${exclude.sourceId})` : undefined,
+        excludeSourceId ? sql`coalesce(${schema.stockMoves.sourceId}, '') <> ${excludeSourceId}` : undefined,
       ),
     )
     .groupBy(schema.stockMoves.itemId);
@@ -182,13 +189,18 @@ export function requireDate(v: unknown, label = "Tanggal") {
 }
 
 /** JSON dari input tersembunyi editor baris. */
+export const MAX_ROWS = 80;
+
 export function parseRows(v: FormDataEntryValue | null): Record<string, unknown>[] {
+  let rows: Record<string, unknown>[] = [];
   try {
     const x = JSON.parse(String(v ?? "[]"));
-    return Array.isArray(x) ? x.filter((r) => r && typeof r === "object") : [];
+    rows = Array.isArray(x) ? x.filter((r) => r && typeof r === "object") : [];
   } catch {
-    return [];
+    rows = [];
   }
+  if (rows.length > MAX_ROWS) throw new UserError(`Maksimal ${MAX_ROWS} baris per dokumen. Pecah menjadi beberapa dokumen.`);
+  return rows;
 }
 
 /** Bungkus server action: UserError → { error }, selain itu dilempar ulang (redirect, dll.). */

@@ -86,8 +86,16 @@ export async function saveItem(_prev: FormState, form: FormData): Promise<FormSt
     revenueAccountId,
     updatedAt: new Date(),
   };
-  if (id) await db.update(schema.items).set(values).where(eq(schema.items.id, id));
-  else await db.insert(schema.items).values(values);
+  if (id) {
+    // Barang yang sudah punya pergerakan stok: jenis persediaan & pelacakan stok dikunci agar
+    // akun persediaan dan harga pokoknya tidak terpecah.
+    const old = await db.query.items.findFirst({ where: eq(schema.items.id, id) });
+    const moved = await db.get<{ n: number }>(sql`select count(*) n from inv_stock_moves where item_id = ${id}`);
+    if (old && Number(moved?.n ?? 0) > 0 && (old.kind !== values.kind || old.trackStock !== values.trackStock)) {
+      return { error: "Barang ini sudah punya pergerakan stok, jadi jenis dan pelacakan stoknya tidak bisa diubah. Buat barang baru bila perlu." };
+    }
+    await db.update(schema.items).set(values).where(eq(schema.items.id, id));
+  } else await db.insert(schema.items).values(values);
   redirect(`/keuangan/barang?ok=${encodeURIComponent(p.data.name)}`);
 }
 

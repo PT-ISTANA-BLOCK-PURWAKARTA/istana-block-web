@@ -18,6 +18,7 @@ export function AdjustmentForm({
   reason,
   opening: initialOpening,
   items,
+  showCost,
 }: {
   id?: string;
   date: string;
@@ -27,6 +28,7 @@ export function AdjustmentForm({
   reason?: string;
   opening?: boolean;
   items: Opt[];
+  showCost: boolean;
 }) {
   const [item, setItem] = useState(itemId ?? "");
   const [dir, setDir] = useState<"tambah" | "kurang">(qty != null && qty < 0 ? "kurang" : "tambah");
@@ -43,7 +45,7 @@ export function AdjustmentForm({
             <option value="">— pilih barang —</option>
             {items.map((i) => <option key={i.id} value={i.id}>{i.code} · {i.name} (stok {formatQty(i.onHand)} {i.unit})</option>)}
           </select>
-          {sel && <span className="help">Stok sekarang {formatQty(sel.onHand)} {sel.unit} · harga pokok rata-rata Rp{formatAmount(Math.round(sel.avgCost))}</span>}
+          {sel && <span className="help">Stok sekarang {formatQty(sel.onHand)} {sel.unit}{showCost && <> · harga pokok rata-rata Rp{formatAmount(Math.round(sel.avgCost))}</>}</span>}
         </div>
         <div className="field">
           <span className="label">Jenis</span>
@@ -53,7 +55,7 @@ export function AdjustmentForm({
           </div>
         </div>
         <div className="field"><label htmlFor="adj-qty">Qty {sel?.unit}</label><input id="adj-qty" name="qty" className="num" inputMode="decimal" defaultValue={qty != null ? formatQty(Math.abs(qty)) : ""} required /></div>
-        {dir === "tambah" && (
+        {dir === "tambah" && showCost && (
           <div className="field"><label htmlFor="adj-cost">Nilai per satuan (Rp) <span className="help">kosong = rata-rata</span></label><input id="adj-cost" name="unitCost" className="num" inputMode="numeric" defaultValue={unitCost ? String(unitCost) : ""} /></div>
         )}
         <div className="field" style={{ justifyContent: "flex-end" }}>

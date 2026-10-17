@@ -30,7 +30,7 @@ export default async function PenyesuaianDetail({ params, searchParams }: { para
     const [items, levels] = await Promise.all([db.select().from(schema.items).where(eq(schema.items.trackStock, true)).orderBy(asc(schema.items.code)), stockLevels(db)]);
     opts = items
       .filter((i) => (i.active || i.id === a.itemId) && (i.kind === "barang_jadi" || i.kind === "bahan_baku"))
-      .map((i) => ({ id: i.id, code: i.code, name: i.name, unit: i.unit, onHand: levels.get(i.id)?.qty ?? 0, avgCost: unitCost(levels.get(i.id), i) }));
+      .map((i) => ({ id: i.id, code: i.code, name: i.name, unit: i.unit, onHand: levels.get(i.id)?.qty ?? 0, avgCost: canFinance ? unitCost(levels.get(i.id), i) : 0 }));
   }
   return (
     <>
@@ -39,7 +39,7 @@ export default async function PenyesuaianDetail({ params, searchParams }: { para
       <Ok ok={ok} />
       <div className="stack" style={{ gap: 20 }}>
         {canEdit ? (
-          <AdjustmentForm id={a.id} date={a.date} itemId={a.itemId} qty={a.qty} unitCost={a.qty > 0 ? a.unitCost : undefined} reason={a.reason} opening={opening} items={opts} />
+          <AdjustmentForm id={a.id} date={a.date} itemId={a.itemId} qty={a.qty} unitCost={canFinance && a.qty > 0 ? a.unitCost : undefined} reason={a.reason} opening={opening} items={opts} showCost={canFinance} />
         ) : (
           <section className="admin-card"><p>{a.reason}</p></section>
         )}

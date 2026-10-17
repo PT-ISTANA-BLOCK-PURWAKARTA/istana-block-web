@@ -122,7 +122,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
           </table>
         </section>
 
-        {(invoices.length > 0 || canFinance) && (
+        {canFinance && (
           <section className="admin-table">
             <table className="compact">
               <caption>Faktur</caption>

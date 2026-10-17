@@ -10,7 +10,7 @@ import { formatQty } from "@/lib/erp/util";
 export const metadata = { title: "Ubah hasil produksi" };
 
 export default async function UbahProduksi({ params }: { params: Promise<{ id: string }> }) {
-  const { canEdit } = await opsAccess();
+  const { canEdit, canFinance } = await opsAccess();
   const { id } = await params;
   if (!canEdit) redirect(`/operasional/produksi/${id}`);
   const db = await getDb();
@@ -27,10 +27,11 @@ export default async function UbahProduksi({ params }: { params: Promise<{ id: s
         id={p.id}
         date={p.date}
         note={p.note}
-        laborCost={p.laborCost}
+        laborCost={canFinance ? p.laborCost : undefined}
+        showCost={canFinance}
         hasil={lines.filter((l) => l.role === "hasil").map(row)}
         bahan={lines.filter((l) => l.role === "bahan").map(row)}
-        items={lists.items.filter((i) => i.kind === "barang_jadi" || i.kind === "bahan_baku")}
+        items={lists.items.filter((i) => i.kind === "barang_jadi" || i.kind === "bahan_baku").map(({ id, code, name, unit, kind }) => ({ id, code, name, unit, kind }))}
       />
     </>
   );

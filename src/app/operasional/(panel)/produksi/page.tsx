@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { Ok, PageHead, Rp } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
+import { chunk } from "@/lib/erp/server";
 import { formatQty, tgl } from "@/lib/erp/util";
 
 export const metadata = { title: "Hasil produksi" };
@@ -15,11 +16,15 @@ export default async function Produksi({ searchParams }: { searchParams: Promise
   const ids = rows.map((r) => r.id);
   const [outs, vals] = ids.length
     ? await Promise.all([
-        db
-          .select({ productionId: schema.productionLines.productionId, qty: schema.productionLines.qty, name: schema.items.name, unit: schema.items.unit })
-          .from(schema.productionLines)
-          .leftJoin(schema.items, eq(schema.items.id, schema.productionLines.itemId))
-          .where(and(eq(schema.productionLines.role, "hasil"), inArray(schema.productionLines.productionId, ids))),
+        Promise.all(
+          chunk(ids).map((part) =>
+            db
+              .select({ productionId: schema.productionLines.productionId, qty: schema.productionLines.qty, name: schema.items.name, unit: schema.items.unit })
+              .from(schema.productionLines)
+              .leftJoin(schema.items, eq(schema.items.id, schema.productionLines.itemId))
+              .where(and(eq(schema.productionLines.role, "hasil"), inArray(schema.productionLines.productionId, part))),
+          ),
+        ).then((r) => r.flat()),
         db.all<{ id: string; value: number }>(sql`select source_id id, coalesce(sum(value),0) value from inv_stock_moves where source = 'produksi' and qty > 0 group by source_id`),
       ])
     : [[], []];

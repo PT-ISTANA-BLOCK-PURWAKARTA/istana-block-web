@@ -35,7 +35,7 @@ function Rows({ title, help, rows, setRows, options }: { title: string; help: st
 }
 
 /** Catat hasil produksi: barang jadi masuk, bahan baku keluar, biaya produksi diserap ke nilai persediaan. */
-export function ProductionForm({ id, date, note, laborCost, hasil, bahan, items }: { id?: string; date: string; note?: string; laborCost?: number; hasil: Row[]; bahan: Row[]; items: Opt[] }) {
+export function ProductionForm({ id, date, note, laborCost, hasil, bahan, items, showCost }: { id?: string; date: string; note?: string; laborCost?: number; hasil: Row[]; bahan: Row[]; items: Opt[]; showCost: boolean }) {
   const [out, setOut] = useState<Row[]>(hasil.length ? hasil : [{ itemId: "", qty: "" }]);
   const [used, setUsed] = useState<Row[]>(bahan.length ? bahan : [{ itemId: "", qty: "" }]);
   const ser = (rs: Row[]) => JSON.stringify(rs.map((r) => ({ itemId: r.itemId, qty: parseQty(r.qty) })).filter((r) => r.itemId || r.qty));
@@ -49,15 +49,19 @@ export function ProductionForm({ id, date, note, laborCost, hasil, bahan, items 
       <section className="form-section">
         <div className="form-grid cols-4">
           <div className="field"><label htmlFor="pr-date">Tanggal</label><input id="pr-date" name="date" type="date" defaultValue={date} required /></div>
-          <div className="field">
-            <label htmlFor="pr-labor">Biaya produksi (Rp) <span className="help">upah, listrik, dll.</span></label>
-            <input id="pr-labor" name="laborCost" className="num" inputMode="numeric" defaultValue={laborCost != null ? String(laborCost) : ""} placeholder="otomatis" />
-          </div>
-          <div className="field span-2"><label htmlFor="pr-note">Catatan <span className="help">mis. shift, mesin, nomor batch</span></label><input id="pr-note" name="note" defaultValue={note} /></div>
+          {showCost && (
+            <div className="field">
+              <label htmlFor="pr-labor">Biaya produksi (Rp) <span className="help">upah, listrik, dll.</span></label>
+              <input id="pr-labor" name="laborCost" className="num" inputMode="numeric" defaultValue={laborCost != null ? String(laborCost) : ""} placeholder="otomatis" />
+            </div>
+          )}
+          <div className={`field ${showCost ? "span-2" : "span-3"}`}><label htmlFor="pr-note">Catatan <span className="help">mis. shift, mesin, nomor batch</span></label><input id="pr-note" name="note" defaultValue={note} /></div>
         </div>
-        <p className="small muted">
-          Nilai hasil = nilai bahan (harga pokok rata-rata) + biaya produksi. Bila biaya produksi dikosongkan, sistem mengisinya supaya nilai hasil sama dengan harga pokok standar barang (diatur di data barang).
-        </p>
+        {showCost && (
+          <p className="small muted">
+            Nilai hasil = nilai bahan (harga pokok rata-rata) + biaya produksi. Bila biaya produksi dikosongkan, sistem mengisinya supaya nilai hasil sama dengan harga pokok standar barang (diatur di data barang).
+          </p>
+        )}
       </section>
       <Rows title="Hasil produksi" help="barang jadi yang masuk gudang" rows={out} setRows={setOut} options={finished.length ? finished : items} />
       <Rows title="Bahan terpakai" help="opsional; mengurangi stok bahan baku" rows={used} setRows={setUsed} options={raw.length ? raw : items} />

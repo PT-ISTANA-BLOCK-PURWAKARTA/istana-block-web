@@ -24,7 +24,11 @@ export async function saveOrder(_prev: FormState, form: FormData): Promise<FormS
     if (existing && (existing.status === "batal" || existing.status === "selesai")) throw new UserError("Pesanan yang sudah selesai atau batal tidak bisa diubah. Buka kembali dulu.");
 
     const contact = await db.query.contacts.findFirst({ where: eq(schema.contacts.id, String(form.get("contactId") ?? "")) });
-    if (!contact) throw new UserError("Pilih pelanggan.");
+    if (!contact || contact.kind === "pemasok") throw new UserError("Pilih pelanggan.");
+    if (existing && contact.id !== existing.contactId) {
+      const inv = await db.get<{ n: number }>(sql`select count(*) n from fin_invoices where order_id = ${existing.id}`);
+      if (Number(inv?.n ?? 0) > 0) throw new UserError("Pesanan ini sudah difaktur, jadi pelanggannya tidak bisa diganti.");
+    }
     const date = requireDate(form.get("date"), "Tanggal pesanan");
     const rq = String(form.get("requestedDate") ?? "");
     const requestedDate = rq ? requireDate(rq, "Tanggal kirim diminta") : null;

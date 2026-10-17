@@ -8,6 +8,7 @@ import { requireModule } from "@/lib/auth";
 import { docTotals, lineAmount } from "@/lib/erp/docs";
 import {
   assertOpen,
+  chunk,
   deleteJournalOps,
   depositBalance,
   getFinSettings,
@@ -47,6 +48,7 @@ export async function saveBill(_prev: FormState, form: FormData): Promise<FormSt
     assertOpen(date, fin.lockDate, "Faktur pembelian");
     if (existing) assertOpen(existing.date, fin.lockDate, "Faktur pembelian");
     const contact = await supplier(db, String(form.get("contactId") ?? ""));
+    if (existing && existing.paid > 0 && contact.id !== existing.contactId) throw new UserError("Faktur ini sudah dibayar sebagian/lunas, jadi pemasoknya tidak bisa diganti. Hapus pembayarannya dulu.");
     const dueDate = String(form.get("dueDate") ?? "") ? requireDate(form.get("dueDate"), "Jatuh tempo") : addDays(date, contact.termDays);
     if (dueDate < date) throw new UserError("Jatuh tempo tidak boleh sebelum tanggal faktur.");
     const acc = await loadAccounts(db);
@@ -168,10 +170,12 @@ export async function deleteBill(id: string): Promise<FormState> {
 /* ============================================================ Pembayaran ke pemasok */
 
 function recalcBillPaid(db: DB, ids: string[]) {
-  return db
-    .update(schema.bills)
-    .set({ paid: sql`(select coalesce(sum(a.amount),0) from fin_payment_allocations a where a.bill_id = ${schema.bills.id})` })
-    .where(inArray(schema.bills.id, ids));
+  return chunk(Array.from(new Set(ids))).map((part) =>
+    db
+      .update(schema.bills)
+      .set({ paid: sql`(select coalesce(sum(a.amount),0) from fin_payment_allocations a where a.bill_id = ${schema.bills.id})` })
+      .where(inArray(schema.bills.id, part)),
+  );
 }
 
 export async function savePayment(_prev: FormState, form: FormData): Promise<FormState> {
@@ -185,7 +189,7 @@ export async function savePayment(_prev: FormState, form: FormData): Promise<For
     const date = requireDate(form.get("date"));
     assertOpen(date, fin.lockDate, "Pembayaran");
     if (existing) assertOpen(existing.date, fin.lockDate, "Pembayaran");
-    const contact = await supplier(db, String(form.get("contactId") ?? existing?.contactId ?? ""));
+    const contact = await supplier(db, existing?.contactId ?? String(form.get("contactId") ?? ""));
     const acc = await loadAccounts(db);
     const accountId = String(form.get("accountId") ?? "");
     const account = acc.byId.get(accountId);
@@ -193,9 +197,14 @@ export async function savePayment(_prev: FormState, form: FormData): Promise<For
     if (!account || (account.group !== "kas_bank" && account.id !== deposit)) throw new UserError("Pilih akun kas/bank pembayar.");
     const amount = parseRupiah(form.get("amount"));
     if (amount <= 0) throw new UserError("Jumlah dibayar harus lebih dari 0.");
-    const allocs = parseRows(form.get("allocs"))
-      .map((r) => ({ docId: String(r.docId ?? ""), amount: parseRupiah(r.amount) }))
-      .filter((a) => a.docId && a.amount > 0);
+    // Alokasi per faktur; baris dengan faktur sama digabung.
+    const sum = new Map<string, number>();
+    for (const r of parseRows(form.get("allocs"))) {
+      const docId = String(r.docId ?? "");
+      const amt = parseRupiah(r.amount);
+      if (docId && amt > 0) sum.set(docId, (sum.get(docId) ?? 0) + amt);
+    }
+    const allocs = [...sum].map(([docId, amt]) => ({ docId, amount: amt }));
     const allocTotal = allocs.reduce((a, x) => a + x.amount, 0);
     if (allocTotal > amount) throw new UserError("Total alokasi melebihi jumlah dibayar.");
 
@@ -209,10 +218,16 @@ export async function savePayment(_prev: FormState, form: FormData): Promise<For
       const left = b.total - b.paid + own;
       if (a.amount > left) throw new UserError(`Alokasi ke ${b.number} (${a.amount}) melebihi sisa hutang (${left}).`);
     }
-    if (accountId === deposit) {
-      if (allocTotal !== amount) throw new UserError("Pemakaian uang muka harus seluruhnya dialokasikan ke faktur.");
-      const bal = await depositBalance(db, deposit, contact.id, "debit", existing?.id);
-      if (amount > bal) throw new UserError(`Saldo uang muka ke pemasok ini hanya ${bal}.`);
+    if (accountId === deposit && allocTotal !== amount) throw new UserError("Pemakaian uang muka harus seluruhnya dialokasikan ke faktur.");
+    // Saldo uang muka ke pemasok sesudah transaksi ini tidak boleh minus.
+    const others = await depositBalance(db, deposit, contact.id, "debit", existing?.id);
+    const after = others + (amount - allocTotal) - (accountId === deposit ? amount : 0);
+    if (after < 0) {
+      throw new UserError(
+        accountId === deposit
+          ? `Saldo uang muka ke pemasok ini hanya ${others}.`
+          : `Uang muka dari pembayaran ini sudah dipakai untuk faktur lain (kurang ${-after}). Ubah/hapus pemakaiannya dulu.`,
+      );
     }
 
     const paymentId = existing?.id ?? crypto.randomUUID();
@@ -230,7 +245,7 @@ export async function savePayment(_prev: FormState, form: FormData): Promise<For
         : db.insert(schema.payments).values({ id: paymentId, ...header, createdBy: me.id }),
       ...insertMany(db, schema.paymentAllocations, allocs.map((a) => ({ paymentId, billId: a.docId, amount: a.amount }))),
       ...journalOps(db, { number, date, memo: `Pembayaran ${number} — ${contact.name}`, source: "pembayaran", sourceId: paymentId, createdBy: me.id, lines: jl }),
-      affected.length ? recalcBillPaid(db, affected) : null,
+      ...recalcBillPaid(db, affected),
     ]);
     return { id: paymentId, number };
   });
@@ -257,7 +272,7 @@ export async function deletePayment(id: string): Promise<FormState> {
       db.delete(schema.paymentAllocations).where(eq(schema.paymentAllocations.paymentId, id)),
       ...deleteJournalOps(db, "pembayaran", id),
       db.delete(schema.payments).where(eq(schema.payments.id, id)),
-      allocs.length ? recalcBillPaid(db, allocs.map((a) => a.billId)) : null,
+      ...recalcBillPaid(db, allocs.map((a) => a.billId)),
     ]);
     return { ok: "deleted" };
   });

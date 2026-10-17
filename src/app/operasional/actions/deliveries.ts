@@ -110,6 +110,18 @@ export async function setDeliveryStatus(_prev: FormState, form: FormData): Promi
       if (!o || o.status === "batal" || o.status === "selesai" || o.status === "draft") throw new UserError("Pesanan sudah ditutup; buka kembali pesanannya dulu.");
     }
 
+    if (wasPosted && !willPost) {
+      // Barang yang sudah difaktur tidak boleh "kembali ke gudang" tanpa faktur dikoreksi dulu.
+      const own = await db.select().from(schema.deliveryLines).where(eq(schema.deliveryLines.deliveryId, d.id));
+      const prog = new Map((await orderProgress(db, d.orderId)).map((p) => [p.id, p]));
+      for (const l of own) {
+        const p = prog.get(l.orderLineId);
+        if (p && p.invoiced > p.shipped - l.qty + EPS && p.invoiced > EPS) {
+          throw new UserError(`"${p.name}" dari surat jalan ini sudah difaktur. Koreksi atau hapus fakturnya dulu sebelum membatalkan pengiriman.`);
+        }
+      }
+    }
+
     const now = new Date();
     const patch: Partial<typeof schema.deliveries.$inferInsert> = { status: to, date, updatedAt: now };
     if (to === "berangkat") patch.departedAt = d.departedAt ?? now;
@@ -139,7 +151,9 @@ export async function setDeliveryStatus(_prev: FormState, form: FormData): Promi
     const acc = await loadAccounts(db);
     await runBatch(db, [
       db.update(schema.deliveries).set(patch).where(eq(schema.deliveries.id, d.id)),
-      wasPosted && (!willPost || date !== d.date) ? unpostDeliveryOps(db, d.id) : null,
+      // Selalu hapus dulu sebelum memposting ulang: kalau tombol terkirim dua kali bersamaan,
+      // hasil akhirnya tetap satu set stok keluar & satu jurnal (batch D1 berjalan berurutan).
+      (wasPosted && !willPost) || (willPost && (!wasPosted || date !== d.date)) ? unpostDeliveryOps(db, d.id) : null,
       willPost && (!wasPosted || date !== d.date) ? await postDeliveryOps(db, acc, { ...d, date }, me.id) : null,
     ]);
     if (d.proofKey && (to === "dijadwalkan" || (uploaded && d.proofKey !== uploaded))) await deleteImage(d.proofKey);
