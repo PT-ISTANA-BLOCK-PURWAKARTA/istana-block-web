@@ -258,7 +258,7 @@ Harga pokok memakai **rata-rata bergerak**. Bila stok kosong, sistem memakai *ha
 - Tanggalnya tetap setelah dibuat. Ringkasan "hari ini" paling pas dilihat pada tanggal `--hari-ini`; setelah itu tagihan makin banyak yang lewat jatuh tempo dan muatan hari ini kosong. Buat ulang dan muat ulang sebelum presentasi.
 - Semua id berawalan `demo-`. Barang dimasukkan dengan `INSERT OR IGNORE`: kalau barang berkode sama sudah ada, data contoh memakainya tanpa menimpa harganya.
 - **Pengaman:** file ini menolak dijalankan (`CHECK constraint failed: n = 0`) bila database sudah berisi transaksi sungguhan atau data contoh sudah pernah dimuat. Tidak ada data yang berubah.
-- Data contoh **tidak membuat akun pengguna**. Di lokal, buat akun latihan di `/internal/pengguna` (sopir latihan bisa dihubungkan ke sopir contoh); untuk Worker demo pakai `npm run demo:worker:akun` (lihat di bawah). Jangan memakai password/PIN yang mudah ditebak di situs produksi.
+- Data contoh **tidak membuat akun pengguna**. Di lokal, buat akun latihan di `/internal/pengguna` (sopir latihan bisa dihubungkan ke sopir contoh); untuk Worker demo akun dibuat otomatis dari `akun-demo.local.json` (lihat *Akun login sekaligus*). Jangan memakai password/PIN yang mudah ditebak di situs produksi.
 
 ```powershell
 npm run demo:local              # muat ke D1 lokal (paling aman untuk mencoba)
@@ -291,14 +291,13 @@ npx wrangler secret put AUTH_SECRET -c wrangler.demo.jsonc        # string acak 
 npm run demo:worker:migrate
 npm run demo:worker:seed                                          # produk, artikel, halaman dari situs lama
 
-# Data contoh untuk tanggal presentasi, lalu akun per peran
+# Data contoh untuk tanggal presentasi (akun dari akun-demo.local.json ikut dibuat)
 node scripts/demo/generate.mjs --hari-ini 2026-10-21
 npm run demo:worker:data
-npm run demo:worker:akun -- --password "sandi-demo-yang-panjang"   # cetak daftar akun + PIN sopir/gudang
 npm run demo:worker:deploy
 ```
 
-Buka `https://istana-block-demo.<akun>.workers.dev/internal`. Akun kantor `pemilik@demo.istanablock`, `situs@…`, `keuangan@…`, `operasional@…` memakai password di atas; kepala gudang (`0811 0000 9001`) dan sopir (`0811 0000 4101`–`4104`) masuk di `/operasional/masuk` dengan PIN yang dicetak.
+Buka `https://istana-block-demo.<akun>.workers.dev/internal`. Akun kantor `pemilik@demo.istanablock`, `situs@…`, `keuangan@…`, `operasional@…` memakai password di `akun-demo.local.json`; kepala gudang (`0811 0000 9001`) dan sopir (`0811 0000 4101`–`4104`) masuk di `/operasional/masuk` dengan PIN di file yang sama.
 
 **Truk bergerak saat presentasi.** Jalankan `npm run demo:gps -- --url https://istana-block-demo.<akun>.workers.dev` di laptop selama presentasi: skrip mengirim posisi tiga truk contoh ke penerima GPS aplikasi (format yang sama dengan alat GPS sungguhan) setiap 10 detik, sehingga *Operasional → Lacak truk* bergerak. Opsi: `--interval 5`, `--percepat 3` (kecepatan perjalanan), `--key` bila kunci GPS sudah diganti.
 
@@ -307,11 +306,27 @@ Buka `https://istana-block-demo.<akun>.workers.dev/internal`. Akun kantor `pemil
 ```powershell
 npm run demo:worker:hapus            # atau demo:worker:bersih bila sudah ada transaksi latihan di Worker demo
 node scripts/demo/generate.mjs --hari-ini 2026-11-02
-npm run demo:worker:data
-npm run demo:worker:akun -- --password "sandi-demo-yang-panjang"
+npm run demo:worker:data            # akun demo dibuat ulang otomatis
 ```
 
-Akun tidak ikut terhapus, tetapi akun sopir dilepas dari sopir contoh saat data dihapus. Jalankan lagi `npm run demo:worker:akun -- --password "…"` setelah memuat ulang supaya akun sopir tersambung lagi (PIN dibuat baru dan dicetak). Untuk memperbarui kode Worker demo setelah ada perubahan aplikasi, cukup `npm run demo:worker:deploy`.
+Akun tidak ikut terhapus, tetapi akun sopir dilepas dari sopir contoh saat data dihapus; `demo:worker:data` menyambungkannya lagi. Untuk memperbarui kode Worker demo setelah ada perubahan aplikasi, cukup `npm run demo:worker:deploy`.
+
+### Akun login sekaligus
+
+Semua akun (kantor: email + password; lapangan: nomor HP + PIN) bisa dibuat sekaligus dari file daftar akun **lokal** yang tidak ikut git, karena berisi password:
+
+```powershell
+copy seed\akun-demo.contoh.json akun-demo.local.json          # lalu isi password_bawaan & pin_bawaan
+copy seed\akun-produksi.contoh.json akun-produksi.local.json  # lalu isi email/nomor HP asli, password, PIN
+
+npm run akun:demo                    # Worker demo (juga otomatis di akhir demo:worker:data)
+npm run akun:produksi -- --yakin     # D1 produksi; akun yang sudah ada dilewati
+npm run akun:produksi -- --yakin --timpa   # atur ulang semua akun produksi ke isi file
+```
+
+- Setiap akun boleh punya `password` atau `pin` sendiri; tanpa itu dipakai `password_bawaan` / `pin_bawaan`. Akun sopir diberi `"sopir": "<ID sopir>"` supaya tersambung ke tugas antarnya.
+- PIN yang mudah ditebak (mis. `123456`) ditolak, kecuali file berisi `"izinkan_pin_mudah": true`. Bila dipakai sebagai PIN sementara, minta setiap orang menggantinya di **Akun saya → Ganti PIN**.
+- Untuk menguji ke database lokal tambahkan `--local`.
 
 ## Teknologi
 
@@ -368,7 +383,8 @@ seed/demo-erp.sql      data contoh keuangan & operasional; demo-erp-hapus.sql un
                        erp-mulai-bersih.sql untuk mengosongkan semua transaksi (lihat "Data contoh")
 scripts/create-admin.mjs  membuat/mereset akun dan perannya
 scripts/demo/          pembuat data contoh (menghasilkan ketiga file seed/demo-erp*.sql & erp-mulai-bersih.sql)
-                       akun-demo.mjs (akun per peran) & simulasi-gps.mjs (truk bergerak saat presentasi)
+                       simulasi-gps.mjs (truk bergerak saat presentasi)
+scripts/akun-seed.mjs  membuat semua akun login dari akun-demo/akun-produksi.local.json (contoh di seed/)
 wrangler.demo.jsonc    Worker demo terpisah untuk presentasi (database & bucket sendiri, noindex)
 public/brand/          logo resmi (biru & putih)
 public/img/            foto dari situs lama: pabrik, produk, galeri, logo klien, lembar TKDN
@@ -528,6 +544,7 @@ Hal lain:
 | `npm run demo:generate` | buat ulang file data contoh dari `scripts/demo/generate.mjs` (`-- --hari-ini YYYY-MM-DD`) |
 | `npm run demo:worker:siapkan` | buat database D1 & bucket R2 **Worker demo** (sekali) |
 | `npm run demo:worker:migrate` / `:seed` / `:data` / `:hapus` / `:bersih` | migrasi, data awal, data contoh, hapus data contoh, kosongkan transaksi di **Worker demo** |
-| `npm run demo:worker:akun -- --password …` | buat akun demo per peran (kantor & lapangan) di Worker demo |
+| `npm run akun:demo` | buat/atur ulang akun demo dari `akun-demo.local.json` (otomatis ikut `demo:worker:data`) |
+| `npm run akun:produksi -- --yakin` | buat akun produksi dari `akun-produksi.local.json`; akun yang sudah ada dilewati (`--timpa` untuk mengatur ulang) |
 | `npm run demo:worker:deploy` | build & deploy Worker demo |
 | `npm run demo:gps -- --url …` | simulasi alat GPS tiga truk contoh selama presentasi |

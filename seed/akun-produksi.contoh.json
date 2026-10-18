@@ -1,0 +1,13 @@
+{
+  "_catatan": "Salin menjadi akun-produksi.local.json (di folder repo, tidak ikut git), isi email/nomor HP asli dan password, lalu: npm run akun:produksi -- --yakin. Akun yang sudah ada dilewati (pakai --timpa untuk mengatur ulang). Kolom 'sopir' diisi ID sopir dari Operasional › Sopir setelah data sopir dibuat.",
+  "password_bawaan": "ISI-PASSWORD-PRODUKSI-MIN-10-KARAKTER",
+  "pin_bawaan": "ISI6ANGKA",
+  "izinkan_pin_mudah": false,
+  "akun": [
+    { "email": "ISI-email-pemilik", "nama": "ISI nama pemilik", "peran": ["owner"] },
+    { "email": "ISI-email-admin-situs", "nama": "ISI nama admin situs", "peran": ["web"] },
+    { "email": "ISI-email-keuangan", "nama": "ISI nama staf keuangan", "peran": ["keuangan"] },
+    { "email": "ISI-email-admin-operasional", "nama": "ISI nama admin operasional", "peran": ["operasional"] },
+    { "hp": "ISI-nomor-HP-kepala-gudang", "nama": "ISI nama kepala gudang", "peran": ["gudang"] }
+  ]
+}

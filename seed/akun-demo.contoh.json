@@ -1,0 +1,17 @@
+{
+  "_catatan": "Salin menjadi akun-demo.local.json (di folder repo, tidak ikut git), isi password, lalu: npm run akun:demo",
+  "password_bawaan": "ISI-PASSWORD-DEMO-MIN-10-KARAKTER",
+  "pin_bawaan": "ISI6ANGKA",
+  "izinkan_pin_mudah": false,
+  "akun": [
+    { "email": "pemilik@demo.istanablock", "nama": "Pemilik (demo)", "peran": ["owner"] },
+    { "email": "situs@demo.istanablock", "nama": "Admin Situs (demo)", "peran": ["web"] },
+    { "email": "keuangan@demo.istanablock", "nama": "Rina — Keuangan (demo)", "peran": ["keuangan"] },
+    { "email": "operasional@demo.istanablock", "nama": "Dimas — Operasional (demo)", "peran": ["operasional"] },
+    { "hp": "0811 0000 9001", "nama": "Yayan — Kepala gudang (demo)", "peran": ["gudang"] },
+    { "hp": "0811 0000 4101", "nama": "Asep Saepudin", "peran": ["sopir"], "sopir": "demo-dr-d1" },
+    { "hp": "0811 0000 4102", "nama": "Ujang Kurnia", "peran": ["sopir"], "sopir": "demo-dr-d2" },
+    { "hp": "0811 0000 4103", "nama": "Dede Rahmat", "peran": ["sopir"], "sopir": "demo-dr-d3" },
+    { "hp": "0811 0000 4104", "nama": "Cecep Hidayat", "peran": ["sopir"], "sopir": "demo-dr-d4" }
+  ]
+}

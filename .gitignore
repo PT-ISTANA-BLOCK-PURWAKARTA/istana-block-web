@@ -11,3 +11,6 @@ next-env.d.ts
 # cadangan database (berisi data pelanggan & hash password) — jangan masuk repo
 backup-*.sql
 *.sql.bak
+
+# daftar akun berisi password (scripts/akun-seed.mjs) — jangan masuk repo
+akun-*.local.json
