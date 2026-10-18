@@ -29,11 +29,11 @@
     "demo:worker:akun": "node scripts/akun-seed.mjs demo",
     "akun:demo": "node scripts/akun-seed.mjs demo",
     "akun:produksi": "node scripts/akun-seed.mjs produksi",
-    "demo:worker:deploy": "opennextjs-cloudflare build -c wrangler.demo.jsonc && opennextjs-cloudflare deploy -c wrangler.demo.jsonc",
+    "demo:worker:deploy": "opennextjs-cloudflare build -c wrangler.demo.jsonc && node scripts/deploy-worker.mjs -c wrangler.demo.jsonc",
     "demo:gps": "node scripts/demo/simulasi-gps.mjs",
     "admin:create": "node scripts/create-admin.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "deploy": "opennextjs-cloudflare build && node scripts/deploy-worker.mjs",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {

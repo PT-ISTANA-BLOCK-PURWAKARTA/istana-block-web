@@ -311,6 +311,8 @@ npm run demo:worker:data            # akun demo dibuat ulang otomatis
 
 Akun tidak ikut terhapus, tetapi akun sopir dilepas dari sopir contoh saat data dihapus; `demo:worker:data` menyambungkannya lagi. Untuk memperbarui kode Worker demo setelah ada perubahan aplikasi, cukup `npm run demo:worker:deploy`.
 
+> **Deploy dari Windows.** `npm run deploy` dan `npm run demo:worker:deploy` mengunggah hasil build dengan `wrangler deploy` (lewat `scripts/deploy-worker.mjs`), bukan `opennextjs-cloudflare deploy`. Perintah OpenNext itu selalu menyalakan runtime Workers lokal, yang di sebagian Windows crash dengan pesan *access violation … has overflowed its stack*. Hasilnya sama karena proyek ini tidak memakai incremental cache. Workers Builds di Cloudflare (Linux) tetap memakai `npx opennextjs-cloudflare deploy`.
+
 ### Akun login sekaligus
 
 Semua akun (kantor: email + password; lapangan: nomor HP + PIN) bisa dibuat sekaligus dari file daftar akun **lokal** yang tidak ikut git, karena berisi password:
