@@ -7,4 +7,8 @@ interface CloudflareEnv {
   AUTH_SECRET: string;
   /** "1" di Worker demo: penanda data contoh + noindex. */
   DEMO_MODE?: string;
+  /** Container Google Tag Manager situs publik, mis. "GTM-PXSMDXD8". Kosong = tidak dimuat. */
+  GTM_ID?: string;
+  /** ID deploy Worker; dipakai worker.ts sebagai bagian kunci cache. */
+  CF_VERSION_METADATA?: WorkerVersionMetadata;
 }

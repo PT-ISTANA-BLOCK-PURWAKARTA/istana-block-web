@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import type { PageKind } from "@/db/schema";
@@ -13,10 +14,11 @@ export async function listProducts(opts: { onlyFeatured?: boolean } = {}) {
   return db.select().from(products).where(where).orderBy(asc(products.sortOrder), asc(products.name));
 }
 
-export async function getProductBySlug(slug: string) {
+// get…BySlug dibungkus cache(): generateMetadata dan halaman memanggilnya dalam satu request.
+export const getProductBySlug = cache(async (slug: string) => {
   const db = await getDb();
   return db.query.products.findFirst({ where: and(eq(products.slug, slug), eq(products.published, true)) });
-}
+});
 
 export async function listArticles(limit?: number) {
   const db = await getDb();
@@ -28,10 +30,10 @@ export async function listArticles(limit?: number) {
   return limit ? q.limit(limit) : q;
 }
 
-export async function getArticleBySlug(slug: string) {
+export const getArticleBySlug = cache(async (slug: string) => {
   const db = await getDb();
   return db.query.articles.findFirst({ where: and(eq(articles.slug, slug), eq(articles.published, true)) });
-}
+});
 
 export async function listTestimonials() {
   const db = await getDb();
@@ -43,10 +45,10 @@ export async function listTestimonials() {
 }
 
 /** Halaman statis yang sudah terbit, berdasarkan slug (tanpa garis miring). */
-export async function getPageBySlug(slug: string) {
+export const getPageBySlug = cache(async (slug: string) => {
   const db = await getDb();
   return db.query.pages.findFirst({ where: and(eq(pages.slug, slug), eq(pages.published, true)) });
-}
+});
 
 /** Semua halaman statis yang terbit, opsional difilter per jenis ("area" / "info"). */
 export async function listPages(kind?: PageKind) {
