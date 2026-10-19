@@ -381,8 +381,8 @@ Pengendali data adalah PT Istana Block Purwakarta, Jl. Terusan Kapten Halim No.1
 ## Ringkasnya
 
 - Situs ini tidak punya formulir untuk pengunjung. Anda tidak perlu mengisi data apa pun di situs.
-- Kami tidak memasang alat analitik atau iklan pihak ketiga, seperti Google Analytics, Google Tag Manager, atau Meta Pixel.
-- Kami tidak memasang cookie untuk pengunjung umum. Satu-satunya cookie dari situs ini dipakai untuk login admin.
+- Situs ini memuat Google Tag Manager untuk menjalankan Google Analytics (statistik kunjungan) dan Google Ads (pengukuran iklan). Penjelasan dan cara menolaknya ada di bagian "Pengukuran kunjungan dan iklan".
+- Cookie yang dibuat situs ini sendiri hanya satu, untuk login admin. Cookie pengukuran dan iklan dipasang oleh Google, lihat bagian "Cookie".
 - Kami baru menerima data pribadi Anda bila Anda sendiri menghubungi kami lewat WhatsApp, telepon, atau email.
 
 ## Data teknis saat Anda membuka situs
@@ -399,8 +399,24 @@ Percobaan login yang gagal ke panel admin dicatat bersama alamat IP untuk membat
 |---|---|---|---|---|
 | `ib_session` | Situs ini | Admin yang login | Menjaga sesi login panel admin | 7 hari, atau sampai admin keluar |
 | Cookie keamanan Cloudflare | Cloudflare | Pengunjung, bila fitur keamanan Cloudflare aktif | Membedakan pengunjung manusia dari bot | Ditentukan Cloudflare |
+| Cookie Google Analytics dan Google Ads (berawalan `_ga` dan `_gcl`) | Google, lewat skrip yang dimuat situs ini | Pengunjung | Mengukur kunjungan dan klik tombol WhatsApp atau telepon, serta menghubungkan klik iklan dengan pesan yang masuk | Ditentukan Google |
 
 Cookie `ib_session` hanya dibuat setelah admin berhasil login, bersifat HttpOnly sehingga tidak bisa dibaca skrip di halaman, dan tidak dipasang untuk pengunjung biasa. Cookie keamanan Cloudflare tidak dipakai untuk iklan.
+
+## Pengukuran kunjungan dan iklan
+
+Situs ini memuat Google Tag Manager, yang menjalankan Google Analytics dan Google Ads. Keduanya dikelola Google dan memasang cookie pengukuran dan iklan di browser Anda saat Anda membuka situs.
+
+Yang diukur: halaman yang dibuka, sumber kunjungan (misalnya klik dari iklan Google), jenis perangkat dan browser, perkiraan lokasi, dan apakah Anda menekan tombol WhatsApp atau telepon. Kami memakai data ini untuk mengetahui halaman mana yang dibaca dan apakah iklan menghasilkan pesan atau panggilan. Google Ads juga dapat memakainya untuk menampilkan iklan Istana Block kepada orang yang pernah membuka situs ini.
+
+Situs ini tidak punya formulir, sehingga kami tidak mengirim nama, nomor telepon, atau email Anda ke Google lewat situs. Data diproses oleh Google dan dapat disimpan di luar Indonesia. Cara Google memakai data dari situs yang memakai layanannya dijelaskan di [policies.google.com/technologies/partner-sites](https://policies.google.com/technologies/partner-sites).
+
+Cara mengatur atau menolak:
+
+- Hapus atau blokir cookie lewat pengaturan browser, atau buka situs dalam mode pribadi. Tombol WhatsApp dan telepon tetap berfungsi tanpa cookie.
+- Pasang [add-on browser Google Analytics Opt-out](https://tools.google.com/dlpage/gaoptout) untuk menolak pengukuran Google Analytics.
+- Atur atau matikan personalisasi iklan di [adssettings.google.com](https://adssettings.google.com).
+- Di ponsel, atur atau setel ulang ID iklan lewat pengaturan perangkat.
 
 ## Tautan ke WhatsApp, telepon, email, dan peta
 
@@ -431,7 +447,7 @@ Dasar pemrosesannya adalah permintaan Anda, pelaksanaan perjanjian jual beli ata
 
 Kami tidak menjual atau menyewakan data pribadi. Data hanya dibagikan sejauh diperlukan kepada:
 
-- penyedia layanan yang kami pakai untuk berkomunikasi dan menjalankan situs, yaitu WhatsApp (Meta), penyedia layanan email kami, dan Cloudflare;
+- penyedia layanan yang kami pakai untuk berkomunikasi dan menjalankan situs, yaitu WhatsApp (Meta), penyedia layanan email kami, Cloudflare, dan Google (Analytics dan Google Ads);
 - bank atau penyedia pembayaran yang memproses transfer Anda;
 - instansi berwenang, bila diwajibkan peraturan perundang-undangan.
 
@@ -465,7 +481,7 @@ Kirim permintaan ke cs@istanablock.com dengan subjek "Permintaan Data Pribadi". 
 
 ## Perubahan kebijakan
 
-Jika cara kami memproses data berubah, misalnya karena situs menambah formulir atau alat analitik, kebijakan ini diperbarui lebih dulu dan tanggal berlakunya diganti.
+Jika cara kami memproses data berubah, misalnya karena situs menambah formulir atau layanan pengukuran lain, kebijakan ini diperbarui lebih dulu dan tanggal berlakunya diganti.
 
 ## Kontak
 

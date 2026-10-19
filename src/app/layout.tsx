@@ -17,8 +17,29 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(env.SITE_URL || "http://localhost:3000"),
     title: { default: "Istana Block Purwakarta", template: "%s | Istana Block Purwakarta" },
     applicationName: "Istana Block Purwakarta",
-    openGraph: { siteName: "Istana Block Purwakarta", locale: "id_ID", type: "website" },
-    ...(env.DEMO_MODE === "1" ? { robots: { index: false, follow: false } } : {}),
+    // Gambar cadangan untuk halaman tanpa openGraph sendiri (/produk, /kontak, /area-pengiriman, /paket-proyek,
+    // /artikel). Halaman yang mendefinisikan openGraph menggantikan seluruh objek ini, jadi tidak tertimpa.
+    openGraph: {
+      siteName: "Istana Block Purwakarta",
+      locale: "id_ID",
+      type: "website",
+      images: [
+        {
+          url: "/img/pabrik/pabrik-mesin-paving.webp",
+          width: 1600,
+          height: 1334,
+          alt: "Mesin cetak paving di pabrik Istana Block Purwakarta dengan paving yang baru dicetak",
+        },
+      ],
+    },
+    // Gambar twitter:image diambil Next dari openGraph.images halaman yang sama.
+    twitter: { card: "summary_large_image" },
+    // Demo tetap noindex. Situs publik mengizinkan pratinjau gambar besar dan cuplikan tanpa batas di hasil
+    // pencarian. Layout panel dan halaman 404/cetak menimpa seluruh objek robots dengan index:false sendiri.
+    robots:
+      env.DEMO_MODE === "1"
+        ? { index: false, follow: false }
+        : { index: true, follow: true, googleBot: { "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
   };
 }
 

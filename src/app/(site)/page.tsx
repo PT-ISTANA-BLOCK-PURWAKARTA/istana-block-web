@@ -11,7 +11,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { ProductCard } from "@/components/ProductCard";
 import { getEnv } from "@/db";
 import { rupiah, tanggal, waLink } from "@/lib/format";
-import { localBusiness } from "@/lib/jsonld";
+import { webSite } from "@/lib/jsonld";
 import { listArticles, listProducts, listTestimonials } from "@/lib/queries";
 import { getSettings, parseFaq } from "@/lib/settings";
 
@@ -32,7 +32,7 @@ const TILE_COLORS = [
 ];
 
 export default async function Home() {
-  const [s, env, all, reviews, articles] = await Promise.all([getSettings(), getEnv(), listProducts(), listTestimonials(), listArticles(3)]);
+  const [s, all, reviews, articles, env] = await Promise.all([getSettings(), listProducts(), listTestimonials(), listArticles(3), getEnv()]);
   const products = all.filter((p) => p.featured && p.category !== "Jasa");
   const faq = parseFaq(s.home_faq);
   const jasa = all.find((p) => p.category === "Jasa");
@@ -41,7 +41,8 @@ export default async function Home() {
 
   return (
     <>
-      <JsonLd data={localBusiness(s, env.SITE_URL)} />
+      {/* WebSite hanya di beranda; LocalBusiness sudah dipasang (site)/layout.tsx dan dirujuk lewat @id. */}
+      <JsonLd data={webSite(s, env.SITE_URL)} />
       <section className="wrap hero">
         <div className="hero-text">
           <div className="pills">
@@ -69,22 +70,15 @@ export default async function Home() {
               <img src="/img/pabrik/pabrik-mesin-paving.webp" alt="Mesin cetak paving di pabrik Istana Block Purwakarta dengan paving yang baru dicetak" width={1600} height={1334} fetchPriority="high" />
             </picture>
           </figure>
-          {s.google_rating &&
-            (() => {
-              const inner = (
-                <>
-                  <b>
-                    {s.google_rating} <span style={{ color: "var(--oranye)", fontSize: "inherit" }}>★</span>
-                  </b>
-                  <span>{s.google_review_count} ulasan Google</span>
-                </>
-              );
-              return s.maps_url ? (
-                <a className="chip" href={s.maps_url} target="_blank" rel="noopener">{inner}</a>
-              ) : (
-                <div className="chip">{inner}</div>
-              );
-            })()}
+          {/* Rating tampil hanya bila tertaut ke profil Google yang nyata (maps_url); angka tanpa tautan tidak bisa dicek pembeli. */}
+          {s.google_rating && s.google_review_count && s.maps_url && (
+            <a className="chip" href={s.maps_url} target="_blank" rel="noopener">
+              <b>
+                {s.google_rating} <span style={{ color: "var(--oranye)", fontSize: "inherit" }}>★</span>
+              </b>
+              <span>{s.google_review_count} ulasan Google</span>
+            </a>
+          )}
         </div>
       </section>
 

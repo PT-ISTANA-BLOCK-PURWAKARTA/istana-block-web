@@ -56,5 +56,5 @@ Buat dua tag **Google Ads Conversion Tracking** (Conversion ID `858211595`, labe
 
 ## Opsional, nanti
 
-- **Lead dari kalkulator** sebagai konversi Secondary terpisah: tambahkan `data-cta="kalkulator"` pada tombol "Kirim ke admin" (`src/components/Calculator.tsx`) dan "Kirim ke WhatsApp" (`src/components/PatternCalculator.tsx`), lalu buat pemicu GTM dengan *Click Element* → `dataset.cta`.
+- **Lead dari kalkulator** sebagai konversi Secondary terpisah: sudah dipasang di kode; tinggal buat pemicu GTM. Atribut `data-cta="kalkulator"` ada pada tombol "Kirim ke admin" (`src/components/Calculator.tsx`) dan "Kirim ke WhatsApp" (`src/components/PatternCalculator.tsx`). Di GTM buat pemicu *Click – Just Links* dengan kondisi *Click Element* cocok dengan selektor CSS `a[data-cta="kalkulator"]` (atau variabel *Click Element* → `dataset.cta` sama dengan `kalkulator`), lalu hubungkan ke tag konversi terpisah.
 - **Kebijakan privasi** di panel `/situs` → Halaman: sebutkan bahwa situs memakai Google Analytics dan Google Ads (cookie pengukuran dan iklan).

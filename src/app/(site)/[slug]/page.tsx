@@ -8,6 +8,7 @@ import { imageUrl, telLink, waLink } from "@/lib/format";
 import { PAGE_SLUG_RE } from "@/lib/pages";
 import { getPageBySlug } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
+import { fitTitle } from "@/lib/title";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -23,7 +24,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = pg.seoDescription || pg.excerpt || undefined;
   const img = imageUrl(pg.coverKey);
   return {
-    title,
+    // seoTitle dari panel sudah lengkap dengan merek; "absolute" mencegah template layout menempelkan akhiran merek kedua.
+    title: pg.seoTitle ? { absolute: pg.seoTitle } : fitTitle(pg.title),
     description,
     alternates: { canonical: `/${pg.slug}` },
     openGraph: { title, description, url: `/${pg.slug}`, images: img ? [img] : ["/img/pabrik/pabrik-mesin-paving.webp"] },
@@ -37,8 +39,10 @@ export default async function StaticPage({ params }: Props) {
   const isArea = pg.kind === "area";
   const img = imageUrl(pg.coverKey);
   const url = `${env.SITE_URL}/${pg.slug}`;
+  // Nama area untuk tombol dan pesan WhatsApp: judul tanpa awalan produk ("Paving Block Subang" jadi "Subang").
+  const areaName = pg.title.replace(/^paving block\s+/i, "").trim() || pg.title;
   const waText = isArea
-    ? `Halo Istana Block, saya ingin cek ongkir ke ${pg.title}. Produk: ..., Volume: ..., Lokasi: ...`
+    ? `Halo Istana Block, saya ingin cek harga + ongkir ke ${areaName}. Produk: ..., Volume: ..., Lokasi: ...`
     : `Halo Istana Block, saya membaca halaman "${pg.title}" dan ingin bertanya.`;
   const crumbs = [
     { name: "Beranda", item: env.SITE_URL },
@@ -85,6 +89,18 @@ export default async function StaticPage({ params }: Props) {
         )}
         <h1 style={{ fontSize: "clamp(32px, 4vw, 50px)" }}>{pg.title}</h1>
         {pg.excerpt && <p className="hero-lead">{pg.excerpt}</p>}
+        {/* Halaman area adalah pintu masuk trafik geo: CTA di atas lipatan, tidak menunggu akhir artikel. */}
+        {isArea && (
+          <a
+            className="btn btn-primary"
+            style={{ alignSelf: "flex-start", lineHeight: 1.25, paddingBlock: 10 }}
+            href={waLink(s.whatsapp, waText)}
+            target="_blank"
+            rel="noopener"
+          >
+            Cek harga + ongkir ke {areaName}
+          </a>
+        )}
       </header>
       {img && <img className="article-cover hexlong" src={img} alt="" style={{ marginBottom: 32 }} />}
       <Markdown>{pg.content}</Markdown>

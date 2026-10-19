@@ -481,7 +481,7 @@ Kalau skema database diubah (`src/db/schema.ts`): `npm run db:generate`, lalu `n
 
 ## Pindah dari WordPress — yang perlu dicek
 
-1. **Redirect.** `src/data/legacy-redirects.json` memetakan 194 alamat dari sitemap situs lama: 179 dialihkan 301 ke halaman baru yang paling dekat isinya (produk, kalkulator, area, profil, artikel), 15 halaman yang tidak relevan lagi diberi 410. Kalau nanti artikel lama dipindahkan lewat admin, ganti target redirect-nya ke `/artikel/<slug>`.
+1. **Redirect.** `src/data/legacy-redirects.json` memetakan 199 alamat dari situs lama (194 dari sitemap, 5 arsip WordPress: kategori, penulis, feed): 180 dialihkan 301 ke halaman baru yang paling dekat isinya (produk, kalkulator, area, profil, artikel), 19 halaman yang tidak relevan lagi diberi 410. Kalau nanti artikel lama dipindahkan lewat admin, ganti target redirect-nya ke `/artikel/<slug>`.
 2. **Search Console.** Kirim ulang `https://istanablockpurwakarta.com/sitemap.xml` setelah situs baru tayang, lalu pantau laporan *Halaman* untuk 404 yang belum terpetakan.
 3. **Google Maps.** Di *Info & kontak*, isi tautan profil Google Bisnis (untuk chip rating dan tombol "Baca ulasan") dan URL embed peta (peta tampil di halaman Kontak).
 

@@ -7,6 +7,7 @@ import { getEnv } from "@/db";
 import { imageUrl, tanggal, waLink } from "@/lib/format";
 import { getArticleBySlug } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
+import { fitTitle } from "@/lib/title";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -17,7 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = a.seoDescription || a.excerpt;
   const img = imageUrl(a.coverKey);
   return {
-    title,
+    // seoTitle dari panel sudah lengkap dengan merek; "absolute" mencegah template layout menempelkan akhiran merek kedua.
+    title: a.seoTitle ? { absolute: a.seoTitle } : fitTitle(a.title),
     description,
     alternates: { canonical: `/artikel/${a.slug}` },
     openGraph: {
