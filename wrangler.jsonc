@@ -1,7 +1,8 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "istana-block-web",
-	"main": ".open-next/worker.js",
+	// worker.ts membungkus .open-next/worker.js dengan cache halaman publik (lihat komentar di sana).
+	"main": "worker.ts",
 	"compatibility_date": "2026-09-01",
 	"compatibility_flags": [
 		"nodejs_compat",
@@ -14,9 +15,16 @@
 	"observability": {
 		"enabled": true
 	},
+	// ID deploy: bagian dari kunci cache di worker.ts, jadi deploy baru tidak menyajikan HTML lama.
+	"version_metadata": {
+		"binding": "CF_VERSION_METADATA"
+	},
 	"vars": {
 		// Ganti dengan domain produksi, dipakai untuk canonical, sitemap, dan Open Graph.
-		"SITE_URL": "https://istanablockpurwakarta.com"
+		"SITE_URL": "https://istanablockpurwakarta.com",
+		// Container Google Tag Manager (Google Ads AW-858211595 + GA4). Hanya dimuat di host SITE_URL
+		// atau saat uji Tag Assistant (?gtm_debug); lihat docs/pelacakan-google-ads.md.
+		"GTM_ID": "GTM-PXSMDXD8"
 	},
 	"d1_databases": [
 		{

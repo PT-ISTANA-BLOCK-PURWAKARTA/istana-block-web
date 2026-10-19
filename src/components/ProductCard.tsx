@@ -5,7 +5,8 @@ import { imageUrl, priceLabel } from "@/lib/format";
 export function ProductCard({ p }: { p: Product }) {
   const img = imageUrl(p.imageKey);
   return (
-    <Link href={`/produk/${p.slug}`} className="card">
+    // prefetch mati: tiap prefetch = satu request ke Worker (batas CPU paket Free).
+    <Link prefetch={false} href={`/produk/${p.slug}`} className="card">
       <div className={`card-media hexlong ${img ? "" : "hexpat-light"}`}>
         {img ? <img src={img} alt={`Foto ${p.name}`} loading="lazy" /> : <span>Foto {p.name.toLowerCase()} menyusul</span>}
       </div>

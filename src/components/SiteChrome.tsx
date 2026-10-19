@@ -9,7 +9,7 @@ export function SiteHeader({ s }: { s: Settings }) {
     <header className="site-header">
       <a href="#isi" className="skip-link">Langsung ke isi</a>
       <div className="wrap">
-        <Link href="/" className="brand" aria-label={`${s.company_name}, ke beranda`}>
+        <Link prefetch={false} href="/" className="brand" aria-label={`${s.company_name}, ke beranda`}>
           <img src="/brand/logo-istana-block.webp" alt="Istana Block Purwakarta" width={147} height={44} className="brand-logo" />
         </Link>
         <nav aria-label="Menu utama" className="main-nav">
@@ -77,22 +77,22 @@ export function SiteFooter({ s }: { s: Settings }) {
           <div>
             <b>Produk &amp; layanan</b>
             <ul className="footer-links">
-              <li><Link href="/produk">Semua produk</Link></li>
-              <li><Link href="/pola-paving">Kalkulator pola paving</Link></li>
-              <li><Link href="/paket-proyek">Paket proyek</Link></li>
-              <li><Link href="/produk/jasa-pasang-paving">Jasa pasang paving</Link></li>
-              <li><Link href="/area-pengiriman">Area pengiriman</Link></li>
+              <li><Link prefetch={false} href="/produk">Semua produk</Link></li>
+              <li><Link prefetch={false} href="/pola-paving">Kalkulator pola paving</Link></li>
+              <li><Link prefetch={false} href="/paket-proyek">Paket proyek</Link></li>
+              <li><Link prefetch={false} href="/produk/jasa-pasang-paving">Jasa pasang paving</Link></li>
+              <li><Link prefetch={false} href="/area-pengiriman">Area pengiriman</Link></li>
             </ul>
           </div>
           <div>
             <b>Informasi</b>
             <ul className="footer-links">
-              <li><Link href="/profil">Profil perusahaan</Link></li>
-              <li><Link href="/sertifikat-tkdn">Sertifikat TKDN</Link></li>
-              <li><Link href="/galeri">Galeri proyek</Link></li>
-              <li><Link href="/artikel">Artikel</Link></li>
-              <li><Link href="/kontak">Kontak &amp; lokasi</Link></li>
-              <li><Link href="/privacy-policy">Kebijakan privasi</Link></li>
+              <li><Link prefetch={false} href="/profil">Profil perusahaan</Link></li>
+              <li><Link prefetch={false} href="/sertifikat-tkdn">Sertifikat TKDN</Link></li>
+              <li><Link prefetch={false} href="/galeri">Galeri proyek</Link></li>
+              <li><Link prefetch={false} href="/artikel">Artikel</Link></li>
+              <li><Link prefetch={false} href="/kontak">Kontak &amp; lokasi</Link></li>
+              <li><Link prefetch={false} href="/privacy-policy">Kebijakan privasi</Link></li>
             </ul>
           </div>
         </div>

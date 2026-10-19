@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getDb, schema } from "@/db";
 
 export type SettingField = {
@@ -86,13 +87,14 @@ export const DEFAULT_SETTINGS: Settings = {
     "Pabrik paving block, U-Ditch, buis beton, kanstin, dan genteng beton di Purwakarta. Mutu K-350–K-450, TKDN Kemenperin, armada sendiri.",
 };
 
-export async function getSettings(): Promise<Settings> {
+// cache(): layout, generateMetadata, dan halaman memanggil ini dalam satu request; query cukup sekali.
+export const getSettings = cache(async (): Promise<Settings> => {
   const db = await getDb();
   const rows = await db.select().from(schema.settings);
   const out = { ...DEFAULT_SETTINGS };
   for (const r of rows) if (r.key in out) out[r.key as SettingKey] = r.value;
   return out;
-}
+});
 
 /**
  * Ubah teks FAQ (satu baris per tanya-jawab, format "Pertanyaan :: Jawaban") menjadi daftar.

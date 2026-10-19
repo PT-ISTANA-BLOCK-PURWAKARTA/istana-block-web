@@ -439,7 +439,15 @@ Cek setelah deploy: buka `https://<nama-worker>.<akun>.workers.dev/internal`, pi
 
 Lalu sambungkan domain: **Cloudflare dashboard → Workers & Pages → istana-block-web → Settings → Domains & Routes → Add → Custom domain** (`istanablockpurwakarta.com` dan `www`). Kalau Cloudflare menolak karena record DNS untuk nama itu sudah ada (A/CNAME ke hosting WordPress), hapus dulu record lama tersebut di menu DNS, lalu ulangi. Siapkan cadangan WordPress sebelumnya.
 
-> **Paket Workers.** Bundle Worker ini sekitar 7,4 MB tanpa kompresi, jauh di bawah batas 64 MiB. Paket gratis membatasi waktu CPU 10 ms per request; halaman biasa aman, tetapi proses login (hash password) bisa melewati batas itu. Kalau login sesekali gagal dengan pesan batas CPU, pakai **Workers Paid (USD 5/bulan)**. Kuota gratis D1 (5 GB, 5 juta baris dibaca/hari) dan R2 (10 GB, 1 juta operasi tulis/bulan) jauh di atas kebutuhan situs ini.
+> **Paket Workers.** Bundle Worker ini sekitar 7,4 MB tanpa kompresi, jauh di bawah batas 64 MiB. Paket gratis membatasi waktu CPU 10 ms per request. Merender halaman Next.js bisa melewati batas itu, dan di staging muncul error 503 "error code: 1102" yang putus-sambung. Proses login (hash password) juga bisa melewatinya. Karena itu `worker.ts` menyimpan halaman publik di cache (lihat di bawah). Bila 1102 masih muncul, pakai **Workers Paid (USD 5/bulan)**. Kuota gratis D1 (5 GB, 5 juta baris dibaca/hari) dan R2 (10 GB, 1 juta operasi tulis/bulan) jauh di atas kebutuhan situs ini.
+
+> **Cache halaman publik (`worker.ts`).** Worker membungkus `.open-next/worker.js`, lalu menyimpan respons halaman publik selama **5 menit**, gambar `/media` 1 tahun, serta `sitemap.xml` dan `robots.txt` 1 jam. Kunjungan berikutnya tidak menjalankan Next.js lagi.
+> - Perubahan lewat panel `/situs` baru terlihat pengunjung **paling lambat 5 menit** kemudian. Admin yang sedang login selalu melihat versi terbaru.
+> - Panel internal, `/api`, dan request selain GET tidak pernah di-cache.
+> - Parameter iklan (`gclid`, `utm_*`, …) tidak memengaruhi isi halaman, jadi tidak membuat salinan cache baru.
+> - Header respons `x-ib-cache: HIT | HIT-EDGE | MISS` menunjukkan asal respons.
+> - Di `*.workers.dev` hanya cache memori yang aktif. Cache API Cloudflare baru ikut bekerja setelah domain sendiri tersambung.
+> - Pelacakan Google Ads dan GA4: lihat [docs/pelacakan-google-ads.md](docs/pelacakan-google-ads.md).
 
 **Cadangan database.** Ekspor isi D1 produksi ke file SQL sebelum perubahan besar:
 

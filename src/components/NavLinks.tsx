@@ -19,9 +19,11 @@ export function NavLinks() {
       {NAV_LINKS.map((l) => {
         const active = path === l.href || path.startsWith(l.href + "/");
         return (
+          // prefetch mati: menu tampil di setiap halaman; tiap prefetch = satu request ke Worker.
           <Link
             key={l.href}
             href={l.href}
+            prefetch={false}
             aria-current={active ? "page" : undefined}
             onClick={(e) => e.currentTarget.closest("details")?.removeAttribute("open")}
           >
