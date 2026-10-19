@@ -47,7 +47,8 @@ export function Calculator({ whatsapp }: { whatsapp: string }) {
           </div>
           <b className="tabular">{fmt(pcs)} pcs</b>
         </div>
-        <a className="btn btn-primary" href={waLink(whatsapp, msg)} target="_blank" rel="noopener">
+        {/* data-cta dibaca pemicu GTM untuk menghitung lead kalkulator terpisah dari klik WhatsApp biasa. */}
+        <a className="btn btn-primary" href={waLink(whatsapp, msg)} target="_blank" rel="noopener" data-cta="kalkulator">
           Kirim ke admin
         </a>
       </div>

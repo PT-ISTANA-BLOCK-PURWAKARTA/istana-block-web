@@ -8,16 +8,19 @@ import { ProductCard } from "@/components/ProductCard";
 import specSheets from "@/data/spec-sheets.json";
 import { getEnv } from "@/db";
 import type { PriceRow } from "@/db/schema";
-import { imageUrl, priceLabel, rupiah, telLink, waLink } from "@/lib/format";
+import { imageUrl, priceLabel, rupiah, tanggal, telLink, waLink } from "@/lib/format";
+import { productOffers } from "@/lib/jsonld";
 import { getProductBySlug, listProducts } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
+import { fitTitle } from "@/lib/title";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await getProductBySlug((await params).slug);
   if (!p) return { title: "Produk tidak ditemukan", robots: { index: false } };
-  const title = p.seoTitle || `Harga ${p.name} Purwakarta`;
+  const fallbackTitle = `Harga ${p.name} Purwakarta`;
+  const title = p.seoTitle || fallbackTitle;
   const price = priceLabel(p);
   let summary = p.summary;
   const room = 155 - price.length - 2;
@@ -25,7 +28,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = p.seoDescription || `${summary} ${price}.`;
   const img = imageUrl(p.imageKey);
   return {
-    title,
+    // seoTitle dari panel sudah lengkap dengan merek; "absolute" mencegah template layout menempelkan akhiran merek kedua.
+    title: p.seoTitle ? { absolute: p.seoTitle } : fitTitle(fallbackTitle),
     description,
     alternates: { canonical: `/produk/${p.slug}` },
     openGraph: { title, description, url: `/produk/${p.slug}`, images: img ? [img] : ["/img/pabrik/pabrik-mesin-paving.webp"] },
@@ -56,9 +60,20 @@ export default async function ProductPage({ params }: Props) {
   const groups = groupRows(p.priceRows);
   const hasDetail = p.priceRows.some((r) => r.detail);
   const related = all.filter((x) => x.id !== p.id && x.category !== "Jasa").slice(0, 3);
-  const prices = p.priceRows.map((r) => r.price).filter((x): x is number => x != null);
+  // Offer di JSON-LD hanya dari angka yang tampil di halaman (hero dan tabel); tanpa angka → tanpa offers.
+  const offers = productOffers(p, env.SITE_URL);
   const url = `${env.SITE_URL}/produk/${p.slug}`;
   const waText = p.waText?.trim() || `Halo Istana Block, saya mau tanya harga ${p.name}. Ukuran: ..., jumlah: ..., lokasi kirim: ...`;
+  // H1 memuat lokasi. Jasa dibiarkan (H1-nya diatur lewat panel), begitu pula nama yang sudah menyebut Purwakarta.
+  const h1 = p.category === "Jasa" || /purwakarta/i.test(p.name) ? p.name : `${p.name} Purwakarta`;
+  // Semua baris tanpa harga: tampilkan tabel tanpa kolom harga plus satu blok ajakan, bukan deretan "Hubungi".
+  const noPrices = p.priceRows.length > 0 && p.priceRows.every((r) => r.price == null);
+  // CTA sekunder: kalkulator hanya untuk paving. Tautan biasa (server-rendered), bukan widget, jadi terbaca crawler tanpa JS.
+  const calcLink = p.category === "Paving" ? <a className="btn btn-ghost" href="/pola-paving">Hitung kebutuhan paving</a> : null;
+  // Katalog hanya tampil bila pemilik mengisi tautannya di panel /situs; kosong = tanpa tombol mati.
+  const catalogLink = s.catalog_url ? (
+    <a className="btn btn-ghost" href={s.catalog_url} target="_blank" rel="noopener" data-cta="katalog">Unduh katalog (PDF)</a>
+  ) : null;
 
   return (
     <>
@@ -72,19 +87,7 @@ export default async function ProductPage({ params }: Props) {
             url,
             ...(img ? { image: img.startsWith("http") ? img : `${env.SITE_URL}${img}` } : {}),
             brand: { "@type": "Brand", name: "Istana Block" },
-            ...(prices.length || p.priceFrom != null
-              ? {
-                  offers: {
-                    "@type": "AggregateOffer",
-                    priceCurrency: "IDR",
-                    lowPrice: prices.length ? Math.min(...prices) : p.priceFrom,
-                    highPrice: prices.length ? Math.max(...prices) : (p.priceTo ?? p.priceFrom),
-                    offerCount: Math.max(prices.length, 1),
-                    availability: "https://schema.org/InStock",
-                    seller: { "@id": `${env.SITE_URL}/#business` },
-                  },
-                }
-              : {}),
+            ...(offers ? { offers } : {}),
           },
           {
             "@context": "https://schema.org",
@@ -106,8 +109,13 @@ export default async function ProductPage({ params }: Props) {
         </nav>
         <section className="product-hero">
           <div className="hero-text" style={{ gap: 22 }}>
-            <h1>{p.name}</h1>
+            <h1>{h1}</h1>
             <p className="hero-lead" style={{ fontSize: 18 }}>{p.summary}</p>
+            {p.priceFrom != null && (
+              <p className="tabular" style={{ fontSize: 18, margin: 0 }}>
+                <b style={{ color: "var(--biru-tua)" }}>{priceLabel(p)}</b> <span className="muted">· belum termasuk ongkir</span>
+              </p>
+            )}
             {(p.specs.length > 0 || p.tkdn) && (
               <dl className="specs">
                 {p.specs.map((x, i) => (
@@ -118,7 +126,9 @@ export default async function ProductPage({ params }: Props) {
             )}
             <div className="actions">
               <a className="btn btn-primary" href={waLink(s.whatsapp, waText)} target="_blank" rel="noopener">Minta harga + ongkir</a>
-              {p.priceRows.length > 0 && <a className="btn btn-ghost" href="#harga">Lihat tabel harga</a>}
+              {p.priceRows.length > 0 && <a className="btn btn-ghost" href="#harga">{noPrices ? "Lihat ukuran" : "Lihat tabel harga"}</a>}
+              {calcLink}
+              {catalogLink}
             </div>
           </div>
           <div className="product-art">
@@ -126,7 +136,8 @@ export default async function ProductPage({ params }: Props) {
             <Hex size={84} color="#FE5722" className="deco" style={{ right: 18, bottom: 6, transform: "rotate(-6deg)" }} />
             <Hex size={48} color="#B5B4AF" className="deco" style={{ left: 8, bottom: 40, transform: "rotate(9deg)" }} />
             <figure className={`hex ${img ? "" : "hexpat-light"}`}>
-              {img ? <img src={img} alt={`Foto ${p.name}`} /> : <figcaption>Foto {p.name.toLowerCase()} menyusul</figcaption>}
+              {/* Gambar hero = LCP: prioritas tinggi dan tidak lazy. */}
+              {img ? <img src={img} alt={`Foto ${p.name}`} fetchPriority="high" loading="eager" /> : <figcaption>Foto {p.name.toLowerCase()} menyusul</figcaption>}
             </figure>
           </div>
         </section>
@@ -134,8 +145,19 @@ export default async function ProductPage({ params }: Props) {
         {p.priceRows.length > 0 && (
           <section id="harga" style={{ paddingBottom: 56 }}>
             <div className="section-head">
-              <h2>Daftar harga {p.name}</h2>
-              <p className="muted small">Belum termasuk ongkir. Harga dapat berubah; penawaran tertulis yang berlaku.</p>
+              <h2>{noPrices ? `Ukuran dan harga ${p.name}` : `Daftar harga ${p.name}`}</h2>
+              <p className="muted small">
+                {noPrices ? (
+                  "Ukuran dan jenis yang tersedia. Harga dikonfirmasi lewat penawaran tertulis, belum termasuk ongkir."
+                ) : (
+                  <>
+                    Belum termasuk ongkir. Harga dapat berubah; penawaran tertulis yang berlaku.
+                    <span style={{ display: "block" }}>
+                      Harga diperbarui <time dateTime={p.updatedAt.toISOString()}>{tanggal(p.updatedAt)}</time>
+                    </span>
+                  </>
+                )}
+              </p>
             </div>
             <div className="tables">
               {groups.map(([g, rows]) => (
@@ -146,7 +168,7 @@ export default async function ProductPage({ params }: Props) {
                       <tr>
                         <th scope="col">Ukuran / jenis</th>
                         {hasDetail && <th scope="col" className="col-detail">Keterangan</th>}
-                        <th scope="col" className="num">Harga</th>
+                        {!noPrices && <th scope="col" className="num">Harga</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -157,7 +179,7 @@ export default async function ProductPage({ params }: Props) {
                             {r.detail && <div className="detail-inline small muted">{r.detail}</div>}
                           </td>
                           {hasDetail && <td className="muted col-detail">{r.detail}</td>}
-                          <td className="num"><b>{r.price != null ? rupiah(r.price) : "Hubungi"}</b>{r.unit ? <span className="muted small">/{r.unit}</span> : null}</td>
+                          {!noPrices && <td className="num"><b>{r.price != null ? rupiah(r.price) : "Hubungi"}</b>{r.unit ? <span className="muted small">/{r.unit}</span> : null}</td>}
                         </tr>
                       ))}
                     </tbody>
@@ -165,6 +187,27 @@ export default async function ProductPage({ params }: Props) {
                 </div>
               ))}
             </div>
+            {/* Titik keputusan: tombol tepat di bawah tabel berangka. Kalau tanpa harga, blok ajakan di bawah sudah menjadi CTA-nya. */}
+            {!noPrices && (
+              <div className="actions" style={{ marginTop: 20, alignItems: "center" }}>
+                <a className="btn btn-primary" href={waLink(s.whatsapp, waText)} target="_blank" rel="noopener">Minta harga + ongkir</a>
+                {calcLink}
+                <span className="muted small">Kirim ukuran dan lokasi; admin membalas dengan penawaran tertulis berisi harga dan ongkir.</span>
+              </div>
+            )}
+            {noPrices && (
+              <div className="panel" style={{ marginTop: 20 }}>
+                <h3 style={{ fontSize: 24 }}>Harga mengikuti ukuran, warna, dan volume pesanan</h3>
+                <p className="muted">
+                  {p.priceFrom != null && <>Harga acuan {priceLabel(p)}, belum termasuk ongkir. </>}
+                  Kirim kebutuhan Anda lewat WhatsApp; admin membalas dengan penawaran tertulis berisi harga dan ongkir ke lokasi Anda.
+                </p>
+                <div className="actions">
+                  <a className="btn btn-primary" href={waLink(s.whatsapp, waText)} target="_blank" rel="noopener">Minta harga + ongkir</a>
+                  {calcLink}
+                </div>
+              </div>
+            )}
           </section>
         )}
 

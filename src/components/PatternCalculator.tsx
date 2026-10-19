@@ -1527,7 +1527,8 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
             )}
 
             <div className={css.actions} data-pp-noprint>
-              <a className="btn btn-primary" href={waHref} target="_blank" rel="noopener">
+              {/* data-cta dibaca pemicu GTM untuk menghitung lead kalkulator terpisah dari klik WhatsApp biasa. */}
+              <a className="btn btn-primary" href={waHref} target="_blank" rel="noopener" data-cta="kalkulator">
                 <WaIcon />
                 Kirim ke WhatsApp
               </a>

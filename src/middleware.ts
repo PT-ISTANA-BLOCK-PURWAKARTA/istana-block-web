@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import legacyRedirects from "@/data/legacy-redirects.json";
+import { isCanonicalHost } from "@/lib/host";
 import { SESSION_COOKIE } from "@/lib/session";
 
 // Berjalan di Edge runtime: hanya Web API (URL, Map, Response), tanpa modul Node.
@@ -109,9 +110,14 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // (g) Lanjut seperti biasa. Worker demo: semua halaman noindex.
+  // (g) Lanjut seperti biasa. Worker demo dan host selain SITE_URL (staging *.workers.dev, URL preview):
+  // semua halaman noindex, supaya salinan situs tidak bersaing dengan domain resmi. Redirect 301 di atas
+  // sengaja tidak diberi header ini. Host dibaca dari URL request, bukan header x-forwarded-host yang bisa
+  // dipalsukan, dan cache worker.ts memakai host di kunci URL, jadi header ini tidak bocor ke domain resmi.
   const res = NextResponse.next();
-  if (process.env.DEMO_MODE === "1") res.headers.set("x-robots-tag", "noindex, nofollow");
+  if (process.env.DEMO_MODE === "1" || !isCanonicalHost(req.nextUrl.host, process.env.SITE_URL)) {
+    res.headers.set("x-robots-tag", "noindex, nofollow");
+  }
   return res;
 }
 

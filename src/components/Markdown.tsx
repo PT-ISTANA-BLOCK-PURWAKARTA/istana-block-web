@@ -8,6 +8,9 @@ const components: Components = {
       <table {...props} />
     </div>
   ),
+  // Foto di isi artikel/halaman biasanya jauh di bawah lipatan: tunda muat dan decode di luar utas utama.
+  // Sampul artikel bukan lewat sini (itu <img className="article-cover"> di halamannya sendiri).
+  img: ({ node: _node, alt, ...props }) => <img loading="lazy" decoding="async" alt={alt ?? ""} {...props} />,
 };
 
 // react-markdown tidak merender HTML mentah (tanpa rehype-raw), jadi aman dari skrip yang disisipkan.

@@ -1,0 +1,16 @@
+# Header untuk aset statis. Cloudflare Static Assets membaca berkas ini; build OpenNext menyalinnya
+# dari public/ ke .open-next/assets. Berlaku hanya untuk berkas yang disajikan langsung dari aset,
+# bukan respons buatan Worker (/media lewat R2, video /reel/*.mp4 lewat src/app/reel/[file]/route.ts).
+# Tanpa berkas ini semua aset dikirim "max-age=0, must-revalidate" dan kunjungan ulang harus cek ke server.
+
+# Nama berkas di _next/static memuat hash isi, jadi aman disimpan setahun.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Nama berkas tidak ber-hash: cukup sehari supaya foto yang diganti dengan nama sama tidak basi lama.
+/img/*
+  Cache-Control: public, max-age=86400
+/brand/*
+  Cache-Control: public, max-age=86400
+/reel/*
+  Cache-Control: public, max-age=86400

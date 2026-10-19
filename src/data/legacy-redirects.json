@@ -192,5 +192,10 @@
   "/wordpress/sasscokit/template-kit/service-details": "/produk/kanstin",
   "/kontak-kami": "/kontak",
   "/sample-page": "410",
-  "/hello-world": "410"
+  "/hello-world": "410",
+  "/category/blog-artikel": "/artikel",
+  "/category/uncategorized": "410",
+  "/author/9cc8dcba79d162e6": "410",
+  "/feed": "410",
+  "/comments/feed": "410"
 }

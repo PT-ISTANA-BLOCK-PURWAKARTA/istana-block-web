@@ -34,6 +34,16 @@ export const SETTING_FIELDS = [
     group: "Kontak",
     help: "Di Google Maps: Bagikan → Sematkan peta → Salin HTML. Tempel isi src=\"…\" (diawali https://www.google.com/maps/embed) atau seluruh kode iframe-nya; peta tampil di halaman Kontak.",
   },
+  { key: "geo_lat", label: "Lintang (latitude) pabrik", type: "text", group: "Kontak", help: "Contoh: -6.5831124 (titik sebagai desimal). Dipakai data terstruktur untuk hasil lokal." },
+  { key: "geo_lng", label: "Bujur (longitude) pabrik", type: "text", group: "Kontak", help: "Contoh: 107.4663503" },
+  {
+    key: "same_as",
+    label: "Profil resmi di luar situs (satu URL per baris)",
+    type: "textarea",
+    group: "Kontak",
+    rows: 3,
+    help: "Instagram, Facebook, atau profil Google Maps. Diawali https:// dan hanya tautan yang masih aktif (kosongkan bila tidak ada). Dipakai data terstruktur agar situs dan profil ini dikenali sebagai satu usaha.",
+  },
   { key: "google_rating", label: "Rating Google", type: "text", group: "Kontak", help: "Contoh: 4,8" },
   { key: "google_review_count", label: "Jumlah ulasan Google", type: "text", group: "Kontak" },
   { key: "hero_title", label: "Judul utama beranda", type: "text", group: "Beranda" },
@@ -72,17 +82,24 @@ export const DEFAULT_SETTINGS: Settings = {
   hours: "Sabtu–Kamis, 07.30–17.00",
   maps_url: "",
   maps_embed_url: "",
+  // Titik pin profil Google Maps pabrik (dari tautan Maps di /kontak situs lama).
+  geo_lat: "-6.5831124",
+  geo_lng: "107.4663503",
+  // Dari JSON-LD situs lama. Kanal YouTube lama (@istanablockpurwakarta4260) sengaja tidak ikut: menjawab 404.
+  same_as: "https://www.instagram.com/pt.istanablock\nhttps://www.facebook.com/istanablock\nhttps://maps.google.com/?cid=6901861555312700265",
   google_rating: "4,8",
   google_review_count: "42",
-  hero_title: "Beton yang tertata, dari pabrik ke halaman Anda.",
+  // H1 beranda memuat kata kunci utama (sama dengan H1 situs lama); tagline lama pindah ke awal paragraf pembuka.
+  hero_title: "Pabrik Paving Block & Beton Precast di Purwakarta",
   hero_subtitle:
-    "Paving block, U-Ditch, buis beton, kanstin, dan genteng beton. Mutu K-350 sampai K-450, bersertifikat TKDN, dikirim dengan armada sendiri ke Jawa Barat dan Jabodetabek.",
+    "Beton yang tertata, dari pabrik ke halaman Anda. Paving block, U-Ditch, buis beton, kanstin, dan genteng beton. Mutu K-350 sampai K-450, bersertifikat TKDN, dikirim dengan armada sendiri ke Jawa Barat dan Jabodetabek.",
   project_title: "Untuk kontraktor dan pengadaan",
   project_text:
     "Paving, kanstin, U-Ditch, buis, dan genteng dalam satu penawaran tertulis, lengkap dengan dokumen TKDN untuk tender.",
   home_faq:
     "Di mana lokasi pabrik Istana Block? :: Di Jl. Terusan Kapten Halim No.121, Kec. Pasawahan, Purwakarta, Jawa Barat. Anda bisa datang langsung; hubungi admin dulu agar kunjungan bisa dijadwalkan. Jam operasional Sabtu–Kamis, 07.30–17.00.\nApakah bisa kirim ke luar Purwakarta? :: Bisa. Kami mengirim dengan armada sendiri ke Karawang, Cikampek, Subang, Bandung, Cimahi, Bandung Barat, Cianjur, dan Sumedang. Jabodetabek dilayani khusus untuk pesanan skala proyek dengan volume minimal. Ongkir dihitung dari jarak, volume, dan akses di titik bongkar.\nBerapa harga paving block per m²? :: Mulai Rp80.000/m² untuk material, harga pabrik belum termasuk ongkir. Harga akhir tergantung jenis, tebal 6 atau 8 cm, warna, mutu, dan volume pesanan. Harga bisa berubah; penawaran tertulis memuat harga dan ongkir untuk lokasi Anda.\nBerapa jumlah paving per m²? :: Truepave (bata) 21×10,5 cm: 44 pcs. Hexagon 20×20 cm: 27 pcs. Ubin 21×21 cm: 22 pcs. Fullpave 30×30 cm: 11 pcs. Grass block: 7,5 pcs. Tambahkan cadangan 5% untuk pola lurus dan 10% untuk pola diagonal atau hexagon.\nApakah ada jasa pemasangan? :: Ada. Jasa pasang paving untuk luas minimal 200 m² dengan lahan siap pasang. Lokasi disurvei dan diukur dulu tanpa biaya, dan pemasangan bergaransi 1 bulan. Kanstin juga bisa dipasang; ketentuannya tanyakan ke admin.\nBagaimana cara memesan? :: Kirim produk, volume, dan lokasi lewat WhatsApp 0813 8888 5141 atau telepon 0878 8177 7660. Admin membalas dengan penawaran berisi harga produk dan ongkir. Pembayaran: DP saat PO, pelunasan saat barang tiba di lokasi.",
-  seo_title: "Paving Block, U-Ditch & Buis Beton Purwakarta | Istana Block",
+  // Sama persis dengan judul beranda situs lama (61 karakter), dipertahankan selama migrasi agar efek pindah situs terpisah dari efek ganti judul.
+  seo_title: "Pabrik Paving Block & Beton Precast Purwakarta | Istana Block",
   seo_description:
     "Pabrik paving block, U-Ditch, buis beton, kanstin, dan genteng beton di Purwakarta. Mutu K-350–K-450, TKDN Kemenperin, armada sendiri.",
 };

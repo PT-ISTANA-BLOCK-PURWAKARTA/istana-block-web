@@ -12,8 +12,10 @@ export const metadata: Metadata = {
 
 export default async function KontakPage() {
   const s = await getSettings();
+  const hasEmbed = isMapsEmbedUrl(s.maps_embed_url);
   const rows = [
-    { k: "Alamat pabrik", v: s.address },
+    // Alamat jadi tautan peta: pembeli yang mau datang ke pabrik langsung dapat petunjuk arah.
+    { k: "Alamat pabrik", v: s.address, href: s.maps_url },
     { k: "Jam operasional", v: s.hours },
     { k: "Area pengiriman", v: s.service_area },
   ];
@@ -25,7 +27,7 @@ export default async function KontakPage() {
           <h1 style={{ fontSize: "clamp(32px, 4vw, 46px)" }}>Kontak &amp; lokasi</h1>
           <dl className="specs" style={{ gridTemplateColumns: "1fr" }}>
             {rows.map((r) => (
-              <div key={r.k} style={{ background: "var(--latar)" }}><dt>{r.k}</dt><dd>{r.v}</dd></div>
+              <div key={r.k} style={{ background: "var(--latar)" }}><dt>{r.k}</dt><dd>{r.href ? <a href={r.href} target="_blank" rel="noopener">{r.v}</a> : r.v}</dd></div>
             ))}
           </dl>
           <div className="actions">
@@ -34,9 +36,9 @@ export default async function KontakPage() {
           </div>
           {s.phone_office && <p>Telepon kantor: <a href={telLink(s.phone_office)}>{s.phone_office}</a></p>}
           <p>Email: <a href={`mailto:${s.email}`}>{s.email}</a></p>
-          {s.maps_url && <a href={s.maps_url} target="_blank" rel="noopener" style={{ fontWeight: 600 }}>Buka lokasi di Google Maps →</a>}
+          {hasEmbed && s.maps_url && <a href={s.maps_url} target="_blank" rel="noopener" style={{ fontWeight: 600 }}>Buka lokasi di Google Maps →</a>}
         </div>
-        {isMapsEmbedUrl(s.maps_embed_url) ? (
+        {hasEmbed ? (
           <div className="map-embed">
             <iframe
               src={s.maps_embed_url}
@@ -47,12 +49,14 @@ export default async function KontakPage() {
             />
           </div>
         ) : (
-          <div className="panel hexpat-light" style={{ flex: "1 1 360px", background: "var(--biru-muda)", alignItems: "center", justifyContent: "center", minHeight: 320 }} aria-hidden="true">
-            <div style={{ position: "relative", width: 260, height: 260 }}>
+          // Tanpa URL embed: dekorasi diganti tautan peta yang menonjol (URL embed tidak dikarang dari tautan biasa).
+          <div className="panel hexpat-light" style={{ flex: "1 1 360px", background: "var(--biru-muda)", alignItems: "center", justifyContent: "center", minHeight: 320 }}>
+            <div style={{ position: "relative", width: 260, height: 260 }} aria-hidden="true">
               <Hex size={150} color="#254186" style={{ position: "absolute", left: 55, top: 20 }} />
               <Hex size={80} color="#FE5722" style={{ position: "absolute", left: 0, top: 150, transform: "rotate(-8deg)" }} />
               <Hex size={64} color="#B5B4AF" style={{ position: "absolute", right: 0, top: 160, transform: "rotate(6deg)" }} />
             </div>
+            {s.maps_url && <a className="btn btn-primary" href={s.maps_url} target="_blank" rel="noopener">Buka di Google Maps</a>}
           </div>
         )}
       </div>

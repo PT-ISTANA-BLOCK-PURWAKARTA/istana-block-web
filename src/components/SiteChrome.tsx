@@ -89,6 +89,8 @@ export function SiteFooter({ s }: { s: Settings }) {
             <ul className="footer-links">
               <li><Link prefetch={false} href="/profil">Profil perusahaan</Link></li>
               <li><Link prefetch={false} href="/sertifikat-tkdn">Sertifikat TKDN</Link></li>
+              {/* Tautan katalog diisi pemilik di panel /situs; kosong = tidak dirender. data-cta dibaca pemicu GTM. */}
+              {s.catalog_url && <li><a href={s.catalog_url} target="_blank" rel="noopener" data-cta="katalog">Unduh katalog (PDF)</a></li>}
               <li><Link prefetch={false} href="/galeri">Galeri proyek</Link></li>
               <li><Link prefetch={false} href="/artikel">Artikel</Link></li>
               <li><Link prefetch={false} href="/kontak">Kontak &amp; lokasi</Link></li>
