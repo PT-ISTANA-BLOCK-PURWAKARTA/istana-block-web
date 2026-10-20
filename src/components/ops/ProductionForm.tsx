@@ -10,7 +10,7 @@ import { DateField, Select } from "@/components/ui";
 import { formatQty, parseQty } from "@/lib/erp/util";
 import { PRODUCTION_ISSUES } from "@/lib/ops/shared/goods";
 
-type Opt = { id: string; code: string; name: string; unit: string; kind: string };
+type Opt = { id: string; code: string; name: string; unit: string; kind: string; category?: ProdCategory };
 type Row = { itemId: string; qty: string };
 
 function Rows({ title, help, rows, setRows, options }: { title: string; help: string; rows: Row[]; setRows: (f: (r: Row[]) => Row[]) => void; options: Opt[] }) {
@@ -79,7 +79,7 @@ export function ProductionForm(p: ProductionFormProps) {
   const paving = category === "paving";
 
   const ser = (rs: Row[]) => JSON.stringify(rs.map((r) => ({ itemId: r.itemId, qty: parseQty(r.qty) })).filter((r) => r.itemId || r.qty));
-  const finished = p.items.filter((i) => i.kind === "barang_jadi");
+  const finished = p.items.filter((i) => i.kind === "barang_jadi" && i.category === category);
   const raw = p.items.filter((i) => i.kind === "bahan_baku");
 
   function fillFromMix() {
@@ -137,7 +137,7 @@ export function ProductionForm(p: ProductionFormProps) {
             <label id="prd-cat-l">Kategori</label>
             <div className="prd-choices" role="group" aria-labelledby="prd-cat-l">
               {p.categories.map((c) => (
-                <button key={c} type="button" className="prd-choice" aria-pressed={category === c} onClick={() => setCategory(c)}>{CATEGORY_LABEL[c]}</button>
+                <button key={c} type="button" className="prd-choice" aria-pressed={category === c} onClick={() => { setCategory(c); setOut((rs) => blank(rs.filter((r) => !r.itemId || p.items.find((i) => i.id === r.itemId)?.category === c))); }}>{CATEGORY_LABEL[c]}</button>
               ))}
             </div>
           </div>
@@ -157,7 +157,7 @@ export function ProductionForm(p: ProductionFormProps) {
       </section>
 
       <section className="form-section">
-        <Rows title="Hasil produksi" help="barang jadi yang dihasilkan; isi 0 bila berhenti" rows={out} setRows={setOut} options={finished.length ? finished : p.items} />
+        <Rows title="Hasil produksi" help="barang jadi yang dihasilkan; isi 0 bila berhenti" rows={out} setRows={setOut} options={finished} />
         {paving && (
           <div className="stack" style={{ gap: 8 }}>
             <div><button type="button" className="btn btn-ghost btn-sm prd-mix" onClick={fillFromMix} disabled={mixBusy}>{mixBusy ? "Mengambil…" : "Isi dari catatan mix desain tanggal ini"}</button></div>

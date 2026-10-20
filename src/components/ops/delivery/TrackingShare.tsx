@@ -40,7 +40,7 @@ export function TrackingShare({ deliveryId, summary, count, lastOpened }: { deli
   return (
     <div className="dl-track">
       <p className="small muted">
-        {count > 0 ? `${count} tautan sudah dibuat${lastOpened ? ` · terakhir dibuka ${lastOpened}` : " · belum pernah dibuka"}.` : "Belum ada tautan."} Pelanggan membuka tautan tanpa login dan hanya melihat progres, muatan, sopir, dan posisi truk (tanpa harga).
+        {count > 0 || url ? `${count + (url ? 1 : 0)} tautan sudah dibuat${lastOpened ? ` · terakhir dibuka ${lastOpened}` : " · belum pernah dibuka"}.` : "Belum ada tautan."} Pelanggan membuka tautan tanpa login dan hanya melihat progres, muatan, sopir, dan posisi truk (tanpa harga).
       </p>
       {!url && (
         <div>

@@ -1,11 +1,11 @@
 import "server-only";
-import { and, desc, eq, gte, like, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like, lte, sql } from "drizzle-orm";
 import { schema } from "@/db";
 import { productionCategories as ALL_CATEGORIES, type ProductionCategory } from "@/db/erp";
 import { requirePerm } from "@/lib/auth";
 import type { DB } from "@/lib/erp/server";
 import { permsOf } from "@/lib/roles";
-import { productionCategories as categoriesByRole } from "@/lib/ops/categories";
+import { itemProductionCategory, productionCategories as categoriesByRole } from "@/lib/ops/categories";
 import { PRECAST_PRODUCTS, batchPrefix } from "@/lib/ops/shared/goods";
 import type { ProdRow } from "@/components/ops/production/summary";
 
@@ -117,11 +117,19 @@ export async function recentLeaders(db: DB) {
 
 /** Barang yang bisa dipilih di form: hasil = barang jadi, bahan = bahan baku; hanya yang dilacak stoknya (+ yang sudah dipakai dokumen ini). */
 export async function productionItems(db: DB, keep: string[] = []) {
-  const all = await db.select().from(schema.items).orderBy(schema.items.name);
+  const all = await db.select({ i: schema.items, web: schema.products.category }).from(schema.items).leftJoin(schema.products, eq(schema.products.id, schema.items.productId)).orderBy(schema.items.name);
   const k = new Set(keep);
   return all
-    .filter((i) => (i.kind === "barang_jadi" || i.kind === "bahan_baku") && ((i.active && i.trackStock) || k.has(i.id)))
-    .map(({ id, code, name, unit, kind }) => ({ id, code, name, unit, kind }));
+    .filter(({ i }) => (i.kind === "barang_jadi" || i.kind === "bahan_baku") && ((i.active && i.trackStock) || k.has(i.id)))
+    .map(({ i, web }) => ({ id: i.id, code: i.code, name: i.name, unit: i.unit, kind: i.kind, category: itemProductionCategory(i, web) }));
+}
+
+/** Kategori produksi tiap barang (id -> kategori), untuk memeriksa hasil yang dikirim ke server. */
+export async function itemCategories(db: DB, items: { id: string; code: string; name: string; productId: number | null }[]) {
+  const pids = Array.from(new Set(items.map((i) => i.productId).filter((x): x is number => x != null)));
+  const web = pids.length ? await db.select({ id: schema.products.id, category: schema.products.category }).from(schema.products).where(inArray(schema.products.id, pids)) : [];
+  const byId = new Map(web.map((w) => [w.id, w.category]));
+  return new Map(items.map((i) => [i.id, itemProductionCategory(i, i.productId == null ? null : byId.get(i.productId))]));
 }
 
 export type MixSuggestion = {

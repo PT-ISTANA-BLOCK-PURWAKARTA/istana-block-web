@@ -124,7 +124,7 @@ export default async function PengirimanDetail({ params, searchParams }: { param
           </section>
         )}
 
-        {(canEdit || canLoad || perms.has("selesaikan")) && <DeliveryActions id={d.id} status={d.status} canShip={canEdit} canLoad={canLoad} canComplete={perms.has("selesaikan")} />}
+        {(canEdit || canLoad || perms.has("selesaikan")) && <DeliveryActions id={d.id} status={d.status} canShip={canEdit} canLoad={canLoad} canComplete={perms.has("selesaikan")} hasDriver={!!d.driverId} />}
         {canAssign && <AssignForm id={d.id} vehicleId={d.vehicleId} driverId={d.driverId} vehicles={vehicles} drivers={drivers} />}
 
         {canEdit && d.status !== "batal" && (

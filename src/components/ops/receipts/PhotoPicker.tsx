@@ -74,7 +74,7 @@ export function PhotoPicker({ name, max = 1, label = "Ambil foto", hint }: { nam
   return (
     <div className="rcv-photos-wrap">
       {/* Input bernama (tersembunyi) yang dikirim bersama form; input kamera di bawah sengaja tanpa nama. */}
-      <input ref={hidden} type="file" name={name} multiple hidden aria-hidden="true" tabIndex={-1} />
+      <input ref={hidden} type="file" name={name} accept="image/*" capture="environment" multiple hidden aria-hidden="true" tabIndex={-1} />
       <input ref={camera} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { void pick(e.target.files?.[0]); e.target.value = ""; }} />
       <div className="rcv-photos">
         {photos.map((photo, index) => (

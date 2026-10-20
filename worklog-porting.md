@@ -31,7 +31,33 @@ Verifikasi yang sudah lolos:
 - `npx tsc --noEmit` nol error (di Windows, sebelum perubahan SheetJS terakhir).
 - Build OpenNext di WSL lolos untuk commit `8f5e395`.
 
-## Sisa pekerjaan (urut)
+## Sesi lanjutan 2026-10-21 pagi (orkestrator Opus + subagen Sonnet)
+
+Langkah 1–3 di bawah SELESAI:
+- Build OpenNext lolos (percobaan 1). `wrangler deploy --dry-run`: **2.783 KiB gzip** (12.693 KiB mentah). Itu di bawah 3.072 KiB, tapi margin hanya ~290 KiB. Tidak ada "SheetJS" di chunks server.
+- D1 lokal dan 8 akun uji siap. `siapkan-uji.sh` tidak bisa dijalankan dari path `side-session-notes` di WSL, karena folder AppData Claude ter-virtualisasi. Salin dulu ke `~` lalu buang CRLF.
+- Uji preview dikerjakan 2 penguji paralel per kelompok peran, lalu uji regresi. Tidak ada 500. Pengiriman bertahap jalan end-to-end: stok keluar dan jurnal HPP seimbang. Hak akses silang benar. `/kiriman` tanpa harga.
+- Perbaikan hasil uji:
+  - Picker dan server produksi difilter per kategori. Helper baru `itemProductionCategory` menurunkan kategori dari kategori produk web/kode PVG/nama; grass block = precast.
+  - TTD tidak lagi terbuka untuk izin `iso`.
+  - Layout HP uji tekan.
+  - Flash uji pasir dan hapus produksi.
+  - Status tautan lacak.
+  - Teks SJ tanpa sopir.
+  - Input foto `accept`/`capture`.
+- Impor Zahir hanya diuji tampilan formnya, karena belum ada contoh `.fp3`.
+
+Keputusan pemilik baru (TIDAK diubah, sama dengan sumber/main):
+- Peran kantor (`operasional`) melihat dan mengisi harga di form PO baru/ubah. Form ini identik dengan main, tapi detail PO menyembunyikan harga darinya. Perilakunya tidak konsisten.
+- Mix harian tanpa template: "disetujui" terisi bawaan Semen 80/Pasir 500/…, dan actual boleh kosong ("Sesuai"). Ini sama dengan sumber `QcPage.tsx`.
+- Aturan turunan kategori barang produksi (karena `fin_items` tanpa kolom kategori) perlu dikonfirmasi pada data nyata.
+- Kosmetik tersisa:
+  - teks "Sopir diberi tahu." di panel Batalkan jadwal untuk SJ tanpa sopir;
+  - `/favicon.ico` 404;
+  - MIME Excel `octet-stream`;
+  - menu gudang tanpa Armada/Sopir/Pelanggan, tapi URL-nya terbuka read-only.
+
+## Sisa pekerjaan (urut, status awal sesi lanjutan)
 
 1. **Ukuran bundel Worker (penghalang deploy).**
    - Ukuran gzip (`wrangler deploy --dry-run`): main 2.540 KiB; cabang ini 3.556 KiB, melewati batas Workers Free 3.072 KiB.

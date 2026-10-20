@@ -8,7 +8,7 @@ const FOLDERS = /^(penerimaan|uji-pasir|produksi|ttd|kalender)\/[\w\-./]+$/;
 
 // Izin tambahan per folder (pemilik selalu boleh): tanda tangan, kalender, uji pasir, dan lain-lain tidak terbuka untuk semua akun operasional.
 const FOLDER_PERMS: Record<string, readonly Perm[]> = {
-  ttd: ["setujui_qc", "ttd_pimpinan", "qc", "iso"],
+  ttd: ["setujui_qc", "ttd_pimpinan", "qc"],
   kalender: ["kalender"],
   "uji-pasir": ["uji_pasir", "lihat_uji_pasir", "iso"],
   penerimaan: ["barang_masuk", "lihat_barang_masuk", "iso"],

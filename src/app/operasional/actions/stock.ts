@@ -30,7 +30,7 @@ import { isDate, parseQty, parseRupiah } from "@/lib/erp/util";
 import { deleteImage, saveImage, UploadError } from "@/lib/media";
 import { logActivity } from "@/lib/ops/activity";
 import { requireShift } from "@/lib/ops/duty";
-import { batchPrefixFor, canChangeProduction, mixSuggestions, nextBatchCode, productionAccess } from "@/lib/ops/production";
+import { batchPrefixFor, canChangeProduction, itemCategories, mixSuggestions, nextBatchCode, productionAccess } from "@/lib/ops/production";
 import { CATEGORY_LABEL } from "@/components/ops/production/summary";
 
 /* ============================================================ Hasil produksi */
@@ -113,6 +113,11 @@ export async function saveProduction(_prev: FormState, form: FormData): Promise<
           if (l.qty < 0 || l.qty > 1_000_000) throw new UserError(`${label} baris ${i + 1}: qty tidak valid.`);
           if (label === "Bahan" && l.qty <= 0) throw new UserError(`${label} baris ${i + 1}: qty harus lebih dari 0.`);
         }
+      }
+      // Barang hasil harus sesuai kategori yang dipilih (paving vs precast).
+      const cats = await itemCategories(db, out.map((l) => items.get(l.itemId)!));
+      for (const [i, l] of out.entries()) {
+        if (cats.get(l.itemId) !== category) throw new UserError(`Hasil baris ${i + 1}: "${items.get(l.itemId)!.name}" bukan barang ${CATEGORY_LABEL[category]}.`);
       }
       const posOut = out.filter((l) => l.qty > 0);
       if (!posOut.length && !issues.length) throw new UserError("Isi jumlah hasil produksi (isi 0 bila produksi berhenti, lalu pilih kendalanya).");
@@ -245,7 +250,7 @@ export async function deleteProduction(id: string): Promise<FormState> {
     return { ok: "deleted" };
   });
   if ("error" in res) return res;
-  redirect("/operasional/produksi?ok=dihapus");
+  redirect(`/operasional/produksi?ok=${encodeURIComponent("~Hasil produksi dihapus.")}`);
 }
 
 /**

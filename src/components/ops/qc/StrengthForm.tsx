@@ -70,12 +70,13 @@ export function StrengthForm({ initial, back }: { initial: StrengthInitial; back
       </section>
 
       <div className="form-grid">
-        <section className="form-section">
+        <section className="form-section qc-cell">
           <h2>Catatan komposisi campuran</h2>
           <MaterialEditor label="Komposisi" items={comp} onChange={setComp} />
         </section>
-        <section className="form-section">
+        <section className="form-section qc-cell">
           <h2>Standarisasi {grade || "-"}</h2>
+          <div className="qc-standard-wrap">
           <table className="compact qc-standard">
             <thead><tr><th>Umur</th><th className="num">Tekanan maks (kN)</th><th className="num">Kekuatan (kg/cm²)</th></tr></thead>
             <tbody>
@@ -85,6 +86,7 @@ export function StrengthForm({ initial, back }: { initial: StrengthInitial; back
               {!standard.length && <tr><td colSpan={3} className="muted">Isi mutu beton, mis. K-350.</td></tr>}
             </tbody>
           </table>
+          </div>
           <div className="field"><label htmlFor="st-notes">Note</label><textarea id="st-notes" name="notes" defaultValue={initial.notes} maxLength={2000} /></div>
         </section>
       </div>

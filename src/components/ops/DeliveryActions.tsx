@@ -80,7 +80,7 @@ function Complete({ id }: { id: string }) {
  * - Kantor (izin pengiriman): semua langkah. Izin "selesaikan" menambah "Selesaikan dari kantor".
  * - Gudang/mandor/satpam (izin muat, tanpa pengiriman): hanya "Sudah dimuat" dan kembali ke jadwal.
  */
-export function DeliveryActions({ id, status, canShip, canLoad = false, canComplete = false }: { id: string; status: DeliveryStatus; canShip: boolean; canLoad?: boolean; canComplete?: boolean }) {
+export function DeliveryActions({ id, status, canShip, canLoad = false, canComplete = false, hasDriver = true }: { id: string; status: DeliveryStatus; canShip: boolean; canLoad?: boolean; canComplete?: boolean; hasDriver?: boolean }) {
   const open = status !== "terkirim" && status !== "batal";
   const complete = canComplete && open ? <Complete id={id} /> : null;
 
@@ -88,7 +88,7 @@ export function DeliveryActions({ id, status, canShip, canLoad = false, canCompl
     if (canLoad && status === "dijadwalkan")
       return (
         <div className="stack" style={{ gap: 14 }}>
-          <div className="head-actions"><Simple id={id} to="dimuat" label="Sudah dimuat" className="btn btn-primary" note="Sopir diberi tahu." /></div>
+          <div className="head-actions"><Simple id={id} to="dimuat" label="Sudah dimuat" className="btn btn-primary" note={hasDriver ? "Sopir diberi tahu." : "Belum ada sopir yang ditugaskan."} /></div>
           {complete}
         </div>
       );
@@ -107,7 +107,7 @@ export function DeliveryActions({ id, status, canShip, canLoad = false, canCompl
     return (
       <div className="stack" style={{ gap: 14 }}>
         <div className="head-actions">
-          <Simple id={id} to="dimuat" label="Sudah dimuat" className="btn btn-primary" note="Sopir diberi tahu." />
+          <Simple id={id} to="dimuat" label="Sudah dimuat" className="btn btn-primary" note={hasDriver ? "Sopir diberi tahu." : "Belum ada sopir yang ditugaskan."} />
           <Simple id={id} to="berangkat" label="Truk berangkat" className="btn btn-blue" note="Stok keluar dicatat hari ini." />
         </div>
         <details className="form-details">

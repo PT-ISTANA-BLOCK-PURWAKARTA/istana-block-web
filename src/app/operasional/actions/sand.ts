@@ -187,8 +187,8 @@ export async function completeSandTest(_prev: FormState, form: FormData): Promis
     return res;
   }
   await logActivity(me, { action: "uji_pasir.selesai", label: "Menyimpan hasil uji lumpur pasir", summary: `${res.draft.sandType}: lumpur ${formatQuantity(res.percent)}%` });
-  refresh();
-  return { ok: `Hasil uji tersimpan · kadar lumpur ${formatQuantity(res.percent)}%.` };
+  // Redirect dengan ok baru supaya flash lama (?ok=draft tersimpan) di URL tergantikan.
+  redirect(`/operasional/uji-pasir?ok=${encodeURIComponent(`~Hasil uji tersimpan · kadar lumpur ${formatQuantity(res.percent)}%.`)}&u=${res.draft.id}`);
 }
 
 /** Hapus draft milik akun sendiri (uji yang sudah selesai tidak bisa dihapus dari sini). */
