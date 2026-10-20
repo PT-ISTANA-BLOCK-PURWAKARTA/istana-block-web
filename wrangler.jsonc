@@ -3,6 +3,8 @@
 	"name": "istana-block-web",
 	// worker.ts membungkus .open-next/worker.js dengan cache halaman publik (lihat komentar di sana).
 	"main": "worker.ts",
+	// Minify bundel: tanpa ini modul Operasional membuat Worker ±3,5 MB gzip, di atas batas 3 MB Workers Free.
+	"minify": true,
 	"compatibility_date": "2026-09-01",
 	"compatibility_flags": [
 		"nodejs_compat",

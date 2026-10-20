@@ -9,6 +9,8 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "istana-block-demo",
 	"main": ".open-next/worker.js",
+	// Sama dengan wrangler.jsonc: tanpa minify bundel melewati batas 3 MB Workers Free.
+	"minify": true,
 	"compatibility_date": "2026-09-01",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 	"assets": {

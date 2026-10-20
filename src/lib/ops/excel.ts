@@ -1,5 +1,19 @@
 // Ekspor Excel di sisi klien (SheetJS). Aman dipakai di komponen "use client"; TANPA server-only.
-// Pustaka xlsx dimuat dinamis saat tombol ditekan, sehingga tidak masuk bundel awal dan tidak membebani Worker.
+// Pustaka xlsx dimuat dinamis saat tombol ditekan dari aset statis /vendor (lihat loadXlsx), sehingga tidak masuk
+// bundel awal maupun bundel server Worker (batas 3 MB terkompresi di Workers Free).
+
+export type XLSXModule = typeof import("xlsx");
+
+/** Salinan node_modules/xlsx/xlsx.mjs; ganti berkas & versinya bersamaan bila xlsx di package.json dinaikkan. */
+const XLSX_URL = "/vendor/xlsx-0.20.3.mjs";
+
+/**
+ * Muat SheetJS di browser tanpa ikut dibundel. URL dibentuk saat jalan (location.origin) supaya webpack
+ * (webpackIgnore) maupun esbuild OpenNext tidak mencoba me-resolve-nya sebagai modul.
+ */
+export function loadXlsx(): Promise<XLSXModule> {
+  return import(/* webpackIgnore: true */ new URL(XLSX_URL, window.location.origin).href);
+}
 
 export type SheetColumn = {
   /** Kunci di setiap baris data. */
@@ -24,7 +38,7 @@ const safeName = (s: string) => s.replace(/[:\\/?*[\]]/g, " ").trim().slice(0, 3
 
 /** Buat berkas .xlsx dari beberapa sheet lalu unduh. fileName harus berakhiran .xlsx. */
 export async function downloadWorkbook(fileName: string, sheets: SheetData[], options: { dateNF?: string } = {}) {
-  const XLSX = await import("xlsx");
+  const XLSX = await loadXlsx();
   const dateNF = options.dateNF ?? "dd/mm/yyyy hh:mm";
   const wb = XLSX.utils.book_new();
   const used = new Set<string>();

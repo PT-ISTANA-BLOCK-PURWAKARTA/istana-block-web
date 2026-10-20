@@ -6,7 +6,8 @@ import { ENVIRONMENT_LIMITS, FORM_BY_CODE, ISO_CODES, SNI_PAVING, type IsoCode, 
 import { OBJECTIVE_GROUPS } from "@/lib/ops/shared/isoObjectives";
 import { dashboardItems, objectiveRows, objectiveSummary, RECAP_LINES, rangeText, type DayRange, type IsoOverview } from "@/lib/ops/shared/isoRecap";
 
-type XLSXModule = typeof import("xlsx");
+import { loadXlsx, type XLSXModule } from "@/lib/ops/excel";
+
 type Sheet = import("xlsx").WorkSheet;
 export type ExportRow = { number: string | null; values: IsoValues };
 export type ExportMeta = DayRange & { printedBy: string; printedAt: Date };
@@ -130,7 +131,7 @@ function objectivesSheet(XLSX: XLSXModule, overview: IsoOverview, meta: ExportMe
 
 /** Satu file form, nama file & sheet sama dengan file aslinya. */
 export async function downloadFormFile(form: IsoForm, rows: ExportRow[], meta: ExportMeta) {
-  const XLSX = await import("xlsx");
+  const XLSX = await loadXlsx();
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, formSheet(XLSX, form, rows, meta), form.code);
   if (form.code === "F-IB-04" || form.code === "F-IB-05") XLSX.utils.book_append_sheet(workbook, standardSheet(XLSX), "Standar");
@@ -139,7 +140,7 @@ export async function downloadFormFile(form: IsoForm, rows: ExportRow[], meta: E
 
 /** Semua form dalam satu file: Ringkasan, Sasaran Mutu, F-IB-01 ... F-IB-15, Standar. */
 export async function downloadAllForms(input: { overview: IsoOverview; monthly: { label: string; overview: IsoOverview }[]; forms: { code: IsoCode; rows: ExportRow[] }[]; meta: ExportMeta }) {
-  const XLSX = await import("xlsx");
+  const XLSX = await loadXlsx();
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, summarySheet(XLSX, input.overview, input.monthly, input.meta), "Ringkasan");
   XLSX.utils.book_append_sheet(workbook, objectivesSheet(XLSX, input.overview, input.meta), "Sasaran Mutu (F-IB-16)");
