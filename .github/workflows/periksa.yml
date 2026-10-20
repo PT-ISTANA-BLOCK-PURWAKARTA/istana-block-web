@@ -1,0 +1,60 @@
+# Pagar CI: typecheck + build di setiap push/PR ke main. Tidak ada secret dan tidak ada deploy.
+# Deploy tetap manual (npm run deploy) atau lewat Workers Builds di dashboard Cloudflare.
+#
+# Job "cek-seo" hanya jalan lewat tombol "Run workflow" (Actions > Periksa > Run workflow) dengan
+# mengisi URL, mis. staging setelah deploy. Ia menjalankan tools/cek-seo.mjs; exit code 1 bila ada GAGAL.
+name: Periksa
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "URL yang diperiksa pagar SEO, mis. https://istana-block-web.abdussalimsan.workers.dev"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: periksa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  periksa:
+    name: Typecheck & build
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      # Semua halaman situs dirender dinamis (force-dynamic), jadi build tidak membaca D1/R2 dan tidak butuh
+      # variabel lingkungan atau .dev.vars. Binding Cloudflare hanya dipakai saat runtime di Workers.
+      - run: npx next build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  cek-seo:
+    name: Pagar SEO (manual)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # URL lewat variabel lingkungan, bukan disisipkan langsung ke perintah shell.
+      - run: node tools/cek-seo.mjs "$SITE_URL"
+        env:
+          SITE_URL: ${{ inputs.url }}

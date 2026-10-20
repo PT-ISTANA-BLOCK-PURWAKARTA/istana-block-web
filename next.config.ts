@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
+  // Tanpa next/image (semua <img> biasa) dan Workers tidak bisa menjalankan sharp saat runtime.
+  // Ukuran responsif: varian webp dibuat saat pengembangan (npm run gambar:varian), dipakai lewat src/lib/img.ts.
   images: { unoptimized: true },
   poweredByHeader: false,
   experimental: {

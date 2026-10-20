@@ -102,7 +102,7 @@ export default async function StaticPage({ params }: Props) {
           </a>
         )}
       </header>
-      {img && <img className="article-cover hexlong" src={img} alt="" style={{ marginBottom: 32 }} />}
+      {img && <img className="article-cover hexlong" src={img} alt="" fetchPriority="high" decoding="async" style={{ marginBottom: 32 }} />}
       <Markdown>{pg.content}</Markdown>
       <aside className="cta-aside hexpat" style={{ marginTop: 40, maxWidth: 720 }}>
         {isArea ? (

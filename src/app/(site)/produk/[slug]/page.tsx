@@ -5,6 +5,7 @@ import { Hex } from "@/components/Hex";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
 import { ProductCard } from "@/components/ProductCard";
+import { responsif } from "@/lib/img";
 import specSheets from "@/data/spec-sheets.json";
 import { getEnv } from "@/db";
 import type { PriceRow } from "@/db/schema";
@@ -137,7 +138,7 @@ export default async function ProductPage({ params }: Props) {
             <Hex size={48} color="#B5B4AF" className="deco" style={{ left: 8, bottom: 40, transform: "rotate(9deg)" }} />
             <figure className={`hex ${img ? "" : "hexpat-light"}`}>
               {/* Gambar hero = LCP: prioritas tinggi dan tidak lazy. */}
-              {img ? <img src={img} alt={`Foto ${p.name}`} fetchPriority="high" loading="eager" /> : <figcaption>Foto {p.name.toLowerCase()} menyusul</figcaption>}
+              {img ? <img src={img} {...responsif(img, "(max-width: 720px) 254px, 404px")} alt={`Foto ${p.name}`} fetchPriority="high" loading="eager" decoding="async" /> : <figcaption>Foto {p.name.toLowerCase()} menyusul</figcaption>}
             </figure>
           </div>
         </section>
@@ -223,7 +224,7 @@ export default async function ProductPage({ params }: Props) {
               <div className={`sheets${sheets.length === 1 ? " single" : ""}`}>
                 {sheets.map((x) => (
                   <a key={x.src} href={x.src} target="_blank" rel="noopener" className="sheet">
-                    <img src={x.src} alt={x.alt} width={x.w} height={x.h} loading="lazy" decoding="async" />
+                    <img src={x.src} {...responsif(x.src, sheets.length === 1 ? "(max-width: 720px) 90vw, 540px" : "(max-width: 720px) 90vw, 280px")} alt={x.alt} width={x.w} height={x.h} loading="lazy" decoding="async" />
                     <span>{x.title}<i aria-hidden="true">↗</i></span>
                   </a>
                 ))}

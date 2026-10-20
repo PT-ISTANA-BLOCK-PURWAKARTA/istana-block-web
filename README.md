@@ -471,6 +471,10 @@ npm run deploy
 
 Jangan memakai `npx wrangler deploy` atau `npx wrangler preview` sebagai perintah deploy: tanpa build OpenNext tidak ada `.open-next/worker.js` untuk diunggah, dan `wrangler preview` gagal dengan pesan *missing a `previews` block*. Migrasi database tetap dijalankan manual (`npm run db:migrate:remote`) **sebelum** perubahan yang membutuhkannya di-merge ke `main`.
 
+> **Merge ke `main` belum tentu memasang ke staging.** Deploy otomatis hanya terjadi bila Workers Builds tersambung ke repo (tabel di atas). Kalau belum, jalankan `npm run deploy` manual dari komputer yang sudah `wrangler login`. Workflow `Periksa` (`.github/workflows/periksa.yml`) hanya memeriksa typecheck dan build di setiap push/PR ke `main`; ia tidak memasang apa pun.
+>
+> **Verifikasi setelah deploy:** `npm run cek:seo -- https://<nama-worker>.<akun>.workers.dev` (atau domain produksi). Exit code 1 bila ada pemeriksaan GAGAL. Bisa juga dari GitHub: **Actions > Periksa > Run workflow**, lalu isi URL-nya.
+
 Kalau skema database diubah (`src/db/schema.ts`): `npm run db:generate`, lalu `npm run db:migrate:remote`, lalu deploy.
 
 > **Memperbarui ke versi portal `/internal` (migrasi `drizzle/0004_portal_gps.sql`).** Migrasi ini menambah tabel riwayat posisi truk, kolom ID perangkat GPS di armada, dan **membuat ulang tabel `users`** (email & password kini boleh kosong untuk akun nomor HP + PIN); semua akun lama disalin utuh beserta password dan perannya. Urutannya: cadangkan database → `npm run db:migrate:remote` → **baru** merge ke `main` / deploy. Kode lama tetap bisa login dengan tabel baru, tetapi kode baru tanpa migrasi ini akan gagal login. Setelah tayang, `/admin` dan `/keuangan` otomatis dialihkan ke alamat baru; beri tahu staf untuk membuka `/internal`.

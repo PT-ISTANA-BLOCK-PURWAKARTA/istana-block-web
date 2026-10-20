@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Hex } from "@/components/Hex";
+import area from "@/data/area.json";
 import { telLink, waLink } from "@/lib/format";
 import { getSettings, isMapsEmbedUrl } from "@/lib/settings";
 
@@ -60,6 +61,24 @@ export default async function KontakPage() {
           </div>
         )}
       </div>
+      <section className="duo" style={{ paddingTop: 24 }} aria-label="Cara menghubungi dan memesan">
+        <div className="panel" style={{ flex: "1 1 420px" }}>
+          <h2>Yang perlu disiapkan saat menghubungi</h2>
+          <p>Admin menjawab lewat WhatsApp dan telepon pada jam operasional. Supaya penawaran bisa langsung dibuat, sebutkan keterangan berikut:</p>
+          <ul className="bullets">
+            <li>Produk yang dibutuhkan: paving block, U-Ditch, buis beton, kanstin, atau genteng beton.</li>
+            <li>Ukuran, tebal, atau warna yang diinginkan.</li>
+            <li>Perkiraan jumlah dalam m², pcs, atau meter.</li>
+            <li>Alamat lengkap atau titik lokasi di peta, beserta kondisi akses truk di lokasi bongkar.</li>
+          </ul>
+          {s.payment_terms && <p>Syarat pembayaran: {s.payment_terms}</p>}
+        </div>
+        <div className="panel" style={{ flex: "1 1 420px" }}>
+          <h2>Cara memesan</h2>
+          <ol className="bullets">{area.langkah.map((x) => <li key={x}>{x}</li>)}</ol>
+          <p>Ingin melihat pabrik? Hubungi admin lebih dulu agar kunjungan bisa dijadwalkan.{s.hours && ` Pabrik buka ${s.hours}.`}</p>
+        </div>
+      </section>
     </div>
   );
 }

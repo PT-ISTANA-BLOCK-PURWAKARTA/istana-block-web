@@ -17,6 +17,18 @@ export default async function ArtikelPage() {
       <div className="section-head" style={{ marginTop: 12 }}>
         <h1 style={{ fontSize: "clamp(34px, 4vw, 52px)" }}>Artikel &amp; panduan</h1>
       </div>
+      {/* Pengantar tetap tampil walau daftar artikel masih sedikit, supaya halaman ini tidak tipis. */}
+      <div className="stack" style={{ gap: 12, maxWidth: 820, paddingBottom: 24 }}>
+        <p className="hero-lead" style={{ fontSize: 18 }}>
+          Kumpulan panduan dari pabrik Istana Block Purwakarta untuk pemilik rumah, kontraktor, dan petugas pengadaan yang sedang memilih material beton. Isinya seputar cara memilih jenis dan ukuran, menghitung kebutuhan, sampai memasang paving block, U-Ditch, buis beton, kanstin, dan genteng beton.
+        </p>
+        <p>
+          Setiap artikel ditulis supaya bisa dipakai sebelum Anda meminta penawaran: Anda tahu produk apa yang cocok, berapa volume yang perlu dipesan, dan keterangan apa yang perlu disiapkan. Daftar harga ada di halaman <Link href="/produk">Produk</Link>, pilihan pola pemasangan di halaman <Link href="/pola-paving">Pola paving</Link>, dan wilayah kirim di halaman <Link href="/area-pengiriman">Area pengiriman</Link>.
+        </p>
+        <p>
+          Belum menemukan jawaban yang Anda cari? Kirim produk, perkiraan volume, dan lokasi proyek ke admin lewat halaman <Link href="/kontak">Kontak</Link>. Admin membalas dengan penawaran berisi harga produk dan ongkir untuk lokasi Anda, jadi Anda tidak perlu menebak biaya sebelum memesan.
+        </p>
+      </div>
       {articles.length === 0 && <p className="muted">Belum ada artikel.</p>}
       <div className="grid-cards">
         {articles.map((a) => {

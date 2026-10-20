@@ -9,6 +9,7 @@ import { Hex } from "@/components/Hex";
 import { HexDivider } from "@/components/HexDivider";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductCard } from "@/components/ProductCard";
+import { responsif } from "@/lib/img";
 import { getEnv } from "@/db";
 import { rupiah, tanggal, waLink } from "@/lib/format";
 import { webSite } from "@/lib/jsonld";
@@ -65,10 +66,8 @@ export default async function Home() {
           <Hex size={54} color="#B5B4AF" className="deco" style={{ left: 70, top: 26, transform: "rotate(5deg)" }} />
           <Hex size={40} color="#254186" className="deco" style={{ right: 30, bottom: 96, transform: "rotate(-4deg)" }} />
           <figure className="hex">
-            <picture>
-              <source media="(max-width: 720px)" srcSet="/img/pabrik/pabrik-mesin-paving-800.webp" />
-              <img src="/img/pabrik/pabrik-mesin-paving.webp" alt="Mesin cetak paving di pabrik Istana Block Purwakarta dengan paving yang baru dicetak" width={1600} height={1334} fetchPriority="high" />
-            </picture>
+            {/* Satu-satunya gambar LCP beranda. Lebar tampil = tinggi figure x rasio (cover): 554px desktop, 277px ponsel. */}
+            <img src="/img/pabrik/pabrik-mesin-paving.webp" {...responsif("/img/pabrik/pabrik-mesin-paving.webp", "(max-width: 720px) 277px, 554px")} alt="Mesin cetak paving di pabrik Istana Block Purwakarta dengan paving yang baru dicetak" width={1600} height={1334} fetchPriority="high" decoding="async" />
           </figure>
           {/* Rating tampil hanya bila tertaut ke profil Google yang nyata (maps_url); angka tanpa tautan tidak bisa dicek pembeli. */}
           {s.google_rating && s.google_review_count && s.maps_url && (

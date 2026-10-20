@@ -14,3 +14,7 @@
   Cache-Control: public, max-age=86400
 /reel/*
   Cache-Control: public, max-age=86400
+
+# Katalog PDF (bila diunggah ke public/katalog): nama tidak ber-hash, jadi sehari saja.
+/katalog/*
+  Cache-Control: public, max-age=86400
