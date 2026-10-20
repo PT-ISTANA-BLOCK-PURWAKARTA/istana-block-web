@@ -33,6 +33,6 @@ export async function sendScheduledSummaries(c: CronContext): Promise<void> {
       body: summaryMessage(summary),
       url: `/operasional/laporan?periode=${job.period}&tanggal=${job.day}`,
       tag: `summary-${job.period}`,
-    });
+    }, c.budget);
   }
 }

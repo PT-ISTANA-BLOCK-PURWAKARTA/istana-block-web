@@ -261,10 +261,12 @@ async function transition(me: CurrentUser, id: string, to: DeliveryStatus, o: Op
   const wasPosted = isPosted(from, d.departedAt);
   const willPost = isPosted(to, departedAt);
   let date = d.date;
-  if (!wasPosted && willPost) date = o.date ? requireDate(o.date) : today(); // hari berangkat = tanggal surat jalan & stok keluar
+  // Hari berangkat = tanggal surat jalan & stok keluar. Tanggal dari form hanya dipakai kantor; sopir/gudang selalu hari ini (WIB).
+  if (!wasPosted && willPost) date = mode === "office" && o.date ? requireDate(o.date) : today();
   const fin = await getFinSettings(db);
-  if (wasPosted) assertOpen(d.date, fin.lockDate, "Surat jalan");
-  if (willPost) assertOpen(date, fin.lockDate, "Surat jalan");
+  // Periode terkunci hanya diperiksa saat posting dicabut (tanggal lama) atau dibuat baru (tanggal baru); perubahan status lain tidak diblokir.
+  if (wasPosted && !willPost) assertOpen(d.date, fin.lockDate, "Surat jalan");
+  if (willPost && !wasPosted) assertOpen(date, fin.lockDate, "Surat jalan");
 
   if (from === "batal" && to === "dijadwalkan") {
     // Pastikan sisa pesanan masih cukup (bisa sudah dipakai surat jalan lain).

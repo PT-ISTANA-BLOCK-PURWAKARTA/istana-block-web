@@ -17,7 +17,8 @@ export type { CronContext, CronDb } from "./cron/types";
 
 /** Titik masuk dari worker.ts: jalankan keempat job secara paralel. */
 export async function runScheduledJobs(env: CloudflareEnv, _ctx: ExecutionContext) {
-  const c: CronContext = { env, db: drizzle(env.DB, { schema }), now: new Date() };
+  // 40 dari 50 subrequest Workers Free untuk fetch push; sisanya cadangan kueri D1 dan lainnya.
+  const c: CronContext = { env, db: drizzle(env.DB, { schema }), now: new Date(), budget: { fetchLeft: 40 } };
   const jobs = { sendDueReminders, remindBackup, sendScheduledSummaries, remindIsoSchedules };
   const results = await Promise.allSettled(Object.values(jobs).map((job) => job(c)));
   results.forEach((r, i) => {

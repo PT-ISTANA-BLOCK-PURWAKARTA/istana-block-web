@@ -24,5 +24,5 @@ export async function remindBackup(c: CronContext): Promise<void> {
     body: `${days === null ? "Data aplikasi belum pernah di-backup." : `Backup terakhir ${days} hari lalu.`} Buka menu Keamanan dari komputer kantor, lalu klik Backup sekarang.`,
     url: "/operasional/keamanan",
     tag: "backup-reminder",
-  });
+  }, c.budget);
 }

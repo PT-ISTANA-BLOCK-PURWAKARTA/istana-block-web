@@ -128,7 +128,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
         <section className="admin-table">
           <table>
             <caption>Barang</caption>
-            <thead><tr><th>Barang</th><th className="num">Dipesan</th><th className="num">Dijadwalkan</th><th className="num">Stok bebas</th><th className="num">Dikirim</th><th className="num">Diterima</th><th className="num">Difaktur</th><th className="num">Harga</th><th className="num">Jumlah</th></tr></thead>
+            <thead><tr><th>Barang</th><th className="num">Dipesan</th><th className="num">Dijadwalkan</th><th className="num">Stok bebas</th><th className="num">Dikirim</th><th className="num">Diterima</th><th className="num">Difaktur</th>{canFinance && <><th className="num">Harga</th><th className="num">Jumlah</th></>}</tr></thead>
             <tbody>
               {prog.map((p) => (
                 <tr key={p.id}>
@@ -145,18 +145,20 @@ export default async function PesananDetail({ params, searchParams }: { params: 
                   <td className="num">{formatQty(p.shipped)}</td>
                   <td className={`num${p.delivered + EPS >= p.qty ? " text-sukses" : ""}`}>{formatQty(p.delivered)}</td>
                   <td className="num">{formatQty(p.invoiced)}</td>
-                  <td className="num"><Rp n={p.price} /></td>
-                  <td className="num"><Rp n={Math.round(p.qty * p.price)} /></td>
+                  {canFinance && <td className="num"><Rp n={p.price} /></td>}
+                  {canFinance && <td className="num"><Rp n={Math.round(p.qty * p.price)} /></td>}
                 </tr>
               ))}
             </tbody>
-            <tfoot>
-              <tr><td colSpan={8} className="num">Subtotal</td><td className="num"><Rp n={t.subtotal} /></td></tr>
-              {t.discount > 0 && <tr><td colSpan={8} className="num">Diskon</td><td className="num"><Rp n={-t.discount} /></td></tr>}
-              {t.ongkir > 0 && <tr><td colSpan={8} className="num">Ongkos kirim</td><td className="num"><Rp n={t.ongkir} /></td></tr>}
-              {o.taxable && <tr><td colSpan={8} className="num">PPN {formatQty(fin.ppnRate)}% (perkiraan)</td><td className="num"><Rp n={t.tax} /></td></tr>}
-              <tr><th colSpan={8} className="num">Nilai pesanan</th><th className="num"><Rp n={t.total} strong /></th></tr>
-            </tfoot>
+            {canFinance && (
+              <tfoot>
+                <tr><td colSpan={8} className="num">Subtotal</td><td className="num"><Rp n={t.subtotal} /></td></tr>
+                {t.discount > 0 && <tr><td colSpan={8} className="num">Diskon</td><td className="num"><Rp n={-t.discount} /></td></tr>}
+                {t.ongkir > 0 && <tr><td colSpan={8} className="num">Ongkos kirim</td><td className="num"><Rp n={t.ongkir} /></td></tr>}
+                {o.taxable && <tr><td colSpan={8} className="num">PPN {formatQty(fin.ppnRate)}% (perkiraan)</td><td className="num"><Rp n={t.tax} /></td></tr>}
+                <tr><th colSpan={8} className="num">Nilai pesanan</th><th className="num"><Rp n={t.total} strong /></th></tr>
+              </tfoot>
+            )}
           </table>
         </section>
         {o.note && <section className="admin-card"><span className="muted small">Catatan</span><p className="pre" style={{ marginTop: 4 }}>{o.note}</p></section>}

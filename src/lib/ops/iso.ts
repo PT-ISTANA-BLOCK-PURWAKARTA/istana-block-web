@@ -64,6 +64,8 @@ export async function saveIsoRecord(db: DB, me: CurrentUser, input: { code: stri
   if (input.id) {
     const row = await getManualRecord(db, form.code, input.id);
     if (!row) throw new UserError("Data tidak ditemukan.");
+    // Sama dengan aturan hapus: baris manual orang lain hanya boleh diubah pembuatnya atau kantor.
+    if (!canDeleteAny(me.roles) && row.createdBy !== me.id) throw new UserError("Hanya pembuat data atau kantor yang dapat mengubah.");
     // Jadwal kalibrasi/maintenance: tanggal pengerjaan sebelumnya disimpan sebagai riwayat (maks 50).
     const history =
       form.code === "F-IB-06" && row.data.terakhir && row.data.terakhir !== values.terakhir

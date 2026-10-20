@@ -177,7 +177,7 @@ export async function buildSummary(db: OpsDb, input: { period: Period; day: stri
         strengthSummary(db, w),
         dutyHours(db, w, nowSec),
         db.get<{ inTransit: number; mixWaitingAcc: number }>(sql`
-          select (select count(*) from ops_deliveries where status = 'berangkat') as inTransit,
+          select (select count(*) from ops_deliveries where status in ('berangkat', 'tiba') or (status = 'tertunda' and departed_at is not null)) as inTransit,
                  (select count(*) from qc_mix_logs where review_status = 'menunggu') as mixWaitingAcc`),
       ]);
   const [previous, ordered, delivered, received, strength, duty, now] = full ?? [ZERO_SCALARS, [], [], [], { reports: 0, samples: 0, passed: 0, failed: 0 }, [], undefined];

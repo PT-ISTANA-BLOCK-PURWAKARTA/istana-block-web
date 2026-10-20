@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb, getEnv, schema } from "@/db";
 import { getCurrentAdmin } from "@/lib/auth";
 import { isPushEndpoint, pushConfigured, pushToUsers } from "@/lib/ops/push";
@@ -16,6 +16,9 @@ async function guard(req: Request, mutating: boolean) {
   if (!me || !canOpen(me.roles, "operasional")) return { error: json(401, { ok: false, error: "Masuk dulu ke aplikasi operasional." }) };
   return { me };
 }
+
+/** Maksimal perangkat berlangganan per akun. */
+const MAX_SUBSCRIPTIONS_PER_USER = 10;
 
 const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
@@ -58,6 +61,16 @@ export async function POST(req: Request) {
     .insert(schema.pushSubscriptions)
     .values({ userId: me.id, endpoint, p256dh, auth, userAgent })
     .onConflictDoUpdate({ target: schema.pushSubscriptions.endpoint, set: { userId: me.id, p256dh, auth, userAgent, updatedAt: now } });
+  // Batasi langganan per akun: yang paling lama dihapus (langganan yang baru didaftarkan tidak pernah ikut terhapus).
+  const mine = await db
+    .select({ id: schema.pushSubscriptions.id, endpoint: schema.pushSubscriptions.endpoint })
+    .from(schema.pushSubscriptions)
+    .where(eq(schema.pushSubscriptions.userId, me.id))
+    .orderBy(asc(schema.pushSubscriptions.updatedAt), asc(schema.pushSubscriptions.id));
+  if (mine.length > MAX_SUBSCRIPTIONS_PER_USER) {
+    const stale = mine.filter((row) => row.endpoint !== endpoint).slice(0, mine.length - MAX_SUBSCRIPTIONS_PER_USER).map((row) => row.id);
+    if (stale.length) await db.delete(schema.pushSubscriptions).where(inArray(schema.pushSubscriptions.id, stale));
+  }
   return json(200, { ok: true });
 }
 

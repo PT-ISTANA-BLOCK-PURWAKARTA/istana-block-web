@@ -118,9 +118,13 @@ export async function deleteReceipt(id: string): Promise<FormState> {
       throw new UserError("Hanya bisa dihapus pembuatnya dalam 24 jam, atau oleh kantor.");
     }
     const tests = await db
-      .select({ start: schema.sandTests.startPhotoKey, photo: schema.sandTests.photoKey })
+      .select({ start: schema.sandTests.startPhotoKey, photo: schema.sandTests.photoKey, status: schema.sandTests.status })
       .from(schema.sandTests)
       .where(eq(schema.sandTests.receiptId, id));
+    // Uji lumpur yang sudah selesai adalah catatan mutu: pembuat non-kantor tidak boleh ikut menghapusnya.
+    if (!isOffice(me.roles) && tests.some((t) => t.status === "selesai")) {
+      throw new UserError("Data ini sudah punya uji lumpur yang selesai. Minta kantor (pemilik/operasional) untuk menghapusnya.");
+    }
     await runBatch(db, [db.delete(schema.sandTests).where(eq(schema.sandTests.receiptId, id)), db.delete(r).where(eq(r.id, id))]);
     // Foto yatim dibersihkan setelah data terhapus (kegagalan di sini tidak boleh membatalkan hapus).
     const keys = [...row.photoKeys, ...tests.flatMap((t) => [t.start, t.photo])].filter((key): key is string => Boolean(key));

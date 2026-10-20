@@ -117,7 +117,7 @@ export default async function Pesanan({ searchParams }: { searchParams: Promise<
       {tabs}
       <div className="admin-table">
         <table>
-          <thead><tr><th>Pesanan</th><th>Pelanggan</th><th>Minta kirim</th><th>Status</th><th className="num">Nilai</th><th className="num">Terkirim</th>{canFinance && <th className="num">Difaktur</th>}</tr></thead>
+          <thead><tr><th>Pesanan</th><th>Pelanggan</th><th>Minta kirim</th><th>Status</th>{canFinance && <th className="num">Nilai</th>}<th className="num">Terkirim</th>{canFinance && <th className="num">Difaktur</th>}</tr></thead>
           <tbody>
             {rows.map((r) => {
               const pct = r.gross > 0 ? Math.min(100, Math.round((Number(r.deliveredValue) / Number(r.gross)) * 100)) : 0;
@@ -135,7 +135,7 @@ export default async function Pesanan({ searchParams }: { searchParams: Promise<
                     {r.paymentStatus && <div style={{ marginTop: 4 }}><PaymentBadge status={r.paymentStatus} /></div>}
                     {r.status === "batal" && r.cancelReason && <div className="small muted clamp-2" title={r.cancelReason}>{r.cancelReason}</div>}
                   </td>
-                  <td className="num"><Rp n={Number(r.value)} /></td>
+                  {canFinance && <td className="num"><Rp n={Number(r.value)} /></td>}
                   <td className="num"><span className="progress" aria-label={`${pct}% terkirim`}><span style={{ width: `${pct}%` }} /></span><div className="small muted">{pct}%</div></td>
                   {canFinance && <td className="num small">{Number(r.invoiced) ? <Rp n={Number(r.invoiced)} /> : <span className="muted">—</span>}</td>}
                 </tr>

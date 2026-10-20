@@ -37,5 +37,5 @@ export async function remindIsoSchedules(c: CronContext): Promise<void> {
     body: lines.join("\n"),
     url: `/operasional/rekap-iso?tab=form&form=${target}`,
     tag: "iso-reminder",
-  });
+  }, c.budget);
 }

@@ -100,9 +100,11 @@ export async function writeDatabase(write: (text: string) => Promise<void>, onPr
       continue;
     }
     await write(`\n-- ${table.name}: ${table.rows} baris\n`);
-    for (let offset = 0; offset < table.rows; offset += PAGE) {
-      const { rows } = await api<{ rows: Record<string, unknown>[] }>(`rows?table=${encodeURIComponent(table.name)}&offset=${offset}&limit=${PAGE}`);
+    // Kursor rowid: tiap halaman lanjut dari rowid terakhir halaman sebelumnya, berhenti saat habis.
+    for (let after = 0; ; ) {
+      const { rows, lastRowid } = await api<{ rows: Record<string, unknown>[]; lastRowid: number }>(`rows?table=${encodeURIComponent(table.name)}&after=${after}&limit=${PAGE}`);
       if (!rows.length) break;
+      after = lastRowid;
       const columns = Object.keys(rows[0]).map(quote).join(",");
       await write(rows.map((row) => `INSERT INTO ${quote(table.name)} (${columns}) VALUES (${Object.values(row).map(sqlValue).join(",")});`).join("\n") + "\n");
       done += rows.length;

@@ -133,11 +133,13 @@ export async function saveProduction(_prev: FormState, form: FormData): Promise<
       const materials = usedValues.reduce((a, v) => a + v, 0);
       const standard = posOut.reduce((a, l) => a + Math.round(l.qty * items.get(l.itemId)!.buyPrice), 0);
       // Kolom biaya hanya tampil untuk staf keuangan; bila tidak dikirim saat mengubah, pakai nilai lama (bila ada).
-      const laborField = form.get("laborCost");
+      // Akun tanpa izin keuangan/stok tidak boleh menentukan biaya: isian laborCost dari form diabaikan (nilai lama / aturan default).
+      const mayEditCost = acc.canFinance || acc.hasStok;
+      const laborField = mayEditCost ? form.get("laborCost") : null;
       const laborRaw = String(laborField ?? "").trim();
       const labor = !posOut.length
         ? 0
-        : laborField === null && existing && existing.laborCost > 0
+        : laborField === null && existing && (existing.laborCost > 0 || !mayEditCost)
           ? existing.laborCost
           : laborRaw
             ? parseRupiah(laborRaw)

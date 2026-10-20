@@ -122,13 +122,15 @@ async function sendOne(sign: (endpoint: string) => Promise<string>, subscription
 
 /**
  * Kirim notifikasi ke semua HP/komputer milik pengguna tertentu; langganan kedaluwarsa (404/410) dihapus.
- * Tidak pernah melempar error. `sent` = jumlah perangkat yang diterima layanan push.
+ * Tidak pernah melempar error. `sent` = jumlah perangkat yang diterima layanan push; `skipped` = langganan yang
+ * tidak dikirim karena batas MAX_SENDS atau `budget` habis.
+ * `budget` (opsional, dipakai cron): anggaran fetch bersama beberapa job dalam satu eksekusi; dikurangi per fetch.
  */
-export async function pushToUsers(db: OpsDb, env: CloudflareEnv, userIds: number[], message: PushMessage): Promise<{ sent: number }> {
+export async function pushToUsers(db: OpsDb, env: CloudflareEnv, userIds: number[], message: PushMessage, budget?: { fetchLeft: number }): Promise<{ sent: number; skipped: number }> {
   try {
-    if (!pushConfigured(env)) return { sent: 0 };
+    if (!pushConfigured(env)) return { sent: 0, skipped: 0 };
     const ids = [...new Set(userIds)];
-    if (!ids.length) return { sent: 0 };
+    if (!ids.length) return { sent: 0, skipped: 0 };
     const subscriptions: Subscription[] = [];
     for (let i = 0; i < ids.length; i += 90) {
       subscriptions.push(
@@ -138,9 +140,14 @@ export async function pushToUsers(db: OpsDb, env: CloudflareEnv, userIds: number
           .where(inArray(schema.pushSubscriptions.userId, ids.slice(i, i + 90)))),
       );
     }
-    if (!subscriptions.length) return { sent: 0 };
-    if (subscriptions.length > MAX_SENDS) console.error(`[push] ${subscriptions.length} langganan, hanya ${MAX_SENDS} yang dikirim sekarang.`);
-    const targets = subscriptions.slice(0, MAX_SENDS);
+    if (!subscriptions.length) return { sent: 0, skipped: 0 };
+    // Ambil jatah dan kurangi anggaran tanpa await di antaranya, supaya job paralel tidak berebut jatah yang sama.
+    const take = budget ? Math.max(0, Math.min(MAX_SENDS, budget.fetchLeft)) : MAX_SENDS;
+    const targets = subscriptions.slice(0, take);
+    if (budget) budget.fetchLeft -= targets.length;
+    const skipped = subscriptions.length - targets.length;
+    if (skipped > 0) console.error(`[push] ${subscriptions.length} langganan, hanya ${targets.length} yang dikirim sekarang.`);
+    if (!targets.length) return { sent: 0, skipped };
     const payload = encoder.encode(JSON.stringify({ title: clip(message.title, 120), body: clip(message.body, 300), url: message.url, tag: message.tag }));
     const sign = await vapidSigner(env);
     const results = await Promise.allSettled(targets.map((subscription) => sendOne(sign, subscription, payload)));
@@ -149,9 +156,9 @@ export async function pushToUsers(db: OpsDb, env: CloudflareEnv, userIds: number
       await db.delete(schema.pushSubscriptions).where(inArray(schema.pushSubscriptions.id, expired.slice(i, i + 90)));
     }
     for (const result of results) if (result.status === "rejected") console.error("[push] gagal:", result.reason);
-    return { sent: results.filter((result) => result.status === "fulfilled" && result.value).length };
+    return { sent: results.filter((result) => result.status === "fulfilled" && result.value).length, skipped };
   } catch (error) {
     console.error("[push] gagal:", error);
-    return { sent: 0 };
+    return { sent: 0, skipped: 0 };
   }
 }

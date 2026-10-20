@@ -41,14 +41,22 @@ export async function sendDueReminders(c: CronContext): Promise<void> {
   await db.update(calendarReminders).set({ sentAt: now }).where(inArray(calendarReminders.id, due.map((r) => r.id)));
   const eventIds = [...new Set(due.map((r) => r.eventId))];
   const people = await db.select({ eventId: calendarParticipants.eventId, userId: calendarParticipants.userId }).from(calendarParticipants).where(inArray(calendarParticipants.eventId, eventIds));
+  // Pengingat yang tidak kebagian anggaran fetch dikembalikan ke belum terkirim agar dicoba lagi di tick berikutnya.
+  const deferred: string[] = [];
   for (const reminder of due) {
     const userIds = people.filter((p) => p.eventId === reminder.eventId).map((p) => p.userId);
     if (!userIds.length) continue;
-    await pushToUsers(db, env, userIds, {
+    if (c.budget.fetchLeft <= 0) {
+      deferred.push(reminder.id);
+      continue;
+    }
+    const { sent, skipped } = await pushToUsers(db, env, userIds, {
       title: `${TYPE_LABELS[reminder.type]} ${leadText(reminder.minutesBefore)}: ${reminder.title}`,
       body: `${wibDay(reminder.startAt)}, ${wibTime(reminder.startAt)} WIB${reminder.location ? ` · ${reminder.location}` : ""}`,
       url: `/operasional/kalender?acara=${reminder.eventId}`,
       tag: `calendar-${reminder.eventId}`,
-    });
+    }, c.budget);
+    if (sent === 0 && skipped > 0) deferred.push(reminder.id);
   }
+  if (deferred.length) await db.update(calendarReminders).set({ sentAt: null }).where(inArray(calendarReminders.id, deferred));
 }

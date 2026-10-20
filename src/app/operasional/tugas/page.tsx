@@ -53,7 +53,8 @@ export default async function Tugas() {
   const t0 = today();
   const onRoad = trips.filter((t) => t.status === "berangkat" || t.status === "tiba" || (t.status === "tertunda" && t.departedAt));
   const loaded = trips.filter((t) => t.status === "dimuat" || (t.status === "tertunda" && !t.departedAt && t.loadedAt));
-  const todo = trips.filter((t) => (t.status === "dijadwalkan" || (t.status === "tertunda" && !t.departedAt && !t.loadedAt)) && t.date <= t0);
+  // Tertunda yang belum dimuat/berangkat tampil di "hari ini" berapa pun tanggalnya (tidak boleh hilang dari daftar).
+  const todo = trips.filter((t) => (t.status === "dijadwalkan" && t.date <= t0) || (t.status === "tertunda" && !t.departedAt && !t.loadedAt));
   const later = trips.filter((t) => t.status === "dijadwalkan" && t.date > t0);
   const done = trips.filter((t) => t.status === "terkirim");
   return (
