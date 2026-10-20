@@ -48,7 +48,7 @@ Langkah 1–3 di bawah SELESAI:
 - Impor Zahir hanya diuji tampilan formnya, karena belum ada contoh `.fp3`.
 
 Keputusan pemilik baru (TIDAK diubah, sama dengan sumber/main):
-- Peran kantor (`operasional`) melihat dan mengisi harga di form PO baru/ubah. Form ini identik dengan main, tapi detail PO menyembunyikan harga darinya. Perilakunya tidak konsisten.
+- DIPUTUSKAN pemilik: kantor tetap mengisi harga di form PO, dan harga/nilai PO kini juga tampil di detail & daftar PO untuk izin `pesanan` (selain keuangan). Peran `lihat_ops` lain tetap tanpa harga.
 - Mix harian tanpa template: "disetujui" terisi bawaan Semen 80/Pasir 500/…, dan actual boleh kosong ("Sesuai"). Ini sama dengan sumber `QcPage.tsx`.
 - Aturan turunan kategori barang produksi (karena `fin_items` tanpa kolom kategori) perlu dikonfirmasi pada data nyata.
 - Kosmetik tersisa:

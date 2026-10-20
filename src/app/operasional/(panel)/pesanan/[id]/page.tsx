@@ -22,6 +22,8 @@ const EPS = 1e-9;
 
 export default async function PesananDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string }> }) {
   const { canOrders: canEdit, canShip, canFinance } = await opsAccess();
+  // Harga terlihat oleh keuangan dan peran yang mengisi harga di form PO (izin pesanan).
+  const canPrice = canFinance || canEdit;
   const { id } = await params;
   const { ok } = await searchParams;
   const db = await getDb();
@@ -128,7 +130,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
         <section className="admin-table">
           <table>
             <caption>Barang</caption>
-            <thead><tr><th>Barang</th><th className="num">Dipesan</th><th className="num">Dijadwalkan</th><th className="num">Stok bebas</th><th className="num">Dikirim</th><th className="num">Diterima</th><th className="num">Difaktur</th>{canFinance && <><th className="num">Harga</th><th className="num">Jumlah</th></>}</tr></thead>
+            <thead><tr><th>Barang</th><th className="num">Dipesan</th><th className="num">Dijadwalkan</th><th className="num">Stok bebas</th><th className="num">Dikirim</th><th className="num">Diterima</th><th className="num">Difaktur</th>{canPrice && <><th className="num">Harga</th><th className="num">Jumlah</th></>}</tr></thead>
             <tbody>
               {prog.map((p) => (
                 <tr key={p.id}>
@@ -145,12 +147,12 @@ export default async function PesananDetail({ params, searchParams }: { params: 
                   <td className="num">{formatQty(p.shipped)}</td>
                   <td className={`num${p.delivered + EPS >= p.qty ? " text-sukses" : ""}`}>{formatQty(p.delivered)}</td>
                   <td className="num">{formatQty(p.invoiced)}</td>
-                  {canFinance && <td className="num"><Rp n={p.price} /></td>}
-                  {canFinance && <td className="num"><Rp n={Math.round(p.qty * p.price)} /></td>}
+                  {canPrice && <td className="num"><Rp n={p.price} /></td>}
+                  {canPrice && <td className="num"><Rp n={Math.round(p.qty * p.price)} /></td>}
                 </tr>
               ))}
             </tbody>
-            {canFinance && (
+            {canPrice && (
               <tfoot>
                 <tr><td colSpan={8} className="num">Subtotal</td><td className="num"><Rp n={t.subtotal} /></td></tr>
                 {t.discount > 0 && <tr><td colSpan={8} className="num">Diskon</td><td className="num"><Rp n={-t.discount} /></td></tr>}
