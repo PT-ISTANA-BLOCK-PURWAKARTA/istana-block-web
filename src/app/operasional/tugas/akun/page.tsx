@@ -1,4 +1,5 @@
 import { PasswordForm, PinForm, ProfileForm } from "@/components/auth/AccountForms";
+import { PushToggle } from "@/components/ops/push/PushToggle";
 import { requirePerm, userHandle } from "@/lib/auth";
 
 export const metadata = { title: "Akun saya" };
@@ -13,6 +14,7 @@ export default async function AkunSopir() {
       </div>
       <div className="stack" style={{ gap: 16 }}>
         <ProfileForm name={me.name} />
+        <PushToggle description="Aktifkan agar tugas baru dan perubahan muatan langsung muncul di HP ini." />
         {me.via === "pin" ? <PinForm /> : <PasswordForm />}
       </div>
     </>

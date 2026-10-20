@@ -1,19 +1,48 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
+import { DRIVER_STEP_LABEL, FLOW_STEPS, STATUS_LABEL, STATUS_TITLE, driverBase, isPosted } from "@/components/ops/delivery/status";
 import { getDb, schema } from "@/db";
-import type { DeliveryStatus } from "@/db/erp";
-import { requirePerm } from "@/lib/auth";
+import { MAX_DELIVERY_PROOFS, type DeliveryStatus } from "@/db/erp";
+import { requirePerm, type CurrentUser } from "@/lib/auth";
 import { can } from "@/lib/roles";
 import { deleteImage, saveImage, UploadError } from "@/lib/media";
-import { POSTED, postDeliveryOps, refreshOrderStatus, unpostDeliveryOps } from "@/lib/erp/ops";
+import { postDeliveryOps, refreshOrderStatus, unpostDeliveryOps } from "@/lib/erp/ops";
 import { orderProgress } from "@/lib/erp/orders";
-import { assertOpen, getFinSettings, guard, insertMany, loadAccounts, nextNumber, parseRows, requireDate, runBatch, UserError } from "@/lib/erp/server";
+import { assertOpen, getFinSettings, guard, insertMany, loadAccounts, nextNumber, parseRows, requireDate, runBatch, UserError, type DB } from "@/lib/erp/server";
 import { formatQty, parseQty, today } from "@/lib/erp/util";
+import { logActivity } from "@/lib/ops/activity";
+import { deliveryProofKeys, newToken, proofRowCount, sha256Hex } from "@/lib/ops/deliveries";
+import { requireShift } from "@/lib/ops/duty";
+import { notifyDriver } from "@/lib/ops/driverNotify";
+import { notificationOp } from "@/lib/ops/notify";
 
 const EPS = 1e-9;
+
+type DeliveryRow = typeof schema.deliveries.$inferSelect;
+
+/** Alamat kembali yang diizinkan setelah aksi (papan muatan / pengiriman / tugas), supaya tidak jadi open-redirect. */
+function backTarget(form: FormData, fallback: string) {
+  const v = String(form.get("back") ?? "");
+  return /^\/operasional\/(muatan|pengiriman|tugas)(\/[\w-]+)?(\?[\w=&%.~-]*)?$/.test(v) ? v : fallback;
+}
+
+/** Sopir yang dipilih harus ada dan aktif ("tersedia"); kendaraan harus ada dan aktif. Hanya diperiksa bila berubah. */
+async function checkAssignees(db: DB, existing: Pick<DeliveryRow, "driverId" | "vehicleId"> | undefined, driverId: string | null, vehicleId: string | null) {
+  if (vehicleId && vehicleId !== existing?.vehicleId) {
+    const v = await db.query.vehicles.findFirst({ where: eq(schema.vehicles.id, vehicleId) });
+    if (!v) throw new UserError("Kendaraan tidak ditemukan.");
+    if (!v.active) throw new UserError(`Kendaraan ${v.plate} sedang tidak aktif.`);
+  }
+  if (driverId && driverId !== existing?.driverId) {
+    const d = await db.query.drivers.findFirst({ where: eq(schema.drivers.id, driverId) });
+    if (!d) throw new UserError("Sopir tidak ditemukan.");
+    if (!d.active) throw new UserError(`Sopir ${d.name} sedang tidak tersedia (nonaktif). Pilih sopir lain.`);
+  }
+}
 
 /** Jadwalkan (atau ubah jadwal) surat jalan dari sisa pesanan yang belum dijadwalkan. */
 export async function saveDelivery(_prev: FormState, form: FormData): Promise<FormState> {
@@ -23,7 +52,7 @@ export async function saveDelivery(_prev: FormState, form: FormData): Promise<Fo
     const id = String(form.get("id") ?? "");
     const existing = id ? await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, id) }) : undefined;
     if (id && !existing) throw new UserError("Surat jalan tidak ditemukan.");
-    if (existing && existing.status !== "dijadwalkan") throw new UserError("Surat jalan yang sudah berangkat, terkirim, atau batal tidak bisa diubah.");
+    if (existing && existing.status !== "dijadwalkan") throw new UserError("Surat jalan yang sudah dimuat, berangkat, terkirim, atau batal tidak bisa diubah. Sopir dan armada masih bisa diganti dari halaman detail selama belum berangkat.");
     const orderId = existing?.orderId ?? String(form.get("orderId") ?? "");
     const order = await db.query.orders.findFirst({ where: eq(schema.orders.id, orderId) });
     if (!order) throw new UserError("Pesanan tidak ditemukan.");
@@ -33,8 +62,7 @@ export async function saveDelivery(_prev: FormState, form: FormData): Promise<Fo
 
     const vehicleId = String(form.get("vehicleId") ?? "") || null;
     const driverId = String(form.get("driverId") ?? "") || null;
-    if (vehicleId && !(await db.query.vehicles.findFirst({ where: eq(schema.vehicles.id, vehicleId) }))) throw new UserError("Kendaraan tidak ditemukan.");
-    if (driverId && !(await db.query.drivers.findFirst({ where: eq(schema.drivers.id, driverId) }))) throw new UserError("Sopir tidak ditemukan.");
+    await checkAssignees(db, existing, driverId, vehicleId);
 
     const prog = await orderProgress(db, order.id);
     const own = existing ? await db.select().from(schema.deliveryLines).where(eq(schema.deliveryLines.deliveryId, existing.id)) : [];
@@ -58,143 +86,383 @@ export async function saveDelivery(_prev: FormState, form: FormData): Promise<Fo
     await runBatch(db, [
       existing
         ? [db.update(schema.deliveries).set(header).where(eq(schema.deliveries.id, deliveryId)), db.delete(schema.deliveryLines).where(eq(schema.deliveryLines.deliveryId, deliveryId))]
-        : db.insert(schema.deliveries).values({ id: deliveryId, number, orderId: order.id, status: "dijadwalkan", ...header, createdBy: me.id }),
+        : [
+            db.insert(schema.deliveries).values({ id: deliveryId, number, orderId: order.id, status: "dijadwalkan", ...header, createdBy: me.id }),
+            db.insert(schema.deliveryHistory).values({ deliveryId, fromStatus: null, toStatus: "dijadwalkan", changedBy: me.id, note: "Surat jalan dijadwalkan" }),
+          ],
       ...insertMany(db, schema.deliveryLines, lines.map((l) => ({ ...l, deliveryId }))),
     ]);
+    // Push ke sopir: tugas baru; bila sopir diganti, yang lama diberi tahu "dialihkan".
+    if (driverId && driverId !== existing?.driverId) await notifyDriver(db, driverId, "baru", deliveryId);
+    if (existing?.driverId && existing.driverId !== driverId) await notifyDriver(db, existing.driverId, "dialihkan", deliveryId);
+    await logActivity(me, { action: "pengiriman.simpan", label: existing ? "Mengubah jadwal surat jalan" : "Menjadwalkan surat jalan", summary: number });
     return { id: deliveryId, number };
   });
   if ("error" in res) return res;
   redirect(`/operasional/pengiriman/${res.id}?ok=${encodeURIComponent(res.number)}`);
 }
 
-const NEXT: Record<DeliveryStatus, DeliveryStatus[]> = {
-  dijadwalkan: ["berangkat", "terkirim", "batal"],
-  berangkat: ["terkirim", "dijadwalkan", "batal"],
-  terkirim: ["batal"],
-  batal: ["dijadwalkan"],
-  // Status baru dari port inventori-ops (migrasi 0005): belum dipakai alur lama; alur lengkapnya dibuat subagen pengiriman.
-  dimuat: [],
-  tiba: [],
-  tertunda: [],
-};
-
-/**
- * Ubah status surat jalan. Berangkat/terkirim = stok keluar + jurnal HPP (tanggal surat jalan ikut hari berangkat);
- * kembali ke dijadwalkan/batal = stok & jurnal dihapus.
- */
-export async function setDeliveryStatus(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requirePerm("pengiriman", "muat", "antar");
-  // Sopir (izin "antar" saja) hanya mengubah surat jalan miliknya: berangkat, lalu terkirim dengan foto.
-  const driverOnly = !can(me.roles, "pengiriman") && !can(me.roles, "muat");
-  let uploaded: string | null = null;
+/** Ganti sopir/armada surat jalan yang belum berangkat (dijadwalkan atau sudah dimuat). */
+export async function assignDelivery(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requirePerm("pengiriman");
   const res = await guard(async () => {
     const db = await getDb();
     const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, String(form.get("id") ?? "")) });
     if (!d) throw new UserError("Surat jalan tidak ditemukan.");
-    const to = String(form.get("to") ?? "") as DeliveryStatus;
-    if (!NEXT[d.status]?.includes(to)) throw new UserError("Perubahan status ini tidak diizinkan.");
-    if (driverOnly) {
-      if (!me.driverId || d.driverId !== me.driverId) throw new UserError("Surat jalan ini bukan tugas Anda.");
-      const own = (d.status === "dijadwalkan" && to === "berangkat") || (d.status === "berangkat" && to === "terkirim");
-      if (!own) throw new UserError("Sopir hanya bisa menandai berangkat dan terkirim. Hubungi admin pengiriman untuk perubahan lain.");
-      if (to === "terkirim" && !(form.get("proof") instanceof File && (form.get("proof") as File).size > 0)) throw new UserError("Ambil foto bukti terima dulu (surat jalan bertanda tangan atau barang di lokasi).");
-      if (to === "terkirim" && !String(form.get("receivedBy") ?? "").trim()) throw new UserError("Isi nama penerima di lokasi.");
-    }
-    // Gudang (izin "muat") hanya memberangkatkan truk atau membatalkan keberangkatan.
-    const loadOnly = (d.status === "dijadwalkan" && to === "berangkat") || (d.status === "berangkat" && to === "dijadwalkan");
-    if (!driverOnly && !can(me.roles, "pengiriman") && !loadOnly) throw new UserError("Akun Anda hanya bisa menandai truk berangkat. Status lain diubah oleh bagian pengiriman.");
-    const fin = await getFinSettings(db);
-    const wasPosted = POSTED.includes(d.status);
-    const willPost = POSTED.includes(to);
+    if (d.status !== "dijadwalkan" && d.status !== "dimuat") throw new UserError("Sopir dan armada hanya bisa diganti sebelum truk berangkat.");
+    const vehicleId = String(form.get("vehicleId") ?? "") || null;
+    const driverId = String(form.get("driverId") ?? "") || null;
+    if (vehicleId === d.vehicleId && driverId === d.driverId) return { id: d.id };
+    await checkAssignees(db, d, driverId, vehicleId);
+    await runBatch(db, [
+      db.update(schema.deliveries).set({ vehicleId, driverId, updatedAt: new Date() }).where(eq(schema.deliveries.id, d.id)),
+      db.insert(schema.deliveryHistory).values({ deliveryId: d.id, fromStatus: d.status, toStatus: d.status, changedBy: me.id, note: "Sopir/armada diganti" }),
+    ]);
+    if (driverId && driverId !== d.driverId) await notifyDriver(db, driverId, "baru", d.id);
+    if (d.driverId && d.driverId !== driverId) await notifyDriver(db, d.driverId, "dialihkan", d.id);
+    await logActivity(me, { action: "pengiriman.tugaskan", label: "Mengganti sopir/armada surat jalan", summary: d.number });
+    return { id: d.id };
+  });
+  if ("error" in res) return res;
+  redirect(`/operasional/pengiriman/${res.id}?ok=${encodeURIComponent("~Sopir/armada diperbarui.")}`);
+}
 
-    // Hari berangkat menjadi tanggal surat jalan (dan tanggal stok keluar).
-    let date = d.date;
-    if (!wasPosted && willPost) {
-      const t = today();
-      date = String(form.get("date") ?? "") ? requireDate(form.get("date")) : t;
-    }
-    if (wasPosted) assertOpen(d.date, fin.lockDate, "Surat jalan");
-    if (willPost) assertOpen(date, fin.lockDate, "Surat jalan");
+/** Tabel transisi status yang sah (kantor dengan izin pengiriman boleh semuanya; muat & antar dibatasi di bawah). */
+const NEXT: Record<DeliveryStatus, DeliveryStatus[]> = {
+  dijadwalkan: ["dimuat", "berangkat", "tertunda", "terkirim", "batal"],
+  dimuat: ["dijadwalkan", "berangkat", "tertunda", "terkirim", "batal"],
+  berangkat: ["dimuat", "dijadwalkan", "tiba", "tertunda", "terkirim", "batal"],
+  tiba: ["berangkat", "dimuat", "dijadwalkan", "tertunda", "terkirim", "batal"],
+  tertunda: ["dijadwalkan", "dimuat", "berangkat", "tiba", "terkirim", "batal"],
+  terkirim: ["batal"],
+  batal: ["dijadwalkan"],
+};
 
-    if (to === "dijadwalkan" && d.status === "batal") {
-      // Pastikan sisa pesanan masih cukup (bisa sudah dipakai surat jalan lain).
-      const prog = new Map((await orderProgress(db, d.orderId)).map((p) => [p.id, p]));
-      for (const l of await db.select().from(schema.deliveryLines).where(eq(schema.deliveryLines.deliveryId, d.id))) {
-        const p = prog.get(l.orderLineId);
-        if (!p || l.qty > p.qty - p.scheduled + EPS) throw new UserError(`Sisa pesanan "${p?.name ?? "barang"}" tidak cukup lagi untuk surat jalan ini. Buat surat jalan baru.`);
-      }
-      const o = await db.query.orders.findFirst({ where: eq(schema.orders.id, d.orderId) });
-      if (!o || o.status === "batal" || o.status === "selesai" || o.status === "draft") throw new UserError("Pesanan sudah ditutup; buka kembali pesanannya dulu.");
-    }
+type Opts = {
+  receivedBy?: string;
+  proof?: FormDataEntryValue | null;
+  reason?: string;
+  note?: string;
+  date?: string;
+  /** Kantor menyelesaikan lewat izin "selesaikan": lompat ke terkirim tanpa foto/nama penerima. */
+  complete?: boolean;
+};
 
-    if (wasPosted && !willPost) {
-      // Barang yang sudah difaktur tidak boleh "kembali ke gudang" tanpa faktur dikoreksi dulu.
-      const own = await db.select().from(schema.deliveryLines).where(eq(schema.deliveryLines.deliveryId, d.id));
-      const prog = new Map((await orderProgress(db, d.orderId)).map((p) => [p.id, p]));
-      for (const l of own) {
-        const p = prog.get(l.orderLineId);
-        if (p && p.invoiced > p.shipped - l.qty + EPS && p.invoiced > EPS) {
-          throw new UserError(`"${p.name}" dari surat jalan ini sudah difaktur. Koreksi atau hapus fakturnya dulu sebelum membatalkan pengiriman.`);
-        }
-      }
-    }
+type Result = { id: string; to: DeliveryStatus; noop?: boolean; code: string };
 
-    const now = new Date();
-    const patch: Partial<typeof schema.deliveries.$inferInsert> = { status: to, date, updatedAt: now };
-    if (to === "berangkat") patch.departedAt = d.departedAt ?? now;
-    if (to === "terkirim") {
-      patch.departedAt = d.departedAt ?? now;
-      patch.deliveredAt = now;
-      patch.receivedBy = String(form.get("receivedBy") ?? "").trim().slice(0, 120);
+/**
+ * Inti perubahan status. Mengisi waktu (loaded/departed/arrived/delivered), memposting atau membatalkan posting stok &
+ * jurnal HPP (terposting bila departed_at terisi dan status bukan dijadwalkan/dimuat/batal), mencatat riwayat,
+ * notifikasi kantor, jejak aktivitas, dan push ke sopir. `uploaded` mengumpulkan kunci R2 baru agar dibersihkan bila gagal.
+ */
+async function transition(me: CurrentUser, id: string, to: DeliveryStatus, o: Opts, uploaded: string[]): Promise<Result> {
+  const db = await getDb();
+  const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, id) });
+  if (!d) throw new UserError("Surat jalan tidak ditemukan.");
+  if (!(to in NEXT)) throw new UserError("Status tujuan tidak dikenal.");
+  const from = d.status;
+
+  // --- siapa boleh apa
+  const office = o.complete ? can(me.roles, "selesaikan") : can(me.roles, "pengiriman");
+  const loader = can(me.roles, "muat");
+  const driver = !o.complete && can(me.roles, "antar") && !!me.driverId && d.driverId === me.driverId;
+  if (!office && !loader && !driver) throw new UserError(can(me.roles, "antar") ? "Surat jalan ini bukan tugas Anda." : "Akun Anda tidak boleh mengubah status surat jalan.");
+  if (to === from) return { id: d.id, to, noop: true, code: d.number }; // idempoten: tekan dua kali / antrean ulang
+
+  let mode: "office" | "loader" | "driver";
+  if (office) mode = "office";
+  else if (loader && ((from === "dijadwalkan" && to === "dimuat") || (from === "dimuat" && to === "dijadwalkan"))) mode = "loader";
+  else if (driver) mode = "driver";
+  else throw new UserError("Akun Anda hanya bisa menandai barang sudah dimuat. Status lain diubah oleh bagian pengiriman.");
+
+  if (mode === "driver") {
+    if (from === "batal") throw new UserError("Surat jalan ini sudah dibatalkan oleh kantor.");
+    const steps = FLOW_STEPS as readonly string[];
+    const iTo = steps.indexOf(to);
+    if (iTo < 1) throw new UserError("Sopir hanya bisa menandai sudah dimuat, berangkat, tiba, dan terkirim. Hubungi admin pengiriman untuk perubahan lain.");
+    const base = driverBase(d);
+    const iBase = steps.indexOf(base);
+    const resume = from === "tertunda" && iTo === iBase; // lanjut setelah kantor mencatat tunda
+    if (!resume) {
+      if (iTo <= iBase) return { id: d.id, to, noop: true, code: d.number };
+      if (iTo > iBase + 1) throw new UserError(base === "dijadwalkan" ? "Tekan Sudah dimuat terlebih dahulu." : `Ikuti urutan: tekan "${DRIVER_STEP_LABEL[steps[iBase + 1]]}" dulu.`);
+    }
+  }
+  if (!NEXT[from].includes(to)) throw new UserError("Perubahan status ini tidak diizinkan.");
+  // Satpam/mandor harus sedang piket untuk menandai "sudah dimuat".
+  if (to === "dimuat") await requireShift(me);
+
+  const reason = (o.reason ?? "").trim().slice(0, 300);
+  if (to === "tertunda" && reason.length < 3) throw new UserError("Isi alasan tertunda (minimal 3 huruf).");
+
+  // --- foto & penerima untuk terkirim
+  let newProof: string | null = null;
+  const file = o.proof && typeof o.proof !== "string" && o.proof.size > 0 ? o.proof : null;
+  if (to === "terkirim") {
+    if (file) {
+      if ((await proofRowCount(db, d.id)) >= MAX_DELIVERY_PROOFS) throw new UserError(`Foto bukti maksimal ${MAX_DELIVERY_PROOFS} per surat jalan.`);
       try {
-        uploaded = await saveImage(form.get("proof"), "pengiriman");
+        newProof = await saveImage(file, "pengiriman");
       } catch (e) {
         if (e instanceof UploadError) throw new UserError(e.message);
         throw e;
       }
-      if (uploaded) patch.proofKey = uploaded;
+      if (newProof) uploaded.push(newProof);
     }
-    if (to === "dijadwalkan") {
-      // Kembali ke jadwal: data perjalanan & bukti terima sebelumnya tidak berlaku lagi.
-      patch.departedAt = null;
-      patch.deliveredAt = null;
-      patch.receivedBy = "";
-      patch.proofKey = null;
+    if (mode === "driver") {
+      if (!(o.receivedBy ?? "").trim()) throw new UserError("Isi nama penerima di lokasi.");
+      const have = (await deliveryProofKeys(db, d.id, d.proofKey)).length + (newProof ? 1 : 0);
+      if (have < 1) throw new UserError("Ambil foto bukti terima dulu (surat jalan bertanda tangan atau barang di lokasi).");
     }
-    if (to === "batal" && String(form.get("reason") ?? "").trim()) {
-      patch.note = [d.note, `Dibatalkan: ${String(form.get("reason")).trim().slice(0, 300)}`].filter(Boolean).join("\n");
-    }
+  }
 
-    const acc = await loadAccounts(db);
-    await runBatch(db, [
-      db.update(schema.deliveries).set(patch).where(eq(schema.deliveries.id, d.id)),
-      // Selalu hapus dulu sebelum memposting ulang: kalau tombol terkirim dua kali bersamaan,
-      // hasil akhirnya tetap satu set stok keluar & satu jurnal (batch D1 berjalan berurutan).
-      (wasPosted && !willPost) || (willPost && (!wasPosted || date !== d.date)) ? unpostDeliveryOps(db, d.id) : null,
-      willPost && (!wasPosted || date !== d.date) ? await postDeliveryOps(db, acc, { ...d, date }, me.id) : null,
-    ]);
-    if (d.proofKey && (to === "dijadwalkan" || (uploaded && d.proofKey !== uploaded))) await deleteImage(d.proofKey);
-    await refreshOrderStatus(db, d.orderId);
-    return { id: d.id, to };
-  });
+  // --- waktu kejadian
+  const now = new Date();
+  let { loadedAt, departedAt, arrivedAt, deliveredAt, delayReason, receivedBy } = d;
+  switch (to) {
+    case "dijadwalkan":
+      loadedAt = departedAt = arrivedAt = deliveredAt = null;
+      delayReason = null;
+      receivedBy = "";
+      break;
+    case "dimuat":
+      loadedAt ??= now;
+      departedAt = arrivedAt = deliveredAt = null;
+      delayReason = null;
+      break;
+    case "berangkat":
+      loadedAt ??= now;
+      departedAt ??= now;
+      arrivedAt = deliveredAt = null;
+      delayReason = null;
+      break;
+    case "tiba":
+      loadedAt ??= now;
+      departedAt ??= now;
+      arrivedAt ??= now;
+      deliveredAt = null;
+      delayReason = null;
+      break;
+    case "tertunda":
+      delayReason = reason;
+      break;
+    case "terkirim":
+      loadedAt ??= now;
+      departedAt ??= now;
+      deliveredAt = now;
+      delayReason = null;
+      receivedBy = o.complete ? "" : (o.receivedBy ?? "").trim().slice(0, 120);
+      break;
+    case "batal":
+      break;
+  }
+
+  // --- posting stok & jurnal
+  const wasPosted = isPosted(from, d.departedAt);
+  const willPost = isPosted(to, departedAt);
+  let date = d.date;
+  if (!wasPosted && willPost) date = o.date ? requireDate(o.date) : today(); // hari berangkat = tanggal surat jalan & stok keluar
+  const fin = await getFinSettings(db);
+  if (wasPosted) assertOpen(d.date, fin.lockDate, "Surat jalan");
+  if (willPost) assertOpen(date, fin.lockDate, "Surat jalan");
+
+  if (from === "batal" && to === "dijadwalkan") {
+    // Pastikan sisa pesanan masih cukup (bisa sudah dipakai surat jalan lain).
+    const prog = new Map((await orderProgress(db, d.orderId)).map((p) => [p.id, p]));
+    for (const l of await db.select().from(schema.deliveryLines).where(eq(schema.deliveryLines.deliveryId, d.id))) {
+      const p = prog.get(l.orderLineId);
+      if (!p || l.qty > p.qty - p.scheduled + EPS) throw new UserError(`Sisa pesanan "${p?.name ?? "barang"}" tidak cukup lagi untuk surat jalan ini. Buat surat jalan baru.`);
+    }
+    const ord = await db.query.orders.findFirst({ where: eq(schema.orders.id, d.orderId) });
+    if (!ord || ord.status === "batal" || ord.status === "selesai" || ord.status === "draft") throw new UserError("Pesanan sudah ditutup; buka kembali pesanannya dulu.");
+  }
+  if (wasPosted && !willPost) {
+    // Barang yang sudah difaktur tidak boleh "kembali ke gudang" tanpa faktur dikoreksi dulu.
+    const own = await db.select().from(schema.deliveryLines).where(eq(schema.deliveryLines.deliveryId, d.id));
+    const prog = new Map((await orderProgress(db, d.orderId)).map((p) => [p.id, p]));
+    for (const l of own) {
+      const p = prog.get(l.orderLineId);
+      if (p && p.invoiced > p.shipped - l.qty + EPS && p.invoiced > EPS) {
+        throw new UserError(`"${p.name}" dari surat jalan ini sudah difaktur. Koreksi atau hapus fakturnya dulu sebelum membatalkan pengiriman.`);
+      }
+    }
+  }
+
+  const patch: Partial<typeof schema.deliveries.$inferInsert> = { status: to, date, loadedAt, departedAt, arrivedAt, deliveredAt, delayReason, receivedBy, updatedAt: now };
+  if (to === "batal" && reason) patch.note = [d.note, `Dibatalkan: ${reason}`].filter(Boolean).join("\n");
+  // Dijadwalkan ulang dari batal: bukti lama tidak berlaku lagi.
+  let oldProofs: string[] = [];
+  if (to === "dijadwalkan" && from === "batal") {
+    oldProofs = await deliveryProofKeys(db, d.id, d.proofKey);
+    patch.proofKey = null;
+  }
+
+  // --- catatan riwayat & notifikasi kantor
+  const ctx = await db.get<{ customer: string; driver: string | null }>(
+    sql`select c.name customer, dr.name driver from ops_orders o join fin_contacts c on c.id = o.contact_id left join ops_drivers dr on dr.id = ${d.driverId} where o.id = ${d.orderId}`,
+  );
+  const byDriver = mode === "driver";
+  const histNote =
+    o.complete ? `Diselesaikan dari kantor oleh ${me.name}${(o.note ?? "").trim() ? `: ${(o.note ?? "").trim().slice(0, 500)}` : ""}`
+    : to === "dimuat" ? `Barang sudah dimuat (dikonfirmasi ${byDriver ? "sopir" : me.name})`
+    : to === "tertunda" || to === "batal" ? reason
+    : to === "terkirim" ? `Diterima oleh ${receivedBy || "—"}`
+    : (o.note ?? "").trim().slice(0, 300);
+  const notifTitle = `${d.number} · ${STATUS_TITLE[to]}`;
+  const notifMsg = [ctx?.customer, ctx?.driver && `sopir ${ctx.driver}`, to === "tertunda" || to === "batal" ? reason : ""].filter(Boolean).join(" · ");
+  // Notifikasi "PO baru perlu diperiksa" untuk PO ini selesai begitu surat jalan dimuat/berjalan/selesai/batal.
+  const closesPoNotice = to !== "dijadwalkan" && to !== "tertunda";
+
+  const acc = willPost && (!wasPosted || date !== d.date) ? await loadAccounts(db) : null;
+  await runBatch(db, [
+    db.update(schema.deliveries).set(patch).where(eq(schema.deliveries.id, d.id)),
+    // Selalu hapus dulu sebelum memposting ulang: kalau tombol ditekan dua kali bersamaan,
+    // hasil akhirnya tetap satu set stok keluar & satu jurnal (batch D1 berjalan berurutan).
+    (wasPosted && !willPost) || (willPost && (!wasPosted || date !== d.date)) ? unpostDeliveryOps(db, d.id) : null,
+    acc ? await postDeliveryOps(db, acc, { ...d, date }, me.id) : null,
+    db.insert(schema.deliveryHistory).values({ deliveryId: d.id, fromStatus: from, toStatus: to, changedBy: me.id, changedByDriver: byDriver ? me.driverId : null, note: histNote }),
+    notificationOp(db, to === "dimuat" ? "dimuat" : "status_kirim", d.id, notifTitle, notifMsg),
+    closesPoNotice ? db.update(schema.notifications).set({ readAt: now }).where(and(eq(schema.notifications.kind, "po_baru"), eq(schema.notifications.refId, d.orderId), isNull(schema.notifications.readAt))) : null,
+    newProof ? db.insert(schema.deliveryProofs).values({ deliveryId: d.id, kind: "photo", fileKey: newProof, originalName: file && typeof file !== "string" ? file.name.slice(0, 200) : "", createdBy: me.id, createdByDriver: byDriver ? me.driverId : null }) : null,
+    oldProofs.length ? db.delete(schema.deliveryProofs).where(eq(schema.deliveryProofs.deliveryId, d.id)) : null,
+  ]);
+  for (const k of oldProofs) await deleteImage(k);
+  await refreshOrderStatus(db, d.orderId);
+  await logActivity(me, { action: o.complete ? "pengiriman.selesaikan" : "pengiriman.status", label: o.complete ? "Menyelesaikan pengiriman dari kantor" : "Mengubah status surat jalan", summary: `${d.number}: ${STATUS_LABEL[from]} → ${STATUS_LABEL[to]}` });
+  if (to === "dimuat" && d.driverId && !byDriver) await notifyDriver(db, d.driverId, "dimuat", d.id);
+  if (to === "batal" && d.driverId) await notifyDriver(db, d.driverId, "dibatalkan", d.id, reason);
+  return { id: d.id, to, code: d.number };
+}
+
+function doneMessage(r: Result) {
+  return r.noop ? `~Surat jalan sudah berstatus ${STATUS_LABEL[r.to].toLowerCase()}.` : `~Status surat jalan ${r.code}: ${STATUS_LABEL[r.to]}.`;
+}
+
+/**
+ * Ubah status surat jalan (alur dijadwalkan → dimuat → berangkat → tiba → terkirim, plus tertunda & batal).
+ * Kantor (izin "pengiriman") bebas; "muat" hanya dimuat/kembali; sopir hanya miliknya, berurutan & idempoten.
+ */
+export async function setDeliveryStatus(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requirePerm("pengiriman", "muat", "antar");
+  const uploaded: string[] = [];
+  const res = await guard(() =>
+    transition(me, String(form.get("id") ?? ""), String(form.get("to") ?? "") as DeliveryStatus, { receivedBy: String(form.get("receivedBy") ?? ""), proof: form.get("proof"), reason: String(form.get("reason") ?? ""), note: String(form.get("note") ?? ""), date: String(form.get("date") ?? "") || undefined }, uploaded),
+  );
   if ("error" in res) {
-    if (uploaded) await deleteImage(uploaded);
+    for (const k of uploaded) await deleteImage(k);
     return res;
   }
-  const label: Record<string, string> = { berangkat: "Berangkat", terkirim: "Terkirim", batal: "Dibatalkan", dijadwalkan: "Dijadwalkan ulang" };
-  redirect(`/operasional/${driverOnly ? "tugas" : "pengiriman"}/${res.id}?ok=${encodeURIComponent(`~Status surat jalan: ${label[res.to]}.`)}`);
+  const fallback = `/operasional/${can(me.roles, "lihat_ops") ? "pengiriman" : "tugas"}/${res.id}`;
+  const target = backTarget(form, fallback);
+  redirect(`${target}${target.includes("?") ? "&" : "?"}ok=${encodeURIComponent(doneMessage(res))}`);
+}
+
+/** Kantor menyelesaikan pengiriman (izin "selesaikan") dengan catatan: "Diselesaikan dari kantor oleh <nama>". */
+export async function completeDelivery(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requirePerm("selesaikan");
+  const uploaded: string[] = [];
+  const res = await guard(async () => {
+    const note = String(form.get("note") ?? "");
+    if (note.trim().length > 500) throw new UserError("Catatan maksimal 500 huruf.");
+    return transition(me, String(form.get("id") ?? ""), "terkirim", { complete: true, note }, uploaded);
+  });
+  if ("error" in res) {
+    for (const k of uploaded) await deleteImage(k);
+    return res;
+  }
+  redirect(`${backTarget(form, `/operasional/pengiriman/${res.id}`)}?ok=${encodeURIComponent(doneMessage(res))}`);
+}
+
+/** Unggah satu foto bukti (maks 4 per surat jalan) oleh kantor atau sopir pemilik tugas. */
+export async function uploadDeliveryProof(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requirePerm("pengiriman", "antar");
+  let key: string | null = null;
+  const res = await guard(async () => {
+    const db = await getDb();
+    const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, String(form.get("id") ?? "")) });
+    if (!d) throw new UserError("Surat jalan tidak ditemukan.");
+    const office = can(me.roles, "pengiriman");
+    if (!office && (!me.driverId || d.driverId !== me.driverId)) throw new UserError("Surat jalan ini bukan tugas Anda.");
+    if (d.status === "batal") throw new UserError("Surat jalan sudah dibatalkan.");
+    const file = form.get("proof");
+    if (!file || typeof file === "string" || file.size === 0) throw new UserError("Pilih atau ambil fotonya dulu.");
+    if ((await proofRowCount(db, d.id)) >= MAX_DELIVERY_PROOFS) throw new UserError(`Foto bukti maksimal ${MAX_DELIVERY_PROOFS} per surat jalan.`);
+    try {
+      key = await saveImage(file, "pengiriman");
+    } catch (e) {
+      if (e instanceof UploadError) throw new UserError(e.message);
+      throw e;
+    }
+    if (!key) throw new UserError("Foto tidak terbaca.");
+    await db.insert(schema.deliveryProofs).values({ deliveryId: d.id, kind: "photo", fileKey: key, originalName: file.name.slice(0, 200), createdBy: me.id, createdByDriver: office ? null : me.driverId });
+    await logActivity(me, { action: "pengiriman.foto", label: "Mengunggah foto bukti pengiriman", summary: d.number });
+    return { id: d.id };
+  });
+  if ("error" in res) {
+    if (key) await deleteImage(key);
+    return res;
+  }
+  revalidatePath(`/operasional/pengiriman/${res.id}`);
+  revalidatePath(`/operasional/tugas/${res.id}`);
+  return { ok: "Foto bukti tersimpan." };
+}
+
+/**
+ * Buat tautan lacak publik. Token acak 24 byte (hex) hanya ditampilkan sekali; yang disimpan SHA-256-nya.
+ * Mengembalikan path `/kiriman/<token>` (klien menambahkan origin). Setiap pemanggilan membuat tautan baru.
+ */
+export async function createTrackingLink(deliveryId: string): Promise<{ error?: string; path?: string }> {
+  const me = await requirePerm("pengiriman");
+  const res = await guard(async () => {
+    const db = await getDb();
+    const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, deliveryId) });
+    if (!d) throw new UserError("Surat jalan tidak ditemukan.");
+    if (d.status === "batal") throw new UserError("Surat jalan sudah dibatalkan; tautan lacak tidak dibuat.");
+    const token = newToken();
+    await db.insert(schema.trackingLinks).values({ deliveryId: d.id, tokenHash: await sha256Hex(token), createdBy: me.id });
+    await logActivity(me, { action: "pengiriman.tautan", label: "Membuat tautan lacak pelanggan", summary: d.number });
+    return { path: `/kiriman/${token}` };
+  });
+  return res;
+}
+
+/** Tandai notifikasi dibaca (maks 50 sekaligus). */
+export async function markNotificationsRead(_prev: FormState, form: FormData): Promise<FormState> {
+  await requirePerm("muat", "pengiriman");
+  let ids: string[] = [];
+  try {
+    const x = JSON.parse(String(form.get("ids") ?? "[]"));
+    ids = Array.isArray(x) ? x.filter((v): v is string => typeof v === "string").slice(0, 50) : [];
+  } catch {
+    ids = [];
+  }
+  if (!ids.length) return { ok: "Tidak ada notifikasi." };
+  const db = await getDb();
+  await db.update(schema.notifications).set({ readAt: new Date() }).where(and(inArray(schema.notifications.id, ids), isNull(schema.notifications.readAt)));
+  revalidatePath("/operasional/muatan");
+  return { ok: "Ditandai sudah dibaca." };
 }
 
 export async function deleteDelivery(id: string): Promise<FormState> {
-  await requirePerm("pengiriman");
+  const me = await requirePerm("pengiriman");
   const res = await guard(async () => {
     const db = await getDb();
     const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, id) });
-    if (!d) return { orderId: "" };
-    if (POSTED.includes(d.status)) throw new UserError("Surat jalan yang sudah berangkat/terkirim tidak bisa dihapus. Batalkan dulu.");
-    await runBatch(db, [db.delete(schema.deliveryLines).where(eq(schema.deliveryLines.deliveryId, id)), db.delete(schema.deliveries).where(eq(schema.deliveries.id, id))]);
-    if (d.proofKey) await deleteImage(d.proofKey);
-    return { orderId: d.orderId };
+    if (!d) return { orderId: "", keys: [] as string[] };
+    if (isPosted(d.status, d.departedAt) || d.status === "terkirim") throw new UserError("Surat jalan yang sudah berangkat/terkirim tidak bisa dihapus. Batalkan dulu.");
+    const keys = await deliveryProofKeys(db, id, d.proofKey);
+    if (d.driverId && d.status !== "batal") await notifyDriver(db, d.driverId, "dibatalkan", id, "Surat jalan dihapus oleh kantor.");
+    await runBatch(db, [
+      db.delete(schema.deliveryLines).where(eq(schema.deliveryLines.deliveryId, id)),
+      db.delete(schema.deliveryHistory).where(eq(schema.deliveryHistory.deliveryId, id)),
+      db.delete(schema.deliveryProofs).where(eq(schema.deliveryProofs.deliveryId, id)),
+      db.delete(schema.trackingLinks).where(eq(schema.trackingLinks.deliveryId, id)),
+      db.delete(schema.notifications).where(and(inArray(schema.notifications.kind, ["status_kirim", "dimuat"]), eq(schema.notifications.refId, id))),
+      db.delete(schema.deliveries).where(eq(schema.deliveries.id, id)),
+    ]);
+    for (const k of keys) await deleteImage(k);
+    await logActivity(me, { action: "pengiriman.hapus", label: "Menghapus surat jalan", summary: d.number });
+    return { orderId: d.orderId, keys };
   });
   if ("error" in res) return res;
   redirect(res.orderId ? `/operasional/pesanan/${res.orderId}?ok=dihapus` : "/operasional/pengiriman?ok=dihapus");

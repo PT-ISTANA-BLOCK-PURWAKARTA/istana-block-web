@@ -35,6 +35,9 @@ const TONE: Record<string, string> = {
   dikonfirmasi: "badge-info",
   dijadwalkan: "badge-info",
   berangkat: "badge-warn",
+  dimuat: "badge-info",
+  tiba: "badge-warn",
+  tertunda: "badge-danger",
   dikirim_sebagian: "badge-warn",
   sebagian: "badge-warn",
   "belum lunas": "badge-warn",
@@ -42,7 +45,7 @@ const TONE: Record<string, string> = {
   batal: "badge-off",
   draft: "badge-off",
 };
-const LABEL: Record<string, string> = { dikirim_sebagian: "Dikirim sebagian", dikonfirmasi: "Dikonfirmasi", dijadwalkan: "Dijadwalkan", berangkat: "Dalam perjalanan", terkirim: "Terkirim", selesai: "Selesai", batal: "Batal", draft: "Draf" };
+const LABEL: Record<string, string> = { dikirim_sebagian: "Dikirim sebagian", dikonfirmasi: "Dikonfirmasi", dijadwalkan: "Dijadwalkan", berangkat: "Dalam perjalanan", dimuat: "Sudah dimuat", tiba: "Tiba di lokasi", tertunda: "Tertunda", terkirim: "Terkirim", selesai: "Selesai", batal: "Batal", draft: "Draf" };
 
 export function Status({ s }: { s: string }) {
   return <span className={`badge ${TONE[s] ?? "badge-off"}`}>{LABEL[s] ?? s.charAt(0).toUpperCase() + s.slice(1)}</span>;

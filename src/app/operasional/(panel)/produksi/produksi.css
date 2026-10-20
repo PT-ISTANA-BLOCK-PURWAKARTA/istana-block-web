@@ -1,0 +1,38 @@
+/*
+ * Hasil produksi: pilihan besar (kategori, kendala), rekap, daftar kartu untuk HP.
+ * Hanya memakai token warna panel; form & daftar nyaman di layar 375 px.
+ */
+
+/* ---------- Form ---------- */
+.prd-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.prd-choice { min-height: 46px; padding: 0 16px; border: 1px solid var(--p-line-strong); border-radius: var(--p-radius-sm); background: #fff; color: var(--p-ink-2); font: 600 15px var(--font-isi); cursor: pointer; text-align: left; }
+.prd-choice:hover { border-color: var(--biru); }
+.prd-choice:focus-visible { outline: 2px solid var(--biru); outline-offset: 1px; }
+.prd-choice[aria-pressed="true"] { background: var(--info-bg); border-color: var(--biru); color: var(--biru-tua); box-shadow: inset 0 0 0 1px var(--biru); }
+.prd-issue[aria-pressed="true"] { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); box-shadow: inset 0 0 0 1px var(--warn); }
+.admin .prd-mix { min-height: 46px; }
+.prd-mix-list { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
+.prd-bahan > summary { cursor: pointer; padding: 2px 0; }
+.prd-bahan[open] > summary { margin-bottom: 12px; }
+.prd-photo { display: inline-flex; align-items: center; gap: 10px; }
+.prd-photo img { width: 96px; height: 96px; object-fit: cover; border-radius: 10px; border: 1px solid var(--p-line); }
+.admin .prd-form .prd-save { min-height: 54px; font-size: 17px; }
+
+/* ---------- Rekap & daftar ---------- */
+.prd-seg { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.prd-rekap { margin-bottom: 16px; }
+.prd-issue-chip { display: inline-flex; align-items: center; padding: 1px 9px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.prd-issues { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.prd-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: var(--p-muted); }
+
+.prd-cards { display: none; }
+.prd-card { display: block; background: #fff; border: 1px solid var(--p-line); border-radius: var(--p-radius); padding: 12px 14px; color: inherit; text-decoration: none; }
+.prd-card p { margin: 0; }
+.prd-card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.prd-card-qty { font-family: var(--font-judul); font-weight: 700; font-size: 16px; color: var(--biru-tua); }
+.prd-card-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; font-size: 13px; color: var(--p-muted); }
+
+@media (max-width: 760px) {
+  .prd-table { display: none; }
+  .prd-cards { display: grid; gap: 10px; }
+}

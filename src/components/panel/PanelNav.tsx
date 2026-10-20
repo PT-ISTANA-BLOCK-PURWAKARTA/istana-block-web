@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon, type IconName } from "./Icon";
 
-export type NavItem = { href: string; label: string; group?: string; icon: IconName };
+export type NavItem = { href: string; label: string; group?: string; icon: IconName; badge?: number | string };
 
 /**
  * Menu samping modul. Item pertama dianggap beranda modul (aktif hanya bila path sama persis).
@@ -41,6 +41,7 @@ export function PanelNav({ items, label, footer }: { items: NavItem[]; label: st
                 <Link href={i.href} aria-current={active ? "page" : undefined}>
                   <Icon name={i.icon} size={18} />
                   <span>{i.label}</span>
+                  {i.badge ? <span className="nav-badge">{i.badge}</span> : null}
                 </Link>
               </div>
             );

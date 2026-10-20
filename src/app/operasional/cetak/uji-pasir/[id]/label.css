@@ -1,0 +1,22 @@
+/* Label uji lumpur A5 "LABORATORIUM BETON". Warna sel mengikuti kartu fisik yang ditempel di gelas ukur. */
+.sand-label { max-width: 150mm; margin: 0 auto; background: #fff; color: #111; padding: 14px; box-shadow: 0 10px 40px rgba(14, 42, 107, .12); }
+.sand-label-table { border-collapse: collapse; width: 100%; }
+.sand-label-table td { border: 1.5px solid #333; padding: 6px 10px; font-size: 12pt; }
+.sl-logo { width: 30%; background: #f5a93c; text-align: center; }
+.sl-logo img { height: 62px; width: auto; }
+.sl-head { background: #a9d4ea; text-align: center; font-weight: bold; letter-spacing: .5px; }
+.sl-key { background: #f5a93c; font-weight: bold; width: 42%; white-space: nowrap; }
+.sl-key span { float: right; }
+.sl-val { font-family: "Comic Sans MS", "Segoe Print", cursive; font-size: 14pt; }
+.sl-verdict { margin: 10px 0 4px; font-weight: bold; }
+.sl-bagus { color: #0a6b3a; }
+.sl-cukup { color: #b45309; }
+.sl-lewat { color: #b42318; }
+.sl-meta { font-size: 9pt; color: #444; margin: 0 0 8px; }
+.sl-photos { display: flex; gap: 6px; }
+.sl-photos img { flex: 1; min-width: 0; max-height: 110mm; object-fit: contain; border: 1px solid #ccc; }
+
+@media print {
+  .sand-label { box-shadow: none; padding: 0; max-width: none; }
+  .sand-label-table td, .sl-logo, .sl-head, .sl-key { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

@@ -1,0 +1,19 @@
+/* Laporan pimpinan: navigasi periode + kartu ringkasan. */
+.lp-nav { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.lp-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.lp-steps .lp-label { min-width: 12rem; text-align: center; font-weight: 600; color: var(--tinta); }
+.lp-steps .is-off { pointer-events: none; opacity: 0.45; }
+.lp-date { display: flex; align-items: flex-end; gap: 8px; }
+.lp-delta { display: block; font-size: 12px; color: var(--p-muted); }
+.lp-now { margin: 0 0 16px; padding: 10px 12px; border-radius: var(--p-radius-sm); background: var(--info-bg); font-size: 14px; }
+.lp-card { display: grid; gap: 14px; align-content: start; }
+.lp-card h2 { margin: 0; font-size: 17px; }
+.lp-qty h3 { margin: 0 0 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--p-muted); }
+.lp-qty p { margin: 0; }
+.lp-issues { padding: 10px 12px; border: 1px solid #f0d9a8; border-radius: var(--p-radius-sm); background: var(--warn-bg); font-size: 14px; }
+.lp-issues p { margin: 4px 0 0; }
+.lp-line { margin: 0; font-size: 14px; color: var(--teks); }
+.lp-card .lp-more { font-size: 14px; font-weight: 600; color: var(--biru-teks); }
+@media (max-width: 640px) {
+  .lp-steps .lp-label { min-width: 0; flex: 1 1 100%; order: -1; }
+}

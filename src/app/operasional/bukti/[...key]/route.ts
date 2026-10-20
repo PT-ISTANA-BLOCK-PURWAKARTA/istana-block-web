@@ -13,7 +13,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ key: st
   // Sopir hanya boleh membuka foto dari surat jalan miliknya.
   if (!can(me.roles, "lihat_ops") && !canOpen(me.roles, "keuangan")) {
     const db = await getDb();
-    const own = me.driverId && (await db.query.deliveries.findFirst({ where: and(eq(schema.deliveries.proofKey, path), eq(schema.deliveries.driverId, me.driverId)) }));
+    // Foto lama (kolom proof_key) atau foto baru (ops_delivery_proofs) dari surat jalan milik sopir ini.
+    const legacy = me.driverId && (await db.query.deliveries.findFirst({ where: and(eq(schema.deliveries.proofKey, path), eq(schema.deliveries.driverId, me.driverId)) }));
+    const row = !legacy && me.driverId ? await db.query.deliveryProofs.findFirst({ where: eq(schema.deliveryProofs.fileKey, path) }) : undefined;
+    const own = legacy || (row && (await db.query.deliveries.findFirst({ where: and(eq(schema.deliveries.id, row.deliveryId), eq(schema.deliveries.driverId, me.driverId as string)) })));
     if (!own) return new Response("Tidak diizinkan", { status: 403 });
   }
   const env = await getEnv();

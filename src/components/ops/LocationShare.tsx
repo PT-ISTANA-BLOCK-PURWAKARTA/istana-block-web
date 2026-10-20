@@ -2,25 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const MIN_INTERVAL = 30_000; // kirim paling sering tiap 30 detik
-const MIN_MOVE_M = 40; // … atau lebih cepat bila sudah bergeser ≥ 40 m
-
-function meters(a: GeolocationCoordinates, b: GeolocationCoordinates) {
-  const R = 6371000;
-  const r = (d: number) => (d * Math.PI) / 180;
-  const h = Math.sin(r(b.latitude - a.latitude) / 2) ** 2 + Math.cos(r(a.latitude)) * Math.cos(r(b.latitude)) * Math.sin(r(b.longitude - a.longitude) / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
+const SEND_EVERY = 10_000; // kirim posisi terakhir tiap 10 detik selama berbagi lokasi
 
 /**
- * "Bagikan lokasi" dari HP sopir selama mengantar. Hanya berjalan saat halaman terbuka;
+ * "Bagikan lokasi" dari HP sopir selama mengantar (berangkat, tiba, tertunda di jalan). Hanya berjalan saat halaman terbuka;
  * untuk pelacakan di latar belakang pakai alat GPS truk atau aplikasi Traccar Client.
+ * Posisi dibaca terus (watchPosition) dan dikirim paling sering tiap 10 detik.
  */
 export function LocationShare() {
   const [on, setOn] = useState(false);
   const [msg, setMsg] = useState<string>("");
   const watch = useRef<number | null>(null);
-  const last = useRef<{ t: number; c: GeolocationCoordinates } | null>(null);
+  const latest = useRef<GeolocationPosition | null>(null);
+  const sentFix = useRef<GeolocationPosition | null>(null);
+  const sentAt = useRef(0);
   const wake = useRef<WakeLockSentinel | null>(null);
 
   useEffect(() => {
@@ -40,6 +35,7 @@ export function LocationShare() {
     if (!on) {
       if (watch.current != null) navigator.geolocation.clearWatch(watch.current);
       watch.current = null;
+      latest.current = null;
       wake.current?.release().catch(() => {});
       wake.current = null;
       return;
@@ -52,37 +48,57 @@ export function LocationShare() {
     setMsg("Mencari sinyal GPS…");
     // Jaga layar tetap menyala selama berbagi lokasi (bila didukung browser).
     (navigator as Navigator & { wakeLock?: { request(t: "screen"): Promise<WakeLockSentinel> } }).wakeLock?.request("screen").then((w) => (wake.current = w)).catch(() => {});
-    watch.current = navigator.geolocation.watchPosition(
-      async (pos) => {
-        const prev = last.current;
-        const now = Date.now();
-        if (prev && now - prev.t < MIN_INTERVAL && meters(prev.c, pos.coords) < MIN_MOVE_M) return;
-        last.current = { t: now, c: pos.coords };
-        try {
-          const r = await fetch("/api/lacak/hp", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, speed: pos.coords.speed, heading: pos.coords.heading, accuracy: pos.coords.accuracy, at: pos.timestamp }),
-          });
-          const d = (await r.json()) as { ok: boolean; error?: string; note?: string; stop?: boolean };
-          if (d.stop) {
-            setMsg(d.error ?? "Berbagi lokasi berhenti.");
-            setOn(false);
-            return;
-          }
-          const t = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-          setMsg(d.ok ? d.note ?? `Lokasi terkirim ${t} · akurasi ± ${Math.round(pos.coords.accuracy)} m` : d.error ?? "Gagal mengirim lokasi.");
-        } catch {
-          setMsg("Sinyal internet lemah; lokasi dicoba lagi otomatis.");
+    let stopped = false;
+    let sending = false;
+
+    async function send() {
+      const pos = latest.current;
+      if (!pos || sending) return;
+      // Titik yang sama dikirim ulang dengan jam sekarang supaya kantor tahu HP masih hidup walau truk berhenti,
+      // tetapi tidak lebih sering dari tiap 30 detik (hemat tulis D1).
+      const fresh = sentFix.current === pos;
+      if (fresh && Date.now() - sentAt.current < 30_000) return;
+      sending = true;
+      try {
+        sentAt.current = Date.now();
+        const r = await fetch("/api/lacak/hp", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, speed: fresh ? 0 : pos.coords.speed, heading: pos.coords.heading, accuracy: pos.coords.accuracy, at: fresh ? Date.now() : pos.timestamp }),
+        });
+        sentFix.current = pos;
+        const d = (await r.json()) as { ok: boolean; error?: string; note?: string; stop?: boolean };
+        if (stopped) return;
+        if (d.stop) {
+          setMsg(d.error ?? "Berbagi lokasi berhenti.");
+          setOn(false);
+          return;
         }
+        const t = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        setMsg(d.ok ? d.note ?? `Lokasi terkirim ${t} · akurasi ± ${Math.round(pos.coords.accuracy)} m` : d.error ?? "Gagal mengirim lokasi.");
+      } catch {
+        if (!stopped) setMsg("Sinyal internet lemah; lokasi dicoba lagi otomatis.");
+      } finally {
+        sending = false;
+      }
+    }
+
+    watch.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const first = latest.current === null;
+        latest.current = pos;
+        if (first) void send();
       },
       (err) => {
         setMsg(err.code === err.PERMISSION_DENIED ? "Izin lokasi ditolak. Izinkan lokasi untuk situs ini di pengaturan browser." : "Lokasi belum didapat. Pastikan GPS HP menyala.");
         if (err.code === err.PERMISSION_DENIED) setOn(false);
       },
-      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 60_000 },
+      { enableHighAccuracy: true, maximumAge: 5_000, timeout: 60_000 },
     );
+    const timer = setInterval(() => void send(), SEND_EVERY);
     return () => {
+      stopped = true;
+      clearInterval(timer);
       if (watch.current != null) navigator.geolocation.clearWatch(watch.current);
       watch.current = null;
     };

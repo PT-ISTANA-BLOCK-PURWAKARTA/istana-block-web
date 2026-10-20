@@ -1,0 +1,21 @@
+/* Keamanan: backup + log aktivitas (khusus pemilik). */
+.kc-tabs { margin-bottom: 16px; }
+.kc-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 14px 16px; border: 1px solid #f0d9a8; border-radius: var(--p-radius); background: var(--warn-bg); }
+.kc-banner.is-ok { border-color: #bfe0cb; background: var(--ok-bg); }
+.kc-banner p { margin: 0; }
+.kc-banner small { display: block; margin-top: 2px; color: var(--p-muted); font-size: 13px; }
+.kc-steps { margin: 0; padding: 10px 12px 10px 30px; border-radius: var(--p-radius-sm); background: var(--info-bg); font-size: 14px; display: grid; gap: 4px; }
+.kc-actions { display: grid; gap: 12px; }
+.kc-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.kc-card { display: grid; gap: 14px; margin-top: 16px; }
+.kc-card h2 { margin: 0; font-size: 17px; }
+.kc-card p { margin: 0; }
+.kc-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.kc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.kc-chips a { padding: 4px 10px; border: 1px solid var(--p-line-strong); border-radius: 8px; background: var(--putih); font-size: 12px; font-weight: 600; color: var(--redup); }
+.kc-chips a[aria-current="page"] { border-color: var(--biru-tua); background: var(--biru-tua); color: var(--putih); }
+.kc-check { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.kc-detail summary { cursor: pointer; font-size: 12px; color: var(--biru-teks); }
+.kc-detail pre { max-height: 220px; overflow: auto; margin: 6px 0 0; padding: 8px; border-radius: 8px; background: var(--p-head); font-size: 11px; white-space: pre-wrap; word-break: break-all; }
+.kc-fail { color: var(--bahaya); font-weight: 600; }
+.kc-okay { color: var(--sukses); font-weight: 600; }

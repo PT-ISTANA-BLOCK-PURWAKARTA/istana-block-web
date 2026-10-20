@@ -1,5 +1,6 @@
 import "server-only";
-import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNotNull, lte, sql } from "drizzle-orm";
+import { SQL_ON_ROAD } from "@/components/ops/delivery/status";
 import { schema } from "@/db";
 import type { PositionSource } from "@/db/erp";
 import { chunk, type DB } from "./server";
@@ -151,7 +152,7 @@ export async function truckBoard(db: DB): Promise<TruckView[]> {
       select d.id, d.number, d.vehicle_id vehicleId, d.status, c.name contactName, o.project, o.address, o.maps_url mapsUrl, dr.name driver
       from ops_deliveries d join ops_orders o on o.id = d.order_id join fin_contacts c on c.id = o.contact_id
       left join ops_drivers dr on dr.id = d.driver_id
-      where d.status = 'berangkat' and d.vehicle_id is not null
+      where ${sql.raw(SQL_ON_ROAD)} and d.vehicle_id is not null
       order by d.departed_at desc`),
   ]);
   // Untuk truk yang berhenti: cari titik bergerak terakhir supaya bisa menulis "berhenti sejak …".
@@ -210,10 +211,10 @@ export async function routeOf(db: DB, vehicleId: string, date: string) {
   return { points: rows.map((r) => [r.lat, r.lng, r.at, r.speed ?? 0] as [number, number, number, number]), km: Math.round(km * 10) / 10 };
 }
 
-/** Surat jalan yang sedang diantar seorang sopir (untuk lokasi dari HP). */
+/** Surat jalan yang sedang diantar seorang sopir (berangkat, tiba, atau tertunda di jalan) untuk lokasi dari HP. */
 export async function activeTripOfDriver(db: DB, driverId: string) {
   return db.query.deliveries.findFirst({
-    where: and(eq(schema.deliveries.driverId, driverId), eq(schema.deliveries.status, "berangkat")),
+    where: and(eq(schema.deliveries.driverId, driverId), inArray(schema.deliveries.status, ["berangkat", "tiba", "tertunda"]), isNotNull(schema.deliveries.departedAt)),
     orderBy: (d, { desc }) => [desc(d.departedAt)],
   });
 }

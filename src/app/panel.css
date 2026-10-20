@@ -47,6 +47,7 @@
 .admin-nav a:hover { background: rgba(255, 255, 255, .07); color: #fff; }
 .admin-nav a[aria-current="page"] { background: #fff; color: var(--biru-tua); font-weight: 600; }
 .admin-nav a[aria-current="page"] .icon { opacity: 1; color: var(--oranye-cta); }
+.admin-nav .nav-badge { margin-left: auto; min-width: 20px; padding: 1px 6px; border-radius: 999px; background: var(--oranye-cta); color: #fff; font-size: 12px; font-weight: 700; text-align: center; line-height: 18px; }
 .admin-side .who { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 10px 0; border-top: 1px solid rgba(255, 255, 255, .12); font-size: 14px; }
 .who-name { display: flex; flex-direction: column; }
 .who-name b { color: #fff; font-weight: 600; }

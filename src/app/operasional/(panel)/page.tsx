@@ -2,10 +2,14 @@ import Link from "next/link";
 import { desc, sql } from "drizzle-orm";
 import { ColumnChart } from "@/components/erp/ColumnChart";
 import { Kpis, PageHead, Status } from "@/components/erp/ui";
+import { DeliveryStatusBadge } from "@/components/ops/delivery/StatusBadge";
+import { SQL_ON_ROAD } from "@/components/ops/delivery/status";
+import { NotificationPanel } from "@/components/ops/order/NotificationPanel";
 import { getDb, schema } from "@/db";
-import { loadingPlan, stockPosition } from "@/lib/erp/insights";
+import { documentAlerts, loadingPlan, orderStats, stockPosition } from "@/lib/erp/insights";
 import { opsAccess } from "@/lib/erp/ops";
 import { addDays, formatQty, monthStart, tgl, today } from "@/lib/erp/util";
+import { unreadNotifications } from "@/lib/ops/deliveries";
 
 export const metadata = { title: "Ringkasan operasional" };
 
@@ -18,13 +22,14 @@ export default async function OpsDashboard() {
   const tomorrow = addDays(now, 1);
   const from14 = addDays(now, -13);
   const warehouseFirst = canStock && !canOrders;
-  const [counts, plan, waiting, stock, daily, productions] = await Promise.all([
+  const office = canOrders || canShip;
+  const [counts, plan, waiting, stock, daily, productions, alerts, stats, notices] = await Promise.all([
     db.get<{ active: number; draft: number; due: number; onRoad: number; doneMonth: number }>(sql`
       select
         (select count(*) from ops_orders where status in ('dikonfirmasi','dikirim_sebagian')) active,
         (select count(*) from ops_orders where status = 'draft') draft,
         (select count(*) from ops_deliveries where status = 'dijadwalkan' and date <= ${now}) due,
-        (select count(*) from ops_deliveries where status = 'berangkat') onRoad,
+        (select count(*) from ops_deliveries d where ${sql.raw(SQL_ON_ROAD)}) onRoad,
         (select count(*) from ops_deliveries where status = 'terkirim' and date >= ${monthStart(now)}) doneMonth`),
     loadingPlan(db, tomorrow),
     db.all<{ id: string; number: string; date: string; requestedDate: string | null; status: string; contactName: string; project: string; ordered: number; scheduled: number }>(sql`
@@ -37,6 +42,9 @@ export default async function OpsDashboard() {
     stockPosition(db),
     db.all<{ date: string; n: number }>(sql`select date, count(*) n from ops_deliveries where status = 'terkirim' and date >= ${from14} group by date`),
     db.select().from(schema.productions).orderBy(desc(schema.productions.date), desc(schema.productions.number)).limit(5),
+    office ? documentAlerts(db, now) : [],
+    office ? orderStats(db) : null,
+    canShip || canLoad ? unreadNotifications(db, ["po_baru", "dimuat", "status_kirim", "umum"], 10) : [],
   ]);
   const unscheduled = waiting.filter((o) => Number(o.scheduled) + 1e-9 < Number(o.ordered));
   const low = stock.filter((s) => s.minStock > 0 && s.onHand < s.minStock);
@@ -73,9 +81,9 @@ export default async function OpsDashboard() {
             {plan.map((t) => (
               <article key={t.id} className={`load-item${t.short ? " is-short" : ""}`}>
                 <div>
-                  <Link href={`/operasional/pengiriman/${t.id}`}><b>{t.number}</b></Link> <Status s={t.status} />
+                  <Link href={`/operasional/pengiriman/${t.id}`}><b>{t.number}</b></Link> <DeliveryStatusBadge s={t.status} />
                   <div className="small muted">
-                    {tgl(t.date)}{t.date < now && t.status === "dijadwalkan" ? " · terlambat" : ""} · {t.contactName}{t.destination ? ` · ${t.destination}` : ""}
+                    {tgl(t.date)}{t.date < now && !t.posted ? " · terlambat" : ""} · {t.contactName}{t.destination ? ` · ${t.destination}` : ""}
                   </div>
                 </div>
                 <div className="small" style={{ textAlign: "right" }}>
@@ -88,7 +96,7 @@ export default async function OpsDashboard() {
                       <span>{l.name}</span>
                       <span className="tabular">
                         <b>{formatQty(l.qty)}</b> {l.unit}
-                        {t.status === "dijadwalkan" && (canStock || canLoad) && (
+                        {!t.posted && (canStock || canLoad) && (
                           <span className={`avail ${l.qty > l.onHand + 1e-9 ? "text-bahaya" : "muted"}`}> · tersedia {formatQty(Math.max(0, l.onHand))}</span>
                         )}
                       </span>
@@ -146,6 +154,39 @@ export default async function OpsDashboard() {
                   </tr>
                 ))}
                 {unscheduled.length === 0 && <tr><td className="muted">Semua pesanan aktif sudah dijadwalkan.</td></tr>}
+              </tbody>
+            </table>
+          </section>
+        )}
+        {office && (
+          <section className="admin-card">
+            <div className="card-head"><h2>Peringatan dokumen</h2><span className="small muted">SIM, STNK, KIR · sisa ≤ 30 hari</span></div>
+            <table className="compact">
+              <tbody>
+                {alerts.map((a, i) => (
+                  <tr key={`${a.kind}-${a.owner}-${i}`}>
+                    <td><Link href={a.href}><b>{a.kind}</b> · {a.owner}</Link></td>
+                    <td className={`num small ${a.daysLeft < 0 ? "text-bahaya" : "text-warn"}`}>
+                      {tgl(a.expiry)}
+                      <div>{a.daysLeft < 0 ? `lewat ${-a.daysLeft} hari` : a.daysLeft === 0 ? "berakhir hari ini" : `sisa ${a.daysLeft} hari`}</div>
+                    </td>
+                  </tr>
+                ))}
+                {alerts.length === 0 && <tr><td className="muted">Semua dokumen armada dan sopir aman. Isi masa berlaku di halaman Armada dan Sopir.</td></tr>}
+              </tbody>
+            </table>
+          </section>
+        )}
+        {(canShip || canLoad) && <NotificationPanel items={notices} />}
+        {stats && (
+          <section className="admin-card">
+            <div className="card-head"><h2>Statistik pesanan</h2><Link href="/operasional/pesanan?status=semua">Semua</Link></div>
+            <table className="compact">
+              <tbody>
+                <tr><td>Total pesanan</td><td className="num"><b>{stats.total}</b></td></tr>
+                <tr><td>Di jalan</td><td className="num"><b>{stats.inTransit}</b></td></tr>
+                <tr><td>Terkirim / selesai</td><td className="num"><b>{stats.delivered}</b></td></tr>
+                <tr><td><Link href="/operasional/pesanan?status=batal">Dibatalkan</Link></td><td className="num"><b>{stats.cancelled}</b></td></tr>
               </tbody>
             </table>
           </section>

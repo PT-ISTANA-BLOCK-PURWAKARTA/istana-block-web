@@ -21,7 +21,7 @@ export async function opsAccess() {
     canOrders: p.has("pesanan"),
     /** Menjadwalkan surat jalan, armada, sopir, terkirim/batal. */
     canShip: p.has("pengiriman"),
-    /** Menandai truk berangkat (barang keluar gudang). */
+    /** Menandai barang sudah dimuat (papan muatan). */
     canLoad: p.has("muat"),
     /** Hasil produksi & penyesuaian stok. */
     canStock: p.has("stok"),
@@ -30,7 +30,8 @@ export async function opsAccess() {
   };
 }
 
-export const POSTED: Delivery["status"][] = ["berangkat", "terkirim"];
+// Stok & jurnal terposting bila departed_at terisi dan status bukan dijadwalkan/dimuat/batal (lihat status.ts).
+export { isPosted, SQL_AT_YARD, SQL_ON_ROAD, SQL_OPEN, SQL_POSTED } from "@/components/ops/delivery/status";
 
 /** Hapus stok keluar & jurnal HPP sebuah surat jalan. */
 export function unpostDeliveryOps(db: DB, deliveryId: string) {
@@ -41,7 +42,7 @@ export function unpostDeliveryOps(db: DB, deliveryId: string) {
 }
 
 /**
- * Stok keluar + jurnal HPP untuk surat jalan yang berangkat/terkirim:
+ * Stok keluar + jurnal HPP untuk surat jalan yang sudah berangkat (berangkat, tiba, tertunda di jalan, terkirim):
  * Dr Harga pokok penjualan / Cr Persediaan, dinilai dengan harga pokok rata-rata saat itu.
  */
 export async function postDeliveryOps(db: DB, acc: Accounts, d: Pick<Delivery, "id" | "number" | "date" | "orderId">, createdBy: number | null) {

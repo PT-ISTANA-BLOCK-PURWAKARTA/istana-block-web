@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, desc, eq } from "drizzle-orm";
-import { deleteOrder, setOrderStatus } from "@/app/operasional/actions/orders";
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { setOrderStatus } from "@/app/operasional/actions/orders";
 import { ConfirmAction } from "@/components/erp/ConfirmAction";
 import { BackLink, Ok, PageHead, payStatus, Rp, Status } from "@/components/erp/ui";
+import { isPosted } from "@/components/ops/delivery/status";
+import { OrderDanger } from "@/components/ops/order/OrderDanger";
+import { PaymentBadge } from "@/components/ops/order/PaymentBadge";
+import { ShareOrderButton } from "@/components/ops/order/ShareOrderButton";
 import { getDb, schema } from "@/db";
 import { docTotals } from "@/lib/erp/docs";
 import { overdueByContact, stockPosition } from "@/lib/erp/insights";
@@ -11,6 +15,7 @@ import { deliveryItems, opsAccess } from "@/lib/erp/ops";
 import { orderProgress } from "@/lib/erp/orders";
 import { depositBalance, getFinSettings, loadAccounts } from "@/lib/erp/server";
 import { formatAmount, formatQty, tgl, today } from "@/lib/erp/util";
+import { formatDateTime } from "@/lib/ops/shared/format";
 
 export const metadata = { title: "Pesanan" };
 const EPS = 1e-9;
@@ -26,7 +31,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
     db.query.contacts.findFirst({ where: eq(schema.contacts.id, o.contactId) }),
     orderProgress(db, id),
     db
-      .select({ d: schema.deliveries, plate: schema.vehicles.plate, driver: schema.drivers.name })
+      .select({ d: schema.deliveries, plate: schema.vehicles.plate, driver: schema.drivers.name, driverPhone: schema.drivers.phone })
       .from(schema.deliveries)
       .leftJoin(schema.vehicles, eq(schema.vehicles.id, schema.deliveries.vehicleId))
       .leftJoin(schema.drivers, eq(schema.drivers.id, schema.deliveries.driverId))
@@ -37,6 +42,8 @@ export default async function PesananDetail({ params, searchParams }: { params: 
     loadAccounts(db),
   ]);
   const [items, stock, overdue] = await Promise.all([deliveryItems(db, deliveries.map((x) => x.d.id)), stockPosition(db), overdueByContact(db, today())]);
+  const whoIds = [o.paymentConfirmedBy, o.cancelledBy].filter((x): x is number => x != null);
+  const who = new Map((whoIds.length ? await db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users).where(inArray(schema.users.id, whoIds)) : []).map((u) => [u.id, u.name]));
   const free = new Map(stock.map((s) => [s.id, s.free]));
   const late = overdue.get(o.contactId);
   const deposit = canFinance ? await depositBalance(db, acc.sys("uang_muka_pelanggan"), o.contactId, "credit") : 0;
@@ -44,13 +51,32 @@ export default async function PesananDetail({ params, searchParams }: { params: 
   const open = o.status === "dikonfirmasi" || o.status === "dikirim_sebagian" || o.status === "terkirim";
   const canSchedule = (o.status === "dikonfirmasi" || o.status === "dikirim_sebagian") && prog.some((p) => p.scheduled + EPS < p.qty);
   const canInvoice = canFinance && o.status !== "draft" && o.status !== "batal" && prog.some((p) => p.invoiced + EPS < (p.delivered > EPS ? p.delivered : p.qty));
-  const activeTrips = deliveries.some((x) => x.d.status === "dijadwalkan" || x.d.status === "berangkat");
-  const shippedAny = deliveries.some((x) => x.d.status === "berangkat" || x.d.status === "terkirim");
+  // Surat jalan belum selesai: dijadwalkan, dimuat, berangkat, tiba, tertunda.
+  const activeTrips = deliveries.some((x) => x.d.status !== "terkirim" && x.d.status !== "batal");
+  // Barang sudah keluar gudang (terposting) atau terkirim.
+  const shippedAny = deliveries.some((x) => x.d.status === "terkirim" || isPosted(x.d.status, x.d.departedAt));
+  const live = deliveries.find((x) => x.d.status !== "terkirim" && x.d.status !== "batal");
+  const share = {
+    number: o.number,
+    customerName: contact?.name ?? "",
+    customerPhone: contact?.phone ?? "",
+    lines: prog.map((p) => ({ name: p.name, qty: p.qty, unit: p.unit })),
+    address: o.address,
+    mapsUrl: o.mapsUrl,
+    requestedDate: live?.d.date ?? o.requestedDate,
+    driverName: live?.driver ?? null,
+    driverPhone: live?.driverPhone ?? null,
+    plate: live?.plate ?? null,
+    trackDeliveryId: canShip && live ? live.d.id : null,
+    trackDeliveryNumber: live?.d.number ?? null,
+  };
+  const canCancel = canEdit && o.status !== "batal" && o.status !== "selesai" && o.status !== "terkirim" && !shippedAny && invoices.length === 0;
+  const canDelete = canEdit && !shippedAny && invoices.length === 0;
 
   return (
     <>
       <BackLink href="/operasional/pesanan">Pesanan</BackLink>
-      <PageHead title={o.number} sub={<Status s={o.status} />}>
+      <PageHead title={o.number} sub={<><Status s={o.status} /> <PaymentBadge status={o.paymentStatus} long /></>}>
         {canShip && canSchedule && <Link href={`/operasional/pengiriman/baru?pesanan=${o.id}`} className="btn btn-primary btn-sm">+ Jadwalkan pengiriman</Link>}
         {canInvoice && <Link href={`/akuntansi/penjualan/baru?pesanan=${o.id}`} className="btn btn-blue btn-sm">Buat faktur</Link>}
         {canFinance && o.status !== "batal" && <Link href={`/akuntansi/penerimaan/baru?kontak=${o.contactId}`} className="btn btn-ghost btn-sm">Catat DP / pembayaran</Link>}
@@ -60,6 +86,16 @@ export default async function PesananDetail({ params, searchParams }: { params: 
       {o.status === "draft" && (
         <p className="alert alert-ok" style={{ marginBottom: 16, background: "var(--biru-muda)", color: "var(--biru-tua)" }}>
           Pesanan masih draf. Konfirmasi dulu agar bisa dijadwalkan kirim.
+        </p>
+      )}
+      {o.status === "batal" && o.cancelReason && (
+        <p className="flag flag-warn" style={{ marginBottom: 16 }}>
+          Dibatalkan{o.cancelledBy != null && who.get(o.cancelledBy) ? ` oleh ${who.get(o.cancelledBy)}` : ""}{o.cancelledAt ? ` pada ${formatDateTime(o.cancelledAt)}` : ""}. Alasan: {o.cancelReason}
+        </p>
+      )}
+      {o.paymentStatus && o.paymentConfirmedBy != null && (
+        <p className="flag flag-info" style={{ marginBottom: 16 }}>
+          Status bayar &quot;{o.paymentStatus === "belum_lunas" ? "belum lunas" : o.paymentStatus === "tidak_diketahui" ? "tidak terbaca" : o.paymentStatus}&quot; dari faktur Zahir dikonfirmasi oleh {who.get(o.paymentConfirmedBy) ?? "pengguna"}{o.paymentConfirmedAt ? ` pada ${formatDateTime(o.paymentConfirmedAt)}` : ""}.
         </p>
       )}
       {late && o.status !== "selesai" && o.status !== "batal" && (
@@ -72,6 +108,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
           <div><span className="muted small">Pelanggan</span><Link href={`/operasional/pelanggan/${contact?.id}`}><b>{contact?.name}</b></Link>{contact?.company && <div className="small">{contact.company}</div>}{contact?.phone && <div className="small"><a href={`tel:${contact.phone}`}>{contact.phone}</a></div>}</div>
           <div><span className="muted small">Tanggal pesanan</span><b>{tgl(o.date)}</b>{o.requestedDate && <div className="small">minta kirim {tgl(o.requestedDate)}</div>}</div>
           {o.customerRef && <div><span className="muted small">No. PO pelanggan</span><b>{o.customerRef}</b></div>}
+          {o.externalRef && <div><span className="muted small">Dokumen Zahir</span><b>{o.externalRef}</b></div>}
           {o.project && <div><span className="muted small">Proyek</span><b>{o.project}</b></div>}
           <div style={{ maxWidth: 360 }}>
             <span className="muted small">Alamat kirim</span>
@@ -81,6 +118,12 @@ export default async function PesananDetail({ params, searchParams }: { params: 
           </div>
           {canFinance && deposit > 0 && <div><span className="muted small">Uang muka pelanggan</span><b><Rp n={deposit} /></b></div>}
         </section>
+
+        {o.status !== "batal" && (
+          <div className="stack" style={{ gap: 10, alignItems: "flex-start" }}>
+            <ShareOrderButton info={share} />
+          </div>
+        )}
 
         <section className="admin-table">
           <table>
@@ -165,9 +208,8 @@ export default async function PesananDetail({ params, searchParams }: { params: 
               {o.status === "draft" && <ConfirmAction action={setOrderStatus.bind(null, o.id, "konfirmasi")} label="Konfirmasi pesanan" confirmText="Konfirmasi pesanan ini?" className="btn btn-blue btn-sm" />}
               {open && <ConfirmAction action={setOrderStatus.bind(null, o.id, "selesai")} label="Tandai selesai" confirmText={activeTrips ? "Masih ada surat jalan berjalan. Tetap coba tandai selesai?" : "Tandai pesanan selesai? Sisa barang yang belum dikirim tidak akan dikirim lagi."} className="btn btn-ghost btn-sm" />}
               {(o.status === "selesai" || o.status === "batal") && <ConfirmAction action={setOrderStatus.bind(null, o.id, "buka")} label="Buka kembali" confirmText="Buka kembali pesanan ini?" className="btn btn-ghost btn-sm" />}
-              {o.status !== "batal" && !shippedAny && <ConfirmAction action={setOrderStatus.bind(null, o.id, "batal")} label="Batalkan pesanan" confirmText="Batalkan pesanan ini? Jadwal kirim yang belum berangkat ikut dibatalkan." />}
-              {!shippedAny && invoices.length === 0 && <ConfirmAction action={deleteOrder.bind(null, o.id)} label="Hapus" confirmText={`Hapus ${o.number} permanen?`} />}
             </div>
+            <OrderDanger id={o.id} number={o.number} canCancel={canCancel} canDelete={canDelete} />
           </section>
         )}
       </div>
