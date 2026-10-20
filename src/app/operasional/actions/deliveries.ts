@@ -72,6 +72,10 @@ const NEXT: Record<DeliveryStatus, DeliveryStatus[]> = {
   berangkat: ["terkirim", "dijadwalkan", "batal"],
   terkirim: ["batal"],
   batal: ["dijadwalkan"],
+  // Status baru dari port inventori-ops (migrasi 0005): belum dipakai alur lama; alur lengkapnya dibuat subagen pengiriman.
+  dimuat: [],
+  tiba: [],
+  tertunda: [],
 };
 
 /**

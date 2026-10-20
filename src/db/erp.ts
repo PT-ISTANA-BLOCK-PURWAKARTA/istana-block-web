@@ -153,6 +153,9 @@ export const vehicles = sqliteTable(
     note: text("note").notNull().default(""),
     /** ID perangkat GPS di truk (IMEI atau ID yang dikirim perangkat/gateway). */
     gpsDeviceId: text("gps_device_id"),
+    /** Masa berlaku STNK & KIR (YYYY-MM-DD); peringatan di Ringkasan bila sisa <= 30 hari. */
+    stnkExpiry: text("stnk_expiry"),
+    kirExpiry: text("kir_expiry"),
     ...created,
   },
   (t) => [uniqueIndex("ops_vehicles_gps_device").on(t.gpsDeviceId)],
@@ -189,8 +192,15 @@ export const drivers = sqliteTable("ops_drivers", {
   phone: text("phone").notNull().default(""),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   note: text("note").notNull().default(""),
+  /** Nomor SIM & masa berlakunya (YYYY-MM-DD); peringatan di Ringkasan bila sisa <= 30 hari. */
+  licenseNo: text("license_no"),
+  licenseExpiry: text("license_expiry"),
   ...created,
 });
+
+/** Status pembayaran PO yang dibaca dari faktur/surat jalan Zahir (nominal sengaja tidak disimpan agar sopir tak melihat harga). */
+export const paymentStatuses = ["lunas", "belum_lunas", "tempo", "tidak_diketahui"] as const;
+export type PaymentStatus = (typeof paymentStatuses)[number];
 
 export const orderStatuses = ["draft", "dikonfirmasi", "dikirim_sebagian", "terkirim", "selesai", "batal"] as const;
 export type OrderStatus = (typeof orderStatuses)[number];
@@ -214,10 +224,20 @@ export const orders = sqliteTable(
     discount: integer("discount").notNull().default(0),
     taxable: integer("taxable", { mode: "boolean" }).notNull().default(false),
     note: text("note").notNull().default(""),
+    /** Nomor faktur/surat jalan Zahir asal impor (anti-dobel). */
+    externalRef: text("external_ref"),
+    paymentStatus: text("payment_status").$type<PaymentStatus>(),
+    /** Pengguna (users.id) yang mengonfirmasi status bayar belum_lunas/tidak_diketahui. */
+    paymentConfirmedBy: integer("payment_confirmed_by"),
+    paymentConfirmedAt: integer("payment_confirmed_at", { mode: "timestamp" }),
+    /** Alasan pembatalan (3-500 huruf), pengguna pembatal (users.id), dan waktunya. */
+    cancelReason: text("cancel_reason"),
+    cancelledBy: integer("cancelled_by"),
+    cancelledAt: integer("cancelled_at", { mode: "timestamp" }),
     createdBy: createdBy(),
     ...created,
   },
-  (t) => [uniqueIndex("ops_orders_number_uq").on(t.number), index("ops_orders_status_idx").on(t.status, t.date)],
+  (t) => [uniqueIndex("ops_orders_number_uq").on(t.number), index("ops_orders_status_idx").on(t.status, t.date), index("ops_orders_external_idx").on(t.externalRef)],
 );
 
 export const orderLines = sqliteTable(
@@ -235,7 +255,12 @@ export const orderLines = sqliteTable(
   (t) => [index("ops_ol_order_idx").on(t.orderId)],
 );
 
-export const deliveryStatuses = ["dijadwalkan", "berangkat", "terkirim", "batal"] as const;
+/**
+ * Urutan alur: dijadwalkan -> dimuat -> berangkat -> tiba -> terkirim (tertunda & batal di luar urutan).
+ * Padanan inventori-ops: unassigned/assigned=dijadwalkan, ready=dimuat, in_transit=berangkat, arrived=tiba,
+ * delayed=tertunda, delivered=terkirim, cancelled=batal.
+ */
+export const deliveryStatuses = ["dijadwalkan", "dimuat", "berangkat", "tiba", "tertunda", "terkirim", "batal"] as const;
 export type DeliveryStatus = (typeof deliveryStatuses)[number];
 
 export const deliveries = sqliteTable(
@@ -248,8 +273,12 @@ export const deliveries = sqliteTable(
     vehicleId: text("vehicle_id"),
     driverId: text("driver_id"),
     status: text("status").$type<DeliveryStatus>().notNull().default("dijadwalkan"),
+    /** Waktu "Sudah dimuat", berangkat, tiba di tujuan, terkirim; alasan bila tertunda. */
+    loadedAt: integer("loaded_at", { mode: "timestamp" }),
     departedAt: integer("departed_at", { mode: "timestamp" }),
+    arrivedAt: integer("arrived_at", { mode: "timestamp" }),
     deliveredAt: integer("delivered_at", { mode: "timestamp" }),
+    delayReason: text("delay_reason"),
     receivedBy: text("received_by").notNull().default(""),
     proofKey: text("proof_key"),
     note: text("note").notNull().default(""),
@@ -294,16 +323,38 @@ export const stockMoves = sqliteTable(
   (t) => [index("inv_sm_item_idx").on(t.itemId, t.date), index("inv_sm_source_idx").on(t.source, t.sourceId)],
 );
 
-export const productions = sqliteTable("inv_productions", {
-  id: id(),
-  number: text("number").notNull(),
-  date: text("date").notNull(),
-  /** Upah/overhead produksi yang dibebankan ke nilai barang jadi. */
-  laborCost: integer("labor_cost").notNull().default(0),
-  note: text("note").notNull().default(""),
-  createdBy: createdBy(),
-  ...created,
-});
+/** Kategori hasil produksi lapangan: mandor mengisi precast, QC mengisi paving, kantor keduanya. */
+export const productionCategories = ["precast", "paving"] as const;
+export type ProductionCategory = (typeof productionCategories)[number];
+
+export const productions = sqliteTable(
+  "inv_productions",
+  {
+    id: id(),
+    number: text("number").notNull(),
+    date: text("date").notNull(),
+    /** Upah/overhead produksi yang dibebankan ke nilai barang jadi. */
+    laborCost: integer("labor_cost").notNull().default(0),
+    note: text("note").notNull().default(""),
+    /** Kolom lapangan (F-IB-02), kosong untuk dokumen lama. */
+    category: text("category").$type<ProductionCategory>(),
+    /** Kode batch otomatis "<prefix>-<yymmdd WIB>-<nn>", mis. PB-261005-01. */
+    batchCode: text("batch_code"),
+    leader: text("leader"),
+    target: real("target"),
+    cementBags: real("cement_bags"),
+    /** Khusus paving: jumlah papan & produk gagal (reject). */
+    boards: real("boards"),
+    rejects: real("rejects"),
+    /** Kendala produksi dari PIC, mis. "Mesin trouble"; rincian di note. */
+    issues: text("issues", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    /** Kunci R2 foto produksi (folder produksi/). */
+    photoKey: text("photo_key"),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [index("inv_productions_batch_idx").on(t.batchCode)],
+);
 
 export const productionLines = sqliteTable(
   "inv_production_lines",
@@ -519,6 +570,495 @@ export const sequences = sqliteTable("sys_sequences", {
   key: text("key").primaryKey(),
   value: integer("value").notNull().default(0),
 });
+
+/* ================================================================================================
+ * Port inventori-ops (migrasi 0005): jejak PO, pelacakan publik, notifikasi, piket, QC, barang masuk,
+ * uji pasir, kalender, rekap ISO, keamanan data. Aturan: lihat keputusan K1-K9 port operasional.
+ * Kunci berkas (*_key) = kunci objek R2 (binding MEDIA), disajikan privat lewat /operasional/berkas/.
+ * ============================================================================================== */
+
+export type MaterialLine = { name: string; qty: number | null; unit: string };
+
+/* ---------------------------------------------------------------- PO & pengiriman: jejak */
+
+/** Jejak PO yang dihapus (snapshot ringkas untuk audit). */
+export const orderDeletions = sqliteTable(
+  "ops_order_deletions",
+  {
+    id: id(),
+    orderId: text("order_id").notNull(),
+    number: text("number").notNull(),
+    customerName: text("customer_name").notNull().default(""),
+    customerPhone: text("customer_phone").notNull().default(""),
+    reason: text("reason").notNull(),
+    snapshot: text("snapshot", { mode: "json" }).$type<Record<string, unknown>>().notNull(),
+    deletedBy: integer("deleted_by"),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [index("ops_order_deletions_at_idx").on(t.deletedAt), index("ops_order_deletions_number_idx").on(t.number)],
+);
+
+/** Riwayat perubahan status surat jalan. */
+export const deliveryHistory = sqliteTable(
+  "ops_delivery_history",
+  {
+    id: id(),
+    deliveryId: text("delivery_id").notNull(),
+    fromStatus: text("from_status").$type<DeliveryStatus>(),
+    toStatus: text("to_status").$type<DeliveryStatus>().notNull(),
+    /** users.id yang mengubah, atau ops_drivers.id bila sopir sendiri. */
+    changedBy: integer("changed_by"),
+    changedByDriver: text("changed_by_driver"),
+    note: text("note").notNull().default(""),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [index("ops_dh_delivery_idx").on(t.deliveryId, t.createdAt)],
+);
+
+export const proofKinds = ["photo", "signature", "document"] as const;
+export type ProofKind = (typeof proofKinds)[number];
+/** Maksimal foto bukti per surat jalan. */
+export const MAX_DELIVERY_PROOFS = 4;
+
+/** Foto bukti pengiriman (maks 4 per surat jalan); kolom lama ops_deliveries.proof_key tetap dibaca. */
+export const deliveryProofs = sqliteTable(
+  "ops_delivery_proofs",
+  {
+    id: id(),
+    deliveryId: text("delivery_id").notNull(),
+    kind: text("kind").$type<ProofKind>().notNull().default("photo"),
+    fileKey: text("file_key").notNull(),
+    originalName: text("original_name").notNull().default(""),
+    createdBy: createdBy(),
+    createdByDriver: text("created_by_driver"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [index("ops_dp_delivery_idx").on(t.deliveryId)],
+);
+
+/** Tautan lacak publik untuk tamu (/kiriman/[token]); yang disimpan hanya SHA-256 token. */
+export const trackingLinks = sqliteTable(
+  "ops_tracking_links",
+  {
+    id: id(),
+    deliveryId: text("delivery_id").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    lastAccessedAt: integer("last_accessed_at", { mode: "timestamp" }),
+    createdBy: createdBy(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [uniqueIndex("ops_tl_token_uq").on(t.tokenHash), index("ops_tl_delivery_idx").on(t.deliveryId)],
+);
+
+/* ---------------------------------------------------------------- Notifikasi & push */
+
+/** po_baru = PO baru perlu diperiksa/menunggu dimuat; dimuat = sudah dimuat; status_kirim = perubahan status SJ (refId = id SJ). */
+export const notificationKinds = ["po_baru", "dimuat", "status_kirim", "umum"] as const;
+export type NotificationKind = (typeof notificationKinds)[number];
+
+/** Notifikasi dalam aplikasi untuk kantor/gudang (refId = id PO atau SJ sesuai kind). */
+export const notifications = sqliteTable(
+  "ops_notifications",
+  {
+    id: id(),
+    kind: text("kind").$type<NotificationKind>().notNull(),
+    refId: text("ref_id").notNull().default(""),
+    title: text("title").notNull(),
+    message: text("message").notNull().default(""),
+    readAt: integer("read_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [index("ops_notif_read_idx").on(t.readAt, t.createdAt), index("ops_notif_ref_idx").on(t.kind, t.refId)],
+);
+
+/** Langganan Web Push per perangkat. */
+export const pushSubscriptions = sqliteTable(
+  "ops_push_subscriptions",
+  {
+    id: id(),
+    userId: integer("user_id").notNull(),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    userAgent: text("user_agent").notNull().default(""),
+    ...created,
+  },
+  (t) => [uniqueIndex("ops_push_endpoint_uq").on(t.endpoint), index("ops_push_user_idx").on(t.userId)],
+);
+
+/* ---------------------------------------------------------------- Piket & keamanan data */
+
+/** Piket per akun (pengganti Duty Phone): endedAt kosong = sedang piket. Shift basi > 24 jam ditutup otomatis. */
+export const dutyShifts = sqliteTable(
+  "ops_duty_shifts",
+  {
+    id: id(),
+    userId: integer("user_id").notNull(),
+    userName: text("user_name").notNull(),
+    startedAt: integer("started_at", { mode: "timestamp" }).notNull(),
+    endedAt: integer("ended_at", { mode: "timestamp" }),
+    handoverNote: text("handover_note").notNull().default(""),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [index("ops_ds_user_idx").on(t.userId, t.endedAt), index("ops_ds_started_idx").on(t.startedAt)],
+);
+
+/** Log aktivitas: siapa, kapan, apa (tanpa password/PIN/foto). Id integer karena volumenya tinggi. */
+export const activityLogs = sqliteTable(
+  "ops_activity_logs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    at: integer("at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+    userId: integer("user_id"),
+    userName: text("user_name"),
+    role: text("role"),
+    /** Pola "modul.aksi", mis. "produksi.simpan". */
+    action: text("action").notNull(),
+    label: text("label").notNull(),
+    summary: text("summary"),
+    /** Isi permintaan yang sudah disamarkan, dipotong 2000 huruf. */
+    details: text("details"),
+    success: integer("success", { mode: "boolean" }).notNull().default(true),
+    ip: text("ip"),
+    device: text("device"),
+  },
+  (t) => [index("ops_al_at_idx").on(t.at), index("ops_al_user_idx").on(t.userId, t.at)],
+);
+
+/** Riwayat backup. */
+export const backupRuns = sqliteTable(
+  "ops_backup_runs",
+  {
+    id: id(),
+    at: integer("at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+    userId: integer("user_id"),
+    userName: text("user_name"),
+    folder: text("folder"),
+    tables: integer("tables_count").notNull().default(0),
+    rows: integer("rows_count").notNull().default(0),
+    photos: integer("photos_count").notNull().default(0),
+    newPhotos: integer("new_photos_count").notNull().default(0),
+  },
+  (t) => [index("ops_br_at_idx").on(t.at)],
+);
+
+/* ---------------------------------------------------------------- QC: mix desain & uji kuat tekan */
+
+export const mixLayers = ["badan", "kepalaan", "lainnya"] as const;
+export type MixLayer = (typeof mixLayers)[number];
+/** gagal = sempat dipakai tapi hasilnya gagal; masuk rekapan bersama yang ditolak. */
+export const mixDesignStatuses = ["diajukan", "disetujui", "ditolak", "gagal"] as const;
+export type MixDesignStatus = (typeof mixDesignStatuses)[number];
+export const checkStatuses = ["sesuai", "tidak_sesuai", "perlu_perbaikan"] as const;
+export type CheckStatus = (typeof checkStatuses)[number];
+/** Alur ACC: menunggu -> disetujui (TTD), atau revisi (dikembalikan ke QC dengan catatan). */
+export const reviewStatuses = ["menunggu", "disetujui", "revisi"] as const;
+export type ReviewStatus = (typeof reviewStatuses)[number];
+
+/** Template komposisi mix desain yang diajukan QC dan disetujui kantor. */
+export const mixDesigns = sqliteTable(
+  "qc_mix_designs",
+  {
+    id: id(),
+    name: text("name").notNull(),
+    layer: text("layer").$type<MixLayer>().notNull(),
+    product: text("product").notNull(),
+    materials: text("materials", { mode: "json" }).$type<MaterialLine[]>().notNull(),
+    notes: text("notes").notNull().default(""),
+    status: text("status").$type<MixDesignStatus>().notNull().default("diajukan"),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    createdBy: createdBy(),
+    approvedBy: integer("approved_by"),
+    approvedAt: integer("approved_at", { mode: "timestamp" }),
+    reviewNote: text("review_note"),
+    /** Dipindah ke rekapan (tidak dipakai lagi/gagal): alasan, oleh siapa, kapan. */
+    retiredReason: text("retired_reason"),
+    retiredBy: integer("retired_by"),
+    retiredAt: integer("retired_at", { mode: "timestamp" }),
+    ...created,
+  },
+  (t) => [index("qc_md_status_idx").on(t.status, t.layer)],
+);
+
+/** Catatan harian penerapan mix desain per lapisan (badan/kepalaan). */
+export const mixLogs = sqliteTable(
+  "qc_mix_logs",
+  {
+    id: id(),
+    workDate: text("work_date").notNull(),
+    layer: text("layer").$type<MixLayer>().notNull(),
+    product: text("product").notNull(),
+    mixDesignId: text("mix_design_id"),
+    approvedMaterials: text("approved_materials", { mode: "json" }).$type<MaterialLine[]>().notNull(),
+    actualMaterials: text("actual_materials", { mode: "json" }).$type<MaterialLine[]>().notNull(),
+    mixingCount: real("mixing_count"),
+    boards: real("boards"),
+    squareMeters: real("square_meters"),
+    rejects: real("rejects"),
+    status: text("status").$type<CheckStatus>().notNull().default("sesuai"),
+    notes: text("notes").notNull().default(""),
+    reviewStatus: text("review_status").$type<ReviewStatus>().notNull().default("menunggu"),
+    reviewNote: text("review_note"),
+    createdBy: createdBy(),
+    /** TTD "Diperiksa oleh" (manajer QC) saat disetujui. */
+    managerSignedBy: integer("manager_signed_by"),
+    managerSignedAt: integer("manager_signed_at", { mode: "timestamp" }),
+    ...created,
+  },
+  (t) => [index("qc_ml_date_idx").on(t.workDate, t.layer)],
+);
+
+/** Laporan "Hasil Uji Kuat Tekan Beton" (kepala laporan + komposisi campuran). */
+export const strengthTests = sqliteTable(
+  "qc_strength_tests",
+  {
+    id: id(),
+    reportDate: text("report_date").notNull(),
+    companyName: text("company_name").notNull().default(""),
+    address: text("address").notNull().default(""),
+    /** Mutu beton, mis. "K-350". */
+    concreteGrade: text("concrete_grade").notNull(),
+    addressedTo: text("addressed_to").notNull().default(""),
+    composition: text("composition", { mode: "json" }).$type<MaterialLine[]>().notNull(),
+    notes: text("notes").notNull().default(""),
+    reviewStatus: text("review_status").$type<ReviewStatus>().notNull().default("menunggu"),
+    reviewNote: text("review_note"),
+    createdBy: createdBy(),
+    /** TTD "Diperiksa Lab Pengujian" saat disetujui; setelah itu TTD "Mengetahui Pimpinan". */
+    labSignedBy: integer("lab_signed_by"),
+    labSignedAt: integer("lab_signed_at", { mode: "timestamp" }),
+    leaderSignedBy: integer("leader_signed_by"),
+    leaderSignedAt: integer("leader_signed_at", { mode: "timestamp" }),
+    ...created,
+  },
+  (t) => [index("qc_st_date_idx").on(t.reportDate)],
+);
+
+/** Benda uji dalam satu laporan uji kuat tekan (tanggal buat/uji = teks YYYY-MM-DD). */
+export const strengthSamples = sqliteTable(
+  "qc_strength_samples",
+  {
+    id: id(),
+    testId: text("test_id").notNull(),
+    position: integer("position").notNull().default(0),
+    sampleName: text("sample_name").notNull(),
+    madeAt: text("made_at"),
+    testedAt: text("tested_at"),
+    weightKg: real("weight_kg"),
+    areaCm2: real("area_cm2"),
+    maxLoadKn: real("max_load_kn"),
+  },
+  (t) => [index("qc_ss_test_idx").on(t.testId)],
+);
+
+/* ---------------------------------------------------------------- Barang masuk & uji lumpur pasir */
+
+export const receiptCategories = ["bahan_baku", "lainnya"] as const;
+export type ReceiptCategory = (typeof receiptCategories)[number];
+export const receiptStatuses = ["diterima", "ditolak"] as const;
+export type ReceiptStatus = (typeof receiptStatuses)[number];
+/** Pengantar: armada quarry/supplier sendiri atau ekspedisi pihak ketiga. */
+export const deliveryModes = ["quarry", "ekspedisi"] as const;
+export type DeliveryMode = (typeof deliveryModes)[number];
+/** Maksimal foto per barang masuk. */
+export const MAX_RECEIPT_PHOTOS = 3;
+
+/**
+ * Log fisik barang yang datang di gerbang (satpam). TIDAK memposting stok; stok tetap lewat Pembelian di /akuntansi.
+ * Penilaian: tier kualitas (QC), kecepatan kirim (kantor), harga (pimpinan).
+ * Tier 1 Bagus, 2 Banyak brangkal, 3 Banyak lumpur, 4 Brangkal & lumpur. Kecepatan 1 Lambat/2 Standard/3 Cepat. Harga 1 Mahal/2 Sedang/3 Affordable.
+ */
+export const goodsReceipts = sqliteTable(
+  "ops_goods_receipts",
+  {
+    id: id(),
+    receivedAt: integer("received_at", { mode: "timestamp" }).notNull(),
+    category: text("category").$type<ReceiptCategory>().notNull().default("bahan_baku"),
+    itemName: text("item_name").notNull(),
+    /** Tag rekap inventory, mis. "Pasir Cimalaka". */
+    tag: text("tag"),
+    supplier: text("supplier"),
+    /** Asal tambang, mis. Cidadap. */
+    quarry: text("quarry"),
+    quantity: real("quantity"),
+    unit: text("unit").notNull().default("m³"),
+    vehiclePlate: text("vehicle_plate"),
+    driverName: text("driver_name"),
+    deliveryNoteNo: text("delivery_note_no"),
+    deliveryMode: text("delivery_mode").$type<DeliveryMode>(),
+    expeditionName: text("expedition_name"),
+    /** Temuan satpam: banyak brangkal (batu besar) di muatan. */
+    hasBrangkal: integer("has_brangkal", { mode: "boolean" }),
+    status: text("status").$type<ReceiptStatus>().notNull().default("diterima"),
+    /** Kunci R2 foto (folder penerimaan/), maks MAX_RECEIPT_PHOTOS. */
+    photoKeys: text("photo_keys", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    notes: text("notes").notNull().default(""),
+    tier: integer("tier"),
+    qualityNote: text("quality_note"),
+    qualityBy: integer("quality_by"),
+    qualityAt: integer("quality_at", { mode: "timestamp" }),
+    speedRating: integer("speed_rating"),
+    deliveryNote: text("delivery_note"),
+    deliveryBy: integer("delivery_by"),
+    deliveryAt: integer("delivery_at", { mode: "timestamp" }),
+    priceRating: integer("price_rating"),
+    priceNote: text("price_note"),
+    priceBy: integer("price_by"),
+    priceAt: integer("price_at", { mode: "timestamp" }),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [index("ops_gr_date_idx").on(t.receivedAt), index("ops_gr_item_idx").on(t.itemName)],
+);
+
+export const sandTestStatuses = ["draft", "selesai"] as const;
+export type SandTestStatus = (typeof sandTestStatuses)[number];
+/** Satuan pembacaan: ml (gelas ukur lab) atau cm (botol + penggaris); rasio kadar lumpur sama. */
+export const readingUnits = ["ml", "cm"] as const;
+export type ReadingUnit = (typeof readingUnits)[number];
+export const sandDecisions = ["diterima", "ditolak", "diterima_bersyarat"] as const;
+export type SandDecision = (typeof sandDecisions)[number];
+/** Batas kadar lumpur (%): <= 5 bagus, <= 10 cukup, > 10 lewat batas. */
+export const MAX_SILT_PERCENT = 10;
+
+/**
+ * Uji kadar lumpur pasir: kadar = lumpur / (pasir + lumpur) x 100. Draft = sedang mengendap (foto awal);
+ * selesai = pembacaan + foto akhir + keputusan.
+ */
+export const sandTests = sqliteTable(
+  "qc_sand_tests",
+  {
+    id: id(),
+    receiptId: text("receipt_id"),
+    status: text("status").$type<SandTestStatus>().notNull().default("selesai"),
+    testedAt: integer("tested_at", { mode: "timestamp" }).notNull(),
+    completedAt: integer("completed_at", { mode: "timestamp" }),
+    /** Sumber manual bila uji tidak terhubung ke barang masuk. */
+    supplier: text("supplier"),
+    quarry: text("quarry"),
+    sandType: text("sand_type").notNull(),
+    readingUnit: text("reading_unit").$type<ReadingUnit>().notNull().default("cm"),
+    /** Tinggi endapan pasir & lumpur, dalam satuan readingUnit. */
+    sandHeight: real("sand_height"),
+    siltHeight: real("silt_height"),
+    siltPercent: real("silt_percent"),
+    maxSiltPercent: real("max_silt_percent").notNull().default(MAX_SILT_PERCENT),
+    decision: text("decision").$type<SandDecision>(),
+    startPhotoKey: text("start_photo_key"),
+    photoKey: text("photo_key"),
+    notes: text("notes").notNull().default(""),
+    createdBy: createdBy(),
+    completedBy: integer("completed_by"),
+    ...created,
+  },
+  (t) => [index("qc_sand_date_idx").on(t.testedAt), index("qc_sand_receipt_idx").on(t.receiptId), index("qc_sand_status_idx").on(t.status)],
+);
+
+/* ---------------------------------------------------------------- Kalender rapat/training */
+
+export const calendarTypes = ["rapat", "training", "lainnya"] as const;
+export type CalendarType = (typeof calendarTypes)[number];
+
+export const calendarEvents = sqliteTable(
+  "ops_calendar_events",
+  {
+    id: id(),
+    title: text("title").notNull(),
+    type: text("type").$type<CalendarType>().notNull().default("rapat"),
+    startAt: integer("start_at", { mode: "timestamp" }).notNull(),
+    endAt: integer("end_at", { mode: "timestamp" }),
+    location: text("location").notNull().default(""),
+    description: text("description").notNull().default(""),
+    /** Pengingat: menit sebelum mulai, mis. [1440, 60]. */
+    reminderMinutes: text("reminder_minutes", { mode: "json" }).$type<number[]>().notNull().default(sql`'[]'`),
+    /** Acara berulang dibuat sebagai beberapa acara dengan seriesId sama. */
+    seriesId: text("series_id"),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [index("ops_ce_start_idx").on(t.startAt), index("ops_ce_series_idx").on(t.seriesId)],
+);
+
+export const calendarParticipants = sqliteTable(
+  "ops_calendar_participants",
+  {
+    id: id(),
+    eventId: text("event_id").notNull(),
+    userId: integer("user_id").notNull(),
+  },
+  (t) => [uniqueIndex("ops_cp_event_user_uq").on(t.eventId, t.userId), index("ops_cp_user_idx").on(t.userId)],
+);
+
+/** Jadwal kirim pengingat (diproses cron tiap 5 menit); sentAt terisi setelah terkirim. */
+export const calendarReminders = sqliteTable(
+  "ops_calendar_reminders",
+  {
+    id: id(),
+    eventId: text("event_id").notNull(),
+    minutesBefore: integer("minutes_before").notNull(),
+    remindAt: integer("remind_at", { mode: "timestamp" }).notNull(),
+    sentAt: integer("sent_at", { mode: "timestamp" }),
+  },
+  (t) => [index("ops_cr_due_idx").on(t.sentAt, t.remindAt), index("ops_cr_event_idx").on(t.eventId)],
+);
+
+export type CalendarAttendee = { userId: number | null; name: string; present: boolean; score: string | null; note: string | null };
+/** Lampiran hasil rapat; key = kunci R2 (folder kalender/). */
+export type CalendarFile = { key: string; name: string; contentType: string; size: number };
+
+/** Notulen rapat/training. Keputusan rapat disimpan sebagai baris F-IB-14 di iso_records (data._from = "event:<id>"). */
+export const calendarResults = sqliteTable(
+  "ops_calendar_results",
+  {
+    id: id(),
+    eventId: text("event_id").notNull(),
+    leader: text("leader").notNull().default(""),
+    category: text("category").notNull().default(""),
+    summary: text("summary").notNull().default(""),
+    attendees: text("attendees", { mode: "json" }).$type<CalendarAttendee[]>().notNull().default(sql`'[]'`),
+    guests: text("guests").notNull().default(""),
+    durationHours: real("duration_hours"),
+    evaluation: text("evaluation").notNull().default(""),
+    notes: text("notes").notNull().default(""),
+    files: text("files", { mode: "json" }).$type<CalendarFile[]>().notNull().default(sql`'[]'`),
+    filledBy: integer("filled_by"),
+    filledByName: text("filled_by_name"),
+    ...created,
+  },
+  (t) => [uniqueIndex("ops_cres_event_uq").on(t.eventId)],
+);
+
+/* ---------------------------------------------------------------- Rekap ISO */
+
+/**
+ * record = baris form yang diisi langsung; supplement = kolom pelengkap untuk baris dari data aplikasi
+ * (sourceKey mis. "order:<id>"); objective = angka Sasaran Mutu F-IB-16 per bulan (sourceKey "YYYY-MM:no").
+ */
+export const isoRecordKinds = ["record", "supplement", "objective"] as const;
+export type IsoRecordKind = (typeof isoRecordKinds)[number];
+export type IsoValues = Record<string, string | number | null>;
+
+export const isoRecords = sqliteTable(
+  "iso_records",
+  {
+    id: id(),
+    formCode: text("form_code").notNull(),
+    kind: text("kind").$type<IsoRecordKind>().notNull().default("record"),
+    /** Tanggal form (YYYY-MM-DD WIB) yang dibaca rekap per periode. */
+    recordDate: text("record_date").notNull(),
+    sourceKey: text("source_key"),
+    /** Nomor dokumen, mis. NCR-2026-001. */
+    number: text("number"),
+    data: text("data", { mode: "json" }).$type<IsoValues>().notNull(),
+    /** Riwayat nilai lama (mis. tanggal kalibrasi sebelumnya pada F-IB-06). */
+    history: text("history", { mode: "json" }).$type<{ at: string; by: string; values: IsoValues }[]>().notNull().default(sql`'[]'`),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    updatedByName: text("updated_by_name"),
+    ...created,
+  },
+  (t) => [index("iso_form_date_idx").on(t.formCode, t.kind, t.recordDate), uniqueIndex("iso_form_source_uq").on(t.formCode, t.sourceKey)],
+);
 
 export type Account = typeof accounts.$inferSelect;
 export type Contact = typeof contacts.$inferSelect;

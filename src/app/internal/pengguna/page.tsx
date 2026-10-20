@@ -16,15 +16,33 @@ const MATRIX: [string, Partial<Record<Role, Cell>>][] = [
   ["Faktur, penerimaan, pembelian, kas, jurnal, laporan keuangan", { owner: "ya", keuangan: "ya" }],
   ["Membuat & mengubah pesanan (PO), data pelanggan", { owner: "ya", operasional: "ya", keuangan: "lihat", gudang: "lihat" }],
   ["Menjadwalkan surat jalan, armada, sopir, konfirmasi terkirim", { owner: "ya", operasional: "ya", keuangan: "lihat", gudang: "lihat" }],
-  ["Menandai truk berangkat (barang keluar gudang)", { owner: "ya", operasional: "ya", gudang: "ya" }],
+  ["Menandai truk berangkat (barang keluar gudang), tombol Sudah dimuat", { owner: "ya", operasional: "ya", gudang: "ya", mandor: "ya", satpam: "ya" }],
   ["Hasil produksi, penyesuaian & saldo awal stok", { owner: "ya", gudang: "ya", keuangan: "lihat" }],
+  ["Mengisi hasil produksi lapangan (mandor: precast, QC: paving, kantor: keduanya)", { owner: "ya", operasional: "ya", mandor: "ya", qc: "ya" }],
+  ["Mencatat barang masuk di gerbang", { owner: "ya", operasional: "ya", satpam: "ya" }],
+  ["Melihat daftar barang masuk", { owner: "ya", operasional: "ya", qc: "ya", satpam: "ya", manajer_qc: "ya", pimpinan: "ya" }],
+  ["Uji lumpur pasir: memulai & mengisi hasil", { owner: "ya", qc: "ya", satpam: "ya" }],
+  ["Melihat hasil uji lumpur pasir", { owner: "ya", qc: "ya", manajer_qc: "ya", pimpinan: "ya" }],
+  ["QC: mix desain, catatan harian, uji kuat tekan", { owner: "ya", operasional: "ya", qc: "ya", manajer_qc: "ya" }],
+  ["ACC catatan & uji kuat tekan (tanda tangan Diperiksa)", { owner: "ya", manajer_qc: "ya" }],
+  ["Tanda tangan Mengetahui pimpinan, nilai harga bahan", { owner: "ya", pimpinan: "ya" }],
+  ["Nilai mutu bahan (QC) dan kecepatan kirim (kantor)", { owner: "ya", operasional: "ya", qc: "ya" }],
+  ["Kalender rapat & training (melihat)", { owner: "ya", operasional: "ya", qc: "ya", mandor: "ya", manajer_qc: "ya", pimpinan: "ya" }],
+  ["Membuat acara kalender, mengisi hasil rapat, melihat rekap piket", { owner: "ya", operasional: "ya" }],
+  ["Laporan pimpinan harian/mingguan/bulanan", { owner: "ya", pimpinan: "ya" }],
+  ["Rekap & form ISO (F-IB)", { owner: "ya", operasional: "ya", qc: "ya", mandor: "ya", manajer_qc: "ya", pimpinan: "ya" }],
+  ["Absen piket (wajib bagi satpam & mandor sebelum mencatat)", { owner: "ya", mandor: "ya", satpam: "ya" }],
+  ["Menyelesaikan PO/pengiriman dari kantor", { owner: "ya", operasional: "ya" }],
+  ["Keamanan data: log aktivitas & backup", { owner: "ya" }],
   ["Melihat stok barang di gudang", { owner: "ya", gudang: "ya", operasional: "ya", keuangan: "ya" }],
   ["Melihat posisi truk di peta", { owner: "ya", operasional: "ya" }],
   ["Tugas antar sendiri: berangkat, tandai terkirim + foto, bagikan lokasi", { sopir: "ya" }],
   ["Melihat harga pokok, nilai persediaan & nilai faktur", { owner: "ya", keuangan: "ya" }],
   ["Mengelola pengguna & peran", { owner: "ya" }],
 ];
-const HOW: Record<Role, string> = { owner: "email", web: "email", keuangan: "email", operasional: "email / HP", gudang: "HP & PIN", sopir: "HP & PIN" };
+const HOW: Record<Role, string> = { owner: "email", web: "email", keuangan: "email", operasional: "email / HP", gudang: "HP & PIN", sopir: "HP & PIN",
+  qc: "HP & PIN / email", mandor: "HP & PIN", satpam: "HP & PIN", manajer_qc: "email", pimpinan: "email",
+};
 
 export default async function Pengguna() {
   const me = await requireOwner();
