@@ -7,7 +7,7 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
 
 /**
  * Lokasi dari HP sopir (halaman Tugas, saat "Bagikan lokasi" aktif). Hanya diterima selama sopir
- * punya surat jalan berstatus berangkat; posisi dicatat untuk truk di surat jalan itu.
+ * punya surat jalan di jalan (berangkat, tiba, atau tertunda setelah berangkat); posisi dicatat untuk truk di surat jalan itu.
  */
 export async function POST(req: Request) {
   const origin = req.headers.get("origin");

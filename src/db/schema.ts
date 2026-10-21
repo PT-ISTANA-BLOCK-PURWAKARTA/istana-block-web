@@ -23,6 +23,8 @@ export const users = sqliteTable("users", {
   driverId: text("driver_id"),
   /** Peran: owner, web (/situs), keuangan (/akuntansi), operasional, gudang, sopir. */
   roles: text("roles", { mode: "json" }).$type<string[]>().notNull().default(sql`'["owner"]'`),
+  /** Kunci R2 (ttd/…) gambar tanda tangan, dicetak di dokumen QC (ACC manajer QC, TTD pimpinan). */
+  signatureKey: text("signature_key"),
   ...timestamps,
 });
 

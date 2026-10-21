@@ -1,0 +1,75 @@
+/*
+ * Barang masuk, uji lumpur pasir, dan bahan baku: pilihan besar (rcv-choice), kartu, dialog <dialog>, label penilaian.
+ * Dipakai bersama oleh /barang-masuk, /uji-pasir, /bahan-baku. Hanya memakai token warna panel; nyaman di HP 375 px.
+ */
+
+/* ---------- Pilihan berbentuk tombol (jenis, barang, satuan, status) ---------- */
+.rcv-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.rcv-choice { min-height: 46px; padding: 0 16px; border: 1px solid var(--p-line-strong); border-radius: var(--p-radius-sm); background: #fff; color: var(--p-ink-2); font: 600 15px var(--font-isi); cursor: pointer; text-align: left; }
+.rcv-choice:hover { border-color: var(--biru); }
+.rcv-choice:focus-visible { outline: 2px solid var(--biru); outline-offset: 1px; }
+.rcv-choice.on { background: var(--info-bg); border-color: var(--biru); color: var(--biru-tua); box-shadow: inset 0 0 0 1px var(--biru); }
+
+/* ---------- Form terima barang ---------- */
+.rcv-formbox { margin-bottom: 16px; }
+.rcv-formbox > summary { list-style: none; cursor: pointer; }
+.rcv-formbox > summary::-webkit-details-marker { display: none; }
+.rcv-formbox[open] > summary { margin-bottom: 12px; }
+.rcv-form { gap: 18px; }
+.admin .rcv-qty { font-size: 22px; font-weight: 700; min-height: 54px; max-width: 220px; }
+.rcv-upper { text-transform: uppercase; }
+.rcv-form .rcv-save { min-height: 54px; font-size: 17px; }
+.rcv-next { margin: 0 0 14px; }
+.rcv-sub { font-size: 16.5px; font-weight: 600; margin: 4px 0 10px; }
+
+/* ---------- Foto ---------- */
+.rcv-photos-wrap { display: flex; flex-direction: column; gap: 6px; }
+.rcv-photos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rcv-thumb { position: relative; display: block; width: 76px; height: 76px; border-radius: 10px; overflow: hidden; border: 1px solid var(--p-line); background: var(--latar); flex: 0 0 auto; }
+.rcv-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rcv-thumb button { position: absolute; top: 2px; right: 2px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--bahaya); color: #fff; font: 700 18px/1 var(--font-isi); cursor: pointer; }
+.admin .rcv-add { gap: 8px; min-height: 48px; }
+.admin .rcv-add-wide { width: 100%; justify-content: center; }
+
+/* ---------- Daftar kartu ---------- */
+.rcv-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; }
+.rcv-summary { margin-bottom: 14px; }
+.rcv-sum-chip { display: inline-block; padding: 7px 12px; border-radius: 10px; background: var(--info-bg); color: var(--biru-tua); font-size: 14px; }
+.rcv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 12px; align-items: start; }
+.rcv-card { background: #fff; border: 1px solid var(--p-line); border-radius: var(--p-radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.rcv-card p { margin: 0; }
+.rcv-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.rcv-title { min-width: 0; overflow-wrap: anywhere; }
+.rcv-title b { color: var(--biru-tua); font-size: 16px; }
+.rcv-qty-text { font-family: var(--font-judul); font-weight: 700; font-size: 17px; color: var(--biru-tua); }
+.rcv-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rcv-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rcv-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid var(--p-line); padding-top: 8px; margin-top: 2px; }
+.silt-ok { color: var(--sukses); }
+.silt-warn { color: var(--warn); }
+.silt-bad { color: var(--bahaya); }
+
+/* ---------- Label penilaian & nilai overall ---------- */
+.lv { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+.lv-avg { font-weight: 400; opacity: .8; }
+.lv-3 { background: var(--ok-bg); color: var(--sukses); }
+.lv-2 { background: var(--info-bg); color: var(--biru-tua); }
+.lv-1 { background: var(--bad-bg); color: var(--bahaya); }
+.overall { display: inline-flex; align-items: center; gap: 6px; padding: 2px 11px; border-radius: 999px; background: var(--biru-tua); color: #fff; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.overall-tmp { font-weight: 400; opacity: .75; }
+.lv-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.lv-pick-btn { min-height: 52px; padding: 0 8px; border-radius: var(--p-radius-sm); border: 2px solid var(--p-line-strong); background: #fff; color: var(--p-ink-2); font: 600 15px var(--font-isi); cursor: pointer; }
+.lv-pick-btn.on.lv-3 { border-color: var(--sukses); background: var(--ok-bg); color: var(--sukses); }
+.lv-pick-btn.on.lv-2 { border-color: var(--biru); background: var(--info-bg); color: var(--biru-tua); }
+.lv-pick-btn.on.lv-1 { border-color: var(--bahaya); background: var(--bad-bg); color: var(--bahaya); }
+
+/* ---------- Dialog ---------- */
+.rcv-modal { border: 0; padding: 0; border-radius: var(--p-radius); width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); box-shadow: 0 24px 60px rgba(14, 42, 107, .28); color: var(--teks); background: #fff; }
+.rcv-modal::backdrop { background: rgba(14, 42, 107, .45); }
+.rcv-modal-body { padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; max-height: calc(100dvh - 24px); }
+.rcv-modal-body .card-head { margin-bottom: 0; align-items: center; }
+
+@media (max-width: 640px) {
+  .rcv-modal-body { padding: 16px 14px 20px; }
+  .rcv-choice { flex: 1 1 auto; }
+}

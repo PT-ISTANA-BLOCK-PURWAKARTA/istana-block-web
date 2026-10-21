@@ -1,0 +1,43 @@
+/* Rekap ISO: pemilih form, tabel baris form, dan pelengkap kecil. Hanya memakai token panel yang sudah ada. */
+
+.iso-forms { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.iso-forms a { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; background: #fff; border: 1px solid var(--p-line); border-radius: var(--p-radius-sm); text-decoration: none; color: var(--tinta); min-height: 44px; }
+.iso-forms a:hover { border-color: var(--biru); }
+.iso-forms a[aria-current="page"] { background: var(--biru-tua); border-color: var(--biru-tua); color: #fff; }
+.iso-forms .code { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; opacity: .8; }
+.iso-forms .cnt { background: var(--abu); color: var(--tinta); border-radius: 999px; padding: 0 7px; font-size: 11.5px; }
+.iso-forms a[aria-current="page"] .cnt { background: rgba(255, 255, 255, .22); color: #fff; }
+.iso-forms .kind { font-size: 11.5px; opacity: .75; }
+
+.iso-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.iso-notes .flag { margin: 0; }
+
+.iso-alerts { display: flex; flex-wrap: wrap; gap: 8px; }
+.iso-suggest { display: flex; flex-direction: column; gap: 1px; padding: 8px 12px; background: #fff; border-radius: var(--p-radius-sm); text-decoration: none; color: var(--tinta); border: 1px solid var(--p-line); }
+.iso-suggest:hover { border-color: var(--biru); }
+
+.iso-chips { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; }
+.iso-chips > span { background: #fff; border: 1px solid var(--p-line); border-radius: var(--p-radius-sm); padding: 8px 12px; }
+
+.iso-table td { white-space: nowrap; vertical-align: top; }
+.iso-table td.wrap { white-space: normal; min-width: 180px; max-width: 280px; }
+.iso-table th.iso-auto, .iso-table td.iso-auto { background: var(--p-head); }
+.iso-table .iso-sticky { position: sticky; left: 0; z-index: 1; background: #fff; }
+.iso-table th.iso-sticky { background: var(--p-head); }
+.iso-table tbody tr:hover td.iso-sticky { background: var(--p-hover); }
+.iso-dot { display: inline-block; width: 6px; height: 6px; margin-left: 5px; border-radius: 50%; background: var(--biru-garis); vertical-align: middle; }
+.iso-actions { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+.iso-history summary { cursor: pointer; font-size: 12px; color: var(--p-muted); }
+.iso-history ul { margin: 4px 0 0; padding-left: 16px; font-size: 12px; color: var(--p-muted); }
+
+.iso-paging { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+.iso-paging a { font-weight: 600; }
+
+.iso-export { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.iso-preview { flex-direction: column; gap: 4px; }
+.iso-preview-list { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+
+@media (max-width: 720px) {
+  .iso-notes { grid-template-columns: 1fr; }
+  .iso-forms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

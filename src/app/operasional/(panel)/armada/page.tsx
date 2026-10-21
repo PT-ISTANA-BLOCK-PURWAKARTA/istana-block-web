@@ -4,7 +4,8 @@ import { Ok, PageHead } from "@/components/erp/ui";
 import { VehicleForm } from "@/components/ops/FleetForms";
 import { getDb, schema } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
-import { tgl } from "@/lib/erp/util";
+import { ExpiryText } from "@/components/ops/order/ExpiryText";
+import { tgl, today } from "@/lib/erp/util";
 
 export const metadata = { title: "Armada" };
 
@@ -17,6 +18,7 @@ export default async function Armada({ searchParams }: { searchParams: Promise<{
     db.all<{ id: string; n: number; last: string }>(sql`select vehicle_id id, count(*) n, max(date) last from ops_deliveries where status = 'terkirim' and vehicle_id is not null group by vehicle_id`),
   ]);
   const u = new Map(usage.map((x) => [x.id, x]));
+  const now = today();
   return (
     <>
       <PageHead title="Armada" sub="Kendaraan pengiriman yang dipilih di surat jalan." />
@@ -24,18 +26,20 @@ export default async function Armada({ searchParams }: { searchParams: Promise<{
       <div className="stack" style={{ gap: 20 }}>
         <div className="admin-table">
           <table>
-            <thead><tr><th>Nomor polisi</th><th>Jenis</th><th>Kapasitas</th><th className="num">Trip terkirim</th><th>Terakhir</th></tr></thead>
+            <thead><tr><th>Nomor polisi</th><th>Jenis</th><th>Kapasitas</th><th>STNK</th><th>KIR</th><th className="num">Trip terkirim</th><th>Terakhir</th></tr></thead>
             <tbody>
               {rows.map((v) => (
                 <tr key={v.id} className={v.active ? undefined : "row-muted"}>
                   <td>{canEdit ? <Link href={`/operasional/armada/${v.id}`}><b>{v.plate}</b></Link> : <b>{v.plate}</b>}{!v.active && <div className="small">nonaktif</div>}</td>
                   <td>{v.name}</td>
                   <td className="small">{v.capacity}</td>
+                  <td className="small"><ExpiryText date={v.stnkExpiry} now={now} /></td>
+                  <td className="small"><ExpiryText date={v.kirExpiry} now={now} /></td>
                   <td className="num">{Number(u.get(v.id)?.n ?? 0)}</td>
                   <td className="small">{u.get(v.id)?.last ? tgl(u.get(v.id)!.last) : "—"}</td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={5} className="muted" style={{ padding: 24 }}>Belum ada kendaraan.</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={7} className="muted" style={{ padding: 24 }}>Belum ada kendaraan.</td></tr>}
             </tbody>
           </table>
         </div>

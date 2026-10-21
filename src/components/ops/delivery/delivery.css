@@ -1,0 +1,43 @@
+/* Pengiriman: progres langkah, riwayat, galeri foto, tautan lacak. Dipakai panel, aplikasi sopir, dan halaman lacak publik.
+   Token panel (--p-*) hanya ada di .admin; di halaman publik jatuh ke token umum. */
+
+.dl-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; counter-reset: dl; }
+.dl-steps li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 12.5px; line-height: 1.25; color: var(--p-muted, var(--redup)); }
+.dl-steps li::before { content: ""; position: absolute; top: 14px; right: 50%; width: 100%; height: 3px; background: var(--p-line-strong, #cdd3df); z-index: 0; }
+.dl-steps li:first-child::before { display: none; }
+.dl-steps li.is-done::before, .dl-steps li.is-now::before { background: var(--biru, #254186); }
+.dl-dot { position: relative; z-index: 1; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #fff; border: 2px solid var(--p-line-strong, #cdd3df); font-weight: 700; font-size: 13px; color: var(--p-muted, var(--redup)); }
+.dl-steps li.is-done .dl-dot { background: var(--biru, #254186); border-color: var(--biru, #254186); color: #fff; }
+.dl-steps li.is-now .dl-dot { border-color: var(--oranye-cta, #d63f12); color: var(--oranye-cta, #d63f12); box-shadow: 0 0 0 4px var(--oranye-muda, #ffe6dc); }
+.dl-steps li.is-now .dl-lbl { font-weight: 700; color: var(--tinta, #14213d); }
+.dl-steps li.is-done .dl-lbl { color: var(--tinta, #14213d); }
+
+/* Kartu perjalanan sopir untuk status di luar "berangkat" */
+.trip-card.is-tiba, .trip-card.is-tertunda { border-color: #f0c38a; box-shadow: inset 4px 0 0 #c27a00; }
+.trip-card.is-dimuat { border-color: #b8c6e6; box-shadow: inset 4px 0 0 #254186; }
+
+/* Riwayat status */
+.dl-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.dl-timeline li { display: grid; grid-template-columns: 10px 1fr; gap: 12px; padding-bottom: 14px; position: relative; }
+.dl-timeline li::before { content: ""; position: absolute; left: 4px; top: 12px; bottom: 0; width: 2px; background: var(--p-line, #e2e5ec); }
+.dl-timeline li:last-child { padding-bottom: 0; }
+.dl-timeline li:last-child::before { display: none; }
+.dl-timeline .dl-pin { width: 10px; height: 10px; border-radius: 50%; background: var(--biru, #254186); margin-top: 6px; position: relative; z-index: 1; }
+.dl-timeline .dl-when { font-size: 13px; color: var(--p-muted, var(--redup)); }
+
+/* Galeri foto bukti */
+.dl-proofs { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.dl-proofs a { display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--p-line, #e2e5ec); background: var(--latar, #f1f1ee); aspect-ratio: 4 / 3; }
+.dl-proofs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dl-upload { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+
+/* Tautan lacak (kantor) */
+.dl-track { display: flex; flex-direction: column; gap: 10px; }
+.dl-track .dl-link { display: flex; gap: 8px; flex-wrap: wrap; }
+.dl-track input[readonly] { flex: 1 1 240px; min-width: 0; font-size: 14px; }
+
+@media (max-width: 420px) {
+  .dl-steps li { font-size: 11.5px; }
+  .dl-dot { width: 26px; height: 26px; }
+  .dl-steps li::before { top: 12px; }
+}

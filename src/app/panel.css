@@ -47,6 +47,7 @@
 .admin-nav a:hover { background: rgba(255, 255, 255, .07); color: #fff; }
 .admin-nav a[aria-current="page"] { background: #fff; color: var(--biru-tua); font-weight: 600; }
 .admin-nav a[aria-current="page"] .icon { opacity: 1; color: var(--oranye-cta); }
+.admin-nav .nav-badge { margin-left: auto; min-width: 20px; padding: 1px 6px; border-radius: 999px; background: var(--oranye-cta); color: #fff; font-size: 12px; font-weight: 700; text-align: center; line-height: 18px; }
 .admin-side .who { margin-top: auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 10px 0; border-top: 1px solid rgba(255, 255, 255, .12); font-size: 14px; }
 .who-name { display: flex; flex-direction: column; }
 .who-name b { color: #fff; font-weight: 600; }
@@ -191,6 +192,11 @@ a.kpi:hover .k-label { color: var(--biru); }
 .role-keuangan { background: #dff3e6; color: var(--sukses); }
 .role-operasional { background: #fff1d6; color: #8a4b00; }
 .role-gudang { background: #ece6fb; color: #4b2a9a; }
+.role-qc { background: #e0f2fe; color: #075985; }
+.role-mandor { background: #fde7d3; color: #9a3412; }
+.role-satpam { background: #e5e7eb; color: #1f2937; }
+.role-manajer_qc { background: #cffafe; color: #155e75; }
+.role-pimpinan { background: #fce7f3; color: #9d174d; }
 .role-checks { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 18px; }
 .role-checks .check { font-weight: 500; align-items: flex-start; min-height: 0; padding: 6px 0; font-size: 14px; line-height: 1.4; }
 .role-checks .check input { margin-top: 1px; flex: 0 0 auto; }

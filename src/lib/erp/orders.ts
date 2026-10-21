@@ -2,6 +2,7 @@ import "server-only";
 import { asc, eq, sql } from "drizzle-orm";
 import { schema } from "@/db";
 import type { OrderStatus } from "@/db/erp";
+import { SQL_POSTED } from "@/components/ops/delivery/status";
 import type { DB } from "./server";
 
 export type LineProgress = {
@@ -30,10 +31,11 @@ export async function orderProgress(db: DB, orderId: string): Promise<LineProgre
     .leftJoin(schema.items, eq(schema.items.id, schema.orderLines.itemId))
     .where(eq(schema.orderLines.orderId, orderId))
     .orderBy(asc(schema.orderLines.sort));
+  // "shipped" = sudah keluar gudang (departed_at terisi dan status bukan dijadwalkan/dimuat/batal), termasuk tiba & tertunda di jalan.
   const ship = await db.all<{ id: string; scheduled: number; shipped: number; delivered: number }>(sql`
     select dl.order_line_id as id,
       sum(case when d.status <> 'batal' then dl.qty else 0 end) as scheduled,
-      sum(case when d.status in ('berangkat','terkirim') then dl.qty else 0 end) as shipped,
+      sum(case when ${sql.raw(SQL_POSTED)} then dl.qty else 0 end) as shipped,
       sum(case when d.status = 'terkirim' then dl.qty else 0 end) as delivered
     from ops_delivery_lines dl join ops_deliveries d on d.id = dl.delivery_id
     where d.order_id = ${orderId} group by dl.order_line_id`);

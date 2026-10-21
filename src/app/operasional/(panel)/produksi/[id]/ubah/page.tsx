@@ -3,22 +3,25 @@ import { eq } from "drizzle-orm";
 import { BackLink, PageHead } from "@/components/erp/ui";
 import { ProductionForm } from "@/components/ops/ProductionForm";
 import { getDb, schema } from "@/db";
-import { opsAccess } from "@/lib/erp/ops";
-import { pickLists } from "@/lib/erp/server";
 import { formatQty } from "@/lib/erp/util";
+import { canChangeProduction, productionAccess, productionItems, recentLeaders } from "@/lib/ops/production";
+import "../../produksi.css";
 
 export const metadata = { title: "Ubah hasil produksi" };
 
 export default async function UbahProduksi({ params }: { params: Promise<{ id: string }> }) {
-  const { canStock: canEdit, canFinance } = await opsAccess();
+  const acc = await productionAccess();
   const { id } = await params;
-  if (!canEdit) redirect(`/operasional/produksi/${id}`);
   const db = await getDb();
   const p = await db.query.productions.findFirst({ where: eq(schema.productions.id, id) });
   if (!p) notFound();
+  if (!canChangeProduction(acc, p)) redirect(`/operasional/produksi/${id}`);
   const lines = await db.select().from(schema.productionLines).where(eq(schema.productionLines.productionId, id));
-  const lists = await pickLists(db, lines.map((l) => l.itemId));
+  const [items, leaders] = await Promise.all([productionItems(db, lines.map((l) => l.itemId)), recentLeaders(db)]);
   const row = (l: (typeof lines)[number]) => ({ itemId: l.itemId, qty: formatQty(l.qty) });
+  const num = (n: number | null) => (n == null ? "" : formatQty(n));
+  // Catatan lama (sebelum kolom lapangan) belum punya kategori: mulai dari kategori pertama yang boleh.
+  const category = p.category && acc.categories.includes(p.category) ? p.category : acc.categories[0];
   return (
     <>
       <BackLink href={`/operasional/produksi/${id}`}>{p.number}</BackLink>
@@ -26,12 +29,23 @@ export default async function UbahProduksi({ params }: { params: Promise<{ id: s
       <ProductionForm
         id={p.id}
         date={p.date}
+        category={category}
+        categories={acc.categories}
         note={p.note}
-        laborCost={canFinance ? p.laborCost : undefined}
-        showCost={canFinance}
+        laborCost={acc.canFinance ? p.laborCost : undefined}
+        showCost={acc.canFinance}
+        leader={p.leader ?? ""}
+        target={num(p.target)}
+        cementBags={num(p.cementBags)}
+        boards={num(p.boards)}
+        rejects={num(p.rejects)}
+        batchCode={p.batchCode ?? ""}
+        issues={Array.isArray(p.issues) ? p.issues : []}
+        photoKey={p.photoKey}
         hasil={lines.filter((l) => l.role === "hasil").map(row)}
         bahan={lines.filter((l) => l.role === "bahan").map(row)}
-        items={lists.items.filter((i) => i.kind === "barang_jadi" || i.kind === "bahan_baku").map(({ id, code, name, unit, kind }) => ({ id, code, name, unit, kind }))}
+        items={items}
+        leaders={leaders}
       />
     </>
   );

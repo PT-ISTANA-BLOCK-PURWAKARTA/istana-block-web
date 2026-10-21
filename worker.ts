@@ -16,12 +16,13 @@
 
 // @ts-ignore `.open-next/worker.js` baru ada setelah `opennextjs-cloudflare build`.
 import { default as handler } from "./.open-next/worker.js";
+import { runScheduledJobs } from "./src/lib/ops/cron";
 
 const PAGE_TTL = 300; // halaman & navigasi: 5 menit (keputusan pemilik 2026-10-19)
 const MEDIA_TTL = 31_536_000; // /media/...: key berisi UUID, isi berkas tidak pernah berubah
 const META_TTL = 3600; // sitemap.xml & robots.txt
 
-const NO_CACHE = /^\/(situs|akuntansi|operasional|internal|api|admin|keuangan|reel)(\/|$)/;
+const NO_CACHE = /^\/(situs|akuntansi|operasional|internal|api|admin|keuangan|reel|kiriman)(\/|$)/;
 const SESSION = /(?:^|;\s*)ib_session=/; // nama cookie = SESSION_COOKIE di src/lib/session.ts
 const TRACKING = /^(utm_.+|gclid|gbraid|wbraid|gad_.+|fbclid|msclkid|_gl|srsltid)$/;
 // Header yang membedakan payload navigasi Next.js (RSC/prefetch) dari HTML biasa.
@@ -159,5 +160,10 @@ export default {
     remember(key, entry);
     ctx.waitUntil(toEdge(key, entry, ttl));
     return respond(entry, "MISS");
+  },
+
+  // Cron Trigger (wrangler.jsonc "triggers.crons"): pekerjaan terjadwal modul operasional.
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(runScheduledJobs(env, ctx));
   },
 } satisfies ExportedHandler<CloudflareEnv>;

@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { Status } from "@/components/erp/ui";
+import { AutoRefresh } from "@/components/ops/delivery/AutoRefresh";
+import { DeliveryStatusBadge } from "@/components/ops/delivery/StatusBadge";
+import { driverNext, DRIVER_STEP_LABEL } from "@/components/ops/delivery/status";
 import { Icon } from "@/components/panel/Icon";
 import { getDb } from "@/db";
 import { requirePerm } from "@/lib/auth";
@@ -11,23 +13,25 @@ export const metadata = { title: "Tugas antar" };
 function Trip({ t }: { t: DriverTrip }) {
   const nav = navUrl(t);
   const tel = phoneIn(t.siteContact) ?? phoneIn(t.contactPhone);
+  const next = driverNext(t);
   return (
     <article className={`trip-card is-${t.status}`}>
       <Link href={`/operasional/tugas/${t.id}`} className="trip-main">
         <span className="trip-top">
-          <b>{t.number}</b> <Status s={t.status} />
+          <b>{t.number}</b> <DeliveryStatusBadge s={t.status} />
           <span className="trip-date">{t.date === today() ? "Hari ini" : tgl(t.date)}</span>
         </span>
         <span className="trip-who">{t.contactName}</span>
         <span className="trip-where">{t.project ? `${t.project} · ` : ""}{t.address.split("\n")[0] || "Alamat belum diisi"}</span>
         <span className="trip-items">{t.lines.map((l) => `${formatQty(l.qty)} ${l.unit} ${l.name}`).join(" · ")}</span>
+        {t.status === "tertunda" && t.delayReason && <span className="trip-where text-warn">Tertunda: {t.delayReason}</span>}
         {t.plate && <span className="trip-plate"><Icon name="truck" size={16} /> {t.plate}</span>}
       </Link>
       {t.status !== "terkirim" && (
         <div className="trip-quick">
           {nav && <a href={nav} target="_blank" rel="noopener" className="btn btn-ghost btn-sm"><Icon name="route" size={16} /> Peta</a>}
           {tel && <a href={`tel:${tel}`} className="btn btn-ghost btn-sm"><Icon name="phone" size={16} /> Telepon</a>}
-          <Link href={`/operasional/tugas/${t.id}`} className="btn btn-primary btn-sm">{t.status === "berangkat" ? "Sudah sampai" : "Buka"}</Link>
+          <Link href={`/operasional/tugas/${t.id}`} className="btn btn-primary btn-sm">{next ? DRIVER_STEP_LABEL[next] : "Buka"}</Link>
         </div>
       )}
     </article>
@@ -47,12 +51,15 @@ export default async function Tugas() {
   const db = await getDb();
   const trips = await driverTrips(db, me.driverId);
   const t0 = today();
-  const onRoad = trips.filter((t) => t.status === "berangkat");
-  const todo = trips.filter((t) => t.status === "dijadwalkan" && t.date <= t0);
+  const onRoad = trips.filter((t) => t.status === "berangkat" || t.status === "tiba" || (t.status === "tertunda" && t.departedAt));
+  const loaded = trips.filter((t) => t.status === "dimuat" || (t.status === "tertunda" && !t.departedAt && t.loadedAt));
+  // Tertunda yang belum dimuat/berangkat tampil di "hari ini" berapa pun tanggalnya (tidak boleh hilang dari daftar).
+  const todo = trips.filter((t) => (t.status === "dijadwalkan" && t.date <= t0) || (t.status === "tertunda" && !t.departedAt && !t.loadedAt));
   const later = trips.filter((t) => t.status === "dijadwalkan" && t.date > t0);
   const done = trips.filter((t) => t.status === "terkirim");
   return (
     <>
+      <AutoRefresh seconds={30} />
       <div className="driver-head">
         <h1>Tugas antar</h1>
         <p className="muted">{tgl(t0)} · {me.name}</p>
@@ -61,6 +68,12 @@ export default async function Tugas() {
         <section className="driver-sec">
           <h2>Sedang diantar</h2>
           {onRoad.map((t) => <Trip key={t.id} t={t} />)}
+        </section>
+      )}
+      {loaded.length > 0 && (
+        <section className="driver-sec">
+          <h2>Sudah dimuat, siap berangkat</h2>
+          {loaded.map((t) => <Trip key={t.id} t={t} />)}
         </section>
       )}
       <section className="driver-sec">

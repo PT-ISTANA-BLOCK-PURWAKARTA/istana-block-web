@@ -1,0 +1,31 @@
+/* Papan muatan: kartu tugas muat, total per barang, notifikasi. Dipakai HP satpam/mandor/gudang: tombol besar, satu kolom. */
+
+.mu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; margin-top: 4px; }
+.mu-card { background: #fff; border: 1px solid var(--p-line); border-radius: var(--p-radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.mu-card.is-dimuat { border-color: #b8c6e6; box-shadow: inset 4px 0 0 var(--biru); }
+.mu-card.is-berangkat, .mu-card.is-tiba, .mu-card.is-tertunda { border-color: #f0c38a; box-shadow: inset 4px 0 0 #c27a00; }
+.mu-card.is-terkirim, .mu-card.is-batal { opacity: .7; }
+.mu-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mu-top .mu-date { margin-left: auto; font-size: 13.5px; font-weight: 600; color: var(--p-muted); }
+.mu-who { font-family: var(--font-judul); font-weight: 700; font-size: 17px; color: var(--biru-tua); }
+.mu-where { font-size: 14px; color: var(--p-ink-2); }
+.mu-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+.mu-lines li { display: grid; grid-template-columns: 7.5em 1fr; gap: 10px; }
+.mu-meta { display: flex; gap: 8px 14px; flex-wrap: wrap; font-size: 13.5px; color: var(--p-muted); }
+.mu-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.mu-act .btn-block { min-height: 50px; font-size: 16.5px; }
+
+.mu-totals { display: flex; flex-wrap: wrap; gap: 8px; }
+.mu-totals li { list-style: none; background: var(--p-head); border: 1px solid var(--p-line); border-radius: 10px; padding: 8px 12px; font-size: 14.5px; }
+.mu-totals ul { display: contents; margin: 0; padding: 0; }
+
+.mu-notices ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.mu-notices li { padding: 8px 0; border-top: 1px solid var(--p-line); font-size: 14.5px; }
+.mu-notices li:first-child { border-top: 0; }
+
+.mu-filter .seg { flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .mu-grid { grid-template-columns: 1fr; }
+  .mu-lines li { grid-template-columns: 6.5em 1fr; }
+}

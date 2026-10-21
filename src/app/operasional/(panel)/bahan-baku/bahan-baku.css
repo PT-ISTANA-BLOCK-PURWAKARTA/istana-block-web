@@ -1,0 +1,108 @@
+/* Bahan baku & supplier: tier list, nilai overall (grade A–D), grafik SVG, tabel ringkasan. Kelas dasar (rcv-*) di ../barang-masuk/barang-masuk.css. */
+
+.sup-section { display: flex; flex-direction: column; gap: 14px; }
+.sup-section h2 { font-size: 16.5px; font-weight: 600; }
+.sup-h3 { font-size: 12.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--p-muted); margin: 0 0 6px; }
+.sup-sub { display: block; }
+.sup-top td { vertical-align: top; }
+.sup-wide { min-width: 640px; }
+.sup-wide-xl { min-width: 1080px; }
+.sup-notes { max-width: 260px; display: flex; flex-direction: column; gap: 2px; }
+.sup-notes p { margin: 0; }
+.sup-tag { display: inline-block; margin-right: 6px; padding: 0 7px; border-radius: 6px; background: var(--info-bg); color: var(--biru-tua); font-weight: 600; }
+
+/* Filter centang bahan baku / tag */
+.sup-filters { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; }
+.sup-filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.sup-filter-label { width: 96px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--p-muted); }
+.sup-check { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px; border: 1px solid var(--p-line-strong); border-radius: var(--p-radius-sm); background: #fff; color: var(--p-ink-2); font: 600 14px var(--font-isi); cursor: pointer; }
+.sup-check.on { border-color: var(--biru); background: var(--info-bg); color: var(--biru-tua); }
+.sup-check-box { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: 1px solid var(--p-line-strong); border-radius: 4px; font-size: 10px; color: #fff; }
+.sup-check.on .sup-check-box { border-color: var(--biru); background: var(--biru); }
+
+/* Pil tier & grade */
+.sup-tier { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; white-space: nowrap; color: #fff; }
+.sup-tier.is-suggest { opacity: .7; }
+.sup-tier.tier-none { background: var(--abu); color: var(--redup); font-weight: 600; }
+.sup-tier.tier-1, .sup-tierhead.tier-1 { background: var(--sukses); color: #fff; }
+.sup-tier.tier-2, .sup-tierhead.tier-2 { background: var(--warn); color: #fff; }
+.sup-tier.tier-3, .sup-tierhead.tier-3 { background: var(--oranye-cta); color: #fff; }
+.sup-tier.tier-4, .sup-tierhead.tier-4 { background: var(--bahaya); color: #fff; }
+.sup-tierhead.grade-A { background: var(--biru-tua); color: #fff; }
+.sup-tierhead.grade-B { background: var(--biru); color: #fff; }
+.sup-tierhead.grade-C { background: var(--biru-garis); color: #fff; }
+.sup-tierhead.grade-D { background: var(--biru-muda); color: var(--biru-tua); }
+.sup-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; background: var(--abu); color: var(--redup); font-size: 12px; }
+
+/* Tier list & grade list */
+.sup-tierlist { border: 1px solid var(--p-line); border-radius: var(--p-radius-sm); overflow: hidden; }
+.sup-tierrow { display: flex; min-height: 64px; border-bottom: 1px solid var(--p-line); }
+.sup-tierrow:last-child { border-bottom: 0; }
+.sup-tierhead { flex: 0 0 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px; text-align: center; line-height: 1.2; }
+.sup-tiernum { font-family: var(--font-judul); font-size: 28px; font-weight: 700; line-height: 1; }
+.sup-tieritems { flex: 1; display: flex; flex-wrap: wrap; align-content: center; gap: 8px; padding: 10px; min-width: 0; }
+.sup-chipbtn { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 12px; border: 1px solid var(--p-line-strong); border-radius: 10px; background: var(--p-head); color: var(--teks); font: 500 14px var(--font-isi); text-align: left; cursor: pointer; max-width: 100%; }
+.sup-chipbtn:hover { border-color: var(--biru); }
+.sup-chipbtn.is-active { outline: 2px solid var(--tinta); outline-offset: 0; }
+.sup-chipbtn b { color: var(--biru-tua); }
+.tier-chip-1 { background: var(--ok-bg); }
+.tier-chip-2 { background: var(--warn-bg); }
+.tier-chip-3 { background: var(--oranye-muda); }
+.tier-chip-4 { background: var(--bad-bg); }
+
+/* Rekap bulanan & mode pengiriman */
+.sup-months { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 8px; }
+.sup-month { padding: 10px 12px; border-radius: 10px; background: var(--p-head); }
+.sup-month p { margin: 2px 0 0; }
+.sup-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; }
+.sup-mode { padding: 10px 14px; border-radius: 10px; background: var(--info-bg); color: var(--biru-tua); }
+.sup-mode p { margin: 4px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+/* Daftar kiriman */
+.sup-listhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 4px; }
+.sup-listhead h2 { font-size: 16.5px; font-weight: 600; }
+.sup-card-row { display: flex; gap: 12px; align-items: flex-start; }
+.sup-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.sup-card .rcv-thumb { width: 64px; height: 64px; }
+.sup-silt { flex: 0 0 auto; font-size: 18px; }
+.sup-silt-none { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
+.sup-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.sup-quotes { display: flex; flex-direction: column; gap: 2px; color: var(--p-ink-2); }
+
+/* Dialog penilaian tier */
+.sup-rowhead { padding: 10px 12px; border-radius: 10px; background: var(--p-head); font-size: 14.5px; }
+.sup-rowhead p { margin: 2px 0 0; }
+.sup-tierpick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.sup-tierpick-btn { min-height: 48px; padding: 0 12px; text-align: left; border: 2px solid var(--p-line-strong); border-radius: var(--p-radius-sm); background: #fff; color: var(--p-ink-2); font: 600 14.5px var(--font-isi); cursor: pointer; }
+.sup-tierpick-btn.tier-1.on { border-color: var(--sukses); background: var(--ok-bg); color: var(--sukses); }
+.sup-tierpick-btn.tier-2.on { border-color: var(--warn); background: var(--warn-bg); color: var(--warn); }
+.sup-tierpick-btn.tier-3.on { border-color: var(--oranye-cta); background: var(--oranye-muda); color: var(--oranye-cta-hover); }
+.sup-tierpick-btn.tier-4.on { border-color: var(--bahaya); background: var(--bad-bg); color: var(--bahaya); }
+
+/* Grafik: peringkat (batang) */
+.sup-bars { display: flex; flex-direction: column; gap: 4px; }
+.sup-bar-row { position: relative; display: grid; grid-template-columns: minmax(110px, 180px) 1fr auto; align-items: center; gap: 12px; padding: 4px 8px; border-radius: 8px; }
+.sup-bar-row.is-hover, .sup-bar-row:focus-visible { background: var(--p-head); outline: none; }
+.sup-bar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; color: var(--biru-tua); }
+.sup-bar-track { position: relative; height: 14px; border-radius: 4px; background: var(--abu); }
+.sup-bar-mark { position: absolute; top: 0; bottom: 0; width: 1px; background: #fff; }
+.sup-bar-fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 0 4px 4px 0; background: var(--biru); }
+.sup-bar-value { width: 64px; text-align: right; font-variant-numeric: tabular-nums; color: var(--tinta); }
+.sup-tip { position: absolute; left: 33%; top: 100%; z-index: 10; margin-top: 2px; padding: 8px 12px; border: 1px solid var(--p-line-strong); border-radius: 10px; background: #fff; box-shadow: 0 6px 20px rgba(14, 42, 107, .12); font-size: 13px; line-height: 1.5; pointer-events: none; }
+
+/* Grafik: kurva per bulan */
+.sup-curve { position: relative; width: 100%; }
+.sup-curve svg { display: block; max-width: 100%; touch-action: pan-y; user-select: none; }
+.sup-curve-tip { min-width: 150px; }
+.sup-grid { stroke: var(--p-line); stroke-width: 1; }
+.sup-axis { stroke: var(--p-line-strong); stroke-width: 1; }
+.sup-text { fill: var(--p-muted); font-family: var(--font-isi); }
+.sup-ink { fill: var(--tinta); font-family: var(--font-isi); }
+
+@media (max-width: 640px) {
+  .sup-tierhead { flex-basis: 84px; }
+  .sup-tiernum { font-size: 24px; }
+  .sup-bar-row { grid-template-columns: minmax(84px, 120px) 1fr auto; gap: 8px; }
+  .sup-filter-label { width: 100%; }
+  .sup-tierpick { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,6 @@
+/* Piket: bilah status di atas halaman (DutyBar) dan kartu di halaman /operasional/piket. */
+.duty-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 14px; margin-bottom: 16px; border: 1px solid var(--p-line); border-radius: var(--p-radius-sm); background: var(--ok-bg); color: var(--tinta); font-size: 14px; }
+.duty-bar.is-off { background: var(--warn-bg); color: var(--warn); border-color: #f0d9a8; }
+.duty-bar .duty-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--sukses); flex: none; }
+.duty-bar.is-off .duty-dot { background: var(--oranye); }
+.duty-bar a { margin-left: auto; font-weight: 600; text-decoration: underline; }

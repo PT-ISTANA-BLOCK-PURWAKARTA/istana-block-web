@@ -3,7 +3,7 @@ import { asc, desc, sql } from "drizzle-orm";
 import { PageHead, Rp } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { ITEM_KIND_LABEL } from "@/lib/erp/accounting";
-import { opsAccess } from "@/lib/erp/ops";
+import { opsAccess, SQL_AT_YARD } from "@/lib/erp/ops";
 import { stockLevels, unitCost } from "@/lib/erp/server";
 import { formatQty } from "@/lib/erp/util";
 
@@ -18,7 +18,7 @@ export default async function Stok({ searchParams }: { searchParams: Promise<{ j
     stockLevels(db),
     db.all<{ itemId: string; qty: number }>(sql`
       select dl.item_id itemId, sum(dl.qty) qty from ops_delivery_lines dl join ops_deliveries d on d.id = dl.delivery_id
-      where d.status = 'dijadwalkan' group by dl.item_id`),
+      where ${sql.raw(SQL_AT_YARD)} group by dl.item_id`),
   ]);
   const pend = new Map(pending.map((p) => [p.itemId, Number(p.qty)]));
   const rows = items.filter((i) => !jenis || i.kind === jenis);

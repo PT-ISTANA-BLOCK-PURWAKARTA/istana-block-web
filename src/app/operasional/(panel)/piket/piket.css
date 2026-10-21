@@ -1,0 +1,14 @@
+/* Halaman Piket: kartu status besar (nyaman di HP) + tabel rekap kantor. */
+.pk-status { display: grid; gap: 14px; }
+.pk-state { display: flex; align-items: center; gap: 12px; font-size: 17px; line-height: 1.3; }
+.pk-state .pk-dot { width: 14px; height: 14px; border-radius: 50%; flex: none; background: var(--beton-tua); }
+.pk-state.is-on .pk-dot { background: var(--sukses); box-shadow: 0 0 0 4px var(--ok-bg); }
+.pk-state small { display: block; color: var(--p-muted); font-size: 13px; font-weight: 400; }
+.pk-big { min-height: 52px; font-size: 17px; }
+.pk-note { margin: 0; padding: 10px 12px; border-left: 3px solid var(--biru-garis); background: var(--info-bg); border-radius: 0 var(--p-radius-sm) var(--p-radius-sm) 0; font-size: 14px; white-space: pre-line; }
+.pk-note small { display: block; margin-bottom: 2px; color: var(--p-muted); }
+.pk-open { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.pk-hand { max-width: 36ch; white-space: pre-line; }
+@media (max-width: 640px) {
+  .pk-state { font-size: 16px; }
+}

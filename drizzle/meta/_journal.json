@@ -36,6 +36,13 @@
       "when": 1792254545919,
       "tag": "0004_portal_gps",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792528151945,
+      "tag": "0005_operasional_inventori",
+      "breakpoints": true
     }
   ]
 }

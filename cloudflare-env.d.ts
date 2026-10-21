@@ -11,4 +11,8 @@ interface CloudflareEnv {
   GTM_ID?: string;
   /** ID deploy Worker; dipakai worker.ts sebagai bagian kunci cache. */
   CF_VERSION_METADATA?: WorkerVersionMetadata;
+  /** Kunci publik VAPID (base64url, titik P-256 tak terkompresi) untuk Web Push. Kosong = push nonaktif. */
+  VAPID_PUBLIC_KEY?: string;
+  /** Kunci privat VAPID (JWK JSON), secret: `wrangler secret put VAPID_PRIVATE_KEY`. Kosong = push nonaktif. */
+  VAPID_PRIVATE_KEY?: string;
 }

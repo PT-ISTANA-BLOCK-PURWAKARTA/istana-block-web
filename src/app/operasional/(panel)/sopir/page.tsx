@@ -4,7 +4,8 @@ import { Ok, PageHead } from "@/components/erp/ui";
 import { DriverForm } from "@/components/ops/FleetForms";
 import { getDb, schema } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
-import { tgl } from "@/lib/erp/util";
+import { ExpiryText } from "@/components/ops/order/ExpiryText";
+import { tgl, today } from "@/lib/erp/util";
 
 export const metadata = { title: "Sopir" };
 
@@ -17,6 +18,7 @@ export default async function Sopir({ searchParams }: { searchParams: Promise<{ 
     db.all<{ id: string; n: number; last: string }>(sql`select driver_id id, count(*) n, max(date) last from ops_deliveries where status = 'terkirim' and driver_id is not null group by driver_id`),
   ]);
   const u = new Map(usage.map((x) => [x.id, x]));
+  const now = today();
   return (
     <>
       <PageHead title="Sopir" />
@@ -24,18 +26,20 @@ export default async function Sopir({ searchParams }: { searchParams: Promise<{ 
       <div className="stack" style={{ gap: 20 }}>
         <div className="admin-table">
           <table>
-            <thead><tr><th>Nama</th><th>Telepon</th><th>Catatan</th><th className="num">Trip terkirim</th><th>Terakhir</th></tr></thead>
+            <thead><tr><th>Nama</th><th>Telepon</th><th>SIM</th><th>Berlaku s.d.</th><th>Catatan</th><th className="num">Trip terkirim</th><th>Terakhir</th></tr></thead>
             <tbody>
               {rows.map((d) => (
                 <tr key={d.id} className={d.active ? undefined : "row-muted"}>
                   <td>{canEdit ? <Link href={`/operasional/sopir/${d.id}`}><b>{d.name}</b></Link> : <b>{d.name}</b>}{!d.active && <div className="small">nonaktif</div>}</td>
                   <td>{d.phone && <a href={`tel:${d.phone}`}>{d.phone}</a>}</td>
+                  <td className="small">{d.licenseNo || <span className="muted">—</span>}</td>
+                  <td className="small"><ExpiryText date={d.licenseExpiry} now={now} /></td>
                   <td className="small">{d.note}</td>
                   <td className="num">{Number(u.get(d.id)?.n ?? 0)}</td>
                   <td className="small">{u.get(d.id)?.last ? tgl(u.get(d.id)!.last) : "—"}</td>
                 </tr>
               ))}
-              {rows.length === 0 && <tr><td colSpan={5} className="muted" style={{ padding: 24 }}>Belum ada sopir.</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={7} className="muted" style={{ padding: 24 }}>Belum ada sopir.</td></tr>}
             </tbody>
           </table>
         </div>
