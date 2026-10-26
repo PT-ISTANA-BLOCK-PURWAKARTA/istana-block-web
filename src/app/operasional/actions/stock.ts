@@ -6,6 +6,7 @@ import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
 import { productionCategories as PRODUCTION_CATEGORIES, type ProductionCategory } from "@/db/erp";
 import { requirePerm } from "@/lib/auth";
+import { assertLive } from "@/lib/erp/archive";
 import { stockItemsById } from "@/lib/erp/ops";
 import {
   assertOpen,
@@ -85,6 +86,7 @@ export async function saveProduction(_prev: FormState, form: FormData): Promise<
       const id = String(form.get("id") ?? "");
       const existing = id ? await db.query.productions.findFirst({ where: eq(schema.productions.id, id) }) : undefined;
       if (id && !existing) throw new UserError("Catatan produksi tidak ditemukan.");
+      assertLive(existing?.id, "Catatan produksi");
       if (existing && !canChangeProduction(acc, existing)) throw new UserError("Catatan ini hanya bisa diubah pembuatnya dalam 7 hari, atau oleh kantor.");
       if (!existing) await requireShift(me);
 
@@ -236,6 +238,7 @@ export async function deleteProduction(id: string): Promise<FormState> {
     const db = await getDb();
     const p = await db.query.productions.findFirst({ where: eq(schema.productions.id, id) });
     if (!p) return { ok: "" };
+    assertLive(p.id, "Catatan produksi");
     if (!canChangeProduction(acc, p)) throw new UserError("Catatan ini hanya bisa dihapus pembuatnya dalam 7 hari, atau oleh kantor.");
     const fin = await getFinSettings(db);
     assertOpen(p.date, fin.lockDate, "Produksi");

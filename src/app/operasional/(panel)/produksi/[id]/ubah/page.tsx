@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { BackLink, PageHead } from "@/components/erp/ui";
 import { ProductionForm } from "@/components/ops/ProductionForm";
 import { getDb, schema } from "@/db";
+import { isArchive } from "@/lib/erp/archive";
 import { formatQty } from "@/lib/erp/util";
 import { canChangeProduction, productionAccess, productionItems, recentLeaders } from "@/lib/ops/production";
 import "../../produksi.css";
@@ -15,7 +16,7 @@ export default async function UbahProduksi({ params }: { params: Promise<{ id: s
   const db = await getDb();
   const p = await db.query.productions.findFirst({ where: eq(schema.productions.id, id) });
   if (!p) notFound();
-  if (!canChangeProduction(acc, p)) redirect(`/operasional/produksi/${id}`);
+  if (isArchive(p.id) || !canChangeProduction(acc, p)) redirect(`/operasional/produksi/${id}`);
   const lines = await db.select().from(schema.productionLines).where(eq(schema.productionLines.productionId, id));
   const [items, leaders] = await Promise.all([productionItems(db, lines.map((l) => l.itemId)), recentLeaders(db)]);
   const row = (l: (typeof lines)[number]) => ({ itemId: l.itemId, qty: formatQty(l.qty) });

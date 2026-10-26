@@ -10,6 +10,7 @@ import { MAX_DELIVERY_PROOFS, type DeliveryStatus } from "@/db/erp";
 import { requirePerm, type CurrentUser } from "@/lib/auth";
 import { can } from "@/lib/roles";
 import { deleteImage, saveImage, UploadError } from "@/lib/media";
+import { assertLive } from "@/lib/erp/archive";
 import { postDeliveryOps, refreshOrderStatus, unpostDeliveryOps } from "@/lib/erp/ops";
 import { orderProgress } from "@/lib/erp/orders";
 import { assertOpen, getFinSettings, guard, insertMany, loadAccounts, nextNumber, parseRows, requireDate, runBatch, UserError, type DB } from "@/lib/erp/server";
@@ -52,8 +53,10 @@ export async function saveDelivery(_prev: FormState, form: FormData): Promise<Fo
     const id = String(form.get("id") ?? "");
     const existing = id ? await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, id) }) : undefined;
     if (id && !existing) throw new UserError("Surat jalan tidak ditemukan.");
+    assertLive(existing?.id, "Surat jalan");
     if (existing && existing.status !== "dijadwalkan") throw new UserError("Surat jalan yang sudah dimuat, berangkat, terkirim, atau batal tidak bisa diubah. Sopir dan armada masih bisa diganti dari halaman detail selama belum berangkat.");
     const orderId = existing?.orderId ?? String(form.get("orderId") ?? "");
+    assertLive(orderId, "Pesanan");
     const order = await db.query.orders.findFirst({ where: eq(schema.orders.id, orderId) });
     if (!order) throw new UserError("Pesanan tidak ditemukan.");
     if (order.status === "draft") throw new UserError("Konfirmasi pesanan dulu sebelum menjadwalkan pengiriman.");
@@ -109,6 +112,7 @@ export async function assignDelivery(_prev: FormState, form: FormData): Promise<
     const db = await getDb();
     const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, String(form.get("id") ?? "")) });
     if (!d) throw new UserError("Surat jalan tidak ditemukan.");
+    assertLive(d.id, "Surat jalan");
     if (d.status !== "dijadwalkan" && d.status !== "dimuat") throw new UserError("Sopir dan armada hanya bisa diganti sebelum truk berangkat.");
     const vehicleId = String(form.get("vehicleId") ?? "") || null;
     const driverId = String(form.get("driverId") ?? "") || null;
@@ -159,6 +163,7 @@ async function transition(me: CurrentUser, id: string, to: DeliveryStatus, o: Op
   const db = await getDb();
   const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, id) });
   if (!d) throw new UserError("Surat jalan tidak ditemukan.");
+  assertLive(d.id, "Surat jalan");
   if (!(to in NEXT)) throw new UserError("Status tujuan tidak dikenal.");
   const from = d.status;
 
@@ -383,6 +388,7 @@ export async function uploadDeliveryProof(_prev: FormState, form: FormData): Pro
     const db = await getDb();
     const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, String(form.get("id") ?? "")) });
     if (!d) throw new UserError("Surat jalan tidak ditemukan.");
+    assertLive(d.id, "Surat jalan");
     const office = can(me.roles, "pengiriman");
     if (!office && (!me.driverId || d.driverId !== me.driverId)) throw new UserError("Surat jalan ini bukan tugas Anda.");
     if (d.status === "batal") throw new UserError("Surat jalan sudah dibatalkan.");
@@ -419,6 +425,7 @@ export async function createTrackingLink(deliveryId: string): Promise<{ error?: 
     const db = await getDb();
     const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, deliveryId) });
     if (!d) throw new UserError("Surat jalan tidak ditemukan.");
+    assertLive(d.id, "Surat jalan");
     if (d.status === "batal") throw new UserError("Surat jalan sudah dibatalkan; tautan lacak tidak dibuat.");
     const token = newToken();
     await db.insert(schema.trackingLinks).values({ deliveryId: d.id, tokenHash: await sha256Hex(token), createdBy: me.id });
@@ -451,6 +458,7 @@ export async function deleteDelivery(id: string): Promise<FormState> {
     const db = await getDb();
     const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, id) });
     if (!d) return { orderId: "", keys: [] as string[] };
+    assertLive(d.id, "Surat jalan");
     if (isPosted(d.status, d.departedAt) || d.status === "terkirim") throw new UserError("Surat jalan yang sudah berangkat/terkirim tidak bisa dihapus. Batalkan dulu.");
     const keys = await deliveryProofKeys(db, id, d.proofKey);
     if (d.driverId && d.status !== "batal") await notifyDriver(db, d.driverId, "dibatalkan", id, "Surat jalan dihapus oleh kantor.");

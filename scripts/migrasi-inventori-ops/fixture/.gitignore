@@ -1,0 +1,5 @@
+out*/
+rahasia/
+snap-*.sql
+# Backup sintetis (data karangan) boleh di-commit, beda dengan backup-*.sql sungguhan yang diabaikan di root.
+!backup-contoh/database/backup-*.sql

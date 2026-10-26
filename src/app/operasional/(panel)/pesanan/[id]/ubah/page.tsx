@@ -3,6 +3,7 @@ import { asc, eq } from "drizzle-orm";
 import { BackLink, PageHead } from "@/components/erp/ui";
 import { OrderForm } from "@/components/ops/OrderForm";
 import { getDb, schema } from "@/db";
+import { isArchive } from "@/lib/erp/archive";
 import { opsAccess } from "@/lib/erp/ops";
 import { orderProgress } from "@/lib/erp/orders";
 import { overdueByContact } from "@/lib/erp/insights";
@@ -14,7 +15,7 @@ export const metadata = { title: "Ubah pesanan" };
 export default async function UbahPesanan({ params }: { params: Promise<{ id: string }> }) {
   const { canOrders: canEdit } = await opsAccess();
   const { id } = await params;
-  if (!canEdit) redirect(`/operasional/pesanan/${id}`);
+  if (!canEdit || isArchive(id)) redirect(`/operasional/pesanan/${id}`);
   const db = await getDb();
   const o = await db.query.orders.findFirst({ where: eq(schema.orders.id, id) });
   if (!o) notFound();

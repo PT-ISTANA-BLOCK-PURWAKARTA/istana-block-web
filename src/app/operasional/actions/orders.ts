@@ -7,6 +7,7 @@ import type { FormState } from "@/components/admin/FormMessage";
 import { isPosted } from "@/components/ops/delivery/status";
 import { getDb, schema } from "@/db";
 import { requirePerm } from "@/lib/auth";
+import { assertLive } from "@/lib/erp/archive";
 import { docTotals } from "@/lib/erp/docs";
 import { refreshOrderStatus, reopenStatus, SQL_OPEN } from "@/lib/erp/ops";
 import { orderProgress } from "@/lib/erp/orders";
@@ -30,6 +31,7 @@ export async function saveOrder(_prev: FormState, form: FormData): Promise<FormS
     const id = String(form.get("id") ?? "");
     const existing = id ? await db.query.orders.findFirst({ where: eq(schema.orders.id, id) }) : undefined;
     if (id && !existing) throw new UserError("Pesanan tidak ditemukan.");
+    assertLive(existing?.id, "Pesanan");
     if (existing && (existing.status === "batal" || existing.status === "selesai")) throw new UserError("Pesanan yang sudah selesai atau batal tidak bisa diubah. Buka kembali dulu.");
 
     const contact = await db.query.contacts.findFirst({ where: eq(schema.contacts.id, String(form.get("contactId") ?? "")) });
@@ -129,6 +131,7 @@ export async function setOrderStatus(id: string, to: "konfirmasi" | "selesai" | 
     const db = await getDb();
     const o = await db.query.orders.findFirst({ where: eq(schema.orders.id, id) });
     if (!o) throw new UserError("Pesanan tidak ditemukan.");
+    assertLive(o.id, "Pesanan");
     let status = o.status;
     const extra: unknown[] = [];
     if (to === "konfirmasi") {
@@ -179,6 +182,7 @@ export async function cancelOrder(_prev: FormState, form: FormData): Promise<For
     const reason = reasonOf(form, "pembatalan");
     const o = await db.query.orders.findFirst({ where: eq(schema.orders.id, id) });
     if (!o) throw new UserError("Pesanan tidak ditemukan.");
+    assertLive(o.id, "Pesanan");
     if (o.status === "batal") throw new UserError("Pesanan ini sudah dibatalkan.");
     if (o.status === "terkirim" || o.status === "selesai") throw new UserError("Pesanan sudah terkirim atau ditutup, jadi tidak bisa dibatalkan.");
     const sjs = await db.select().from(schema.deliveries).where(eq(schema.deliveries.orderId, id));
@@ -220,6 +224,7 @@ export async function deleteOrder(_prev: FormState, form: FormData): Promise<For
     const reason = reasonOf(form, "penghapusan");
     const o = await db.query.orders.findFirst({ where: eq(schema.orders.id, id) });
     if (!o) throw new UserError("Pesanan tidak ditemukan.");
+    assertLive(o.id, "Pesanan");
     const sjs = await db.select().from(schema.deliveries).where(eq(schema.deliveries.orderId, id));
     if (sjs.some((d) => d.status === "terkirim" || isPosted(d.status, d.departedAt))) throw new UserError("Pesanan sudah punya surat jalan yang berangkat atau terkirim. Batalkan pesanan saja.");
     const sjIds = sjs.map((d) => d.id);

@@ -7,6 +7,7 @@ import { JournalView } from "@/components/erp/JournalView";
 import { BackLink, Ok, PageHead, Rp } from "@/components/erp/ui";
 import { categoryLabel } from "@/components/ops/production/summary";
 import { getDb, schema } from "@/db";
+import { isArchive } from "@/lib/erp/archive";
 import { journalFor } from "@/lib/erp/server";
 import { formatQty, tgl } from "@/lib/erp/util";
 import { canChangeProduction, productionAccess } from "@/lib/ops/production";
@@ -27,7 +28,9 @@ export default async function ProduksiDetail({ params, searchParams }: { params:
     acc.canFinance ? journalFor(db, "produksi", id) : Promise.resolve([]),
     p.createdBy != null ? db.select({ name: schema.users.name }).from(schema.users).where(eq(schema.users.id, p.createdBy)).limit(1) : Promise.resolve([]),
   ]);
-  const canEdit = canChangeProduction(acc, p);
+  // Data arsip dari aplikasi lama: baca-saja.
+  const archived = isArchive(p.id);
+  const canEdit = canChangeProduction(acc, p) && !archived;
   const valueOf = (itemId: string, sign: number) => moves.filter((m) => m.itemId === itemId && Math.sign(m.qty) === sign).reduce((a, m) => a + Math.abs(m.value), 0);
   const table = (role: "hasil" | "bahan", title: string) => {
     const rows = lines.filter((x) => x.l.role === role);
@@ -68,6 +71,7 @@ export default async function ProduksiDetail({ params, searchParams }: { params:
         {canEdit && <Link href={`/operasional/produksi/${p.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>}
       </PageHead>
       <Ok ok={ok} />
+      {archived && <p className="flag flag-info">Arsip aplikasi lama. Catatan produksi ini hanya bisa dilihat, tidak bisa diubah atau dihapus.</p>}
       <div className="stack" style={{ gap: 20 }}>
         <section className="admin-card doc-head">
           {meta.filter(([, v]) => v).map(([k, v]) => (
