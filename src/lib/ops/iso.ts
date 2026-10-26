@@ -152,8 +152,10 @@ export async function setObjective(db: DB, me: CurrentUser, input: { month: stri
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(input.month)) throw new UserError("Bulan tidak valid.");
   const objective = QUALITY_OBJECTIVES.find((item) => item.no === input.no);
   if (!objective) throw new UserError("Sasaran tidak dikenal.");
-  if (objective.auto) throw new UserError("Sasaran ini dihitung otomatis dari data aplikasi.");
-  const { total, achieved } = input;
+  if (objective.auto && !objective.manualAchieved) throw new UserError("Sasaran ini dihitung otomatis dari data aplikasi.");
+  // Sasaran dengan total otomatis (no. 13): hanya jumlah tercapai yang diisi; total selalu null.
+  const total = objective.manualAchieved ? null : input.total;
+  const { achieved } = input;
   if ((total !== null && (!Number.isFinite(total) || total < 0)) || (achieved !== null && (!Number.isFinite(achieved) || achieved < 0))) throw new UserError("Jumlah harus angka nol atau lebih.");
   if (total !== null && achieved !== null && achieved > total) throw new UserError("Jumlah tercapai tidak boleh lebih dari jumlah total.");
   const sourceKey = `${input.month}:${input.no}`;

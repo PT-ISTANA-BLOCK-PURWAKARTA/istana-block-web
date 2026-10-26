@@ -14,7 +14,7 @@ import { DialogForm, Modal } from "./Modal";
 import { whenFull } from "./util";
 
 /** Bagian barang masuk yang dibutuhkan untuk menghitung nilai overall. */
-export type Rated = { category: ReceiptCategory; tier: SandTier | null; speedRating: number | null; priceRating: number | null };
+export type Rated = { category: ReceiptCategory; tier: SandTier | null; speedRating: number | null; priceRating: number | null; deliveryMode?: DeliveryMode | null };
 
 /** Bagian barang masuk yang dibutuhkan dialog penilaian. */
 export type RatingSubject = Rated & {
@@ -35,7 +35,8 @@ export type RatingSubject = Rated & {
 
 /** Nilai overall satu kiriman (tier hanya dihitung untuk bahan baku). */
 export const receiptOverall = (row: Rated) =>
-  overallScore(receiptParts({ tier: row.category === "bahan_baku" ? row.tier : null, speedRating: row.speedRating, priceRating: row.priceRating }));
+  // Armada Istana Block sendiri ("sendiri") bukan kinerja supplier: kecepatannya tidak ikut menilai.
+  overallScore(receiptParts({ tier: row.category === "bahan_baku" ? row.tier : null, speedRating: row.deliveryMode === "sendiri" ? null : row.speedRating, priceRating: row.priceRating }));
 
 /** Label tiga tingkat; untuk rata-rata ditampilkan juga angkanya (mis. "Standard · 2,3/3"). */
 export function LevelChip({ value, labels, empty = "belum dinilai" }: { value: number | null; labels: Record<number, string>; empty?: string }) {
@@ -120,11 +121,15 @@ export function DeliveryDialog({ row, expeditions, tags, onClose }: { row: Ratin
             </>
           )}
         </div>
-        <div className="field">
-          <span className="label">Kecepatan pengiriman</span>
-          <ThreeLevelPicker name="speedRating" value={form.speedRating} labels={SPEED_LABELS} onChange={(speedRating) => setForm({ ...form, speedRating })} />
-          <span className="help small muted">Boleh dikosongkan bila belum tahu; klik lagi untuk membatalkan pilihan.</span>
-        </div>
+        {form.deliveryMode === "sendiri" ? (
+          <p className="help small muted">Diambil armada Istana Block sendiri: kecepatan tidak dinilai dan tidak ikut nilai overall supplier.</p>
+        ) : (
+          <div className="field">
+            <span className="label">Kecepatan pengiriman</span>
+            <ThreeLevelPicker name="speedRating" value={form.speedRating} labels={SPEED_LABELS} onChange={(speedRating) => setForm({ ...form, speedRating })} />
+            <span className="help small muted">Boleh dikosongkan bila belum tahu; klik lagi untuk membatalkan pilihan.</span>
+          </div>
+        )}
         <div className="field">
           <label htmlFor="rd-note">Keterangan pengiriman</label>
           <textarea id="rd-note" name="deliveryNote" value={form.deliveryNote} onChange={(e) => setForm({ ...form, deliveryNote: e.target.value })} placeholder="Contoh: telat 1 hari, sopir tidak bisa dihubungi, muatan kurang." />

@@ -30,6 +30,8 @@ export type ReceiptRow = Omit<ReceiptBase, "tier"> & {
   qualityByName: string | null;
   deliveryByName: string | null;
   priceByName: string | null;
+  /** Nama petugas yang melewati (skip) uji lumpur. */
+  testSkippedByName: string | null;
   /** Uji lumpur terbaru (selesai didahulukan), null bila belum ada. */
   test: ReceiptTest | null;
   /** Kadar lumpur (%) dari uji yang SELESAI; null bila belum diuji. */
@@ -44,6 +46,7 @@ const creator = alias(schema.users, "receipt_creator");
 const qualityUser = alias(schema.users, "receipt_quality");
 const deliveryUser = alias(schema.users, "receipt_delivery");
 const priceUser = alias(schema.users, "receipt_price");
+const skipUser = alias(schema.users, "receipt_skip");
 
 /**
  * Daftar barang masuk pada rentang waktu (maks 2000, terbaru dulu), lengkap dengan nama pencatat/penilai
@@ -65,12 +68,14 @@ export async function listReceipts(
       qualityByName: qualityUser.name,
       deliveryByName: deliveryUser.name,
       priceByName: priceUser.name,
+      testSkippedByName: skipUser.name,
     })
     .from(r)
     .leftJoin(creator, eq(r.createdBy, creator.id))
     .leftJoin(qualityUser, eq(r.qualityBy, qualityUser.id))
     .leftJoin(deliveryUser, eq(r.deliveryBy, deliveryUser.id))
     .leftJoin(priceUser, eq(r.priceBy, priceUser.id))
+    .leftJoin(skipUser, eq(r.testSkippedBy, skipUser.id))
     .where(and(...filters))
     .orderBy(desc(r.receivedAt))
     .limit(2000);
@@ -140,8 +145,8 @@ export type ReceiptForTesting = {
   vehiclePlate: string | null;
   quantity: number | null;
   unit: string;
-  /** Status uji yang sudah ada untuk barang ini: selesai, draft, atau belum pernah. */
-  testStatus: "selesai" | "draft" | null;
+  /** Status uji yang sudah ada untuk barang ini: selesai, draft, dilewati (skip), atau belum pernah. */
+  testStatus: "selesai" | "draft" | "dilewati" | null;
 };
 
 /** Bahan baku 3 hari terakhir untuk dipilih saat mulai uji lumpur. */
@@ -149,7 +154,7 @@ export async function listReceiptsForTesting(db: DB): Promise<ReceiptForTesting[
   const r = schema.goodsReceipts;
   const t = schema.sandTests;
   const rows = await db
-    .select({ id: r.id, receivedAt: r.receivedAt, itemName: r.itemName, tag: r.tag, supplier: r.supplier, quarry: r.quarry, vehiclePlate: r.vehiclePlate, quantity: r.quantity, unit: r.unit })
+    .select({ id: r.id, receivedAt: r.receivedAt, itemName: r.itemName, tag: r.tag, supplier: r.supplier, quarry: r.quarry, vehiclePlate: r.vehiclePlate, quantity: r.quantity, unit: r.unit, skippedAt: r.testSkippedAt })
     .from(r)
     .where(and(eq(r.category, "bahan_baku"), gte(r.receivedAt, new Date(Date.now() - 3 * 24 * 3600_000))))
     .orderBy(desc(r.receivedAt))
@@ -160,6 +165,8 @@ export async function listReceiptsForTesting(db: DB): Promise<ReceiptForTesting[
     : [];
   return rows.map((row) => {
     const own = tested.filter((x) => x.receiptId === row.id);
-    return { ...row, testStatus: own.some((x) => x.status === "selesai") ? ("selesai" as const) : own.length ? ("draft" as const) : null };
+    const { skippedAt, ...rest } = row;
+    const testStatus = own.some((x) => x.status === "selesai") ? ("selesai" as const) : own.length ? ("draft" as const) : skippedAt ? ("dilewati" as const) : null;
+    return { ...rest, testStatus };
   });
 }

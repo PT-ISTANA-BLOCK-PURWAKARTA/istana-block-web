@@ -20,3 +20,8 @@
   .sand-label { box-shadow: none; padding: 0; max-width: none; }
   .sand-label-table td, .sl-logo, .sl-head, .sl-key { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* TTD bertingkat di kaki label */
+.sl-signs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; font-size: 9pt; }
+.sl-signs .qc-signblock { min-width: 0; font-size: 9pt; }
+.sl-signs .qc-sig-img, .sl-signs .qc-sig-space { height: 40px; }

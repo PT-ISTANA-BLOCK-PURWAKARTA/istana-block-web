@@ -2,18 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
-import { parseWibLocal } from "@/components/ops/receipts/util";
+import { isOffice, parseWibLocal } from "@/components/ops/receipts/util";
 import { MAX_READING, readingOf, siltPercentOf } from "@/components/ops/sand/util";
 import { getDb, schema } from "@/db";
-import { MAX_SILT_PERCENT, readingUnits, sandDecisions, type ReadingUnit, type SandDecision } from "@/db/erp";
+import { MAX_SILT_PERCENT, readingUnits, sandDecisions, skipLevels, type ReadingUnit, type SandDecision, type SandEdit, type SkipLevel } from "@/db/erp";
 import { requirePerm } from "@/lib/auth";
-import { guard, runBatch, UserError } from "@/lib/erp/server";
+import { chunk, guard, runBatch, UserError } from "@/lib/erp/server";
 import { deleteImage, saveImage, UploadError } from "@/lib/media";
 import { logActivity } from "@/lib/ops/activity";
 import { requireShift } from "@/lib/ops/duty";
 import { formatQuantity } from "@/lib/ops/shared/format";
+import { SKIP_LEVEL_LABELS } from "@/lib/ops/shared/sand";
 
 const t = schema.sandTests;
 
@@ -121,6 +122,8 @@ export async function startSandTest(_prev: FormState, form: FormData): Promise<F
           completedBy: reading ? me.id : null,
         }),
         reading ? syncReceipt(db, receiptId, reading.decision) : null,
+        // Barang yang akhirnya diuji tidak lagi berstatus "dilewati".
+        receiptId ? db.update(schema.goodsReceipts).set({ testSkippedAt: null, testSkipLevel: null, testSkipReason: null, testSkippedBy: null }).where(and(eq(schema.goodsReceipts.id, receiptId), isNotNull(schema.goodsReceipts.testSkippedAt))) : null,
       ]);
     } catch (e) {
       await Promise.all(uploaded.map((key) => deleteImage(key)));
@@ -206,4 +209,163 @@ export async function deleteSandDraft(id: string): Promise<FormState> {
   await logActivity(me, { action: "uji_pasir.hapus_draft", label: "Menghapus draft uji lumpur", summary: res.sandType });
   refresh();
   return { ok: "Draft dihapus." };
+}
+
+/* ============================================================ skip uji lumpur */
+
+/** Lewati uji lumpur bahan baku (mis. pasir pantai): kondisi lumpur menurut pengamatan + alasan wajib. Tanpa data uji. */
+export async function skipSandTest(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requirePerm("uji_pasir");
+  const res = await guard(async () => {
+    await requireShift(me);
+    const level = String(form.get("level") ?? "") as SkipLevel;
+    if (!skipLevels.includes(level)) throw new UserError("Pilih kondisi lumpur: Tidak berlumpur / Lumpur sedikit / Lumpur sedang.");
+    const reason = text(form, "reason", 300);
+    if (!reason || reason.length < 3) throw new UserError("Tulis alasan skip uji lumpur (mis. pasir pantai).");
+    const db = await getDb();
+    const receipt = await db.query.goodsReceipts.findFirst({ where: eq(schema.goodsReceipts.id, String(form.get("receiptId") ?? "")) });
+    if (!receipt) throw new UserError("Data barang masuk tidak ditemukan.");
+    if (receipt.category !== "bahan_baku") throw new UserError("Hanya bahan baku yang diuji lumpur.");
+    if (receipt.testSkippedAt) throw new UserError("Uji lumpur barang ini sudah dilewati.");
+    const tests = await db.select({ id: t.id }).from(t).where(eq(t.receiptId, receipt.id)).limit(1);
+    if (tests.length) throw new UserError("Barang ini sudah punya uji lumpur (draft atau selesai), tidak bisa dilewati.");
+    await db
+      .update(schema.goodsReceipts)
+      .set({ testSkippedAt: new Date(), testSkipLevel: level, testSkipReason: reason, testSkippedBy: me.id, updatedAt: new Date() })
+      .where(and(eq(schema.goodsReceipts.id, receipt.id), isNull(schema.goodsReceipts.testSkippedAt)));
+    return { receipt, level, reason };
+  });
+  if ("error" in res) return res;
+  await logActivity(me, { action: "uji_pasir.skip", label: "Melewati uji lumpur", summary: `${res.receipt.itemName}: ${SKIP_LEVEL_LABELS[res.level]} — ${res.reason}` });
+  refresh();
+  return { ok: "Uji lumpur dilewati." };
+}
+
+/** Batalkan skip: barang kembali ke daftar yang perlu diuji. */
+export async function unskipSandTest(receiptId: string): Promise<FormState> {
+  const me = await requirePerm("uji_pasir");
+  const res = await guard(async () => {
+    const db = await getDb();
+    const receipt = await db.query.goodsReceipts.findFirst({ where: eq(schema.goodsReceipts.id, receiptId) });
+    if (!receipt || !receipt.testSkippedAt) throw new UserError("Barang ini tidak dalam status dilewati.");
+    await db
+      .update(schema.goodsReceipts)
+      .set({ testSkippedAt: null, testSkipLevel: null, testSkipReason: null, testSkippedBy: null, updatedAt: new Date() })
+      .where(eq(schema.goodsReceipts.id, receipt.id));
+    return receipt;
+  });
+  if ("error" in res) return res;
+  await logActivity(me, { action: "uji_pasir.batal_skip", label: "Membatalkan skip uji lumpur", summary: res.itemName });
+  refresh();
+  return { ok: "Dikembalikan ke daftar yang perlu diuji." };
+}
+
+/* ============================================================ ubah hasil (dengan riwayat) */
+
+/**
+ * Ubah hasil uji yang sudah selesai. Nilai lama disimpan di riwayat (edit_history) beserta alasan (min. 5 huruf).
+ * Boleh: kantor; atau QC / satpam (satpam hanya dalam 24 jam sejak selesai) selama Manager & Pimpinan belum TTD.
+ * Setelah diubah ketiga TTD direset dan perlu diulang.
+ */
+export async function editSandResult(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requirePerm("uji_pasir");
+  const uploaded: string[] = [];
+  const res = await guard(async () => {
+    const db = await getDb();
+    const row = await db.query.sandTests.findFirst({ where: eq(t.id, String(form.get("id") ?? "")) });
+    if (!row) throw new UserError("Uji tidak ditemukan.");
+    if (row.status !== "selesai") throw new UserError("Hanya uji yang sudah selesai yang bisa diubah hasilnya.");
+    const signedAbove = Boolean(row.managerAckBy || row.leaderAckBy);
+    const freshSatpam = me.roles.includes("satpam") && row.completedAt !== null && Date.now() - row.completedAt.getTime() < 24 * 3600_000;
+    if (!isOffice(me.roles) && (signedAbove || !(me.roles.includes("qc") || freshSatpam))) {
+      throw new UserError("Hasil ini tidak bisa Anda ubah (sudah ditandatangani Manager / Pimpinan, atau melewati batas waktu). Minta kantor.");
+    }
+    const reason = String(form.get("reason") ?? "").trim().slice(0, 300);
+    if (reason.length < 5) throw new UserError("Tulis alasan perubahan (min. 5 huruf), mis. salah baca skala.");
+    const unit = unitOf(form);
+    const reading = readFrom(form, unit);
+    const photoKey = await savePhoto(form, "resultPhoto", uploaded);
+    const ackReset = Boolean(row.secretaryAckBy || row.managerAckBy || row.leaderAckBy);
+    const entry: SandEdit = {
+      at: Math.floor(Date.now() / 1000),
+      by: me.id,
+      reason,
+      old: { readingUnit: row.readingUnit, sandHeight: row.sandHeight, siltHeight: row.siltHeight, siltPercent: row.siltPercent, decision: row.decision },
+    };
+    try {
+      await runBatch(db, [
+        db
+          .update(t)
+          .set({
+            readingUnit: unit,
+            sandHeight: reading.sand,
+            siltHeight: reading.silt,
+            siltPercent: reading.percent,
+            decision: reading.decision,
+            ...(photoKey ? { photoKey } : {}),
+            editHistory: [...(row.editHistory ?? []), entry],
+            secretaryAckBy: null, secretaryAckAt: null, managerAckBy: null, managerAckAt: null, leaderAckBy: null, leaderAckAt: null,
+            updatedAt: new Date(),
+          })
+          .where(and(eq(t.id, row.id), eq(t.status, "selesai"))),
+        syncReceipt(db, row.receiptId, reading.decision),
+      ]);
+    } catch (e) {
+      await Promise.all(uploaded.map((key) => deleteImage(key)));
+      throw e;
+    }
+    if (photoKey && row.photoKey) await deleteImage(row.photoKey).catch(() => undefined);
+    return { row, percent: reading.percent, ackReset };
+  });
+  if ("error" in res) {
+    await Promise.all(uploaded.map((key) => deleteImage(key)));
+    return res;
+  }
+  await logActivity(me, { action: "uji_pasir.ubah_hasil", label: "Mengubah hasil uji lumpur", summary: `${res.row.sandType}: ${formatQuantity(res.row.siltPercent ?? 0)}% → ${formatQuantity(res.percent)}%` });
+  refresh();
+  return { ok: `Hasil diubah · kadar lumpur ${formatQuantity(res.percent)}%${res.ackReset ? " · tanda tangan perlu diulang" : ""}.` };
+}
+
+/* ============================================================ TTD bertingkat */
+
+const ACK_LEVELS = {
+  sekretaris: { perm: "ttd_sekretaris", label: "Sekretaris" },
+  manager: { perm: "setujui_qc", label: "Manager in charge" },
+  pimpinan: { perm: "ttd_pimpinan", label: "Pimpinan" },
+} as const;
+export type AckLevel = keyof typeof ACK_LEVELS;
+
+/**
+ * Tanda tangan massal "Mengetahui" pada hasil uji yang sudah selesai. Bertingkat: Sekretaris dulu, lalu Manager
+ * (butuh TTD Sekretaris), lalu Pimpinan (butuh TTD Manager). Baris yang belum memenuhi syarat dilewati.
+ */
+export async function ackSandTests(level: AckLevel, ids: string[]): Promise<FormState> {
+  const cfg = ACK_LEVELS[level];
+  if (!cfg) return { error: "Tingkat tanda tangan tidak dikenal." };
+  const me = await requirePerm(cfg.perm);
+  const res = await guard(async () => {
+    if (!Array.isArray(ids) || !ids.length) throw new UserError("Tidak ada hasil uji yang dipilih.");
+    const db = await getDb();
+    const by = level === "sekretaris" ? t.secretaryAckBy : level === "manager" ? t.managerAckBy : t.leaderAckBy;
+    const prerequisite = level === "sekretaris" ? undefined : level === "manager" ? isNotNull(t.secretaryAckBy) : isNotNull(t.managerAckBy);
+    const eligible: string[] = [];
+    for (const part of chunk([...new Set(ids.map(String))].slice(0, 2000), 90)) {
+      const rows = await db.select({ id: t.id }).from(t).where(and(inArray(t.id, part), eq(t.status, "selesai"), isNull(by), prerequisite));
+      eligible.push(...rows.map((row) => row.id));
+    }
+    if (!eligible.length) {
+      throw new UserError(
+        level === "sekretaris" ? "Tidak ada hasil uji yang menunggu TTD Sekretaris." : `Tidak ada hasil uji yang siap: TTD ${level === "manager" ? "Sekretaris" : "Manager"} harus ada lebih dulu.`,
+      );
+    }
+    const now = new Date();
+    const set =
+      level === "sekretaris" ? { secretaryAckBy: me.id, secretaryAckAt: now } : level === "manager" ? { managerAckBy: me.id, managerAckAt: now } : { leaderAckBy: me.id, leaderAckAt: now };
+    await runBatch(db, chunk(eligible, 90).map((part) => db.update(t).set({ ...set, updatedAt: now }).where(and(inArray(t.id, part), isNull(by)))));
+    return { count: eligible.length };
+  });
+  if ("error" in res) return res;
+  await logActivity(me, { action: "uji_pasir.ttd", label: `TTD ${cfg.label} uji lumpur`, summary: `${res.count} hasil uji` });
+  refresh();
+  return { ok: `${res.count} hasil uji ditandatangani sebagai ${cfg.label}.` };
 }

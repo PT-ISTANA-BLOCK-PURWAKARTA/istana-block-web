@@ -5,12 +5,14 @@ import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveItem } from "@/app/akuntansi/actions/master";
 import type { Item } from "@/db/erp";
-import { itemKinds } from "@/db/erp";
+import { itemKinds, productLines, productionMethods } from "@/db/erp";
+import { LINE_LABEL, METHOD_LABEL } from "@/lib/ops/production-lines";
 import { ITEM_KIND_LABEL } from "@/lib/erp/accounting";
 import { Select } from "@/components/ui";
 
 export function ItemForm({ item, products, revenueAccounts }: { item?: Item; products: { id: number; name: string }[]; revenueAccounts: { id: string; code: string; name: string }[] }) {
   const [kind, setKind] = useState<Item["kind"]>(item?.kind ?? "barang_jadi");
+  const [line, setLine] = useState<string>(item?.productionLine ?? "");
   return (
     <ActionForm action={saveItem} className="stack" style={{ gap: 20 }}>
       {item && <input type="hidden" name="id" value={item.id} />}
@@ -38,6 +40,20 @@ export function ItemForm({ item, products, revenueAccounts }: { item?: Item; pro
             <label htmlFor="it-prod">Produk di website <span className="help">opsional</span></label>
             <Select id="it-prod" name="productId" defaultValue={item?.productId != null ? String(item.productId) : ""} placeholder="Tidak ditautkan" options={[{ value: "", label: "Tidak ditautkan" }, ...products.map((p) => ({ value: String(p.id), label: p.name }))]} />
           </div>
+          {kind === "barang_jadi" && (
+            <>
+              <div className="field">
+                <label htmlFor="it-line">Kelompok produksi <span className="help">kosong = ditebak dari nama</span></label>
+                <Select id="it-line" name="productionLine" value={line} onChange={setLine} options={[{ value: "", label: "Otomatis (dari nama)" }, ...productLines.map((l) => ({ value: l, label: LINE_LABEL[l] }))]} />
+              </div>
+              {line === "buis" && (
+                <div className="field">
+                  <label htmlFor="it-method">Metode buis</label>
+                  <Select id="it-method" name="method" defaultValue={item?.method ?? ""} options={[{ value: "", label: "Dipilih saat produksi" }, ...productionMethods.map((m) => ({ value: m, label: METHOD_LABEL[m] }))]} />
+                </div>
+              )}
+            </>
+          )}
           <div className="field">
             <label htmlFor="it-rev">Akun pendapatan <span className="help">kosongkan = otomatis</span></label>
             <Select id="it-rev" name="revenueAccountId" defaultValue={item?.revenueAccountId ?? ""} options={[{ value: "", label: `Otomatis (${kind === "jasa" ? "Pendapatan jasa" : "Penjualan"})` }, ...revenueAccounts.map((a) => ({ value: a.id, label: `${a.code} · ${a.name}` }))]} />

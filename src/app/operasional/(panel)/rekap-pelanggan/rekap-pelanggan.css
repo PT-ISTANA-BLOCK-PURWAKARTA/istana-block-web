@@ -1,0 +1,51 @@
+/* Rekap Pelanggan: kartu kecil, chip filter, tabel, dan dialog. Hanya memakai token panel yang sudah ada. */
+
+.rp-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+.rp-h { font-size: 14px; font-weight: 700; color: var(--biru-tua); margin: 0 0 10px; }
+.rp-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.rp-pill { display: inline-flex; gap: 5px; align-items: baseline; padding: 4px 11px; border-radius: 999px; background: #fde8e7; color: var(--bahaya); font-size: 13px; cursor: help; }
+.rp-avg { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 14px; }
+.rp-avg .stars { font-size: 20px; letter-spacing: 2px; }
+.rp-chips { margin-bottom: 14px; }
+.rp-chips a { white-space: nowrap; }
+
+.rp-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; margin-bottom: 12px; }
+.rp-bar .rp-count { margin-right: auto; }
+
+.rp-table { min-width: 1150px; }
+.rp-table td { vertical-align: top; }
+.rp-table .rp-sub { display: block; font-size: 12px; color: var(--redup); }
+.rp-star-s { color: var(--oranye); letter-spacing: 1px; white-space: nowrap; }
+.rp-actions { display: flex; gap: 6px; align-items: center; justify-content: flex-end; white-space: nowrap; }
+.rp-actions .btn { min-height: 34px; padding: 0 10px; }
+.rp-reasons { display: block; color: var(--bahaya); font-size: 12px; margin-top: 3px; }
+.rp-st-membeli { background: #dff3e6; color: var(--sukses); }
+.rp-st-follow_up { background: #fff1d6; color: #8a4b00; }
+.rp-st-tidak_membeli { background: #eef0f3; color: var(--redup); }
+.rp-link { font-size: 12px; color: var(--biru); }
+
+/* dialog */
+.rp-dialog { border: 0; padding: 0; border-radius: 14px; width: min(660px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); box-shadow: 0 20px 60px rgba(14, 24, 50, .35); color: var(--tinta); }
+.rp-dialog::backdrop { background: rgba(14, 24, 50, .5); }
+.rp-dialog-in { padding: 18px 18px 20px; overflow-y: auto; max-height: calc(100dvh - 24px); }
+.rp-dialog h2 { margin: 0 0 2px; font-size: 18px; color: var(--biru-tua); }
+.rp-dialog .rp-desc { margin: 0 0 14px; font-size: 13.5px; color: var(--redup); }
+.rp-dialog .rp-close { position: sticky; float: right; top: 0; margin: -6px -6px 0 0; }
+.rp-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.rp-opts .seg-opt { cursor: pointer; border: 1px solid var(--p-line); background: #fff; min-height: 38px; }
+.rp-opts .seg-opt.on { background: var(--biru-tua); color: #fff; border-color: var(--biru-tua); }
+.rp-opts .seg-opt.bad.on { background: var(--bahaya); border-color: var(--bahaya); }
+.rp-opts .seg-opt.good.on { background: var(--sukses); border-color: var(--sukses); }
+
+.rp-rate-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 6px 0; }
+.rp-rate-row > b { min-width: 76px; }
+.rp-starbtns { display: inline-flex; gap: 2px; }
+.rp-starbtn { font-size: 30px; line-height: 1; min-width: 44px; min-height: 44px; border: 0; background: none; cursor: pointer; color: #c9ced8; padding: 0; }
+.rp-starbtn.on { color: var(--oranye); }
+.rp-complaint { border: 1px solid #f3c1be; background: #fff6f5; border-radius: 10px; padding: 12px; margin-top: 12px; display: grid; gap: 12px; }
+.rp-preview { margin: 12px 0 0; font-size: 14px; }
+
+@media (max-width: 720px) {
+  .rp-cards { grid-template-columns: 1fr; }
+  .rp-bar .btn { flex: 1 1 auto; }
+}

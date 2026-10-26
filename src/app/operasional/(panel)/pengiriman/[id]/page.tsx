@@ -6,6 +6,8 @@ import { ConfirmAction } from "@/components/erp/ConfirmAction";
 import { JournalView } from "@/components/erp/JournalView";
 import { BackLink, Ok, PageHead } from "@/components/erp/ui";
 import { DeliveryActions } from "@/components/ops/DeliveryActions";
+import { WIB_MS, wibNowLocal } from "@/components/ops/receipts/util";
+import { ArrivalCorrection } from "@/components/ops/delivery/ArrivalCorrection";
 import { AssignForm } from "@/components/ops/delivery/AssignForm";
 import { DeliveryStatusBadge } from "@/components/ops/delivery/StatusBadge";
 import { ProofUploader } from "@/components/ops/delivery/ProofUploader";
@@ -51,6 +53,8 @@ export default async function PengirimanDetail({ params, searchParams }: { param
     canAssign ? db.select().from(schema.vehicles).where(d.vehicleId ? or(eq(schema.vehicles.active, true), eq(schema.vehicles.id, d.vehicleId)) : eq(schema.vehicles.active, true)).orderBy(asc(schema.vehicles.plate)) : [],
     canAssign ? db.select().from(schema.drivers).where(d.driverId ? or(eq(schema.drivers.active, true), eq(schema.drivers.id, d.driverId)) : eq(schema.drivers.active, true)).orderBy(asc(schema.drivers.name)) : [],
   ]);
+  const canCorrect = !archived && perms.has("selesaikan") && Boolean(d.arrivedAt || d.deliveredAt);
+  const corrector = canCorrect && d.arrivalCorrectedBy ? await db.query.users.findFirst({ where: eq(schema.users.id, d.arrivalCorrectedBy) }) : undefined;
   const wa = driver?.phone ? `https://wa.me/${driver.phone.replace(/\D/g, "").replace(/^0/, "62")}` : null;
   const lines = items.get(id) ?? [];
   // Teks bagikan untuk pelanggan: tanpa harga dan tanpa nomor telepon.
@@ -84,7 +88,7 @@ export default async function PengirimanDetail({ params, searchParams }: { param
             <span className="muted small">Tanggal</span><b>{tgl(d.date)}</b>
             {d.loadedAt && <div className="small">dimuat {stamp(d.loadedAt)}</div>}
             {d.departedAt && <div className="small">berangkat {stamp(d.departedAt)}</div>}
-            {d.arrivedAt && <div className="small">tiba {stamp(d.arrivedAt)}</div>}
+            {d.arrivedAt && <div className="small">tiba {stamp(d.arrivedAt)}{d.arrivalCorrectedAt ? ` (dikoreksi ke ${stamp(d.arrivalCorrectedAt)})` : ""}</div>}
             {d.deliveredAt && <div className="small">terkirim {stamp(d.deliveredAt)}</div>}
           </div>
           <div><span className="muted small">Armada</span><b>{vehicle?.plate ?? "—"}</b>{vehicle?.name && <div className="small">{vehicle.name}</div>}</div>
@@ -131,6 +135,18 @@ export default async function PengirimanDetail({ params, searchParams }: { param
         )}
 
         {(canEdit || canLoad || (!archived && perms.has("selesaikan"))) && <DeliveryActions id={d.id} status={d.status} canShip={canEdit} canLoad={canLoad} canComplete={!archived && perms.has("selesaikan")} hasDriver={!!d.driverId} />}
+        {canCorrect && (
+          <ArrivalCorrection
+            id={d.id}
+            originalText={stamp(d.arrivedAt ?? d.deliveredAt)}
+            correctedLocal={d.arrivalCorrectedAt ? new Date(d.arrivalCorrectedAt.getTime() + WIB_MS).toISOString().slice(0, 16) : ""}
+            correctedText={d.arrivalCorrectedAt ? stamp(d.arrivalCorrectedAt) : null}
+            reason={d.arrivalCorrectionReason}
+            byName={corrector?.name ?? null}
+            madeText={d.arrivalCorrectionMadeAt ? stamp(d.arrivalCorrectionMadeAt) : null}
+            nowLocal={wibNowLocal()}
+          />
+        )}
         {canAssign && <AssignForm id={d.id} vehicleId={d.vehicleId} driverId={d.driverId} vehicles={vehicles} drivers={drivers} />}
 
         {canEdit && d.status !== "batal" && (

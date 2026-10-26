@@ -9,13 +9,14 @@ import { formatQty, isDate, monthStart, tgl, tglPanjang, today } from "@/lib/erp
 
 export const metadata = { title: "Kartu stok" };
 
-const SRC: Record<string, string> = { pengiriman: "Surat jalan", produksi: "Hasil produksi", pembelian: "Pembelian", penyesuaian: "Penyesuaian", saldo_awal: "Saldo awal" };
+const SRC: Record<string, string> = { pengiriman: "Surat jalan", produksi: "Hasil produksi", pembelian: "Pembelian", penyesuaian: "Penyesuaian", saldo_awal: "Saldo awal", konversi: "Konversi (cat genteng)" };
 
 function href(source: string, id: string | null) {
   if (!id) return null;
   if (source === "pengiriman") return `/operasional/pengiriman/${id}`;
   if (source === "produksi") return `/operasional/produksi/${id}`;
   if (source === "pembelian") return `/akuntansi/pembelian/${id}`;
+  if (source === "konversi") return "/operasional/stok/cat-genteng";
   return `/operasional/stok/penyesuaian/${id}`;
 }
 

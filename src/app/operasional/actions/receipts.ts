@@ -79,7 +79,8 @@ export async function createReceipt(_prev: FormState, form: FormData): Promise<F
         itemName,
         tag: raw ? text(form, "tag") : null,
         supplier: text(form, "supplier"),
-        quarry: raw ? text(form, "quarry") : null,
+        // Kolom quarry tidak diisi lagi dari form (data lama tetap tampil); asal bahan cukup di "Supplier / quarry".
+        quarry: null,
         quantity,
         unit,
         vehiclePlate: text(form, "vehiclePlate", 20)?.toUpperCase() ?? null,
@@ -172,7 +173,8 @@ export async function rateDelivery(_prev: FormState, form: FormData): Promise<Fo
     if (!deliveryModes.includes(modeRaw)) throw new UserError("Pilih siapa yang mengirim.");
     const expeditionName = modeRaw === "ekspedisi" ? text(form, "expeditionName") : null;
     if (modeRaw === "ekspedisi" && !expeditionName) throw new UserError("Isi nama ekspedisi.");
-    const speed = Number(form.get("speedRating") || 0);
+    // Diambil armada Istana Block sendiri: bukan kinerja supplier, kecepatan tidak dinilai.
+    const speed = modeRaw === "sendiri" ? 0 : Number(form.get("speedRating") || 0);
     if (!Number.isInteger(speed) || speed < 0 || speed > 3) throw new UserError("Kecepatan tidak valid.");
     const quantityText = String(form.get("quantity") ?? "").trim();
     const quantity = quantityText ? parseQty(quantityText) : null;

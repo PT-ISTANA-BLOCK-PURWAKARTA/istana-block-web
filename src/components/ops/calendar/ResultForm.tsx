@@ -118,7 +118,7 @@ export function ResultForm({ event, result, decisions: saved, names }: { event: 
             {attendees.map((a, i) => (
               <div key={`${a.userId ?? "x"}-${i}`} className={`cal-att-row ${rowCls}`}>
                 <input type="checkbox" aria-label={`Hadir: ${a.name || "peserta"}`} checked={a.present} onChange={(e) => setAtt(i, { present: e.target.checked })} />
-                {a.userId ? <span>{a.name}</span> : <input type="text" value={a.name} maxLength={120} onChange={(e) => setAtt(i, { name: e.target.value })} placeholder="Nama peserta" aria-label="Nama peserta" />}
+                {a.userId ? <span>{a.name}{event.participants.find((p) => p.userId === a.userId)?.signedAt ? " ✓ TTD" : ""}</span> : <input type="text" value={a.name} maxLength={120} onChange={(e) => setAtt(i, { name: e.target.value })} placeholder="Nama peserta" aria-label="Nama peserta" />}
                 {!rapat && <input type="text" className="full" value={a.score ?? ""} maxLength={40} onChange={(e) => setAtt(i, { score: e.target.value })} placeholder="Nilai / Lulus" aria-label="Nilai" />}
                 <input type="text" className="full" value={a.note ?? ""} maxLength={200} onChange={(e) => setAtt(i, { note: e.target.value })} placeholder={a.present ? "Catatan" : "Alasan tidak hadir"} aria-label="Catatan" />
                 {a.userId ? <span /> : <button type="button" className="icon-btn" aria-label="Hapus peserta" onClick={() => setAttendees((l) => l.filter((_, x) => x !== i))}>&times;</button>}

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/erp/PrintButton";
+import { SignBlock } from "@/components/ops/qc/SignBlock";
 import { berkasUrl } from "@/components/ops/receipts/util";
 import { testerName } from "@/components/ops/sand/util";
 import { getDb } from "@/db";
@@ -79,6 +80,12 @@ export default async function CetakUjiPasir({ params }: { params: Promise<{ id: 
           Pembacaan: endapan pasir {fmt(row.sandHeight)} {row.readingUnit} · endapan lumpur {fmt(row.siltHeight)} {row.readingUnit}
           {row.vehiclePlate ? ` · Truk ${row.vehiclePlate}` : ""} · Diuji oleh {testerName(row)}
         </p>
+        <div className="sl-signs">
+          <SignBlock label="Pembuat data (Sekretaris)" name={row.secretaryAckName} at={row.secretaryAckAt} imageKey={row.secretarySignatureKey} />
+          <SignBlock label="Mengetahui Manager in charge" name={row.managerAckName} at={row.managerAckAt} imageKey={row.managerSignatureKey} />
+          <SignBlock label="Mengetahui Pimpinan" name={row.leaderAckName} at={row.leaderAckAt} imageKey={row.leaderSignatureKey} />
+        </div>
+        {row.editHistory.length > 0 && <p className="sl-meta">Hasil pernah diubah {row.editHistory.length}× (terakhir: {row.editHistory[row.editHistory.length - 1].reason}).</p>}
         {photos.length > 0 && (
           <div className="sl-photos">
             {photos.map((key) => (

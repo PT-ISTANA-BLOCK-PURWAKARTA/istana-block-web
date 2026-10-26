@@ -1,7 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
 import { calendarTypes, type CalendarAttendee, type CalendarFile, type CalendarType } from "@/db/erp";
@@ -115,11 +116,15 @@ export async function saveEvent(_prev: FormState, form: FormData): Promise<FormS
     const participantIds = wanted.filter((p) => allowed.has(p));
 
     if (existing) {
+      // Peserta yang tetap diundang tidak dihapus-ulang, supaya TTD hadirnya (attendance_signed_at) tidak hilang.
+      const kept = new Set((await db.select({ userId: calendarParticipants.userId }).from(calendarParticipants).where(eq(calendarParticipants.eventId, existing.id))).map((r) => r.userId));
       await runBatch(db, [
         db.update(calendarEvents).set({ title, type, startAt, endAt, location, description, reminderMinutes: reminders, updatedAt: new Date() }).where(eq(calendarEvents.id, existing.id)),
-        db.delete(calendarParticipants).where(eq(calendarParticipants.eventId, existing.id)),
+        participantIds.length
+          ? db.delete(calendarParticipants).where(and(eq(calendarParticipants.eventId, existing.id), notInArray(calendarParticipants.userId, participantIds)))
+          : db.delete(calendarParticipants).where(eq(calendarParticipants.eventId, existing.id)),
         db.delete(calendarReminders).where(and(eq(calendarReminders.eventId, existing.id), isNull(calendarReminders.sentAt))),
-        ...insertMany(db, calendarParticipants, participantIds.map((userId) => ({ eventId: existing.id, userId }))),
+        ...insertMany(db, calendarParticipants, participantIds.filter((userId) => !kept.has(userId)).map((userId) => ({ eventId: existing.id, userId }))),
         ...insertMany(db, calendarReminders, reminderRows(existing.id, startAt, reminders)),
       ]);
       return { id: existing.id, date, ok: "~Acara diperbarui." };
@@ -266,4 +271,31 @@ export async function saveResult(_prev: FormState, form: FormData): Promise<Form
   const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
   const note = res.rapat && res.counted ? `~Hasil rapat tersimpan. ${res.counted} keputusan masuk form F-IB-14.` : "~Hasil tersimpan.";
   redirect(`${BASE}?tab=rekap&from=${res.month}-01&to=${res.month}-${String(last).padStart(2, "0")}&ok=${encodeURIComponent(note)}`);
+}
+
+/* ------------------------------------------------------------ TTD hadir */
+
+/**
+ * Peserta menandatangani kehadirannya sendiri pada rapat / training yang sudah dimulai (calendar.signAttendance).
+ * Hanya yang terdaftar di daftar peserta acara; tamu di luar daftar tidak bisa. Mengulang tidak mengubah waktu TTD pertama.
+ */
+export async function signAttendance(eventId: string): Promise<FormState> {
+  const me = await requirePerm("kalender");
+  const res = await guard(async () => {
+    const db = await getDb();
+    const event = await db.query.calendarEvents.findFirst({ where: eq(calendarEvents.id, eventId) });
+    if (!event) throw new UserError("Acara tidak ditemukan.");
+    if (event.type === "lainnya") throw new UserError("TTD hadir hanya untuk rapat dan training.");
+    if (event.startAt.getTime() > Date.now()) throw new UserError("Acara belum dimulai; TTD hadir bisa dilakukan setelah acara dimulai.");
+    const row = await db.query.calendarParticipants.findFirst({ where: and(eq(calendarParticipants.eventId, event.id), eq(calendarParticipants.userId, me.id)) });
+    if (!row) throw new UserError("Anda tidak terdaftar sebagai peserta acara ini.");
+    if (row.attendanceSignedAt) return { event, already: true };
+    await db.update(calendarParticipants).set({ attendanceSignedAt: new Date() }).where(and(eq(calendarParticipants.id, row.id), isNull(calendarParticipants.attendanceSignedAt)));
+    return { event, already: false };
+  });
+  if ("error" in res) return res;
+  if (!res.already) await logActivity(me, { action: "kalender.ttd_hadir", label: "TTD hadir rapat/training", summary: res.event.title.slice(0, 120) });
+  revalidatePath(BASE);
+  revalidatePath(`${BASE}/hasil/${eventId}`);
+  return { ok: res.already ? "Kehadiran Anda sudah ditandatangani." : "Kehadiran ditandatangani." };
 }

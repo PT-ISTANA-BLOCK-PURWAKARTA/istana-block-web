@@ -95,6 +95,10 @@ export const items = sqliteTable(
     minStock: real("min_stock").notNull().default(0),
     /** Opsional: produk di website yang terkait. */
     productId: integer("product_id"),
+    /** Opsional: kelompok barang jadi (productLines) untuk pengelompokan Stok barang & pilihan form produksi. */
+    productionLine: text("production_line").$type<ProductLine>(),
+    /** Opsional: metode (khusus buis: tumbuk|cor|tulangan). */
+    method: text("method").$type<ProductionMethod>(),
     /** Opsional: akun pendapatan khusus; kosong = otomatis dari jenis barang. */
     revenueAccountId: text("revenue_account_id"),
     active: integer("active", { mode: "boolean" }).notNull().default(true),
@@ -279,6 +283,11 @@ export const deliveries = sqliteTable(
     arrivedAt: integer("arrived_at", { mode: "timestamp" }),
     deliveredAt: integer("delivered_at", { mode: "timestamp" }),
     delayReason: text("delay_reason"),
+    /** Koreksi jam tiba (Sasaran Mutu pengiriman tepat waktu): jam tiba sebenarnya; arrived_at asli tetap tersimpan. Alasan min. 10 huruf. */
+    arrivalCorrectedAt: integer("arrival_corrected_at", { mode: "timestamp" }),
+    arrivalCorrectedBy: integer("arrival_corrected_by"),
+    arrivalCorrectionMadeAt: integer("arrival_correction_made_at", { mode: "timestamp" }),
+    arrivalCorrectionReason: text("arrival_correction_reason"),
     receivedBy: text("received_by").notNull().default(""),
     proofKey: text("proof_key"),
     note: text("note").notNull().default(""),
@@ -302,7 +311,7 @@ export const deliveryLines = sqliteTable(
 
 /* ---------------------------------------------------------------- Persediaan */
 
-export const stockSources = ["pengiriman", "produksi", "pembelian", "penyesuaian", "saldo_awal"] as const;
+export const stockSources = ["pengiriman", "produksi", "pembelian", "penyesuaian", "saldo_awal", "konversi"] as const;
 export type StockSource = (typeof stockSources)[number];
 
 export const stockMoves = sqliteTable(
@@ -350,10 +359,25 @@ export const productions = sqliteTable(
     issues: text("issues", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
     /** Kunci R2 foto produksi (folder produksi/). */
     photoKey: text("photo_key"),
+    /** Mutu (setara app live): quantity hasil = Grade A (menambah stok); Grade B = reject masih dijual; rejects = tidak dijual. Keduanya hanya dicatat. */
+    gradeB: real("grade_b"),
+    /** Khusus buis: tumbuk|cor|tulangan. */
+    method: text("method").$type<ProductionMethod>(),
+    /** Semen curah (kg), khusus paving. */
+    cementKg: real("cement_kg"),
+    /** Adukan cor bersama (inv_production_batches.id); cement_bags dokumen ini dikosongkan agar rasio tak ganda. */
+    batchId: text("batch_id"),
+    /** Catatan mix desain (qc_mix_logs.id) asal baris paving otomatis. */
+    mixLogId: text("mix_log_id"),
+    /** TTD ketidaksesuaian (Grade B/reject): Manager in charge lalu Pimpinan; gambar TTD dari users.signature_key. */
+    rejectManagerBy: integer("reject_manager_by"),
+    rejectManagerAt: integer("reject_manager_at", { mode: "timestamp" }),
+    rejectLeaderBy: integer("reject_leader_by"),
+    rejectLeaderAt: integer("reject_leader_at", { mode: "timestamp" }),
     createdBy: createdBy(),
     ...created,
   },
-  (t) => [index("inv_productions_batch_idx").on(t.batchCode)],
+  (t) => [index("inv_productions_batch_idx").on(t.batchCode), index("inv_productions_adukan_idx").on(t.batchId)],
 );
 
 export const productionLines = sqliteTable(
@@ -369,18 +393,24 @@ export const productionLines = sqliteTable(
   (t) => [index("inv_pl_prod_idx").on(t.productionId)],
 );
 
-export const adjustments = sqliteTable("inv_adjustments", {
-  id: id(),
-  number: text("number").notNull(),
-  date: text("date").notNull(),
-  itemId: text("item_id").notNull(),
-  qty: real("qty").notNull(),
-  /** Nilai per satuan untuk penambahan; pengurangan memakai harga pokok rata-rata. */
-  unitCost: integer("unit_cost").notNull().default(0),
-  reason: text("reason").notNull().default(""),
-  createdBy: createdBy(),
-  ...created,
-});
+export const adjustments = sqliteTable(
+  "inv_adjustments",
+  {
+    id: id(),
+    number: text("number").notNull(),
+    date: text("date").notNull(),
+    itemId: text("item_id").notNull(),
+    qty: real("qty").notNull(),
+    /** Nilai per satuan untuk penambahan; pengurangan memakai harga pokok rata-rata. */
+    unitCost: integer("unit_cost").notNull().default(0),
+    reason: text("reason").notNull().default(""),
+    /** Terisi bila penyesuaian ini selisih sebuah stok opname (inv_counts.id); dikelola dari dokumen opname. */
+    countId: text("count_id"),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [index("inv_adj_count_idx").on(t.countId)],
+);
 
 /* ---------------------------------------------------------------- Penjualan */
 
@@ -795,6 +825,9 @@ export const mixLogs = sqliteTable(
     boards: real("boards"),
     squareMeters: real("square_meters"),
     rejects: real("rejects"),
+    /** Grade B (reject masih bisa dijual) dan belahan Hexagon setengah (buah, dari cetakan yang sama). */
+    gradeB: real("grade_b"),
+    halfPieces: real("half_pieces"),
     status: text("status").$type<CheckStatus>().notNull().default("sesuai"),
     notes: text("notes").notNull().default(""),
     reviewStatus: text("review_status").$type<ReviewStatus>().notNull().default("menunggu"),
@@ -857,8 +890,8 @@ export const receiptCategories = ["bahan_baku", "lainnya"] as const;
 export type ReceiptCategory = (typeof receiptCategories)[number];
 export const receiptStatuses = ["diterima", "ditolak"] as const;
 export type ReceiptStatus = (typeof receiptStatuses)[number];
-/** Pengantar: armada quarry/supplier sendiri atau ekspedisi pihak ketiga. */
-export const deliveryModes = ["quarry", "ekspedisi"] as const;
+/** Pengantar: armada quarry/supplier, ekspedisi pihak ketiga, atau diambil sendiri (armada Istana Block). */
+export const deliveryModes = ["quarry", "ekspedisi", "sendiri"] as const;
 export type DeliveryMode = (typeof deliveryModes)[number];
 /** Maksimal foto per barang masuk. */
 export const MAX_RECEIPT_PHOTOS = 3;
@@ -905,6 +938,11 @@ export const goodsReceipts = sqliteTable(
     priceNote: text("price_note"),
     priceBy: integer("price_by"),
     priceAt: integer("price_at", { mode: "timestamp" }),
+    /** Uji lumpur dilewati (skip): level kondisi lumpur, alasan, oleh siapa. Kosong = tidak di-skip. */
+    testSkippedAt: integer("test_skipped_at", { mode: "timestamp" }),
+    testSkipLevel: text("test_skip_level").$type<SkipLevel>(),
+    testSkipReason: text("test_skip_reason"),
+    testSkippedBy: integer("test_skipped_by"),
     createdBy: createdBy(),
     ...created,
   },
@@ -949,6 +987,15 @@ export const sandTests = sqliteTable(
     notes: text("notes").notNull().default(""),
     createdBy: createdBy(),
     completedBy: integer("completed_by"),
+    /** TTD bertingkat Sekretaris -> Manager in charge -> Pimpinan (massal per daftar). Mengubah hasil mereset ketiganya. */
+    secretaryAckBy: integer("secretary_ack_by"),
+    secretaryAckAt: integer("secretary_ack_at", { mode: "timestamp" }),
+    managerAckBy: integer("manager_ack_by"),
+    managerAckAt: integer("manager_ack_at", { mode: "timestamp" }),
+    leaderAckBy: integer("leader_ack_by"),
+    leaderAckAt: integer("leader_ack_at", { mode: "timestamp" }),
+    /** Riwayat "Ubah hasil": nilai lama + alasan (min. 5 huruf). */
+    editHistory: text("edit_history", { mode: "json" }).$type<SandEdit[]>().notNull().default(sql`'[]'`),
     ...created,
   },
   (t) => [index("qc_sand_date_idx").on(t.testedAt), index("qc_sand_receipt_idx").on(t.receiptId), index("qc_sand_status_idx").on(t.status)],
@@ -985,6 +1032,8 @@ export const calendarParticipants = sqliteTable(
     id: id(),
     eventId: text("event_id").notNull(),
     userId: integer("user_id").notNull(),
+    /** TTD hadir: diisi peserta sendiri (calendar.signAttendance). */
+    attendanceSignedAt: integer("attendance_signed_at", { mode: "timestamp" }),
   },
   (t) => [uniqueIndex("ops_cp_event_user_uq").on(t.eventId, t.userId), index("ops_cp_user_idx").on(t.userId)],
 );
@@ -1060,6 +1109,190 @@ export const isoRecords = sqliteTable(
   (t) => [index("iso_form_date_idx").on(t.formCode, t.kind, t.recordDate), uniqueIndex("iso_form_source_uq").on(t.formCode, t.sourceKey)],
 );
 
+/* ================================================================================================
+ * Setara app live (migrasi 0006): Rekap Pelanggan, stok opname & cat genteng (gabung ke stok web),
+ * grade/adukan cor/spesifikasi produk, skip & TTD uji lumpur, koreksi jam tiba, TTD hadir kalender.
+ * Kontrak untuk subagen fitur: lihat rekonstruksi-app-live/fondasi-setara.md.
+ * ============================================================================================== */
+
+/** Kelompok barang jadi (kunci "line" app live). Genteng/paving/buis dst. Dipakai fin_items.production_line & qc_product_specs.line. */
+export const productLines = ["paving", "genteng", "buis", "tutup_buis", "kanstin", "uditch", "tutup_uditch", "greffel", "grass", "lainnya"] as const;
+export type ProductLine = (typeof productLines)[number];
+/** Metode Buis Beton. */
+export const productionMethods = ["tumbuk", "cor", "tulangan"] as const;
+export type ProductionMethod = (typeof productionMethods)[number];
+/** Skip uji lumpur: kondisi lumpur yang diperkirakan tanpa uji. */
+export const skipLevels = ["tidak", "sedikit", "sedang"] as const;
+export type SkipLevel = (typeof skipLevels)[number];
+export type SandEdit = {
+  at: number;
+  by: number | null;
+  reason: string;
+  old: { readingUnit: string; sandHeight: number | null; siltHeight: number | null; siltPercent: number | null; decision: string | null };
+};
+
+/* ---------------------------------------------------------------- Rekap Pelanggan */
+
+export const leadStatuses = ["membeli", "follow_up", "tidak_membeli"] as const;
+export type LeadStatus = (typeof leadStatuses)[number];
+export const leadSources = ["Google Ads", "WhatsApp", "Instagram / Facebook", "Datang langsung", "Telepon", "Referensi", "Pelanggan lama", "Lainnya"] as const;
+/** Alasan tidak membeli (kode tersimpan di ops_customer_leads.reasons). */
+export const leadReasons = ["harga_mahal", "min_order", "luar_provinsi", "tidak_ada_info", "tidak_tersedia"] as const;
+export type LeadReason = (typeof leadReasons)[number];
+export const leadFeedbacks = ["puas", "komplain"] as const;
+export type LeadFeedback = (typeof leadFeedbacks)[number];
+export const getbackResults = ["puas", "tidak_puas"] as const;
+export type GetbackResult = (typeof getbackResults)[number];
+
+/**
+ * Konsumen yang bertanya/membeli (iklan Google Ads dan sumber lain) + penilaian pembeli. Terpisah dari fin_contacts:
+ * contact_id hanya tautan opsional ke pelanggan web. Baris impor Excel hanya presisi bulan (contact_date = tanggal 1).
+ * import_key unik ("YYYY-MM|NO|nama") menjaga impor ulang tidak dobel dan tidak menimpa penilaian.
+ */
+export const customerLeads = sqliteTable(
+  "ops_customer_leads",
+  {
+    id: id(),
+    /** YYYY-MM-DD WIB. */
+    contactDate: text("contact_date").notNull(),
+    source: text("source").notNull().default("Google Ads"),
+    name: text("name").notNull(),
+    phone: text("phone"),
+    address: text("address"),
+    product: text("product"),
+    status: text("status").$type<LeadStatus>().notNull().default("follow_up"),
+    /** Rupiah; hanya bermakna untuk status membeli. */
+    saleValue: integer("sale_value"),
+    priceNett: integer("price_nett"),
+    priceOffer: integer("price_offer"),
+    reasons: text("reasons", { mode: "json" }).$type<LeadReason[]>().notNull().default(sql`'[]'`),
+    notes: text("notes"),
+    /** Bintang 1-5 (null = belum dinilai). */
+    ratingService: integer("rating_service"),
+    ratingQuality: integer("rating_quality"),
+    ratingSpeed: integer("rating_speed"),
+    ratingNote: text("rating_note"),
+    ratedBy: integer("rated_by"),
+    ratedAt: integer("rated_at", { mode: "timestamp" }),
+    feedback: text("feedback").$type<LeadFeedback>(),
+    complaintDate: text("complaint_date"),
+    complaintNote: text("complaint_note"),
+    getbackDate: text("getback_date"),
+    getbackNote: text("getback_note"),
+    getbackResult: text("getback_result").$type<GetbackResult>(),
+    getbackBy: integer("getback_by"),
+    /** Tautan opsional ke pelanggan web (fin_contacts.id). */
+    contactId: text("contact_id"),
+    importKey: text("import_key"),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [
+    index("ops_cl_date_idx").on(t.contactDate),
+    index("ops_cl_status_idx").on(t.status, t.contactDate),
+    uniqueIndex("ops_cl_import_uq").on(t.importKey),
+    index("ops_cl_contact_idx").on(t.contactId),
+  ],
+);
+
+/* ---------------------------------------------------------------- Stok opname & cat genteng (gabung ke stok web) */
+
+/**
+ * Dokumen stok opname. Saat disimpan, tiap baris yang selisih menghasilkan SATU inv_adjustments (count_id terisi)
+ * + inv_stock_moves "penyesuaian" + jurnal "penyesuaian" (mekanisme stok/penyesuaian web). Tidak ada tabel stok kedua.
+ * Stok sistem pada counted_at disimpan di baris (system_qty) sebagai bukti.
+ */
+export const stockCounts = sqliteTable(
+  "inv_counts",
+  {
+    id: id(),
+    number: text("number").notNull(),
+    /** Tanggal bisnis (WIB) = tanggal penyesuaian yang diposting. */
+    date: text("date").notNull(),
+    /** Waktu hitung fisik (datetime). */
+    countedAt: integer("counted_at", { mode: "timestamp" }).notNull(),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [uniqueIndex("inv_counts_number_uq").on(t.number), index("inv_counts_date_idx").on(t.date)],
+);
+
+export const stockCountLines = sqliteTable(
+  "inv_count_lines",
+  {
+    id: id(),
+    countId: text("count_id").notNull(),
+    itemId: text("item_id").notNull(),
+    /** Stok sistem saat disimpan. */
+    systemQty: real("system_qty").notNull(),
+    /** Jumlah fisik. diff = counted - system (diff 0: tidak ada penyesuaian). */
+    countedQty: real("counted_qty").notNull(),
+  },
+  (t) => [index("inv_cl_count_idx").on(t.countId), index("inv_cl_item_idx").on(t.itemId)],
+);
+
+/**
+ * Konversi barang 1:1 (cat genteng: natural -> hitam/merah). Memposting 2 inv_stock_moves source "konversi"
+ * (keluar from_item, masuk to_item; nilai keluar = harga pokok rata-rata, nilai masuk = sama). Tanpa jurnal bila
+ * kedua barang berakun persediaan sama (barang_jadi); tidak menambah "produksi".
+ */
+export const conversions = sqliteTable(
+  "inv_conversions",
+  {
+    id: id(),
+    number: text("number").notNull(),
+    date: text("date").notNull(),
+    /** Waktu kejadian (datetime-local) untuk riwayat. */
+    movedAt: integer("moved_at", { mode: "timestamp" }).notNull(),
+    fromItemId: text("from_item_id").notNull(),
+    toItemId: text("to_item_id").notNull(),
+    qty: real("qty").notNull(),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [uniqueIndex("inv_conv_number_uq").on(t.number), index("inv_conv_date_idx").on(t.date), index("inv_conv_from_idx").on(t.fromItemId), index("inv_conv_to_idx").on(t.toItemId)],
+);
+
+/* ---------------------------------------------------------------- Produksi: adukan cor bersama & spesifikasi produk */
+
+/** Satu adukan semen untuk beberapa produk (Buis cor/tulangan, U-Ditch, Kanstin): tiap produk satu inv_productions.batch_id = id ini. */
+export const productionBatches = sqliteTable(
+  "inv_production_batches",
+  {
+    id: id(),
+    date: text("date").notNull(),
+    /** Total sak semen adukan ini (dicatat sekali di sini). */
+    cementBags: real("cement_bags").notNull(),
+    leader: text("leader"),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [index("inv_pb_date_idx").on(t.date)],
+);
+
+/** Spesifikasi & berat tiap ukuran/tipe produk; jadi pilihan di form produksi. line=buis: variant = metode. */
+export const productSpecs = sqliteTable(
+  "qc_product_specs",
+  {
+    id: id(),
+    line: text("line").$type<ProductLine>().notNull(),
+    name: text("name").notNull(),
+    variant: text("variant"),
+    weightKg: real("weight_kg"),
+    /** Pasangan nama-nilai, mis. { Mutu: "K-350", Tebal: "70 mm" }. */
+    specs: text("specs", { mode: "json" }).$type<Record<string, string>>().notNull().default(sql`'{}'`),
+    notes: text("notes").notNull().default(""),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+    /** Opsional: barang web (fin_items.id) yang dipakai produksi untuk spesifikasi ini. */
+    itemId: text("item_id"),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [index("qc_ps_line_idx").on(t.line, t.name), index("qc_ps_item_idx").on(t.itemId)],
+);
 export type Account = typeof accounts.$inferSelect;
 export type Contact = typeof contacts.$inferSelect;
 export type Item = typeof items.$inferSelect;

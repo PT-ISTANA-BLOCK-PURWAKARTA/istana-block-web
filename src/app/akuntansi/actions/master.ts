@@ -6,7 +6,7 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
-import { accountGroups, contactKinds, itemKinds } from "@/db/erp";
+import { accountGroups, contactKinds, itemKinds, productLines, productionMethods } from "@/db/erp";
 import { requireModule, requirePerm } from "@/lib/auth";
 import { FIN_DEFAULTS, guard, UserError } from "@/lib/erp/server";
 import { isDate, parseQty, parseRupiah } from "@/lib/erp/util";
@@ -76,6 +76,9 @@ export async function saveItem(_prev: FormState, form: FormData): Promise<FormSt
   if (clash) return { error: `Kode "${p.data.code}" sudah dipakai "${clash.name}".` };
   const productId = Number(form.get("productId")) || null;
   const revenueAccountId = String(form.get("revenueAccountId") ?? "") || null;
+  const lineRaw = String(form.get("productionLine") ?? "");
+  const productionLine = p.data.kind === "barang_jadi" ? productLines.find((l) => l === lineRaw) ?? null : null;
+  const method = productionLine === "buis" ? productionMethods.find((m) => m === String(form.get("method") ?? "")) ?? null : null;
   const values = {
     ...p.data,
     sellPrice: parseRupiah(form.get("sellPrice")),
@@ -85,6 +88,8 @@ export async function saveItem(_prev: FormState, form: FormData): Promise<FormSt
     active: form.get("active") === "on",
     productId,
     revenueAccountId,
+    productionLine,
+    method,
     updatedAt: new Date(),
   };
   if (id) {

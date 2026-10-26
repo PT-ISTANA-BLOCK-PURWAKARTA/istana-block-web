@@ -12,7 +12,7 @@ import { OverallBars, OverallCurve, type RankItem } from "./ScoreCharts";
 import { QualityDialog } from "./QualityDialog";
 import { exportSupplierExcel, printSupplierSummary } from "./exports";
 import {
-  NO_TAG, average, buildSummaries, curveData, levelOf, materialKey, modeSummary, partsOf, pts, qty, ranked, share, silts, sourceKey, summarizeGroups, summarizeMonths, tagKey, tagOf,
+  NO_TAG, average, buildSummaries, curveData, levelOf, materialKey, modeSummary, partsOf, pts, qty, ranked, share, silts, sourceKey, speedOf, summarizeGroups, summarizeMonths, tagKey, tagOf,
   type GroupSummary, type Note, type SupplierRow,
 } from "./summaries";
 
@@ -133,7 +133,7 @@ export function SupplierBoard({
   const rankItems: RankItem[] = useMemo(() => rankList.map((s) => ({ key: s.key, label: s.label, overall: s.overall!, parts: s.parts, count: s.scored, complete: s.complete })), [rankList]);
 
   const totals = useMemo(() => {
-    const speeds = rows.flatMap((row) => (row.speedRating ? [row.speedRating] : []));
+    const speeds = rows.flatMap((row) => (speedOf(row) ? [speedOf(row)!] : []));
     const tested = rows.filter((row) => row.siltPercent !== null);
     return {
       avgSilt: average(silts(rows)),
@@ -144,13 +144,13 @@ export function SupplierBoard({
       speedAvg: average(speeds),
       overall: overallScore(partsOf(rows)).overall,
       pendingQc: rows.filter((row) => !row.tierConfirmed).length,
-      pendingOffice: rows.filter((row) => !row.speedRating).length,
+      pendingOffice: rows.filter((row) => row.deliveryMode !== "sendiri" && !row.speedRating).length,
       pendingPrice: rows.filter((row) => !row.priceRating).length,
     };
   }, [rows]);
 
   const visible = rows.filter(
-    (row) => (!filter.source || sourceKey(row) === filter.source) && (filter.pending !== "qc" || !row.tierConfirmed) && (filter.pending !== "kantor" || !row.speedRating) && (filter.pending !== "harga" || !row.priceRating),
+    (row) => (!filter.source || sourceKey(row) === filter.source) && (filter.pending !== "qc" || !row.tierConfirmed) && (filter.pending !== "kantor" || (row.deliveryMode !== "sendiri" && !row.speedRating)) && (filter.pending !== "harga" || !row.priceRating),
   );
   const filterLabel = filter.source ? sources.find((s) => s.key === filter.source)?.label : null;
   const subject = rating ? allRows.find((row) => row.id === rating.id) ?? null : null;
@@ -340,7 +340,7 @@ export function SupplierBoard({
                       <td>
                         <b>{s.label}</b>
                         <span className="sup-sub small muted">{s.materials.join(", ")}{s.unrated ? ` · ${s.unrated} belum dinilai QC` : ""}</span>
-                        <span className="sup-sub small muted">{[s.viaQuarry ? `${s.viaQuarry}× armada quarry` : null, s.viaExpedition ? `${s.viaExpedition}× ekspedisi` : null].filter(Boolean).join(", ")}</span>
+                        <span className="sup-sub small muted">{[s.viaQuarry ? `${s.viaQuarry}× armada quarry` : null, s.viaExpedition ? `${s.viaExpedition}× ekspedisi` : null, s.viaSendiri ? `${s.viaSendiri}× armada Istana Block` : null].filter(Boolean).join(", ")}</span>
                       </td>
                       <td><TierDot tier={s.tier} /></td>
                       <td className="num">{s.count}<span className="sup-sub small muted">{qty(s.rows)}</span></td>
@@ -364,7 +364,7 @@ export function SupplierBoard({
           <section className="admin-card sup-section">
             <h2>Kecepatan &amp; keterangan pengiriman per vendor</h2>
             <div className="sup-modes">
-              {(["quarry", "ekspedisi"] as const).map((mode) => {
+              {(["quarry", "ekspedisi", "sendiri"] as const).map((mode) => {
                 const m = modeSummary(rows, mode);
                 return (
                   <div key={mode} className="sup-mode">
@@ -443,8 +443,8 @@ export function SupplierBoard({
                         <OverallBadge score={score.overall} complete={score.complete} />
                       </div>
                       <p className="small muted sup-line">
-                        <span>{row.deliveryMode ? (row.deliveryMode === "ekspedisi" ? `${row.expeditionName ?? "Ekspedisi"} (ekspedisi pihak ketiga)` : "Armada quarry / supplier") : "Pengirim belum diisi"}</span>
-                        <SpeedChip value={row.speedRating} />
+                        <span>{row.deliveryMode ? (row.deliveryMode === "ekspedisi" ? `${row.expeditionName ?? "Ekspedisi"} (ekspedisi pihak ketiga)` : row.deliveryMode === "sendiri" ? "Armada Istana Block (ambil sendiri)" : "Armada quarry / supplier") : "Pengirim belum diisi"}</span>
+                        <SpeedChip value={speedOf(row)} />
                         <PriceChip value={row.priceRating} />
                       </p>
                       {(row.qualityNote || row.deliveryNote || row.priceNote) && (

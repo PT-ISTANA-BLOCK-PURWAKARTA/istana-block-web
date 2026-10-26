@@ -132,6 +132,8 @@ export type MixLogRow = {
   boards: number | null;
   squareMeters: number | null;
   rejects: number | null;
+  gradeB: number | null;
+  halfPieces: number | null;
   status: "sesuai" | "tidak_sesuai" | "perlu_perbaikan";
   notes: string;
   reviewStatus: "menunggu" | "disetujui" | "revisi";
@@ -147,7 +149,7 @@ const mixLogColumns = () => {
   const l = schema.mixLogs;
   return {
     id: l.id, workDate: l.workDate, layer: l.layer, product: l.product, mixDesignId: l.mixDesignId, approvedMaterials: l.approvedMaterials, actualMaterials: l.actualMaterials,
-    mixingCount: l.mixingCount, boards: l.boards, squareMeters: l.squareMeters, rejects: l.rejects, status: l.status, notes: l.notes, reviewStatus: l.reviewStatus, reviewNote: l.reviewNote,
+    mixingCount: l.mixingCount, boards: l.boards, squareMeters: l.squareMeters, rejects: l.rejects, gradeB: l.gradeB, halfPieces: l.halfPieces, status: l.status, notes: l.notes, reviewStatus: l.reviewStatus, reviewNote: l.reviewNote,
     createdBy: l.createdBy, createdByName: creator.name, managerSignedByName: manager.name, managerSignatureKey: manager.signatureKey, managerSignedAt: l.managerSignedAt,
   };
 };

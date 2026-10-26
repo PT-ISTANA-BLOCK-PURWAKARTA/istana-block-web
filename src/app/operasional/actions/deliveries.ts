@@ -15,6 +15,7 @@ import { postDeliveryOps, refreshOrderStatus, unpostDeliveryOps } from "@/lib/er
 import { orderProgress } from "@/lib/erp/orders";
 import { assertOpen, getFinSettings, guard, insertMany, loadAccounts, nextNumber, parseRows, requireDate, runBatch, UserError, type DB } from "@/lib/erp/server";
 import { formatQty, parseQty, today } from "@/lib/erp/util";
+import { parseWibLocal } from "@/components/ops/receipts/util";
 import { logActivity } from "@/lib/ops/activity";
 import { deliveryProofKeys, newToken, proofRowCount, sha256Hex } from "@/lib/ops/deliveries";
 import { requireShift } from "@/lib/ops/duty";
@@ -476,4 +477,90 @@ export async function deleteDelivery(id: string): Promise<FormState> {
   });
   if ("error" in res) return res;
   redirect(res.orderId ? `/operasional/pesanan/${res.orderId}?ok=dihapus` : "/operasional/pengiriman?ok=dihapus");
+}
+
+/**
+ * Batalkan status Selesai (terkirim -> tiba) atau Sampai (tiba -> berangkat): mundur SATU langkah, alasan wajib (min. 5 huruf),
+ * tercatat di riwayat. Izin "selesaikan".
+ *
+ * Aman terhadap stok & jurnal: di web stok keluar + jurnal HPP diposting saat BERANGKAT (departed_at terisi dan status bukan
+ * dijadwalkan/dimuat/batal, lihat isPosted). Kedua mundur ini tetap di status terposting dan departed_at tidak disentuh, jadi
+ * postingan TIDAK dibalik/diulang. Hanya kolom waktu tiba/terkirim, penerima, dan status yang berubah. Pembatalan lebih jauh
+ * (kembali ke jadwal / batal) tetap lewat tombol status biasa yang membalik posting dengan pemeriksaan faktur.
+ */
+export async function revertDeliveryStatus(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requirePerm("selesaikan");
+  const res = await guard(async () => {
+    const db = await getDb();
+    const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, String(form.get("id") ?? "")) });
+    if (!d) throw new UserError("Surat jalan tidak ditemukan.");
+    assertLive(d.id, "Surat jalan");
+    const reason = String(form.get("reason") ?? "").trim().slice(0, 300);
+    if (reason.length < 5) throw new UserError("Tulis alasan pembatalan status (min. 5 huruf).");
+    const from = d.status;
+    const to: DeliveryStatus | null = from === "terkirim" ? "tiba" : from === "tiba" ? "berangkat" : null;
+    if (!to) throw new UserError('Hanya status "Terkirim" (Selesai) atau "Tiba" (Sampai) yang bisa dibatalkan.');
+    // Penjaga keselamatan stok: kedua sisi harus sama-sama terposting, dan jam berangkat harus ada.
+    if (!d.departedAt || !isPosted(from, d.departedAt) || !isPosted(to, d.departedAt)) throw new UserError("Data surat jalan tidak lengkap (jam berangkat kosong); status tidak diubah.");
+    const now = new Date();
+    const patch: Partial<typeof schema.deliveries.$inferInsert> =
+      from === "terkirim"
+        ? { status: to, arrivedAt: d.arrivedAt ?? d.deliveredAt ?? now, deliveredAt: null, receivedBy: "", updatedAt: now }
+        : { status: to, arrivedAt: null, deliveredAt: null, updatedAt: now };
+    await runBatch(db, [
+      db.update(schema.deliveries).set(patch).where(and(eq(schema.deliveries.id, d.id), eq(schema.deliveries.status, from))),
+      db.insert(schema.deliveryHistory).values({ deliveryId: d.id, fromStatus: from, toStatus: to, changedBy: me.id, note: `Status ${from === "terkirim" ? "Selesai" : "Sampai"} dibatalkan oleh ${me.name}: ${reason}` }),
+      notificationOp(db, "status_kirim", d.id, `${d.number} · ${STATUS_TITLE[to]}`, `Status ${STATUS_LABEL[from]} dibatalkan: ${reason}`),
+    ]);
+    await refreshOrderStatus(db, d.orderId);
+    await logActivity(me, { action: "pengiriman.batal_status", label: "Membatalkan status surat jalan", summary: `${d.number}: ${STATUS_LABEL[from]} → ${STATUS_LABEL[to]} (${reason})` });
+    return { id: d.id, to };
+  });
+  if ("error" in res) return res;
+  revalidatePath(`/operasional/pengiriman/${res.id}`);
+  revalidatePath("/operasional/pengiriman");
+  revalidatePath(`/operasional/tugas/${res.id}`);
+  return { ok: `Kembali ke status "${STATUS_LABEL[res.to]}".` };
+}
+
+/**
+ * Koreksi jam tiba sebenarnya (mis. sopir lupa menekan Sampai): jam asli `arrived_at` tetap tersimpan; yang dipakai penilaian
+ * ketepatan waktu adalah `arrival_corrected_at`. Alasan/bukti min. 10 huruf. Jam kosong = batalkan koreksi. Izin "selesaikan".
+ */
+export async function correctDeliveryArrival(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requirePerm("selesaikan");
+  const res = await guard(async () => {
+    const db = await getDb();
+    const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, String(form.get("id") ?? "")) });
+    if (!d) throw new UserError("Surat jalan tidak ditemukan.");
+    assertLive(d.id, "Surat jalan");
+    if (!d.arrivedAt && !d.deliveredAt) throw new UserError("Surat jalan ini belum tiba; belum ada jam tiba yang bisa dikoreksi.");
+    const raw = String(form.get("arrivedAt") ?? "").trim();
+    const now = new Date();
+    if (!raw) {
+      if (!d.arrivalCorrectedAt) throw new UserError("Belum ada koreksi yang dibatalkan.");
+      await runBatch(db, [
+        db.update(schema.deliveries).set({ arrivalCorrectedAt: null, arrivalCorrectedBy: null, arrivalCorrectionMadeAt: null, arrivalCorrectionReason: null, updatedAt: now }).where(eq(schema.deliveries.id, d.id)),
+        db.insert(schema.deliveryHistory).values({ deliveryId: d.id, fromStatus: d.status, toStatus: d.status, changedBy: me.id, note: `Koreksi jam tiba dibatalkan oleh ${me.name}` }),
+      ]);
+      await logActivity(me, { action: "pengiriman.koreksi_tiba", label: "Membatalkan koreksi jam tiba", summary: d.number });
+      return { id: d.id, cancelled: true };
+    }
+    const at = parseWibLocal(raw);
+    if (!at) throw new UserError("Jam tiba sebenarnya tidak valid.");
+    if (at.getTime() > now.getTime() + 5 * 60_000) throw new UserError("Jam tiba tidak boleh di masa depan.");
+    if (d.departedAt && at.getTime() < d.departedAt.getTime() - 60_000) throw new UserError("Jam tiba tidak boleh sebelum jam berangkat.");
+    const reason = String(form.get("reason") ?? "").trim().slice(0, 500);
+    if (reason.length < 10) throw new UserError("Tulis alasan & bukti koreksi (min. 10 huruf).");
+    const label = at.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+    await runBatch(db, [
+      db.update(schema.deliveries).set({ arrivalCorrectedAt: at, arrivalCorrectedBy: me.id, arrivalCorrectionMadeAt: now, arrivalCorrectionReason: reason, updatedAt: now }).where(eq(schema.deliveries.id, d.id)),
+      db.insert(schema.deliveryHistory).values({ deliveryId: d.id, fromStatus: d.status, toStatus: d.status, changedBy: me.id, note: `Jam tiba dikoreksi ke ${label} oleh ${me.name}: ${reason}` }),
+    ]);
+    await logActivity(me, { action: "pengiriman.koreksi_tiba", label: "Mengoreksi jam tiba pengiriman", summary: `${d.number}: ${label} (${reason})` });
+    return { id: d.id, cancelled: false };
+  });
+  if ("error" in res) return res;
+  revalidatePath(`/operasional/pengiriman/${res.id}`);
+  return { ok: res.cancelled ? "Koreksi jam tiba dibatalkan." : "Koreksi jam tiba tersimpan." };
 }

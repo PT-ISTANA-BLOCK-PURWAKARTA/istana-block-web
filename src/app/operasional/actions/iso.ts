@@ -8,6 +8,7 @@ import { guard, UserError } from "@/lib/erp/server";
 import { logActivity } from "@/lib/ops/activity";
 import { asUserError, deleteIsoRecord, saveIsoRecord, saveIsoSupplement, setObjective } from "@/lib/ops/iso";
 import { FORM_BY_CODE, type IsoCode } from "@/lib/ops/shared/isoForms";
+import { QUALITY_OBJECTIVES } from "@/lib/ops/shared/isoObjectives";
 
 const BASE = "/operasional/rekap-iso";
 
@@ -87,7 +88,8 @@ export async function saveObjectiveAction(_prev: FormState, form: FormData): Pro
     const month = String(form.get("month") ?? "");
     const total = clear ? null : toNumber(form.get("total"));
     const achieved = clear ? null : toNumber(form.get("achieved"));
-    if (!clear && (total === null || achieved === null)) throw new UserError("Isi jumlah total dan jumlah tercapai.");
+    const totalAuto = QUALITY_OBJECTIVES.find((o) => o.no === no)?.manualAchieved === true;
+    if (!clear && (achieved === null || (total === null && !totalAuto))) throw new UserError(totalAuto ? "Isi jumlah tercapai." : "Isi jumlah total dan jumlah tercapai.");
     await asUserError(() => setObjective(db, me, { month, no, total, achieved, note: String(form.get("note") ?? "") }));
     await logActivity(me, { action: "iso.sasaran", label: clear ? "Menghapus angka Sasaran Mutu" : "Mengisi angka Sasaran Mutu", summary: `Sasaran ${no} · ${month}` });
     return { done: true };

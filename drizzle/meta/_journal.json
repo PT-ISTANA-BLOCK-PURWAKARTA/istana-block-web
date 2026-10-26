@@ -43,6 +43,13 @@
       "when": 1792528151945,
       "tag": "0005_operasional_inventori",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793038262472,
+      "tag": "0006_setara_app_live",
+      "breakpoints": true
     }
   ]
 }

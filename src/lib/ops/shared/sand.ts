@@ -60,14 +60,20 @@ export function suggestTier(siltPercent: number, hasBrangkal: boolean | null | u
   return 1;
 }
 
-/** Siapa yang mengantar pasir: armada milik quarry/supplier sendiri, atau ekspedisi pihak ketiga. */
-export const DELIVERY_MODES = ["quarry", "ekspedisi"] as const;
+/** Siapa yang mengantar pasir: armada quarry/supplier, ekspedisi pihak ketiga, atau diambil sendiri oleh armada Istana Block. */
+export const DELIVERY_MODES = ["quarry", "ekspedisi", "sendiri"] as const;
 export type DeliveryMode = (typeof DELIVERY_MODES)[number];
 
 export const DELIVERY_MODE_LABELS: Record<DeliveryMode, string> = {
-  quarry: "Vendor quarry / supplier",
+  quarry: "Dikirim oleh supplier / quarry",
   ekspedisi: "Ekspedisi pihak ketiga",
+  sendiri: "Diambil sendiri (armada Istana Block)",
 };
+
+/** Skip uji lumpur: kondisi lumpur menurut pengamatan (tanpa uji gelas/botol). */
+export const SKIP_LEVELS = ["tidak", "sedikit", "sedang"] as const;
+export type SkipLevel = (typeof SKIP_LEVELS)[number];
+export const SKIP_LEVEL_LABELS: Record<SkipLevel, string> = { tidak: "Tidak berlumpur", sedikit: "Lumpur sedikit", sedang: "Lumpur sedang" };
 
 /** Penilaian kecepatan pengiriman oleh kantor (3 = terbaik). */
 export const SPEED_LABELS: Record<number, string> = {

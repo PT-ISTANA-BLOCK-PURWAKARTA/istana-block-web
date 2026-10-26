@@ -34,13 +34,22 @@ export const tagOf = (row: SupplierRow) => row.tag?.trim() || NO_TAG;
 export const tagKey = (row: SupplierRow) => tagOf(row).toLowerCase();
 export const materialKey = (row: SupplierRow) => row.itemName.trim().toLowerCase();
 export const vendorName = (row: SupplierRow) =>
-  row.deliveryMode === "ekspedisi" ? row.expeditionName?.trim() || "Ekspedisi (tanpa nama)" : row.deliveryMode === "quarry" ? `Armada ${sourceLabel(row)}` : "Belum diisi";
+  row.deliveryMode === "ekspedisi"
+    ? row.expeditionName?.trim() || "Ekspedisi (tanpa nama)"
+    : row.deliveryMode === "quarry"
+      ? `Armada ${sourceLabel(row)}`
+      : row.deliveryMode === "sendiri"
+        ? "Armada Istana Block (ambil sendiri)"
+        : "Belum diisi";
+
+/** Kecepatan kirim yang ikut menilai supplier/vendor: armada Istana Block sendiri tidak (bukan kinerja supplier), jadi diabaikan. */
+export const speedOf = (row: Pick<SupplierRow, "deliveryMode" | "speedRating">) => (row.deliveryMode === "sendiri" ? null : row.speedRating);
 export const levelOf = (row: SupplierRow) => (row.siltPercent === null ? null : siltLevel(row.siltPercent, row.test?.maxSiltPercent ?? MAX_SILT_PERCENT));
 export const silts = (items: SupplierRow[]) => items.flatMap((row) => (row.siltPercent === null ? [] : [row.siltPercent]));
 
 /** Penilaian satu kiriman → komponen nilai. */
 export const partsOf = (items: SupplierRow[]) =>
-  averageParts(items.map((row) => receiptParts({ tier: row.category === "bahan_baku" ? row.tier : null, speedRating: row.speedRating, priceRating: row.priceRating })));
+  averageParts(items.map((row) => receiptParts({ tier: row.category === "bahan_baku" ? row.tier : null, speedRating: speedOf(row), priceRating: row.priceRating })));
 
 export function groupBy<T>(rows: T[], key: (row: T) => string) {
   const groups = new Map<string, T[]>();
@@ -105,14 +114,14 @@ export function summarizeMonths(rows: SupplierRow[]): MonthSummary[] {
 export type SourceSummary = {
   key: string; label: string; materials: string[]; rows: SupplierRow[]; count: number; tested: number; avgSilt: number | null; minSilt: number | null; maxSilt: number | null;
   good: number; overLimit: number; rejected: number; tiers: Record<SandTier, number>; tier: SandTier | null; unrated: number; speedAvg: number | null; speedCount: number;
-  priceAvg: number | null; viaQuarry: number; viaExpedition: number; notes: Note[]; parts: ScoreParts; overall: number | null; complete: boolean; scored: number;
+  priceAvg: number | null; viaQuarry: number; viaExpedition: number; viaSendiri: number; notes: Note[]; parts: ScoreParts; overall: number | null; complete: boolean; scored: number;
 };
 
 export function summarizeSources(rows: SupplierRow[]): SourceSummary[] {
   return [...groupBy(rows, sourceKey).entries()]
     .map(([key, items]) => {
       const values = silts(items);
-      const speeds = items.flatMap((row) => (row.speedRating ? [row.speedRating] : []));
+      const speeds = items.flatMap((row) => (speedOf(row) ? [speedOf(row)!] : []));
       const prices = items.flatMap((row) => (row.priceRating ? [row.priceRating] : []));
       const parts = partsOf(items);
       return {
@@ -135,10 +144,11 @@ export function summarizeSources(rows: SupplierRow[]): SourceSummary[] {
         priceAvg: average(prices),
         viaQuarry: items.filter((row) => row.deliveryMode === "quarry").length,
         viaExpedition: items.filter((row) => row.deliveryMode === "ekspedisi").length,
+        viaSendiri: items.filter((row) => row.deliveryMode === "sendiri").length,
         notes: notesOf(items, (row) => [row.qualityNote, row.qualityByName]),
         parts,
         ...overallScore(parts),
-        scored: items.filter((row) => row.tier || row.speedRating || row.priceRating).length,
+        scored: items.filter((row) => row.tier || speedOf(row) || row.priceRating).length,
       };
     })
     .sort((a, b) => (a.tier ?? 9) - (b.tier ?? 9) || (a.avgSilt ?? 99) - (b.avgSilt ?? 99) || (b.speedAvg ?? 0) - (a.speedAvg ?? 0));
@@ -150,7 +160,7 @@ export type VendorSummary = { key: string; name: string; mode: DeliveryMode | nu
 export function summarizeVendors(rows: SupplierRow[]): VendorSummary[] {
   return [...groupBy(rows, (row) => `${row.deliveryMode ?? "-"}|${vendorName(row).toLowerCase()}`).entries()]
     .map(([key, items]) => {
-      const speeds = items.flatMap((row) => (row.speedRating ? [row.speedRating] : []));
+      const speeds = items.flatMap((row) => (speedOf(row) ? [speedOf(row)!] : []));
       return {
         key,
         name: vendorName(items[0]),
@@ -168,7 +178,7 @@ export function summarizeVendors(rows: SupplierRow[]): VendorSummary[] {
 
 export function modeSummary(rows: SupplierRow[], mode: DeliveryMode) {
   const items = rows.filter((row) => row.deliveryMode === mode);
-  const speeds = items.flatMap((row) => (row.speedRating ? [row.speedRating] : []));
+  const speeds = items.flatMap((row) => (speedOf(row) ? [speedOf(row)!] : []));
   return { count: items.length, speedAvg: average(speeds), speedCount: speeds.length, onTime: speeds.filter((speed) => speed >= 2).length };
 }
 

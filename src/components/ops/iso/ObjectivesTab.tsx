@@ -43,7 +43,11 @@ export function ObjectivesTab({ overview, range, canEdit, defaultMonth, editor }
                   <td><Chip text={row.status} /></td>
                   <td className="small" style={{ minWidth: 200 }}>
                     {row.auto ? (
-                      <span><b className="text-sukses">Otomatis</b> · <span className="muted">{row.dataSource}</span></span>
+                      <span className="stack" style={{ gap: 4, alignItems: "flex-start" }}>
+                        <span><b className="text-sukses">Otomatis</b> · <span className="muted">{row.dataSource}</span></span>
+                        {row.manualAchieved && row.months.length > 0 && <span className="muted">Tercapai manual: {row.months.map(monthLabel).join(", ")}</span>}
+                        {row.manualAchieved && canEdit && <Link href={isoUrl({ range, tab: "sasaran" }, { isi: String(row.no), bulan: defaultMonth })} className="btn btn-ghost btn-sm">Isi tercapai</Link>}
+                      </span>
                     ) : (
                       <span className="stack" style={{ gap: 4, alignItems: "flex-start" }}>
                         <span className="muted">{row.months.length ? `Manual: ${row.months.map(monthLabel).join(", ")}` : "Manual (belum diisi)"}</span>

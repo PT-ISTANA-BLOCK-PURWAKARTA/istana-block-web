@@ -29,10 +29,10 @@ export function RecapExport({ items, from, to }: { items: RecapItem[]; from: str
       await downloadWorkbook(`Rekap-Rapat-Training_${from}_sd_${to}.xlsx`, [
         {
           name: "Rapat", title: `REKAP RAPAT ${dmy(from)} s/d ${dmy(to)}`,
-          columns: ["No", "Tanggal", "Jam", "Judul / topik", "Jenis rapat", "Tempat", "Pimpinan rapat", "Diundang", "Hadir", "Nama hadir", "Ringkasan pembahasan", "Keputusan", "Keputusan masih Open", "Lampiran", "Status rekap", "Diisi oleh"].map((h) => ({ key: h, header: h })),
+          columns: ["No", "Tanggal", "Jam", "Judul / topik", "Jenis rapat", "Tempat", "Pimpinan rapat", "Diundang", "Hadir", "Nama hadir", "TTD hadir", "Ringkasan pembahasan", "Keputusan", "Keputusan masih Open", "Lampiran", "Status rekap", "Diisi oleh"].map((h) => ({ key: h, header: h })),
           rows: rapat.map((i, n) => ({
             "No": n + 1, "Tanggal": dmy(wibKey(i.startAt)), "Jam": clock(i), "Judul / topik": i.title, "Jenis rapat": i.result?.category ?? "", "Tempat": i.location, "Pimpinan rapat": i.result?.leader ?? "",
-            "Diundang": i.participants.length, "Hadir": i.result ? presentNames(i).length : "", "Nama hadir": i.result ? presentNames(i).join(", ") : "", "Ringkasan pembahasan": i.result?.summary ?? "",
+            "Diundang": i.participants.length, "Hadir": i.result ? presentNames(i).length : "", "Nama hadir": i.result ? presentNames(i).join(", ") : "", "TTD hadir": i.participants.filter((p) => p.signedAt).map((p) => p.name).join(", "), "Ringkasan pembahasan": i.result?.summary ?? "",
             "Keputusan": i.decisions.length, "Keputusan masih Open": i.decisions.filter((d) => d.values.status === "Open").length, "Lampiran": links(i),
             "Status rekap": i.result ? "Sudah diisi" : "Belum diisi", "Diisi oleh": i.result?.filledByName ?? "",
           })),
@@ -48,10 +48,10 @@ export function RecapExport({ items, from, to }: { items: RecapItem[]; from: str
         },
         {
           name: "Training", title: `REKAP TRAINING ${dmy(from)} s/d ${dmy(to)}`,
-          columns: ["No", "Tanggal", "Jam", "Judul training", "Jenis", "Pemateri / trainer", "Tempat", "Durasi (jam)", "Diundang", "Hadir", "Materi", "Evaluasi / hasil", "Catatan", "Lampiran", "Status rekap", "Diisi oleh"].map((h) => ({ key: h, header: h })),
+          columns: ["No", "Tanggal", "Jam", "Judul training", "Jenis", "Pemateri / trainer", "Tempat", "Durasi (jam)", "Diundang", "Hadir", "TTD hadir", "Materi", "Evaluasi / hasil", "Catatan", "Lampiran", "Status rekap", "Diisi oleh"].map((h) => ({ key: h, header: h })),
           rows: training.map((i, n) => ({
             "No": n + 1, "Tanggal": dmy(wibKey(i.startAt)), "Jam": clock(i), "Judul training": i.title, "Jenis": i.result?.category ?? "", "Pemateri / trainer": i.result?.leader ?? "", "Tempat": i.location,
-            "Durasi (jam)": i.result?.durationHours ?? "", "Diundang": i.participants.length, "Hadir": i.result ? presentNames(i).length : "", "Materi": i.result?.summary ?? "",
+            "Durasi (jam)": i.result?.durationHours ?? "", "Diundang": i.participants.length, "Hadir": i.result ? presentNames(i).length : "", "TTD hadir": i.participants.filter((p) => p.signedAt).map((p) => p.name).join(", "), "Materi": i.result?.summary ?? "",
             "Evaluasi / hasil": i.result?.evaluation ?? "", "Catatan": i.result?.notes ?? "", "Lampiran": links(i), "Status rekap": i.result ? "Sudah diisi" : "Belum diisi", "Diisi oleh": i.result?.filledByName ?? "",
           })),
         },

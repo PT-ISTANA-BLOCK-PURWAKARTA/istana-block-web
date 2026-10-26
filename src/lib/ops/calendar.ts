@@ -40,7 +40,7 @@ async function participantsOf(db: DB, eventIds: string[]) {
     await Promise.all(
       chunk(eventIds).map((part) =>
         db
-          .select({ eventId: calendarParticipants.eventId, userId: users.id, name: users.name, roles: users.roles })
+          .select({ eventId: calendarParticipants.eventId, userId: users.id, name: users.name, roles: users.roles, signedAt: calendarParticipants.attendanceSignedAt })
           .from(calendarParticipants)
           .innerJoin(users, eq(calendarParticipants.userId, users.id))
           .where(inArray(calendarParticipants.eventId, part)),
@@ -58,7 +58,7 @@ const eventColumns = {
 async function toViews(db: DB, rows: { id: string; title: string; type: CalendarType; startAt: Date; endAt: Date | null; location: string; description: string; reminderMinutes: number[]; seriesId: string | null; createdByName: string | null }[], meId: number): Promise<EventView[]> {
   const people = await participantsOf(db, rows.map((r) => r.id));
   return rows.map((r) => {
-    const participants = people.filter((p) => p.eventId === r.id).map((p) => ({ userId: p.userId, name: p.name, role: roleLabel(p.roles) }));
+    const participants = people.filter((p) => p.eventId === r.id).map((p) => ({ userId: p.userId, name: p.name, role: roleLabel(p.roles), signedAt: p.signedAt?.toISOString() ?? null }));
     return { ...r, startAt: r.startAt.toISOString(), endAt: r.endAt?.toISOString() ?? null, participants, isMine: participants.some((p) => p.userId === meId) };
   });
 }
