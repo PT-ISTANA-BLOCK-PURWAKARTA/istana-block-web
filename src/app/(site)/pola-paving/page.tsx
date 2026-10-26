@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/pola-paving" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/pola-paving", images: ["/img/pabrik/pabrik-mesin-paving.webp"] },
+  openGraph: { title: TITLE, description: DESCRIPTION, url: "/pola-paving", images: [{ url: "/og-default.jpg", width: 1200, height: 630 }] },
 };
 
 const FAQ = [

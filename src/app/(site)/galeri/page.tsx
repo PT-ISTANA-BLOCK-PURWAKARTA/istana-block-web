@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Galeri Pemasangan Paving & Stok Pabrik",
   description: "Dokumentasi pemasangan paving block hexagon, bata, dan kombinasi warna oleh Istana Block Purwakarta, serta stok U-Ditch, buis, kanstin, dan greffel di pabrik.",
   alternates: { canonical: "/galeri" },
-  openGraph: { images: [GALLERY[0]?.src ?? "/img/pabrik/pabrik-mesin-paving.webp"] },
+  openGraph: { images: [GALLERY[0]?.src ?? { url: "/og-default.jpg", width: 1200, height: 630 }] },
 };
 
 const FILTERS = [

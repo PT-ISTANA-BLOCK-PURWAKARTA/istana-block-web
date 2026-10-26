@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: pg.seoTitle ? { absolute: pg.seoTitle } : fitTitle(pg.title),
     description,
     alternates: { canonical: `/${pg.slug}` },
-    openGraph: { title, description, url: `/${pg.slug}`, images: img ? [img] : ["/img/pabrik/pabrik-mesin-paving.webp"] },
+    openGraph: { title, description, url: `/${pg.slug}`, images: img ? [img] : [{ url: "/og-default.jpg", width: 1200, height: 630 }] },
   };
 }
 
@@ -102,7 +102,7 @@ export default async function StaticPage({ params }: Props) {
           </a>
         )}
       </header>
-      {img && <img className="article-cover hexlong" src={img} alt="" fetchPriority="high" decoding="async" style={{ marginBottom: 32 }} />}
+      {img && <img className="article-cover hexlong" src={img} alt="" width={1200} height={675} fetchPriority="high" decoding="async" style={{ marginBottom: 32 }} />}
       <Markdown>{pg.content}</Markdown>
       <aside className="cta-aside hexpat" style={{ marginTop: 40, maxWidth: 720 }}>
         {isArea ? (

@@ -741,6 +741,29 @@ async function periksaRobots(ctx) {
   ];
 }
 
+/** Gambar WordPress lama yang terdaftar di src/data/legacy-uploads.json harus 301 satu lompatan ke padanannya (audit P12(c)). */
+async function periksaUploadLama(ctx) {
+  let peta = {};
+  try {
+    peta = JSON.parse(readFileSync(new URL("../src/data/legacy-uploads.json", import.meta.url), "utf8"));
+  } catch {
+    return [];
+  }
+  return paralel(Object.entries(peta), 1, async ([dari, ke]) => {
+    const url = `${ctx.base}${dari}`;
+    const r = await ambilHalaman(url, {}, { baca: false });
+    if (r.galat) return buat("PERINGATAN", "redirect-uploads", url, `tidak bisa dihubungi: ${r.galat}`);
+    let tujuan = null;
+    try {
+      tujuan = r.location ? new URL(r.location, url).pathname : null;
+    } catch {
+      /* Location rusak: ditangani di bawah */
+    }
+    if (r.status !== 301 || tujuan !== ke) return buat("GAGAL", "redirect-uploads", url, `${r.status} ke ${tujuan ?? "(tanpa Location)"}, harus 301 ke ${ke}`);
+    return buat("LULUS", "redirect-uploads", url, `301 ke ${ke}`);
+  });
+}
+
 async function periksaPengalihan(ctx) {
   const kasus = [
     { cek: "redirect-http", dari: `http://${ctx.prodHost}/`, ke: `https://${ctx.prodHost}/` },
@@ -1005,6 +1028,8 @@ async function jalankan(opsi) {
     log("Memeriksa pengalihan http dan www ...");
     situs.push(...(await periksaPengalihan(ctx)));
   }
+  log("Memeriksa pengalihan gambar WordPress lama ...");
+  situs.push(...(await periksaUploadLama(ctx)));
   log("Memeriksa tautan internal beranda ...");
   situs.push(...(await periksaTautanBeranda(ctx, faktaPerJalur.get("/"), new Set(jalur))));
   log(`Mengirim ${JUMLAH_UJI_5XX} permintaan beruntun (uji 5xx) ...`);

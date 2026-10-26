@@ -21,6 +21,12 @@ import { runScheduledJobs } from "./src/lib/ops/cron";
 const PAGE_TTL = 300; // halaman & navigasi: 5 menit (keputusan pemilik 2026-10-19)
 const MEDIA_TTL = 31_536_000; // /media/...: key berisi UUID, isi berkas tidak pernah berubah
 const META_TTL = 3600; // sitemap.xml & robots.txt
+// Setelah TTL habis, entri lama tetap disajikan (stale-while-revalidate) sambil dirender ulang di latar
+// belakang. Pengunjung tidak menunggu render dingin, dan bila render ulang gagal (mis. 1102 di paket Free)
+// halaman lama tetap tampil, bukan 503. Render ulang yang dijawab 4xx/3xx (halaman dihapus atau dialihkan)
+// membuang entri lama, jadi hanya kegagalan server (5xx / exception) yang memperpanjang umur entri.
+const STALE_TTL = 6 * 3600;
+const REFRESH_LOCK_MS = 30_000; // satu render ulang per kunci per isolate dalam rentang ini
 
 const NO_CACHE = /^\/(situs|akuntansi|operasional|internal|api|admin|keuangan|reel|kiriman)(\/|$)/;
 const SESSION = /(?:^|;\s*)ib_session=/; // nama cookie = SESSION_COOKIE di src/lib/session.ts
@@ -34,6 +40,7 @@ const MEM_MAX_ENTRIES = 300;
 const MEM_MAX_ENTRY_BYTES = 2 * 1024 * 1024;
 const MEM_MAX_BYTES = 32 * 1024 * 1024; // batas memori isolate 128 MB
 const memory = new Map<string, Entry>();
+const refreshing = new Map<string, number>(); // kunci -> waktu mulai render ulang (penanda saja, bukan promise)
 let memBytes = 0;
 
 function ttlFor(req: Request, url: URL): number | null {
@@ -98,7 +105,13 @@ function remember(key: string, entry: Entry) {
 // tsconfig memuat lib "dom", yang tidak mengenal caches.default milik Cloudflare.
 const edgeCache = () => (caches as unknown as { default: Cache }).default;
 
-function respond(entry: Entry, status: "HIT" | "HIT-EDGE" | "MISS") {
+function forget(key: string) {
+  const old = memory.get(key);
+  if (old) memBytes -= old.body.byteLength;
+  memory.delete(key);
+}
+
+function respond(entry: Entry, status: "HIT" | "HIT-EDGE" | "STALE" | "MISS") {
   const headers = new Headers(entry.headers);
   headers.set("x-ib-cache", status);
   return new Response(entry.body, { status: 200, headers });
@@ -109,7 +122,7 @@ async function fromEdge(key: string): Promise<Entry | null> {
     const res = await edgeCache().match(key);
     if (!res) return null;
     const expires = Number(res.headers.get("x-ib-expires"));
-    if (!expires || expires <= Date.now()) return null;
+    if (!expires || expires + STALE_TTL * 1000 <= Date.now()) return null;
     const headers = new Headers(res.headers);
     const original = headers.get("x-ib-cc");
     headers.delete("x-ib-expires");
@@ -127,7 +140,7 @@ async function toEdge(key: string, entry: Entry, ttl: number) {
     const headers = new Headers(entry.headers);
     const original = headers.get("cache-control");
     if (original) headers.set("x-ib-cc", original); // dipulihkan saat disajikan ke browser
-    headers.set("cache-control", `public, max-age=${ttl}`);
+    headers.set("cache-control", `public, max-age=${ttl + STALE_TTL}`);
     headers.set("x-ib-expires", String(entry.expires));
     await edgeCache().put(key, new Response(entry.body, { status: 200, headers }));
   } catch {
@@ -144,17 +157,54 @@ export default {
     const { clean, tracking } = splitTracking(url);
     const key = await cacheKey(req, clean, env.CF_VERSION_METADATA?.id ?? "lokal");
     const now = Date.now();
-    const mem = memory.get(key);
-    if (mem && mem.expires > now) return respond(mem, "HIT");
+    const forward = () => (tracking.length ? new Request(clean.href, req) : req);
+
+    let cached = memory.get(key);
+    if (cached && cached.expires > now) return respond(cached, "HIT");
+    if (cached && cached.expires + STALE_TTL * 1000 <= now) cached = undefined;
 
     const edge = await fromEdge(key);
-    if (edge) {
+    if (edge && (!cached || edge.expires > cached.expires)) {
       remember(key, edge);
-      return respond(edge, "HIT-EDGE");
+      cached = edge;
+      if (edge.expires > now) return respond(edge, "HIT-EDGE");
     }
 
-    const forwarded = tracking.length ? new Request(clean.href, req) : req;
-    const res: Response = await handler.fetch(forwarded, env, ctx);
+    // Entri kedaluwarsa tapi masih dalam masa stale: sajikan sekarang, render ulang di latar belakang.
+    if (cached) {
+      if (now - (refreshing.get(key) ?? 0) > REFRESH_LOCK_MS) {
+        refreshing.set(key, now);
+        ctx.waitUntil(
+          (async () => {
+            try {
+              const fresh: Response = await handler.fetch(forward(), env, ctx);
+              if (fresh.status === 200 && !fresh.headers.has("set-cookie")) {
+                const entry: Entry = { expires: Date.now() + ttl * 1000, headers: [...fresh.headers], body: await fresh.arrayBuffer() };
+                remember(key, entry);
+                await toEdge(key, entry, ttl);
+              } else {
+                await fresh.body?.cancel();
+                if (fresh.status < 500) {
+                  forget(key); // halaman dihapus/dialihkan: jangan sajikan salinan lama lagi
+                  try {
+                    await edgeCache().delete(key);
+                  } catch {
+                    // Cache API tidak tersedia: cukup lapis memori.
+                  }
+                }
+              }
+            } catch {
+              // render ulang gagal (mis. batas CPU): salinan lama tetap dipakai
+            } finally {
+              refreshing.delete(key);
+            }
+          })(),
+        );
+      }
+      return respond(cached, "STALE");
+    }
+
+    const res: Response = await handler.fetch(forward(), env, ctx);
     if (res.status !== 200 || res.headers.has("set-cookie")) return withTracking(res, clean, tracking);
     const entry: Entry = { expires: now + ttl * 1000, headers: [...res.headers], body: await res.arrayBuffer() };
     remember(key, entry);

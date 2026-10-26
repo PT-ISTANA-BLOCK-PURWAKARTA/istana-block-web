@@ -445,7 +445,11 @@ Lalu sambungkan domain: **Cloudflare dashboard → Workers & Pages → istana-bl
 > - Perubahan lewat panel `/situs` baru terlihat pengunjung **paling lambat 5 menit** kemudian. Admin yang sedang login selalu melihat versi terbaru.
 > - Panel internal, `/api`, dan request selain GET tidak pernah di-cache.
 > - Parameter iklan (`gclid`, `utm_*`, …) tidak memengaruhi isi halaman, jadi tidak membuat salinan cache baru.
-> - Header respons `x-ib-cache: HIT | HIT-EDGE | MISS` menunjukkan asal respons.
+> - Header respons `x-ib-cache: HIT | HIT-EDGE | STALE | MISS` menunjukkan asal respons.
+> - **Stale-while-revalidate.** Setelah 5 menit, halaman lama tetap disajikan (maksimal 6 jam) sambil dirender ulang di latar belakang. Pengunjung tidak menunggu render dingin, dan bila render ulang gagal (1102/5xx) halaman lama tetap tampil. Halaman yang dihapus atau dialihkan (render ulang 3xx/4xx) langsung dibuang dari cache. Jadi satu pengunjung pertama sesudah 5 menit bisa melihat versi lama; berikutnya sudah versi baru.
+> - Hasil query D1 halaman publik (`src/lib/queries.ts`) juga di-memo 30 detik per isolate (`src/lib/memo.ts`), jadi render ulang tidak mengulang query. Pengaturan (`getSettings`) sengaja tidak di-memo karena dibaca juga oleh panel `/situs`.
+> - `(site)/layout.tsx` sengaja tetap `force-dynamic`: tanpa incremental cache OpenNext (butuh binding R2/KV) isinya tidak bisa diperbarui dari panel.
+> - **Keputusan pemilik (1102).** Render dingin satu halaman Next.js hampir pasti melewati 10 ms CPU di paket Free, dan render yang gagal tidak pernah mengisi cache. Cache di atas hanya mengurangi seberapa sering render dingin terjadi; kepastian hanya dari **Workers Paid (USD 5/bulan)** lalu tambahkan `"limits": { "cpu_ms": 30000 }` di `wrangler.jsonc` (jangan ditambahkan di paket Free: deploy ditolak). Lihat juga usulan binding R2 + `tagCache` di laporan audit P1.
 > - Di `*.workers.dev` hanya cache memori yang aktif. Cache API Cloudflare baru ikut bekerja setelah domain sendiri tersambung.
 > - Pelacakan Google Ads dan GA4: lihat [docs/pelacakan-google-ads.md](docs/pelacakan-google-ads.md).
 

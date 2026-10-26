@@ -75,7 +75,7 @@ export function FeatureReel() {
         <picture className="reel-poster" aria-hidden="true">
           <source media={MOBILE_QUERY} srcSet="/reel/reel-9x16.webp" type="image/webp" />
           <source srcSet="/reel/reel-16x9.webp" type="image/webp" />
-          <img src="/reel/reel-16x9.jpg" alt="" loading="lazy" decoding="async" />
+          <img src="/reel/reel-16x9.jpg" alt="" width={1280} height={720} loading="lazy" decoding="async" />
         </picture>
         {src && (inView || withSound || playing) && (
           <video

@@ -25,9 +25,9 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       images: [
         {
-          url: "/img/pabrik/pabrik-mesin-paving.webp",
-          width: 1600,
-          height: 1334,
+          url: "/og-default.jpg",
+          width: 1200,
+          height: 630,
           alt: "Mesin cetak paving di pabrik Istana Block Purwakarta dengan paving yang baru dicetak",
         },
       ],
