@@ -697,6 +697,16 @@ async function periksaHeader(ctx, daftarFakta) {
   if (ib) tambah("LULUS", "x-ib-cache", urlBeranda, `x-ib-cache: ${ib.join(",")}`);
   else tambah("PERINGATAN", "x-ib-cache", urlBeranda, "tidak ada header x-ib-cache (cache worker.ts tidak aktif di host ini; aman, tetapi tidak terukur)");
 
+  // Parameter iklan tidak boleh membuat kunci cache baru: gclid kedua yang berbeda harus dilayani dari cache.
+  if (ib) {
+    const acak = () => `cek${Math.random().toString(36).slice(2, 10)}`;
+    await ambilHalaman(`${urlBeranda}?gclid=${acak()}`, {}, { baca: false });
+    const kedua = await ambilHalaman(`${urlBeranda}?gclid=${acak()}&utm_source=cek-seo`, {}, { baca: false });
+    const status = kedua.headers.get("x-ib-cache");
+    if (status === "HIT" || status === "HIT-EDGE" || status === "STALE") tambah("LULUS", "cache-gclid", urlBeranda, `gclid berbeda tetap ${status}`);
+    else tambah("GAGAL", "cache-gclid", urlBeranda, `gclid berbeda tidak dilayani dari cache (x-ib-cache: ${status ?? kedua.galat ?? "tanpa"}, status ${kedua.status})`);
+  }
+
   for (const { cek, pola, jenis, label } of [
     { cek: "cache-control-static", pola: /\/_next\/static\/[^\s"',?#)]+\.js/, jenis: "static", label: "/_next/static/*.js" },
     { cek: "cache-control-img", pola: /\/img\/[^\s"',?#)]+/, jenis: "img", label: "/img/*" },
