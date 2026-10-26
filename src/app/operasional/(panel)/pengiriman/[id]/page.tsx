@@ -14,6 +14,7 @@ import { TrackingShare } from "@/components/ops/delivery/TrackingShare";
 import { STATUS_LABEL } from "@/components/ops/delivery/status";
 import { getDb, schema } from "@/db";
 import { MAX_DELIVERY_PROOFS } from "@/db/erp";
+import { isArchive } from "@/lib/erp/archive";
 import { deliveryItems, opsAccess } from "@/lib/erp/ops";
 import { journalFor } from "@/lib/erp/server";
 import { formatQty, tgl } from "@/lib/erp/util";
@@ -25,8 +26,12 @@ const stamp = (d: Date | number | null) =>
   d ? new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(typeof d === "number" ? new Date(d * 1000) : d) : "";
 
 export default async function PengirimanDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string }> }) {
-  const { canShip: canEdit, canLoad, canFinance, perms } = await opsAccess();
+  const { canShip, canLoad: canLoadAccess, canFinance, perms } = await opsAccess();
   const { id } = await params;
+  // Data arsip dari aplikasi lama: baca-saja, tanpa tombol ubah/status/sopir/bukti/tautan lacak/hapus.
+  const archived = isArchive(id);
+  const canEdit = canShip && !archived;
+  const canLoad = canLoadAccess && !archived;
   const { ok } = await searchParams;
   const db = await getDb();
   const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, id) });
@@ -67,6 +72,7 @@ export default async function PengirimanDetail({ params, searchParams }: { param
         {canEdit && d.status === "dijadwalkan" && <Link href={`/operasional/pengiriman/${d.id}/ubah`} className="btn btn-ghost btn-sm">Ubah jadwal</Link>}
       </PageHead>
       <Ok ok={ok} />
+      {archived && <p className="flag flag-info">Arsip aplikasi lama. Surat jalan ini hanya bisa dilihat, tidak bisa diubah statusnya.</p>}
       <div className="stack" style={{ gap: 20 }}>
         {d.status === "batal" ? <p className="alert alert-error">Surat jalan ini dibatalkan.</p> : <section className="admin-card"><Steps status={d.status === "tertunda" ? (d.arrivedAt ? "tiba" : d.departedAt ? "berangkat" : d.loadedAt ? "dimuat" : "dijadwalkan") : d.status} /></section>}
         {d.status === "tertunda" && <p className="alert alert-warn">Tertunda{d.delayReason ? `: ${d.delayReason}` : ""}</p>}
@@ -124,7 +130,7 @@ export default async function PengirimanDetail({ params, searchParams }: { param
           </section>
         )}
 
-        {(canEdit || canLoad || perms.has("selesaikan")) && <DeliveryActions id={d.id} status={d.status} canShip={canEdit} canLoad={canLoad} canComplete={perms.has("selesaikan")} hasDriver={!!d.driverId} />}
+        {(canEdit || canLoad || (!archived && perms.has("selesaikan"))) && <DeliveryActions id={d.id} status={d.status} canShip={canEdit} canLoad={canLoad} canComplete={!archived && perms.has("selesaikan")} hasDriver={!!d.driverId} />}
         {canAssign && <AssignForm id={d.id} vehicleId={d.vehicleId} driverId={d.driverId} vehicles={vehicles} drivers={drivers} />}
 
         {canEdit && d.status !== "batal" && (

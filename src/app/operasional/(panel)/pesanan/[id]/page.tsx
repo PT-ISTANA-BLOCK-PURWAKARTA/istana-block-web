@@ -9,6 +9,7 @@ import { OrderDanger } from "@/components/ops/order/OrderDanger";
 import { PaymentBadge } from "@/components/ops/order/PaymentBadge";
 import { ShareOrderButton } from "@/components/ops/order/ShareOrderButton";
 import { getDb, schema } from "@/db";
+import { isArchive } from "@/lib/erp/archive";
 import { docTotals } from "@/lib/erp/docs";
 import { overdueByContact, stockPosition } from "@/lib/erp/insights";
 import { deliveryItems, opsAccess } from "@/lib/erp/ops";
@@ -21,10 +22,14 @@ export const metadata = { title: "Pesanan" };
 const EPS = 1e-9;
 
 export default async function PesananDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string }> }) {
-  const { canOrders: canEdit, canShip, canFinance } = await opsAccess();
+  const { canOrders, canShip: canShipAccess, canFinance } = await opsAccess();
   // Harga terlihat oleh keuangan dan peran yang mengisi harga di form PO (izin pesanan).
-  const canPrice = canFinance || canEdit;
+  const canPrice = canFinance || canOrders;
   const { id } = await params;
+  // Data arsip dari aplikasi lama: baca-saja, tanpa tombol ubah/status/batal/hapus/jadwal/faktur.
+  const archived = isArchive(id);
+  const canEdit = canOrders && !archived;
+  const canShip = canShipAccess && !archived;
   const { ok } = await searchParams;
   const db = await getDb();
   const o = await db.query.orders.findFirst({ where: eq(schema.orders.id, id) });
@@ -52,7 +57,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
   const t = docTotals(prog, { discount: o.discount, ongkir: o.ongkir, taxable: o.taxable, taxRate: fin.ppnRate });
   const open = o.status === "dikonfirmasi" || o.status === "dikirim_sebagian" || o.status === "terkirim";
   const canSchedule = (o.status === "dikonfirmasi" || o.status === "dikirim_sebagian") && prog.some((p) => p.scheduled + EPS < p.qty);
-  const canInvoice = canFinance && o.status !== "draft" && o.status !== "batal" && prog.some((p) => p.invoiced + EPS < (p.delivered > EPS ? p.delivered : p.qty));
+  const canInvoice = canFinance && !archived && o.status !== "draft" && o.status !== "batal" && prog.some((p) => p.invoiced + EPS < (p.delivered > EPS ? p.delivered : p.qty));
   // Surat jalan belum selesai: dijadwalkan, dimuat, berangkat, tiba, tertunda.
   const activeTrips = deliveries.some((x) => x.d.status !== "terkirim" && x.d.status !== "batal");
   // Barang sudah keluar gudang (terposting) atau terkirim.
@@ -85,6 +90,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
         {canEdit && o.status !== "batal" && o.status !== "selesai" && <Link href={`/operasional/pesanan/${o.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>}
       </PageHead>
       <Ok ok={ok} />
+      {archived && <p className="flag flag-info" style={{ marginBottom: 16 }}>Arsip aplikasi lama. Pesanan ini hanya bisa dilihat, tidak bisa diubah, dijadwalkan kirim, atau difaktur.</p>}
       {o.status === "draft" && (
         <p className="alert alert-ok" style={{ marginBottom: 16, background: "var(--biru-muda)", color: "var(--biru-tua)" }}>
           Pesanan masih draf. Konfirmasi dulu agar bisa dijadwalkan kirim.

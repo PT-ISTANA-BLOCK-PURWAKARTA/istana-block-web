@@ -5,6 +5,7 @@ import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
 import { requireModule } from "@/lib/auth";
+import { isArchive } from "@/lib/erp/archive";
 import { docTotals, lineAmount } from "@/lib/erp/docs";
 import {
   assertOpen,
@@ -51,6 +52,7 @@ export async function saveInvoice(_prev: FormState, form: FormData): Promise<For
     const dueDate = String(form.get("dueDate") ?? "") ? requireDate(form.get("dueDate"), "Jatuh tempo") : addDays(date, contact.termDays || fin.termDays);
     if (dueDate < date) throw new UserError("Jatuh tempo tidak boleh sebelum tanggal faktur.");
     const orderId = String(form.get("orderId") ?? "") || existing?.orderId || null;
+    if (orderId && isArchive(orderId)) throw new UserError("PO arsip tidak bisa difaktur; buat faktur manual tanpa pesanan.");
 
     const acc = await loadAccounts(db);
     const itemRows = await db.select().from(schema.items);
