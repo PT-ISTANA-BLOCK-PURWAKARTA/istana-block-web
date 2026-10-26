@@ -30,7 +30,7 @@ const REFRESH_LOCK_MS = 30_000; // satu render ulang per kunci per isolate dalam
 
 const NO_CACHE = /^\/(situs|akuntansi|operasional|internal|api|admin|keuangan|reel|kiriman)(\/|$)/;
 const SESSION = /(?:^|;\s*)ib_session=/; // nama cookie = SESSION_COOKIE di src/lib/session.ts
-const TRACKING = /^(utm_.+|gclid|gbraid|wbraid|gad_.+|fbclid|msclkid|_gl|srsltid)$/;
+const TRACKING = /^(utm_.+|gclid|gbraid|wbraid|gad_.+|dclid|fbclid|msclkid|ttclid|twclid|li_fat_id|igshid|yclid|mc_cid|mc_eid|_ga|_gl|srsltid)$/i;
 // Header yang membedakan payload navigasi Next.js (RSC/prefetch) dari HTML biasa.
 const VARY = ["rsc", "next-router-prefetch", "next-router-state-tree", "next-router-segment-prefetch", "next-url"];
 
