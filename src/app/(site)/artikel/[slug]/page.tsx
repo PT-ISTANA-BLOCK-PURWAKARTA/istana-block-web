@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `/artikel/${a.slug}`,
       publishedTime: a.publishedAt?.toISOString(),
       modifiedTime: a.updatedAt.toISOString(),
-      images: img ? [img] : ["/img/pabrik/pabrik-mesin-paving.webp"],
+      images: img ? [img] : [{ url: "/og-default.jpg", width: 1200, height: 630 }],
     },
   };
 }
@@ -63,7 +63,7 @@ export default async function ArticlePage({ params }: Props) {
         <h1 style={{ fontSize: "clamp(32px, 4vw, 50px)" }}>{a.title}</h1>
         {a.excerpt && <p className="hero-lead">{a.excerpt}</p>}
       </header>
-      {img && <img className="article-cover hexlong" src={img} alt="" fetchPriority="high" decoding="async" style={{ marginBottom: 32 }} />}
+      {img && <img className="article-cover hexlong" src={img} alt="" width={1200} height={675} fetchPriority="high" decoding="async" style={{ marginBottom: 32 }} />}
       <Markdown>{a.content}</Markdown>
       <aside className="cta-aside hexpat" style={{ marginTop: 40, maxWidth: 720 }}>
         <h2>Butuh material untuk proyek Anda?</h2>

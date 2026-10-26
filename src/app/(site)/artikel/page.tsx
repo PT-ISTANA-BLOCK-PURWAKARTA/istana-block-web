@@ -37,7 +37,7 @@ export default async function ArtikelPage() {
             <Link href={`/artikel/${a.slug}`} className="card" key={a.id}>
               {img && (
                 <div className="card-media hexlong">
-                  <img src={img} alt="" loading="lazy" />
+                  <img src={img} alt="" width={800} height={800} loading="lazy" decoding="async" />
                 </div>
               )}
               <div className="card-body" style={{ paddingTop: img ? 0 : 10 }}>

@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: p.seoTitle ? { absolute: p.seoTitle } : fitTitle(fallbackTitle),
     description,
     alternates: { canonical: `/produk/${p.slug}` },
-    openGraph: { title, description, url: `/produk/${p.slug}`, images: img ? [img] : ["/img/pabrik/pabrik-mesin-paving.webp"] },
+    openGraph: { title, description, url: `/produk/${p.slug}`, images: img ? [img] : [{ url: "/og-default.jpg", width: 1200, height: 630 }] },
   };
 }
 
@@ -138,7 +138,7 @@ export default async function ProductPage({ params }: Props) {
             <Hex size={48} color="#B5B4AF" className="deco" style={{ left: 8, bottom: 40, transform: "rotate(9deg)" }} />
             <figure className={`hex ${img ? "" : "hexpat-light"}`}>
               {/* Gambar hero = LCP: prioritas tinggi dan tidak lazy. */}
-              {img ? <img src={img} {...responsif(img, "(max-width: 720px) 254px, 404px")} alt={`Foto ${p.name}`} fetchPriority="high" loading="eager" decoding="async" /> : <figcaption>Foto {p.name.toLowerCase()} menyusul</figcaption>}
+              {img ? <img src={img} {...responsif(img, "(max-width: 720px) 254px, 404px")} alt={`Foto ${p.name}`} width={800} height={800} fetchPriority="high" loading="eager" decoding="async" /> : <figcaption>Foto {p.name.toLowerCase()} menyusul</figcaption>}
             </figure>
           </div>
         </section>
@@ -202,6 +202,9 @@ export default async function ProductPage({ params }: Props) {
                 <p className="muted">
                   {p.priceFrom != null && <>Harga acuan {priceLabel(p)}, belum termasuk ongkir. </>}
                   Kirim kebutuhan Anda lewat WhatsApp; admin membalas dengan penawaran tertulis berisi harga dan ongkir ke lokasi Anda.
+                </p>
+                <p className="muted small">
+                  Harga diperbarui <time dateTime={p.updatedAt.toISOString()}>{tanggal(p.updatedAt)}</time>
                 </p>
                 <div className="actions">
                   <a className="btn btn-primary" href={waLink(s.whatsapp, waText)} target="_blank" rel="noopener">Minta harga + ongkir</a>

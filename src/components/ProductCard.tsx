@@ -9,7 +9,7 @@ export function ProductCard({ p }: { p: Product }) {
     // prefetch mati: tiap prefetch = satu request ke Worker (batas CPU paket Free).
     <Link prefetch={false} href={`/produk/${p.slug}`} className="card">
       <div className={`card-media hexlong ${img ? "" : "hexpat-light"}`}>
-        {img ? <img src={img} {...responsif(img, "(max-width: 720px) 90vw, 380px")} alt={`Foto ${p.name}`} loading="lazy" decoding="async" /> : <span>Foto {p.name.toLowerCase()} menyusul</span>}
+        {img ? <img src={img} {...responsif(img, "(max-width: 720px) 90vw, 380px")} alt={`Foto ${p.name}`} width={800} height={800} loading="lazy" decoding="async" /> : <span>Foto {p.name.toLowerCase()} menyusul</span>}
       </div>
       <div className="card-body">
         <h3>{p.name}</h3>
