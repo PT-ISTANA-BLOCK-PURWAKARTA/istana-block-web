@@ -1,15 +1,17 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { and, eq, gt, inArray, isNotNull, isNull, or } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
-import { productionCategories as PRODUCTION_CATEGORIES, type ProductionCategory } from "@/db/erp";
+import { productionCategories as PRODUCTION_CATEGORIES, productionMethods, type ProductionCategory, type ProductionMethod } from "@/db/erp";
 import { requirePerm } from "@/lib/auth";
 import { assertLive } from "@/lib/erp/archive";
 import { stockItemsById } from "@/lib/erp/ops";
 import {
   assertOpen,
+  chunk,
   deleteJournalOps,
   getFinSettings,
   guard,
@@ -33,6 +35,8 @@ import { logActivity } from "@/lib/ops/activity";
 import { requireShift } from "@/lib/ops/duty";
 import { batchPrefixFor, canChangeProduction, itemCategories, mixSuggestions, nextBatchCode, productionAccess } from "@/lib/ops/production";
 import { CATEGORY_LABEL } from "@/components/ops/production/summary";
+import { lineOfItem } from "@/lib/ops/production-lines";
+import { deleteProductionOps, simpleProductionOps } from "@/lib/ops/production-post";
 
 /* ============================================================ Hasil produksi */
 
@@ -127,6 +131,19 @@ export async function saveProduction(_prev: FormState, form: FormData): Promise<
 
       const boards = optionalNumber(form, "boards", "Papan");
       const rejects = optionalNumber(form, "rejects", "Reject");
+      // Mutu: qty hasil = Grade A (menambah stok); Grade B (masih dijual) & reject hanya dicatat.
+      const gradeB = optionalNumber(form, "gradeB", "Grade B");
+      const hasBuis = out.some((l) => lineOfItem(items.get(l.itemId)!) === "buis");
+      const methodRaw = String(form.get("method") ?? "");
+      const method = hasBuis && (productionMethods as readonly string[]).includes(methodRaw) ? (methodRaw as ProductionMethod) : null;
+      if (hasBuis && !method) throw new UserError("Pilih metode Buis Beton: Tumbuk, Cor, atau Tulangan.");
+      const cementKg = category === "paving" ? optionalNumber(form, "cementKg", "Semen curah (kg)") : null;
+      // Nilai mutu berubah = TTD ketidaksesuaian (Manager lalu Pimpinan) harus diulang.
+      let resetSign = false;
+      if (existing) {
+        const old = await db.select({ qty: schema.productionLines.qty }).from(schema.productionLines).where(and(eq(schema.productionLines.productionId, existing.id), eq(schema.productionLines.role, "hasil")));
+        resetSign = (existing.gradeB ?? null) !== gradeB || (existing.rejects ?? null) !== rejects || old.reduce((a, l) => a + l.qty, 0) !== out.reduce((a, l) => a + l.qty, 0);
+      }
       const target = optionalNumber(form, "target", "Target");
       const cementBags = optionalNumber(form, "cementBags", "Semen terpakai");
       const leader = String(form.get("leader") ?? "").trim().replace(/\s+/g, " ").slice(0, 60) || null;
@@ -195,8 +212,12 @@ export async function saveProduction(_prev: FormState, form: FormData): Promise<
         cementBags,
         boards: category === "paving" ? boards : null,
         rejects,
+        gradeB,
+        method,
+        cementKg,
         issues,
         photoKey: t.newKey ?? existing?.photoKey ?? null,
+        ...(resetSign ? { rejectManagerBy: null, rejectManagerAt: null, rejectLeaderBy: null, rejectLeaderAt: null } : {}),
         updatedAt: new Date(),
       };
       await runBatch(db, [
@@ -248,6 +269,11 @@ export async function deleteProduction(id: string): Promise<FormState> {
       ...deleteJournalOps(db, "produksi", id),
       db.delete(schema.productions).where(eq(schema.productions.id, id)),
     ]);
+    // Adukan cor yang tidak punya produk lagi ikut dihapus.
+    if (p.batchId) {
+      const left = await db.select({ id: schema.productions.id }).from(schema.productions).where(eq(schema.productions.batchId, p.batchId)).limit(1);
+      if (!left.length) await db.delete(schema.productionBatches).where(eq(schema.productionBatches.id, p.batchId));
+    }
     await deleteImage(p.photoKey).catch(() => {});
     await logActivity(acc.user, { action: "produksi.hapus", label: "Menghapus hasil produksi", summary: `${p.number}${p.batchCode ? ` · batch ${p.batchCode}` : ""}` });
     return { ok: "deleted" };
@@ -269,6 +295,178 @@ export async function fillProductionFromMix(date: string) {
   return { products };
 }
 
+/* ============================================================ Adukan cor bersama */
+
+/**
+ * "Input adukan cor": satu adukan semen untuk beberapa produk precast (Buis cor/tulangan, U-Ditch, Kanstin, ...).
+ * Semen dicatat SEKALI di inv_production_batches; tiap produk = satu dokumen produksi ber-batch_id dengan
+ * cement_bags kosong (rasio sak/buah dihitung dari adukan). Hasil = Grade A (memposting stok); Grade B & reject hanya dicatat.
+ * Payload `items` (JSON): [{ docId?, itemId, qty, gradeB, rejects, target, method }]; dokumen adukan yang tidak ada di payload dihapus.
+ */
+export async function saveBatch(_prev: FormState, form: FormData): Promise<FormState> {
+  const acc = await productionAccess();
+  const me = acc.user;
+  if (!acc.categories.includes("precast")) return { error: "Akun Anda tidak boleh mencatat produksi precast." };
+  const res = await guard(async () => {
+    const db = await getDb();
+    const batchId = String(form.get("id") ?? "");
+    const batch = batchId ? await db.query.productionBatches.findFirst({ where: eq(schema.productionBatches.id, batchId) }) : undefined;
+    if (batchId && !batch) throw new UserError("Adukan tidak ditemukan.");
+    const oldDocs = batch ? await db.select().from(schema.productions).where(eq(schema.productions.batchId, batch.id)) : [];
+    for (const d of oldDocs) if (!canChangeProduction(acc, d)) throw new UserError("Adukan ini hanya bisa diubah pembuatnya dalam 7 hari, atau oleh kantor.");
+    if (!batch) await requireShift(me);
+
+    const fin = await getFinSettings(db);
+    const date = requireDate(form.get("date"));
+    assertOpen(date, fin.lockDate, "Produksi");
+    if (batch) assertOpen(batch.date, fin.lockDate, "Produksi");
+    const cementBags = optionalNumber(form, "cementBags", "Semen terpakai");
+    if (!cementBags) throw new UserError("Isi semen terpakai (sak) untuk adukan ini.");
+    const leader = String(form.get("leader") ?? "").trim().replace(/\s+/g, " ").slice(0, 60) || null;
+    const note = String(form.get("note") ?? "").trim().slice(0, 1000);
+
+    const rows = parseRows(form.get("items"))
+      .map((r) => ({
+        docId: String(r.docId ?? ""),
+        itemId: String(r.itemId ?? ""),
+        qty: parseQty(r.qty),
+        gradeB: r.gradeB === "" || r.gradeB == null ? null : parseQty(r.gradeB),
+        rejects: r.rejects === "" || r.rejects == null ? null : parseQty(r.rejects),
+        target: r.target === "" || r.target == null ? null : parseQty(r.target),
+        method: String(r.method ?? ""),
+      }))
+      .filter((r) => r.itemId || r.qty || r.target);
+    if (!rows.length) throw new UserError("Isi minimal satu produk adukan.");
+    const items = await stockItemsById(db, rows.map((r) => r.itemId));
+    const cats = await itemCategories(db, rows.map((r) => items.get(r.itemId)).filter((x): x is NonNullable<typeof x> => !!x));
+    const seen = new Set<string>();
+    for (const [i, r] of rows.entries()) {
+      const it = items.get(r.itemId);
+      if (!it) throw new UserError(`Produk baris ${i + 1}: pilih barang.`);
+      if (!isStockItem(it) || it.kind !== "barang_jadi") throw new UserError(`Produk baris ${i + 1}: "${it.name}" bukan barang jadi yang dilacak stoknya.`);
+      if (cats.get(it.id) !== "precast") throw new UserError(`Produk baris ${i + 1}: "${it.name}" bukan barang precast.`);
+      if (seen.has(it.id)) throw new UserError(`"${it.name}" terisi dua kali; gabungkan jumlahnya.`);
+      seen.add(it.id);
+      for (const [label, v] of [["Jadi", r.qty], ["Grade B", r.gradeB], ["Reject", r.rejects], ["Target", r.target]] as const) {
+        if (v != null && (!Number.isFinite(v) || v < 0 || v > 1_000_000)) throw new UserError(`Produk baris ${i + 1}: ${label} tidak valid.`);
+      }
+      if (lineOfItem(it) === "buis" && !(productionMethods as readonly string[]).includes(r.method)) throw new UserError(`Produk baris ${i + 1}: pilih metode Buis Beton (Tumbuk, Cor, atau Tulangan).`);
+      if (r.docId && !oldDocs.some((d) => d.id === r.docId)) throw new UserError(`Produk baris ${i + 1}: dokumen bukan bagian adukan ini.`);
+    }
+    if (!rows.some((r) => r.qty > 0)) throw new UserError("Isi jumlah jadi minimal satu produk.");
+
+    const acct = await loadAccounts(db);
+    const bid = batch?.id ?? crypto.randomUUID();
+    const ops: Parameters<typeof runBatch>[1] = [
+      batch
+        ? db.update(schema.productionBatches).set({ date, cementBags, leader, note, updatedAt: new Date() }).where(eq(schema.productionBatches.id, bid))
+        : db.insert(schema.productionBatches).values({ id: bid, date, cementBags, leader, note, createdBy: me.id }),
+    ];
+    for (const r of rows) {
+      const existing = r.docId ? oldDocs.find((d) => d.id === r.docId) : undefined;
+      const oldLines = existing ? await db.select({ qty: schema.productionLines.qty }).from(schema.productionLines).where(eq(schema.productionLines.productionId, existing.id)) : [];
+      const resetSign = !!existing && ((existing.gradeB ?? null) !== r.gradeB || (existing.rejects ?? null) !== r.rejects || oldLines.reduce((a, l) => a + l.qty, 0) !== r.qty);
+      const it = items.get(r.itemId)!;
+      const p = await simpleProductionOps(db, acct, {
+        existing,
+        date,
+        category: "precast",
+        lines: [{ itemId: r.itemId, qty: r.qty }],
+        items,
+        gradeB: r.gradeB,
+        rejects: r.rejects,
+        target: r.target,
+        leader,
+        note,
+        method: lineOfItem(it) === "buis" ? (r.method as ProductionMethod) : null,
+        batchId: bid,
+        resetSign,
+        createdBy: existing?.createdBy ?? me.id,
+      });
+      ops.push(...p.ops);
+    }
+    const keep = new Set(rows.map((r) => r.docId).filter(Boolean));
+    for (const d of oldDocs) if (!keep.has(d.id)) ops.push(...deleteProductionOps(db, d.id));
+    await runBatch(db, ops);
+    return { edited: !!batch, count: rows.length, bags: cementBags };
+  });
+  if ("error" in res) return res;
+  await logActivity(me, { action: res.edited ? "produksi.adukan_ubah" : "produksi.adukan", label: res.edited ? "Mengubah adukan cor" : "Menyimpan adukan cor", summary: `${res.bags} sak · ${res.count} produk` });
+  redirect(`/operasional/produksi?ok=${encodeURIComponent("~Adukan cor tersimpan.")}`);
+}
+
+export async function deleteBatch(id: string): Promise<FormState> {
+  const acc = await productionAccess();
+  if (!acc.categories.includes("precast")) return { error: "Akun Anda tidak boleh menghapus produksi precast." };
+  const res = await guard(async () => {
+    const db = await getDb();
+    const b = await db.query.productionBatches.findFirst({ where: eq(schema.productionBatches.id, id) });
+    if (!b) return { ok: "" };
+    const docs = await db.select().from(schema.productions).where(eq(schema.productions.batchId, id));
+    for (const d of docs) if (!canChangeProduction(acc, d)) throw new UserError("Adukan ini hanya bisa dihapus pembuatnya dalam 7 hari, atau oleh kantor.");
+    const fin = await getFinSettings(db);
+    assertOpen(b.date, fin.lockDate, "Produksi");
+    await runBatch(db, [...docs.flatMap((d) => deleteProductionOps(db, d.id)), db.delete(schema.productionBatches).where(eq(schema.productionBatches.id, id))]);
+    await logActivity(acc.user, { action: "produksi.adukan_hapus", label: "Menghapus adukan cor", summary: `${b.date} · ${b.cementBags} sak · ${docs.length} produk` });
+    return { ok: "deleted" };
+  });
+  if ("error" in res) return res;
+  redirect(`/operasional/produksi?ok=${encodeURIComponent("~Adukan cor dihapus.")}`);
+}
+
+/* ============================================================ TTD ketidaksesuaian produksi */
+
+function idList(ids: unknown) {
+  const list = [...new Set((Array.isArray(ids) ? ids : []).map(String))];
+  if (!list.length) throw new UserError("Tidak ada ketidaksesuaian yang dipilih.");
+  if (list.length > 200) throw new UserError("Maksimal 200 ketidaksesuaian sekali tanda tangan.");
+  return list;
+}
+
+/** TTD Manager in charge (setujui_qc): hanya dokumen ber-Grade B/reject yang belum ditandatangani. */
+export async function ackRejectManager(ids: string[]): Promise<FormState> {
+  const me = await requirePerm("setujui_qc");
+  const res = await guard(async () => {
+    const list = idList(ids);
+    const db = await getDb();
+    const p = schema.productions;
+    let n = 0;
+    for (const part of chunk(list, 80)) {
+      const rows = await db.select({ id: p.id }).from(p).where(and(inArray(p.id, part), or(gt(p.gradeB, 0), gt(p.rejects, 0)), isNull(p.rejectManagerBy)));
+      if (!rows.length) continue;
+      n += rows.length;
+      await db.update(p).set({ rejectManagerBy: me.id, rejectManagerAt: new Date() }).where(inArray(p.id, rows.map((r) => r.id)));
+    }
+    if (!n) throw new UserError("Tidak ada ketidaksesuaian yang bisa ditandatangani (sudah ditandatangani atau tanpa Grade B / reject).");
+    await logActivity(me, { action: "produksi.ttd_manager", label: "TTD ketidaksesuaian produksi (Manager in charge)", summary: `${n} dokumen` });
+    return { ok: `${n} ketidaksesuaian ditandatangani.` };
+  });
+  if (!("error" in res)) revalidatePath("/operasional/produksi");
+  return res;
+}
+
+/** TTD Pimpinan (ttd_pimpinan): setelah Manager in charge. */
+export async function ackRejectLeader(ids: string[]): Promise<FormState> {
+  const me = await requirePerm("ttd_pimpinan");
+  const res = await guard(async () => {
+    const list = idList(ids);
+    const db = await getDb();
+    const p = schema.productions;
+    let n = 0;
+    for (const part of chunk(list, 80)) {
+      const rows = await db.select({ id: p.id }).from(p).where(and(inArray(p.id, part), or(gt(p.gradeB, 0), gt(p.rejects, 0)), isNotNull(p.rejectManagerBy), isNull(p.rejectLeaderBy)));
+      if (!rows.length) continue;
+      n += rows.length;
+      await db.update(p).set({ rejectLeaderBy: me.id, rejectLeaderAt: new Date() }).where(inArray(p.id, rows.map((r) => r.id)));
+    }
+    if (!n) throw new UserError("Tidak ada ketidaksesuaian yang bisa disetujui (Manager in charge belum menandatangani, atau sudah disetujui).");
+    await logActivity(me, { action: "produksi.ttd_pimpinan", label: "TTD ketidaksesuaian produksi (Pimpinan)", summary: `${n} dokumen` });
+    return { ok: `${n} ketidaksesuaian ditandatangani.` };
+  });
+  if (!("error" in res)) revalidatePath("/operasional/produksi");
+  return res;
+}
+
 /* ============================================================ Penyesuaian & saldo awal stok */
 
 const ADJ_SOURCES = ["penyesuaian", "saldo_awal"] as const;
@@ -284,6 +482,7 @@ export async function saveAdjustment(_prev: FormState, form: FormData): Promise<
     const id = String(form.get("id") ?? "");
     const existing = id ? await db.query.adjustments.findFirst({ where: eq(schema.adjustments.id, id) }) : undefined;
     if (id && !existing) throw new UserError("Penyesuaian tidak ditemukan.");
+    if (existing?.countId) throw new UserError("Penyesuaian ini bagian dari stok opname. Ubah atau hapus lewat dokumen stok opname-nya.");
     const fin = await getFinSettings(db);
     const date = requireDate(form.get("date"));
     assertOpen(date, fin.lockDate, "Penyesuaian stok");
@@ -338,6 +537,7 @@ export async function deleteAdjustment(id: string): Promise<FormState> {
     const db = await getDb();
     const a = await db.query.adjustments.findFirst({ where: eq(schema.adjustments.id, id) });
     if (!a) return { ok: "" };
+    if (a.countId) throw new UserError("Penyesuaian ini bagian dari stok opname. Hapus lewat dokumen stok opname-nya.");
     const fin = await getFinSettings(db);
     assertOpen(a.date, fin.lockDate, "Penyesuaian stok");
     await runBatch(db, [

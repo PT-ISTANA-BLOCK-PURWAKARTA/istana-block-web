@@ -14,6 +14,8 @@ type Props = {
   targetLabel: string;
   target: number;
   pic: string;
+  /** Jumlah total otomatis dari data aplikasi (sasaran no. 13): hanya jumlah tercapai yang diisi. */
+  totalAuto?: boolean;
   month: string;
   initial: { total: number | null; achieved: number | null; note: string | null };
   back: string;
@@ -28,7 +30,7 @@ const parse = (v: string) => {
 };
 
 /** Isi angka Sasaran Mutu manual untuk satu bulan; ganti bulan memuat ulang halaman (GET). */
-export function ObjectiveForm({ no, text, basis, targetLabel, target, pic, month, initial, back, cancelHref, keep }: Props) {
+export function ObjectiveForm({ no, text, basis, targetLabel, target, pic, totalAuto, month, initial, back, cancelHref, keep }: Props) {
   const [total, setTotal] = useState(initial.total?.toString() ?? "");
   const [achieved, setAchieved] = useState(initial.achieved?.toString() ?? "");
   const [note, setNote] = useState(initial.note ?? "");
@@ -56,7 +58,7 @@ export function ObjectiveForm({ no, text, basis, targetLabel, target, pic, month
         <input type="hidden" name="month" value={month} />
         <input type="hidden" name="back" value={back} />
         <div className="form-grid">
-          <div className="field"><label htmlFor="obj-total">Jumlah total</label><input id="obj-total" name="total" inputMode="decimal" value={total} onChange={(e) => setTotal(e.target.value)} /></div>
+          <div className="field"><label htmlFor="obj-total">Jumlah total</label><input id="obj-total" name="total" inputMode="decimal" value={totalAuto ? "" : total} placeholder={totalAuto ? "Otomatis dari data aplikasi" : undefined} disabled={totalAuto} onChange={(e) => setTotal(e.target.value)} /></div>
           <div className="field"><label htmlFor="obj-achieved">Jumlah tercapai</label><input id="obj-achieved" name="achieved" inputMode="decimal" value={achieved} onChange={(e) => setAchieved(e.target.value)} /></div>
           <div className="field span-2"><label htmlFor="obj-note">Catatan / bukti (opsional)</label><input id="obj-note" name="note" value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} placeholder="Contoh: rekap chat WA dari HP admin" /></div>
         </div>

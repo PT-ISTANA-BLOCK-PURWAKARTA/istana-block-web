@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { deleteAdjustment } from "@/app/operasional/actions/stock";
@@ -25,8 +26,11 @@ export default async function PenyesuaianDetail({ params, searchParams }: { para
     canFinance ? journalFor(db, "penyesuaian", id) : [],
   ]);
   const opening = move?.source === "saldo_awal";
+  // Selisih sebuah stok opname: dikelola dari dokumen opname, bukan dari halaman ini.
+  const count = a.countId ? await db.query.stockCounts.findFirst({ where: eq(schema.stockCounts.id, a.countId) }) : undefined;
+  const canEditHere = canEdit && !a.countId;
   let opts: { id: string; code: string; name: string; unit: string; onHand: number; avgCost: number }[] = [];
-  if (canEdit) {
+  if (canEditHere) {
     const [items, levels] = await Promise.all([db.select().from(schema.items).where(eq(schema.items.trackStock, true)).orderBy(asc(schema.items.code)), stockLevels(db)]);
     opts = items
       .filter((i) => (i.active || i.id === a.itemId) && (i.kind === "barang_jadi" || i.kind === "bahan_baku"))
@@ -38,13 +42,18 @@ export default async function PenyesuaianDetail({ params, searchParams }: { para
       <PageHead title={a.number} sub={`${tgl(a.date)} · ${item?.name ?? ""} ${a.qty > 0 ? "+" : ""}${formatQty(a.qty)} ${item?.unit ?? ""}${opening ? " · saldo awal" : ""}`} />
       <Ok ok={ok} />
       <div className="stack" style={{ gap: 20 }}>
-        {canEdit ? (
+        {a.countId && (
+          <section className="admin-card">
+            <p>Selisih stok opname{count ? <> <Link href={`/operasional/stok/opname/${count.id}`}><b>{count.number}</b></Link></> : ""}. Ubah atau hapus lewat dokumen stok opname-nya.</p>
+          </section>
+        )}
+        {canEditHere ? (
           <AdjustmentForm id={a.id} date={a.date} itemId={a.itemId} qty={a.qty} unitCost={canFinance && a.qty > 0 ? a.unitCost : undefined} reason={a.reason} opening={opening} items={opts} showCost={canFinance} />
         ) : (
-          <section className="admin-card"><p>{a.reason}</p></section>
+          !a.countId && <section className="admin-card"><p>{a.reason}</p></section>
         )}
         {canFinance && <JournalView lines={journal} />}
-        {canEdit && <div><ConfirmAction action={deleteAdjustment.bind(null, a.id)} label="Hapus penyesuaian" confirmText={`Hapus ${a.number}? Stok dan jurnalnya ikut dihapus.`} /></div>}
+        {canEditHere && <div><ConfirmAction action={deleteAdjustment.bind(null, a.id)} label="Hapus penyesuaian" confirmText={`Hapus ${a.number}? Stok dan jurnalnya ikut dihapus.`} /></div>}
       </div>
     </>
   );

@@ -42,3 +42,19 @@
 .sand-test-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .sand-test-main p { margin: 0; }
 .sand-test-main .sand-pct { font-size: 26px; }
+
+/* Skip uji lumpur */
+.sand-pick-cell { display: flex; flex-direction: column; gap: 4px; }
+.sand-skip-btn { border-style: dashed; }
+.sand-skipped { margin-top: 18px; }
+.sand-skip-row { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--p-line); border-radius: var(--p-radius-sm); background: var(--p-head); overflow-wrap: anywhere; }
+.sand-skip-tidak { color: var(--sukses); }
+.sand-skip-sedikit { color: var(--warn); }
+.sand-skip-sedang { color: var(--bahaya); }
+
+/* TTD bertingkat & riwayat ubah hasil */
+.sand-ackbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.sand-acks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.sand-ack { padding: 2px 10px; border-radius: 999px; font-size: 12px; background: var(--p-head); color: var(--p-muted); }
+.sand-ack.done { background: var(--ok-bg); color: var(--sukses); font-weight: 600; }
+.sand-edits { margin: 6px 0 0; padding: 6px 10px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-size: 12px; line-height: 1.5; }

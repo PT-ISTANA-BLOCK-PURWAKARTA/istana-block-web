@@ -12,6 +12,7 @@ import { chunk, guard, insertMany, runBatch, UserError, type DB } from "@/lib/er
 import { isDate, parseQty, today } from "@/lib/erp/util";
 import { deleteImage, saveImage, UploadError } from "@/lib/media";
 import { logActivity } from "@/lib/ops/activity";
+import { syncMixProduction } from "@/lib/ops/production-mix";
 import { qcCan } from "@/lib/ops/qc";
 
 /* ============================================================ pembantu */
@@ -211,6 +212,9 @@ async function mixLogValues(db: DB, form: FormData) {
     boards: optNumber(form.get("boards"), "Papan"),
     squareMeters: optNumber(form.get("squareMeters"), "Meter persegi"),
     rejects: layer === "kepalaan" ? null : optNumber(form.get("rejects"), "Reject"),
+    // Grade B (reject masih dijual) & belahan Hexagon setengah: hanya lapisan badan; masuk Hasil Produksi paving otomatis.
+    gradeB: layer === "kepalaan" ? null : optNumber(form.get("gradeB"), "Grade B"),
+    halfPieces: layer === "badan" ? optNumber(form.get("halfPieces"), "Belahan setengah") : null,
     status,
     notes: optText(form, "notes", "Catatan", 2000),
   };
@@ -221,7 +225,9 @@ export async function createMixLog(_prev: FormState, form: FormData): Promise<Fo
   const res = await guard(async () => {
     const db = await getDb();
     const v = await mixLogValues(db, form);
-    await db.insert(schema.mixLogs).values({ ...v, createdBy: me.id });
+    const logId = crypto.randomUUID();
+    await db.insert(schema.mixLogs).values({ ...v, id: logId, createdBy: me.id });
+    await syncMixProduction(db, logId);
     await logActivity(me, { action: "qc.catatan_buat", label: "Mengisi mix desain harian", summary: `${v.workDate} · ${v.layer} · ${v.product}` });
     return { date: v.workDate };
   });
@@ -247,6 +253,7 @@ export async function updateMixLog(_prev: FormState, form: FormData): Promise<Fo
     await editableMixLog(db, me, id);
     const v = await mixLogValues(db, form);
     await db.update(schema.mixLogs).set({ ...v, reviewStatus: "menunggu", reviewNote: null, updatedAt: new Date() }).where(eq(schema.mixLogs.id, id));
+    await syncMixProduction(db, id);
     await logActivity(me, { action: "qc.catatan_ubah", label: "Mengubah mix desain harian", summary: `${v.workDate} · ${v.layer} · ${v.product}` });
     return { date: v.workDate };
   });
@@ -260,6 +267,7 @@ export async function deleteMixLog(id: string): Promise<FormState> {
     const db = await getDb();
     const row = await editableMixLog(db, me, id);
     await db.delete(schema.mixLogs).where(eq(schema.mixLogs.id, id));
+    await syncMixProduction(db, id);
     await logActivity(me, { action: "qc.catatan_hapus", label: "Menghapus mix desain harian", summary: `${row.workDate} · ${row.layer} · ${row.product}` });
     return { ok: "Data dihapus." };
   });
@@ -484,7 +492,7 @@ const MAX_SIGNATURE = 2 * 1024 * 1024;
  * maks 2 MB; `hapus` = "1" untuk menghapus. Berkas disimpan di R2 folder ttd/ dan kuncinya di users.signature_key.
  */
 export async function setSignature(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requirePerm("setujui_qc", "ttd_pimpinan");
+  const me = await requirePerm("setujui_qc", "ttd_pimpinan", "ttd_sekretaris");
   const res = await guard(async () => {
     const db = await getDb();
     const user = await db.query.users.findFirst({ where: eq(schema.users.id, me.id) });

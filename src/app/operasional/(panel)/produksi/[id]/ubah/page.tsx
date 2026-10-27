@@ -5,7 +5,7 @@ import { ProductionForm } from "@/components/ops/ProductionForm";
 import { getDb, schema } from "@/db";
 import { isArchive } from "@/lib/erp/archive";
 import { formatQty } from "@/lib/erp/util";
-import { canChangeProduction, productionAccess, productionItems, recentLeaders } from "@/lib/ops/production";
+import { activeSpecs, canChangeProduction, productionAccess, productionItems, recentLeaders } from "@/lib/ops/production";
 import "../../produksi.css";
 
 export const metadata = { title: "Ubah hasil produksi" };
@@ -18,7 +18,8 @@ export default async function UbahProduksi({ params }: { params: Promise<{ id: s
   if (!p) notFound();
   if (isArchive(p.id) || !canChangeProduction(acc, p)) redirect(`/operasional/produksi/${id}`);
   const lines = await db.select().from(schema.productionLines).where(eq(schema.productionLines.productionId, id));
-  const [items, leaders] = await Promise.all([productionItems(db, lines.map((l) => l.itemId)), recentLeaders(db)]);
+  if (p.batchId) redirect(`/operasional/produksi/adukan/${p.batchId}`);
+  const [items, leaders, specs] = await Promise.all([productionItems(db, lines.map((l) => l.itemId)), recentLeaders(db), activeSpecs(db)]);
   const row = (l: (typeof lines)[number]) => ({ itemId: l.itemId, qty: formatQty(l.qty) });
   const num = (n: number | null) => (n == null ? "" : formatQty(n));
   // Catatan lama (sebelum kolom lapangan) belum punya kategori: mulai dari kategori pertama yang boleh.
@@ -40,6 +41,10 @@ export default async function UbahProduksi({ params }: { params: Promise<{ id: s
         cementBags={num(p.cementBags)}
         boards={num(p.boards)}
         rejects={num(p.rejects)}
+        gradeB={num(p.gradeB)}
+        cementKg={num(p.cementKg)}
+        method={p.method}
+        specs={specs}
         batchCode={p.batchCode ?? ""}
         issues={Array.isArray(p.issues) ? p.issues : []}
         photoKey={p.photoKey}

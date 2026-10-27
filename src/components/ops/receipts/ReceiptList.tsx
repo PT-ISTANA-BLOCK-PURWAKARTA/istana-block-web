@@ -8,7 +8,7 @@ import { Icon } from "@/components/panel/Icon";
 import { downloadWorkbook } from "@/lib/ops/excel";
 import type { ReceiptRow } from "@/lib/ops/receipts";
 import { fmt } from "@/lib/ops/shared/format";
-import { DELIVERY_MODE_LABELS, PRICE_LABELS, SPEED_LABELS, siltLevel, sourceLabel } from "@/lib/ops/shared/sand";
+import { DELIVERY_MODE_LABELS, PRICE_LABELS, SKIP_LEVEL_LABELS, SPEED_LABELS, siltLevel, sourceLabel } from "@/lib/ops/shared/sand";
 import { gradeOf } from "@/lib/ops/shared/score";
 import { DeliveryDialog, OverallBadge, PriceChip, PriceDialog, SpeedChip, receiptOverall } from "./ReceiptRatings";
 import { CATEGORY_LABELS, berkasUrl, itemSummary, quantitySum, whenText } from "./util";
@@ -50,6 +50,11 @@ function ReceiptCard({ row, canTest, onRateDelivery, onRatePrice }: { row: Recei
             ) : (
               silt !== null && <b className={`silt-${LEVEL_CLASS[siltLevel(silt, row.test.maxSiltPercent)]}`}>Kadar lumpur {fmt(silt)}%</b>
             )
+          ) : row.testSkippedAt ? (
+            <span className="muted">
+              Tanpa uji lumpur{row.testSkipLevel ? ` — ${SKIP_LEVEL_LABELS[row.testSkipLevel]}` : ""}{row.testSkipReason ? ` — ${row.testSkipReason}` : ""}
+              {row.testSkippedByName ? ` (skip oleh ${row.testSkippedByName})` : ""}
+            </span>
           ) : (
             <span className="muted">Belum diuji lumpur</span>
           )}
@@ -69,7 +74,7 @@ function ReceiptCard({ row, canTest, onRateDelivery, onRatePrice }: { row: Recei
       {row.notes && <p className="small">{row.notes}</p>}
       {(row.speedRating || row.priceRating || row.tier) && (
         <div className="rcv-chips">
-          <SpeedChip value={row.speedRating} />
+          <SpeedChip value={row.deliveryMode === "sendiri" ? null : row.speedRating} />
           <PriceChip value={row.priceRating} />
           <OverallBadge score={score.overall} complete={score.complete} />
         </div>

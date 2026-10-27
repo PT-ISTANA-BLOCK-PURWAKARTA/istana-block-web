@@ -83,14 +83,14 @@ export default async function Halaman({ searchParams }: { searchParams: Promise<
     const defaultMonth = range.to.slice(0, 7);
     let editor: React.ReactNode = null;
     const isi = Number(one(sp.isi));
-    const objective = canObjective ? QUALITY_OBJECTIVES.find((o) => o.no === isi && !o.auto) : undefined;
+    const objective = canObjective ? QUALITY_OBJECTIVES.find((o) => o.no === isi && (!o.auto || o.manualAchieved)) : undefined;
     if (objective) {
       const bulan = /^\d{4}-(0[1-9]|1[0-2])$/.test(one(sp.bulan) ?? "") ? (one(sp.bulan) as string) : defaultMonth;
       const current = (await objectiveMonth(db, bulan)).find((e) => e.no === objective.no);
       editor = (
         <ObjectiveForm
           key={`${objective.no}-${bulan}`} no={objective.no} text={objective.text} basis={objective.basis} targetLabel={objective.targetLabel} target={objective.target} pic={objective.pic}
-          month={bulan} initial={{ total: current?.total ?? null, achieved: current?.achieved ?? null, note: current?.note ?? null }}
+          totalAuto={objective.manualAchieved === true} month={bulan} initial={{ total: current?.total ?? null, achieved: current?.achieved ?? null, note: current?.note ?? null }}
           back={here} cancelHref={here} keep={{ dari: range.from, sampai: range.to, tab: "sasaran", isi: String(objective.no) }}
         />
       );

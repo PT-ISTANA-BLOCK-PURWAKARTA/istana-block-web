@@ -7,6 +7,7 @@ import { alias } from "drizzle-orm/sqlite-core";
 import type { MaterialLine, OrderStatus } from "../../db/erp";
 import * as schema from "../../db/schema";
 import { can, type Role } from "../roles";
+import { leadObjectives } from "./customer-leads-core";
 import { fmt } from "./shared/format";
 import { productionLine } from "./shared/goods";
 import { addDays, computeIsoValues, daysBetween, FORM_BY_CODE, isDay, ISO_CODES, KGCM2_PER_MPA, num, productClass, workingDaysBetween, type IsoCode, type IsoForm, type IsoInputRole, type IsoValues } from "./shared/isoForms";
@@ -585,7 +586,7 @@ export async function isoOverview(db: OpsDb, input: DayRange): Promise<IsoOvervi
     // Pengiriman terkirim pada periode: tepat waktu (selesai <= tanggal kirim diminta PO) dan terpantau GPS (ada posisi truk selama perjalanan).
     db.all<{ total: number; onTime: number; tracked: number }>(sql`
       select count(*) as total,
-        coalesce(sum(case when coalesce(o.requested_date, '') = '' or date(d.delivered_at + 25200, 'unixepoch') <= o.requested_date then 1 else 0 end), 0) as onTime,
+        coalesce(sum(case when coalesce(o.requested_date, '') = '' or date(coalesce(d.arrival_corrected_at, d.arrived_at, d.delivered_at) + 25200, 'unixepoch') <= o.requested_date then 1 else 0 end), 0) as onTime,
         coalesce(sum(case when d.vehicle_id is not null and d.departed_at is not null and exists (
           select 1 from ops_positions p where p.vehicle_id = d.vehicle_id and p.at >= d.departed_at and p.at <= d.delivered_at + 300) then 1 else 0 end), 0) as tracked
       from ops_deliveries d join ops_orders o on o.id = d.order_id
@@ -636,7 +637,21 @@ export async function isoOverview(db: OpsDb, input: DayRange): Promise<IsoOvervi
       .filter((row) => productClass(row.product ?? "", row.category) === cls)
       .reduce((sum, row) => ({ total: sum.total + Number(row.quantity) + Number(row.rejects), achieved: sum.achieved + Number(row.quantity) }), { total: 0, achieved: 0 });
   const keluhan = ncrInRange.filter((v) => v.sumber === "Keluhan Pelanggan");
+  // Sasaran dari Rekap Pelanggan (no. 13, 14, 16, 20, 22); periode = tanggal konsumen (contactDate). Rumus: leadObjectives().
+  const leadRows = await db
+    .select({
+      contactDate: schema.customerLeads.contactDate, status: schema.customerLeads.status, saleValue: schema.customerLeads.saleValue,
+      priceNett: schema.customerLeads.priceNett, priceOffer: schema.customerLeads.priceOffer, reasons: schema.customerLeads.reasons,
+      ratingService: schema.customerLeads.ratingService, ratingQuality: schema.customerLeads.ratingQuality, ratingSpeed: schema.customerLeads.ratingSpeed,
+      feedback: schema.customerLeads.feedback, complaintDate: schema.customerLeads.complaintDate, getbackDate: schema.customerLeads.getbackDate,
+      getbackResult: schema.customerLeads.getbackResult,
+    })
+    .from(schema.customerLeads)
+    .where(and(gte(schema.customerLeads.contactDate, range.from), lte(schema.customerLeads.contactDate, range.to)));
+  const leadObj = leadObjectives(leadRows);
   const auto: Record<ObjectiveAuto, { total: number; achieved: number }> = {
+    "leads:chat": { total: leadObj.chat.total, achieved: 0 }, // tercapai diisi manual: lihat cabang manualAchieved di bawah
+    "leads:offer": leadObj.offer, "survey:satisfaction": leadObj.satisfaction, "leads:noComplaint": leadObj.noComplaint, "leads:getback24": leadObj.getback24,
     "test:paving": testsOf(["paving"]), "test:uditch": testsOf(["uditch"]), "test:kanstin": testsOf(["kanstin"]),
     "test:buis": testsOf(["buisVibrasi", "buisTumbuk"]), "test:greffel": testsOf(["greffel"]),
     "delivery:onTime": { total: delivered.total, achieved: delivered.onTime },
@@ -653,6 +668,15 @@ export async function isoOverview(db: OpsDb, input: DayRange): Promise<IsoOvervi
     "reject:buisVibrasi": made("buisVibrasi"), "reject:buisTumbuk": made("buisTumbuk"), "reject:greffel": made("greffel"),
   };
   const objectives = QUALITY_OBJECTIVES.map((objective) => {
+    if (objective.manualAchieved) {
+      // Total otomatis (Rekap Pelanggan), jumlah tercapai dijumlahkan dari isian manual bulanan.
+      const entries = objectiveValues.filter((r) => Number(r.data.no) === objective.no && num(r.data.achieved) !== null);
+      const total = auto[objective.auto as ObjectiveAuto].total;
+      return {
+        no: objective.no, total: total || null, achieved: total && entries.length ? entries.reduce((sum, r) => sum + (num(r.data.achieved) ?? 0), 0) : null,
+        source: "auto" as const, months: entries.map((r) => r.recordDate.slice(0, 7)).sort(),
+      };
+    }
     if (objective.auto) {
       const value = auto[objective.auto];
       return { no: objective.no, total: value.total || null, achieved: value.total ? value.achieved : null, source: "auto" as const, months: [] as string[] };

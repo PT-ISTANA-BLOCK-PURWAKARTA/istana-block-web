@@ -13,6 +13,15 @@ export type ProdRow = {
   cementBags: number | null;
   boards: number | null;
   rejects: number | null;
+  /** Grade B (reject masih dijual); hanya dicatat. */
+  gradeB: number | null;
+  method: "tumbuk" | "cor" | "tulangan" | null;
+  cementKg: number | null;
+  batchId: string | null;
+  mixLogId: string | null;
+  /** TTD ketidaksesuaian: Manager in charge lalu Pimpinan. */
+  rejectManager: { name: string | null; at: number } | null;
+  rejectLeader: { name: string | null; at: number } | null;
   issues: string[];
   note: string;
   photoKey: string | null;
@@ -49,6 +58,7 @@ export type ProductSummary = {
   issueDays: Set<string>;
   boards: number;
   rejects: number;
+  gradeB: number;
   docs: number;
 };
 
@@ -58,7 +68,7 @@ export function summarizeProducts(rows: ProdRow[]): ProductSummary[] {
     const main = mainItem(r);
     for (const h of r.hasil) {
       const key = `${r.category ?? "-"}|${h.itemId}`;
-      const e = map.get(key) ?? { key, category: r.category, itemId: h.itemId, name: h.name, unit: h.unit, qty: 0, days: new Set<string>(), issueDays: new Set<string>(), boards: 0, rejects: 0, docs: 0 };
+      const e = map.get(key) ?? { key, category: r.category, itemId: h.itemId, name: h.name, unit: h.unit, qty: 0, days: new Set<string>(), issueDays: new Set<string>(), boards: 0, rejects: 0, gradeB: 0, docs: 0 };
       e.qty += h.qty;
       e.docs += 1;
       if (h.qty > 0) e.days.add(r.date);
@@ -66,6 +76,7 @@ export function summarizeProducts(rows: ProdRow[]): ProductSummary[] {
       if (main && main.itemId === h.itemId) {
         e.boards += r.boards ?? 0;
         e.rejects += r.rejects ?? 0;
+        e.gradeB += r.gradeB ?? 0;
       }
       map.set(key, e);
     }
@@ -90,6 +101,9 @@ export function summarizeIssues(rows: ProdRow[]): IssueSummary[] {
     }))
     .sort((a, b) => b.count - a.count || a.issue.localeCompare(b.issue));
 }
+
+/** Dokumen yang punya Grade B atau reject (butuh TTD ketidaksesuaian). */
+export const hasNonconformity = (r: ProdRow) => (r.gradeB ?? 0) > 0 || (r.rejects ?? 0) > 0;
 
 /** "40 buah + 3 m" untuk hasil dokumen (dijumlah per satuan). */
 export function hasilText(r: ProdRow, format: (n: number) => string) {

@@ -37,7 +37,6 @@ export function ReceiveForm({ nowLocal, sources }: { nowLocal: string; sources: 
   return (
     <ActionForm action={createReceipt} className="form-section rcv-form">
       <datalist id="rcv-suppliers">{sources.suppliers.map((value) => <option key={value} value={value} />)}</datalist>
-      <datalist id="rcv-quarries">{sources.quarries.map((value) => <option key={value} value={value} />)}</datalist>
       <datalist id="rcv-tags">{sources.tags.map((value) => <option key={value} value={value} />)}</datalist>
       <datalist id="rcv-expeditions">{sources.expeditions.map((value) => <option key={value} value={value} />)}</datalist>
       <datalist id="rcv-items">{[...new Set([...OTHER_GOODS.filter((name) => name !== "Lainnya"), ...sources.otherItems])].map((value) => <option key={value} value={value} />)}</datalist>
@@ -69,7 +68,7 @@ export function ReceiveForm({ nowLocal, sources }: { nowLocal: string; sources: 
 
       <div className="form-grid">
         <div className="field">
-          <label htmlFor="rcv-supplier">Supplier / toko</label>
+          <label htmlFor="rcv-supplier">{raw ? "Supplier / quarry" : "Supplier / toko"}</label>
           <input id="rcv-supplier" name="supplier" list="rcv-suppliers" maxLength={80} autoComplete="off" />
         </div>
         <div className="field">
@@ -78,10 +77,6 @@ export function ReceiveForm({ nowLocal, sources }: { nowLocal: string; sources: 
         </div>
         {raw && (
           <>
-            <div className="field">
-              <label htmlFor="rcv-quarry">Quarry (asal tambang)</label>
-              <input id="rcv-quarry" name="quarry" list="rcv-quarries" maxLength={80} placeholder="Contoh: Cidadap" autoComplete="off" />
-            </div>
             <div className="field">
               <label htmlFor="rcv-tag">Tag (kategori inventory)</label>
               <input id="rcv-tag" name="tag" list="rcv-tags" maxLength={80} placeholder="Contoh: Pasir Cimalaka" autoComplete="off" />

@@ -2,7 +2,7 @@
 
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { completeDelivery, setDeliveryStatus } from "@/app/operasional/actions/deliveries";
+import { completeDelivery, revertDeliveryStatus, setDeliveryStatus } from "@/app/operasional/actions/deliveries";
 import type { DeliveryStatus } from "@/db/erp";
 import { ProofInput } from "./ProofInput";
 
@@ -75,6 +75,27 @@ function Complete({ id }: { id: string }) {
   );
 }
 
+/** Batalkan status Selesai (terkirim -> tiba) / Sampai (tiba -> berangkat) dengan alasan wajib; stok & jurnal tidak berubah. */
+function Revert({ id, status }: { id: string; status: DeliveryStatus }) {
+  const done = status === "terkirim";
+  return (
+    <details className="danger-zone">
+      <summary>{done ? "Batalkan status Selesai" : "Batalkan status Sampai"}</summary>
+      <ActionForm action={revertDeliveryStatus} className="stack" style={{ gap: 10, paddingTop: 10 }}>
+        <input type="hidden" name="id" value={id} />
+        <div className="field">
+          <label htmlFor="dv-revert">Alasan *</label>
+          <input id="dv-revert" name="reason" required minLength={5} maxLength={300} placeholder="mis. salah tekan, barang ternyata belum diterima" autoComplete="off" />
+        </div>
+        <p className="small muted">
+          Status kembali satu langkah ke {done ? "Sudah tiba" : "Dalam perjalanan"} dan tercatat di riwayat. Stok yang sudah keluar dan jurnalnya tidak berubah.
+        </p>
+        <div><SubmitButton className="btn btn-ghost btn-sm" pendingText="Memproses…">{done ? "Batalkan status Selesai" : "Batalkan status Sampai"}</SubmitButton></div>
+      </ActionForm>
+    </details>
+  );
+}
+
 /**
  * Tombol alur status surat jalan: dijadwalkan → dimuat → berangkat → tiba → terkirim (plus tertunda & batal).
  * - Kantor (izin pengiriman): semua langkah. Izin "selesaikan" menambah "Selesaikan dari kantor".
@@ -83,6 +104,8 @@ function Complete({ id }: { id: string }) {
 export function DeliveryActions({ id, status, canShip, canLoad = false, canComplete = false, hasDriver = true }: { id: string; status: DeliveryStatus; canShip: boolean; canLoad?: boolean; canComplete?: boolean; hasDriver?: boolean }) {
   const open = status !== "terkirim" && status !== "batal";
   const complete = canComplete && open ? <Complete id={id} /> : null;
+  // Izin "selesaikan": boleh mundur satu langkah dari Tiba / Terkirim dengan alasan (selain tombol status biasa).
+  const revert = canComplete && (status === "tiba" || status === "terkirim") ? <Revert id={id} status={status} /> : null;
 
   if (!canShip) {
     if (canLoad && status === "dijadwalkan")
@@ -156,6 +179,7 @@ export function DeliveryActions({ id, status, canShip, canLoad = false, canCompl
           <Simple id={id} to="dijadwalkan" label="Batal berangkat (kembali ke jadwal)" className="btn btn-ghost btn-sm" />
         </div>
         {complete}
+        {revert}
         <Cancel id={id} label="Batalkan surat jalan" />
       </div>
     );
@@ -172,6 +196,12 @@ export function DeliveryActions({ id, status, canShip, canLoad = false, canCompl
         <Cancel id={id} label="Batalkan surat jalan" />
       </div>
     );
-  if (status === "terkirim") return <Cancel id={id} label="Koreksi: batalkan surat jalan yang sudah terkirim" />;
+  if (status === "terkirim")
+    return (
+      <div className="stack" style={{ gap: 14 }}>
+        {revert}
+        <Cancel id={id} label="Koreksi: batalkan surat jalan yang sudah terkirim" />
+      </div>
+    );
   return <div className="head-actions"><Simple id={id} to="dijadwalkan" label="Jadwalkan ulang" className="btn btn-blue btn-sm" /></div>;
 }

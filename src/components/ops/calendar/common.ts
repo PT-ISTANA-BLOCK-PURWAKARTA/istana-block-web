@@ -2,7 +2,7 @@
 import { addDays } from "@/lib/erp/util";
 
 export type CalType = "rapat" | "training" | "lainnya";
-export type EventPerson = { userId: number; name: string; role: string };
+export type EventPerson = { userId: number; name: string; role: string; /** Waktu TTD hadir (ISO), null = belum. */ signedAt?: string | null };
 /** Acara untuk tampilan; waktu berupa ISO string (UTC) supaya bisa melintasi batas server/klien. */
 export type EventView = {
   id: string; title: string; type: CalType; startAt: string; endAt: string | null; location: string; description: string;

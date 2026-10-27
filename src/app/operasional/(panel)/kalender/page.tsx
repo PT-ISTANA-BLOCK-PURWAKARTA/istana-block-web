@@ -3,6 +3,7 @@ import { Kpis, Ok, PageHead, RangeForm } from "@/components/erp/ui";
 import { CalendarView } from "@/components/ops/calendar/CalendarView";
 import { monthGrid, wibKey, wibTime, TYPE_LABEL, type EventView } from "@/components/ops/calendar/common";
 import { RecapExport } from "@/components/ops/calendar/RecapExport";
+import { SignAttendance } from "@/components/ops/calendar/SignAttendance";
 import { PushToggle } from "@/components/ops/push/PushToggle";
 import { getDb } from "@/db";
 import { requirePerm } from "@/lib/auth";
@@ -106,20 +107,22 @@ async function RecapTab({ sp, meId, canManage, canIso, now }: { sp: SP; meId: nu
         </span>
       </div>
       <div className="stack" style={{ gap: 10 }}>
-        {items.map((i) => <RecapCard key={i.id} item={i} canManage={canManage} nowMs={nowMs} />)}
+        {items.map((i) => <RecapCard key={i.id} item={i} canManage={canManage} nowMs={nowMs} meId={meId} />)}
         {items.length === 0 && <p className="cal-empty">Tidak ada rapat atau training pada periode ini.</p>}
       </div>
     </>
   );
 }
 
-function RecapCard({ item, canManage, nowMs }: { item: RecapItem; canManage: boolean; nowMs: number }) {
+function RecapCard({ item, canManage, nowMs, meId }: { item: RecapItem; canManage: boolean; nowMs: number; meId: number }) {
   const r = item.result;
   const day = wibKey(item.startAt);
   const presentCount = r ? r.attendees.filter((a) => a.present).length + guestNames(r.guests).length : null;
   const open = item.decisions.filter((d) => d.values.status === "Open").length;
   const late = item.decisions.some((d) => d.values.ketepatan === "TERLAMBAT");
   const past = new Date(item.startAt).getTime() < nowMs;
+  const signedBy = item.participants.filter((p) => p.signedAt);
+  const mine = item.participants.find((p) => p.userId === meId);
   return (
     <article className={`cal-recap cal-tone-${item.type}`}>
       <div className="when"><span>{tgl(day).split(" ")[1]}</span><b>{Number(day.slice(8))}</b><span>{wibTime(item.startAt)}</span></div>
@@ -140,12 +143,19 @@ function RecapCard({ item, canManage, nowMs }: { item: RecapItem; canManage: boo
             {late && <b className="text-bahaya"> &middot; ada yang TERLAMBAT</b>}
           </p>
         )}
+        {item.participants.length > 0 && (
+          <p className="small" style={{ marginTop: 4 }}>
+            <b>TTD hadir:</b> {signedBy.length} dari {item.participants.length} peserta
+            {signedBy.length > 0 && <span className="muted"> ({signedBy.map((p) => p.name).join(", ")})</span>}
+          </p>
+        )}
         {r && r.files.length > 0 && <div className="files">{r.files.map((f) => <a key={f.key} href={`/operasional/berkas/${f.key}`} target="_blank" rel="noreferrer">{f.name}</a>)}</div>}
       </div>
       <div className="side">
         {r ? <span className="badge badge-on">Sudah diisi</span> : <span className={`badge ${past ? "badge-warn" : "badge-off"}`}>{past ? "Belum diisi" : "Akan datang"}</span>}
         {canManage && <Link href={`/operasional/kalender/hasil/${item.id}`} className="btn btn-ghost btn-sm">{r ? "Ubah hasil" : "Isi hasil"}</Link>}
         {r?.filledByName && <span className="small muted">oleh {r.filledByName}</span>}
+        {mine && past && <SignAttendance eventId={item.id} signed={Boolean(mine.signedAt)} />}
       </div>
     </article>
   );

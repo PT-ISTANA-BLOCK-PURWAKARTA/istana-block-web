@@ -41,6 +41,8 @@ export default async function UbahMixDesain({ params }: { params: Promise<{ id: 
     boards: numText(log.boards),
     squareMeters: numText(log.squareMeters),
     rejects: numText(log.rejects),
+    gradeB: numText(log.gradeB),
+    halfPieces: numText(log.halfPieces),
     status: log.status,
     notes: log.notes,
   };

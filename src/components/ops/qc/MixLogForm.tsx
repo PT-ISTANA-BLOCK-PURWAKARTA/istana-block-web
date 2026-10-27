@@ -24,6 +24,9 @@ export type MixLogInitial = {
   boards: string;
   squareMeters: string;
   rejects: string;
+  /** Grade B & belahan Hexagon setengah (opsional supaya halaman pemanggil lama tetap valid). */
+  gradeB?: string;
+  halfPieces?: string;
   status: CheckStatus;
   notes: string;
 };
@@ -37,6 +40,7 @@ export function MixLogForm({ initial, designs, back }: { initial: MixLogInitial;
   const [actualRaw, setActualRaw] = useState(() => toRows(initial.actual));
   const [status, setStatus] = useState<CheckStatus>(initial.status);
   const available = designs.filter((d) => d.layer === layer);
+  const isHexagon = /hexa|segi ?enam/i.test(product) && !/setengah|belah|trapes/i.test(product);
 
   // Isian "actual" mengikuti nama bahan pada "disetujui".
   const actual = approved.map((m) => actualRaw.find((a) => a.name === m.name) ?? { ...m, qty: "" });
@@ -110,9 +114,13 @@ export function MixLogForm({ initial, designs, back }: { initial: MixLogInitial;
         <div className="form-grid cols-4">
           <div className="field"><label htmlFor="ml-mixing">Mixing <span className="help">jumlah adukan</span></label><input id="ml-mixing" name="mixingCount" className="num" inputMode="decimal" defaultValue={initial.mixingCount} /></div>
           <div className="field"><label htmlFor="ml-boards">Papan</label><input id="ml-boards" name="boards" className="num" inputMode="decimal" defaultValue={initial.boards} /></div>
-          <div className="field"><label htmlFor="ml-m2">Meter persegi</label><input id="ml-m2" name="squareMeters" className="num" inputMode="decimal" defaultValue={initial.squareMeters} /></div>
-          {layer !== "kepalaan" && <div className="field"><label htmlFor="ml-reject">Reject</label><input id="ml-reject" name="rejects" className="num" inputMode="decimal" defaultValue={initial.rejects} /></div>}
+          <div className="field"><label htmlFor="ml-m2">{layer === "badan" ? "m² Grade A (siap jual)" : "Meter persegi"}</label><input id="ml-m2" name="squareMeters" className="num" inputMode="decimal" defaultValue={initial.squareMeters} /></div>
+          {layer !== "kepalaan" && <div className="field"><label htmlFor="ml-gradeb">Grade B <span className="help">reject, masih bisa dijual</span></label><input id="ml-gradeb" name="gradeB" className="num" inputMode="decimal" defaultValue={initial.gradeB ?? ""} /></div>}
+          {layer !== "kepalaan" && <div className="field"><label htmlFor="ml-reject">Reject <span className="help">tidak bisa dijual</span></label><input id="ml-reject" name="rejects" className="num" inputMode="decimal" defaultValue={initial.rejects} /></div>}
+          {layer === "badan" && isHexagon && <div className="field"><label htmlFor="ml-half">Belahan setengah (trapesium) <span className="help">buah, dari cetakan yang sama</span></label><input id="ml-half" name="halfPieces" className="num" inputMode="decimal" defaultValue={initial.halfPieces ?? ""} /></div>}
         </div>
+        {layer === "kepalaan" && <p className="small muted">Hasil produksi (papan, Grade A/B, reject) cukup diisi di lapisan badan — sudah termasuk kepalaan.</p>}
+        {layer === "badan" && <p className="small muted">Hasil lapisan badan otomatis masuk ke Hasil Produksi (paving): Grade A sebagai jumlah jadi, plus Grade B &amp; reject{isHexagon ? "; belahan setengah masuk ke barang Hexagon Setengah (trapesium) warna yang sama" : ""}.</p>}
         <div className="field">
           <span className="label">Status</span>
           <div className="seg" role="radiogroup" aria-label="Status">

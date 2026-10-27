@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { deleteProduction } from "@/app/operasional/actions/stock";
 import { ConfirmAction } from "@/components/erp/ConfirmAction";
 import { JournalView } from "@/components/erp/JournalView";
@@ -11,6 +11,7 @@ import { isArchive } from "@/lib/erp/archive";
 import { journalFor } from "@/lib/erp/server";
 import { formatQty, tgl } from "@/lib/erp/util";
 import { canChangeProduction, productionAccess } from "@/lib/ops/production";
+import { METHOD_LABEL } from "@/lib/ops/production-lines";
 import "../produksi.css";
 
 export const metadata = { title: "Hasil produksi" };
@@ -28,6 +29,14 @@ export default async function ProduksiDetail({ params, searchParams }: { params:
     acc.canFinance ? journalFor(db, "produksi", id) : Promise.resolve([]),
     p.createdBy != null ? db.select({ name: schema.users.name }).from(schema.users).where(eq(schema.users.id, p.createdBy)).limit(1) : Promise.resolve([]),
   ]);
+  const signerIds = [p.rejectManagerBy, p.rejectLeaderBy].filter((x): x is number => x != null);
+  const [signerRows, batch] = await Promise.all([
+    signerIds.length ? db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users).where(inArray(schema.users.id, signerIds)) : Promise.resolve([]),
+    p.batchId ? db.query.productionBatches.findFirst({ where: eq(schema.productionBatches.id, p.batchId) }) : Promise.resolve(undefined),
+  ]);
+  const signer = new Map(signerRows.map((s) => [s.id, s.name]));
+  // Tanggal WIB (UTC+7) dari waktu kejadian, untuk label TTD.
+  const wib = (d: Date) => new Date(d.getTime() + 7 * 3600_000).toISOString().slice(0, 10);
   // Data arsip dari aplikasi lama: baca-saja.
   const archived = isArchive(p.id);
   const canEdit = canChangeProduction(acc, p) && !archived;
@@ -60,8 +69,11 @@ export default async function ProduksiDetail({ params, searchParams }: { params:
     ["Ketua regu", p.leader],
     ["Target", p.target != null ? formatQty(p.target) : null],
     ["Semen terpakai", p.cementBags != null ? `${formatQty(p.cementBags)} sak` : null],
+    ["Metode Buis", p.method ? METHOD_LABEL[p.method] : null],
+    ["Semen curah", p.cementKg != null ? `${formatQty(p.cementKg)} kg` : null],
     ["Papan", p.boards != null ? formatQty(p.boards) : null],
-    ["Reject", p.rejects != null ? formatQty(p.rejects) : null],
+    ["Grade B (masih dijual)", p.gradeB != null ? formatQty(p.gradeB) : null],
+    ["Reject (tidak dijual)", p.rejects != null ? formatQty(p.rejects) : null],
     ["Dicatat oleh", creator[0]?.name ?? null],
   ];
   return (
@@ -71,6 +83,8 @@ export default async function ProduksiDetail({ params, searchParams }: { params:
         {canEdit && <Link href={`/operasional/produksi/${p.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>}
       </PageHead>
       <Ok ok={ok} />
+      {p.mixLogId && <p className="flag flag-info">Baris ini otomatis dari catatan Mix Desain harian (QC). Ubah lewat menu QC → Mix desain harian.</p>}
+      {p.batchId && <p className="flag flag-info">Bagian dari adukan cor bersama{batch ? ` (${formatQty(batch.cementBags)} sak semen untuk beberapa produk)` : ""}. <Link href={`/operasional/produksi/adukan/${p.batchId}`}>Lihat / ubah adukan</Link></p>}
       {archived && <p className="flag flag-info">Arsip aplikasi lama. Catatan produksi ini hanya bisa dilihat, tidak bisa diubah atau dihapus.</p>}
       <div className="stack" style={{ gap: 20 }}>
         <section className="admin-card doc-head">
@@ -82,6 +96,17 @@ export default async function ProduksiDetail({ params, searchParams }: { params:
           <section className="admin-card">
             <span className="muted small">Kendala produksi</span>
             <div className="prd-issues">{issues.map((i) => <span key={i} className="prd-issue-chip">{i}</span>)}</div>
+          </section>
+        )}
+        {((p.gradeB ?? 0) > 0 || (p.rejects ?? 0) > 0) && (
+          <section className="admin-card">
+            <span className="muted small">Ketidaksesuaian produksi</span>
+            <p style={{ marginTop: 4 }}>
+              <b>Manager in charge:</b> {p.rejectManagerAt ? `${signer.get(p.rejectManagerBy ?? -1) ?? "-"} · ${tgl(wib(p.rejectManagerAt))}` : "belum"}<br />
+              <b>Pimpinan:</b> {p.rejectLeaderAt ? `${signer.get(p.rejectLeaderBy ?? -1) ?? "-"} · ${tgl(wib(p.rejectLeaderAt))}` : "belum"}
+            </p>
+            <p className="small muted">TTD ditandatangani dari daftar hasil produksi (Manager in charge dulu, lalu Pimpinan); mengubah jumlah / Grade B / reject mengulang TTD.</p>
+            <Link href={`/operasional/cetak/ketidaksesuaian-produksi?from=${p.date}&to=${p.date}`} className="btn btn-ghost btn-sm">Dokumen ketidaksesuaian</Link>
           </section>
         )}
         {p.note && <section className="admin-card"><span className="muted small">Catatan</span><p className="pre" style={{ marginTop: 4 }}>{p.note}</p></section>}

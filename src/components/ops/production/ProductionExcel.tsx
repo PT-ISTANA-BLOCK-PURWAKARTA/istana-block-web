@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { downloadWorkbook, type SheetData } from "@/lib/ops/excel";
-import { CATEGORY_LABEL, categoryLabel, round2, sum, summarizeIssues, summarizeProducts, type ProdRow } from "./summary";
+import { CATEGORY_LABEL, categoryLabel, hasNonconformity, round2, sum, summarizeIssues, summarizeProducts, type ProdRow } from "./summary";
 
 const dateOf = (d: string) => new Date(`${d}T00:00:00`);
 const unitLabel = (name: string, unit: string) => (unit ? `${name} (${unit})` : name);
@@ -33,9 +33,10 @@ export function ProductionExcel({ rows, from, to }: { rows: ProdRow[]; from: str
             { key: "qty", header: "Jumlah jadi", width: 14 },
             { key: "unit", header: "Satuan", width: 10 },
             { key: "boards", header: "Papan", width: 10 },
+            { key: "gradeB", header: "Grade B", width: 10 },
             { key: "rejects", header: "Reject", width: 10 },
           ],
-          rows: products.map((p, i) => ({ no: i + 1, category: categoryLabel(p.category), product: p.name, days: p.days.size, issueDays: p.issueDays.size, qty: round2(p.qty), unit: p.unit, boards: p.boards || "", rejects: p.rejects || "" })),
+          rows: products.map((p, i) => ({ no: i + 1, category: categoryLabel(p.category), product: p.name, days: p.days.size, issueDays: p.issueDays.size, qty: round2(p.qty), unit: p.unit, boards: p.boards || "", gradeB: p.gradeB || "", rejects: p.rejects || "" })),
         },
         {
           name: "Per hari",
@@ -78,9 +79,14 @@ export function ProductionExcel({ rows, from, to }: { rows: ProdRow[]; from: str
             { key: "hasil", header: "Hasil", width: 44 },
             { key: "total", header: "Jumlah", width: 12 },
             { key: "target", header: "Target", width: 10 },
+            { key: "method", header: "Metode", width: 10 },
             { key: "boards", header: "Papan", width: 10 },
+            { key: "gradeB", header: "Grade B", width: 10 },
             { key: "rejects", header: "Reject", width: 10 },
+            { key: "batchGroup", header: "Adukan bersama", width: 14 },
+            { key: "cementKg", header: "Semen curah (kg)", width: 14 },
             { key: "cement", header: "Semen (sak)", width: 12 },
+            { key: "ttd", header: "TTD ketidaksesuaian", width: 34 },
             { key: "issues", header: "Kendala", width: 30 },
             { key: "note", header: "Catatan", width: 40 },
             { key: "pic", header: "Pencatat", width: 18 },
@@ -96,9 +102,14 @@ export function ProductionExcel({ rows, from, to }: { rows: ProdRow[]; from: str
             hasil: r.hasil.map((h) => `${h.name} ${round2(h.qty)} ${h.unit}`.trim()).join("; "),
             total: round2(sum(r.hasil.map((h) => h.qty))),
             target: r.target ?? "",
+            method: r.method ?? "",
             boards: r.boards ?? "",
+            gradeB: r.gradeB ?? "",
             rejects: r.rejects ?? "",
+            batchGroup: r.batchId ? "Ya" : "",
+            cementKg: r.cementKg ?? "",
             cement: r.cementBags ?? "",
+            ttd: hasNonconformity(r) ? `Manager: ${r.rejectManager ? (r.rejectManager.name ?? "ya") : "belum"}; Pimpinan: ${r.rejectLeader ? (r.rejectLeader.name ?? "ya") : "belum"}` : "",
             issues: r.issues.join(", "),
             note: r.note,
             pic: r.createdByName ?? "",

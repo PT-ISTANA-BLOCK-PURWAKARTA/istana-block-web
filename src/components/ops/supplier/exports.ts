@@ -5,7 +5,7 @@ import { downloadWorkbook, type SheetData } from "@/lib/ops/excel";
 import { fmt } from "@/lib/ops/shared/format";
 import { DECISION_LABELS, DELIVERY_MODE_LABELS, GOOD_SILT_PERCENT, MAX_SILT_PERCENT, PRICE_LABELS, SAND_TIERS, SILT_LEVEL_LABELS, SPEED_LABELS, TIER_LABELS } from "@/lib/ops/shared/sand";
 import { SCORE_WEIGHTS, gradeOf, overallScore } from "@/lib/ops/shared/score";
-import { curveData, groupBy, levelOf, materialKey, partsOf, qty, ranked, round, share, type GroupSummary, type Note, type Summaries, type SupplierRow } from "./summaries";
+import { curveData, groupBy, levelOf, materialKey, partsOf, qty, ranked, round, share, speedOf, type GroupSummary, type Note, type Summaries, type SupplierRow } from "./summaries";
 
 /** "Standard (2,3/3)" untuk rata-rata penilaian tiga tingkat. */
 export const levelText = (value: number | null, labels: Record<number, string>) =>
@@ -115,7 +115,7 @@ export async function exportSupplierExcel({ rows, materials, tags, sources, vend
         Peringkat: i + 1, "Supplier / quarry": s.label, "Bahan baku": s.materials.join(", "), Tier: s.tier ?? "", "Keterangan tier": s.tier ? TIER_LABELS[s.tier] : "Belum dinilai", Rit: s.count, ...unitColumns(s.rows),
         Diuji: s.tested, "Lumpur rata-rata (%)": round(s.avgSilt), "Lumpur min (%)": s.minSilt ?? "", "Lumpur maks (%)": s.maxSilt ?? "", [`Bagus ≤${GOOD_SILT_PERCENT}%`]: s.good, [`Lewat >${MAX_SILT_PERCENT}%`]: s.overLimit,
         Ditolak: s.rejected, "Tier 1": s.tiers[1], "Tier 2": s.tiers[2], "Tier 3": s.tiers[3], "Tier 4": s.tiers[4], "Belum dinilai QC": s.unrated, Kecepatan: levelText(s.speedAvg, SPEED_LABELS),
-        Harga: levelText(s.priceAvg, PRICE_LABELS), "Nilai overall": s.overall ?? "", "Via armada quarry": s.viaQuarry, "Via ekspedisi": s.viaExpedition, "Keterangan terbaru": s.notes[0]?.text ?? "",
+        Harga: levelText(s.priceAvg, PRICE_LABELS), "Nilai overall": s.overall ?? "", "Via armada quarry": s.viaQuarry, "Via ekspedisi": s.viaExpedition, "Diambil sendiri": s.viaSendiri, "Keterangan terbaru": s.notes[0]?.text ?? "",
       })),
     ),
     sheetOf(
@@ -148,7 +148,7 @@ export async function exportSupplierExcel({ rows, materials, tags, sources, vend
           "Hasil uji": level ? SILT_LEVEL_LABELS[level] : row.test?.status === "draft" ? "Mengendap" : "Belum diuji", Keputusan: row.test?.decision ? DECISION_LABELS[row.test.decision] : "", Brangkal: row.hasBrangkal ? "Banyak" : "",
           Tier: row.tier ?? "", "Keterangan tier": row.tier ? TIER_LABELS[row.tier] : "", "Status tier": row.tierConfirmed ? "Dinilai QC" : row.tier ? "Saran sistem" : "Belum", "Keterangan QC": row.qualityNote ?? "",
           "Dinilai QC oleh": row.qualityByName ?? "", "Dikirim oleh": row.deliveryMode ? DELIVERY_MODE_LABELS[row.deliveryMode] : "", Ekspedisi: row.expeditionName ?? "",
-          Kecepatan: row.speedRating ? SPEED_LABELS[row.speedRating] : "", "Keterangan pengiriman": row.deliveryNote ?? "", "Dinilai kantor oleh": row.deliveryByName ?? "",
+          Kecepatan: speedOf(row) ? SPEED_LABELS[speedOf(row)!] : "", "Keterangan pengiriman": row.deliveryNote ?? "", "Dinilai kantor oleh": row.deliveryByName ?? "",
           Harga: row.priceRating ? PRICE_LABELS[row.priceRating] : "", "Keterangan harga": row.priceNote ?? "", "Dinilai harga oleh": row.priceByName ?? "",
           "Nilai overall": score.overall ?? "", Grade: score.overall === null ? "" : gradeOf(score.overall)!.grade, "Dicatat oleh": row.createdByName ?? "",
           Foto: row.photoKeys.map((key) => `${origin}${berkasUrl(key)}`).join(" "),

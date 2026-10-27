@@ -1,20 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { startSandTest } from "@/app/operasional/actions/sand";
+import { skipSandTest, startSandTest } from "@/app/operasional/actions/sand";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { Chips } from "@/components/ops/receipts/Chips";
+import { DialogForm, Modal } from "@/components/ops/receipts/Modal";
 import { PhotoPicker } from "@/components/ops/receipts/PhotoPicker";
 import { whenText } from "@/components/ops/receipts/util";
 import type { ReadingUnit } from "@/db/erp";
 import type { ReceiptForTesting } from "@/lib/ops/receipts";
 import { fmt } from "@/lib/ops/shared/format";
-import { GOOD_SILT_PERCENT, MATERIALS, MAX_SILT_PERCENT, sourceLabel } from "@/lib/ops/shared/sand";
+import { GOOD_SILT_PERCENT, MATERIALS, MAX_SILT_PERCENT, SKIP_LEVELS, SKIP_LEVEL_LABELS, sourceLabel, type SkipLevel } from "@/lib/ops/shared/sand";
 import { ReadingFields, emptyReading } from "./ReadingFields";
 import { UNIT_LABELS } from "./util";
 
 const UNITS = ["ml", "cm"] as const;
+
+/** Dialog skip uji lumpur: kondisi lumpur menurut pengamatan + alasan wajib. */
+function SkipDialog({ receipt, onClose, onSaved }: { receipt: ReceiptForTesting; onClose: () => void; onSaved: () => void }) {
+  const [level, setLevel] = useState<SkipLevel | "">("");
+  const [reason, setReason] = useState("");
+  return (
+    <Modal title="Skip uji lumpur" sub={`${receipt.itemName}${receipt.tag ? ` · ${receipt.tag}` : ""} · ${whenText(receipt.receivedAt)} · ${sourceLabel(receipt)}`} onClose={onClose}>
+      <DialogForm action={skipSandTest} onSaved={onSaved}>
+        <input type="hidden" name="receiptId" value={receipt.id} />
+        <p className="small muted">Pilih kondisi lumpur menurut pengamatan (tanpa uji gelas / botol), mis. pasir pantai:</p>
+        <div className="field">
+          <Chips name="level" value={level} options={SKIP_LEVELS} labels={SKIP_LEVEL_LABELS} onChange={setLevel} label="Kondisi lumpur" />
+        </div>
+        <div className="field">
+          <label htmlFor="sk-reason">Alasan skip *</label>
+          <input id="sk-reason" name="reason" required minLength={3} maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Mis. pasir pantai, tidak perlu uji" autoComplete="off" />
+        </div>
+        <div><SubmitButton className="btn btn-primary" pendingText="Menyimpan…">Simpan skip</SubmitButton></div>
+      </DialogForm>
+    </Modal>
+  );
+}
 
 /** Mulai uji lumpur: pilih barang masuk (3 hari terakhir) atau manual, foto awal → draft; atau langsung isi hasil. */
 export function StartForm({ receipts, preselect, nowLocal }: { receipts: ReceiptForTesting[]; preselect: string | null; nowLocal: string }) {
@@ -23,10 +46,12 @@ export function StartForm({ receipts, preselect, nowLocal }: { receipts: Receipt
   const [unit, setUnit] = useState<ReadingUnit>("ml");
   const [now, setNow] = useState(false);
   const [reading, setReading] = useState(emptyReading);
+  const [skipping, setSkipping] = useState<ReceiptForTesting | null>(null);
   // Barang yang sudah selesai diuji disembunyikan, kecuali yang dipilih lewat tautan (?barang=…).
-  const untested = receipts.filter((receipt) => receipt.testStatus !== "selesai" || receipt.id === preselect);
+  const untested = receipts.filter((receipt) => (receipt.testStatus !== "selesai" && receipt.testStatus !== "dilewati") || receipt.id === preselect);
 
   return (
+    <>
     <ActionForm action={startSandTest} className="form-section rcv-form">
       <div>
         <h2>Mulai uji lumpur</h2>
@@ -48,7 +73,8 @@ export function StartForm({ receipts, preselect, nowLocal }: { receipts: Receipt
         {untested.length ? (
           <div className="sand-pick">
             {untested.map((receipt) => (
-              <button key={receipt.id} type="button" aria-pressed={target === receipt.id} className={`sand-pick-btn${target === receipt.id ? " on" : ""}`} onClick={() => setTarget(receipt.id)}>
+              <div key={receipt.id} className="sand-pick-cell">
+              <button type="button" aria-pressed={target === receipt.id} className={`sand-pick-btn${target === receipt.id ? " on" : ""}`} onClick={() => setTarget(receipt.id)}>
                 <b>{receipt.itemName}{receipt.tag ? ` · ${receipt.tag}` : ""}</b>
                 <span className="small">
                   {whenText(receipt.receivedAt)} · {sourceLabel(receipt)}
@@ -57,6 +83,10 @@ export function StartForm({ receipts, preselect, nowLocal }: { receipts: Receipt
                 </span>
                 {receipt.testStatus === "draft" && <span className="small text-warn">sudah ada draft uji</span>}
               </button>
+              {receipt.testStatus !== "selesai" && receipt.testStatus !== "draft" && (
+                <button type="button" className="btn btn-ghost btn-sm sand-skip-btn" onClick={() => setSkipping(receipt)}>Skip uji (mis. pasir pantai)</button>
+              )}
+              </div>
             ))}
           </div>
         ) : (
@@ -107,5 +137,7 @@ export function StartForm({ receipts, preselect, nowLocal }: { receipts: Receipt
         <SubmitButton className="btn btn-primary btn-block rcv-save" pendingText="Menyimpan…">{now ? "Simpan hasil uji" : "Simpan draft — mulai mengendap"}</SubmitButton>
       </div>
     </ActionForm>
+      {skipping && <SkipDialog receipt={skipping} onClose={() => setSkipping(null)} onSaved={() => { if (target === skipping.id) setTarget(""); setSkipping(null); }} />}
+    </>
   );
 }
