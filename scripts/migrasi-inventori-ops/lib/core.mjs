@@ -1,6 +1,6 @@
 // Inti skrip migrasi inventori-ops -> istana-block-web: literal SQL, konteks (muat backup + snapshot),
 // penampung keluaran/laporan, peta id (pengguna, kontak, barang, sopir, kendaraan) dan pendaftar foto.
-// Hanya modul bawaan Node. Spesifikasi: docs/migrasi-data-inventori-ops.md
+// Hanya modul bawaan Node. Spesifikasi: docs/arsip/migrasi-data-inventori-ops.md
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";

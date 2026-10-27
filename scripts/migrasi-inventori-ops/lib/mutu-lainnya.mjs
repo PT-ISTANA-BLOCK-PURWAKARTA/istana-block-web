@@ -1,5 +1,5 @@
-﻿// Modul migrasi: piket (dutyShifts), QC, penerimaan, uji pasir, produksi ARSIP (tanpa stok/jurnal), kalender, ISO.
-// Spesifikasi: docs/migrasi-data-inventori-ops.md (A.1 dutyShifts, A.4, A.5, D, E.2, E.3).
+// Modul migrasi: piket (dutyShifts), QC, penerimaan, uji pasir, produksi ARSIP (tanpa stok/jurnal), kalender, ISO.
+// Spesifikasi: docs/arsip/migrasi-data-inventori-ops.md (A.1 dutyShifts, A.4, A.5, D, E.2, E.3).
 // Keluaran: 04-qc, 05-terima-produksi, 06-piket-kalender, 07-iso.
 import { insert, sec, wibDate, iid } from "./core.mjs";
 

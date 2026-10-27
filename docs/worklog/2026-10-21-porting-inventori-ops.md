@@ -1,3 +1,5 @@
+> Arsip worklog porting 21 Okt; status terkini ada di docs/STATUS.md
+
 # Worklog: port istana-block-inventori-ops → menu OPERASIONAL
 
 Tanggal: 2026-10-21 (dihentikan atas permintaan pemilik sekitar 05.15 WIB)

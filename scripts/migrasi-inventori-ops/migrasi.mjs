@@ -1,5 +1,5 @@
-﻿#!/usr/bin/env node
-// Migrasi data inventori-ops -> istana-block-web (Operasional). Spesifikasi: docs/migrasi-data-inventori-ops.md
+#!/usr/bin/env node
+// Migrasi data inventori-ops -> istana-block-web (Operasional). Spesifikasi: docs/arsip/migrasi-data-inventori-ops.md
 //   node scripts/migrasi-inventori-ops/migrasi.mjs --backup <folder backup> --snapshot <snap.sql> --out <folder keluaran> [--final] [--open=stop|skip] [--cutover <ISO>]
 // Default dry-run: hanya laporan + hitungan. --final menulis out/*.sql, r2-manifest.json, unggah-r2.ps1, akun-baru.csv (di ..\rahasia).
 import fs from "node:fs";

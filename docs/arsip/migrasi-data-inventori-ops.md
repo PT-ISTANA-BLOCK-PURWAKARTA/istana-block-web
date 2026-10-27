@@ -1,3 +1,5 @@
+> TIDAK DIPAKAI — pemilik memutuskan fresh start 27 Okt 2026 (data app lama tidak dimigrasi). Skrip `scripts/migrasi-inventori-ops/` dan guard arsip `src/lib/erp/archive.ts` dibiarkan (inert).
+
 # Spesifikasi migrasi data: inventori-ops -> istana-block-web (Operasional)
 
 Skrip satu kali, offline. Dokumen ini adalah spesifikasi pemetaan (bukan kode). Acuan: `worker/schema.ts` + `migrations/0000-0020` (sumber),

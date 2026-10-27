@@ -2,6 +2,8 @@
 
 Situs web Istana Block Purwakarta yang dibangun ulang dengan **Next.js 15** dan berjalan di **Cloudflare Workers**. Data disimpan di **Cloudflare D1** dan gambar di **Cloudflare R2**. Pintu masuk staf ada di **`/internal`**: pilih aplikasi **Situs** (`/situs`, produk, harga, artikel, halaman), **Operasional** (`/operasional`, pesanan, pengiriman, stok, lacak truk), atau **Keuangan** (`/akuntansi`, pembukuan ala Zahir dan laporan). Situs & Keuangan masuk dengan email + password; gudang, sopir, dan staf lapangan masuk ke Operasional dengan nomor HP + PIN 6 angka.
 
+**Status & dokumentasi:** [docs/STATUS.md](docs/STATUS.md), [docs/README.md](docs/README.md)
+
 ![Beranda](docs/screenshots/beranda-atas.webp)
 
 ## Tampilan

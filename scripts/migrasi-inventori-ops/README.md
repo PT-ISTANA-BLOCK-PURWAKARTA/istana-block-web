@@ -1,6 +1,8 @@
-﻿# Migrasi data inventori-ops -> istana-block-web
+> TIDAK DIPAKAI — pemilik memutuskan fresh start 27 Okt 2026 (data app lama tidak dimigrasi). Skrip ini dan guard arsip `src/lib/erp/archive.ts` dibiarkan (inert).
 
-Skrip satu kali, offline (Node 24, hanya modul bawaan; tanpa `npm install`). Spesifikasi lengkap: `docs/migrasi-data-inventori-ops.md`.
+# Migrasi data inventori-ops -> istana-block-web
+
+Skrip satu kali, offline (Node 24, hanya modul bawaan; tanpa `npm install`). Spesifikasi lengkap: `docs/arsip/migrasi-data-inventori-ops.md`.
 
 ## Pakai
 
