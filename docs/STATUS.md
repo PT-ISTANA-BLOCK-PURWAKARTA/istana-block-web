@@ -26,7 +26,7 @@ Ringkasan kondisi situs `istana-block-web` (Next.js + OpenNext Cloudflare + D1).
 | #8 | Port inventori-ops menjadi menu Operasional. |
 | #9 | Skrip migrasi data + guard arsip. **Tidak dipakai** (fresh start); dibiarkan inert. |
 | #10 | SEO P1, P8, P5, P12c, P2e. |
-| #11 | Parameter pelacak iklan (gclid/utm) masuk kunci cache. |
+| #11 | Daftar parameter pelacak iklan (gclid/utm/fbclid, dll.) yang diabaikan dari kunci cache dilengkapi. |
 | #12 | Operasional setara app live (rincian di bawah). |
 
 Isi PR #12: Rekap Pelanggan + Sasaran Mutu 13/14/16/20/22; stok opname & cat genteng digabung ke stok web; produksi Grade A/B/Reject, metode Buis, adukan cor bersama, sinkron mix ke produksi paving, TTD ketidaksesuaian; spesifikasi produk; moda "Diambil sendiri"; uji lumpur (skip, ubah hasil, TTD bertingkat); koreksi jam tiba; batalkan status Selesai/Sampai tanpa menyentuh stok; TTD hadir kalender.
