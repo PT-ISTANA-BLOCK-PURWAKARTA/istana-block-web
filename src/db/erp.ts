@@ -1496,6 +1496,83 @@ export const fleetExpenses = sqliteTable(
   (t) => [index("ops_fleet_exp_date_idx2").on(t.entryDate)],
 );
 
+/** Perpindahan stok antar kunci gudang (padanan `stockTransfers`), mis. cat natural -> warna. */
+export const transfers = sqliteTable(
+  "inv_transfers",
+  {
+    id: id(),
+    kind: text("kind").notNull(),
+    fromKey: text("from_key").notNull(),
+    toKey: text("to_key").notNull(),
+    qty: real("qty").notNull(),
+    movedAt: integer("moved_at", { mode: "timestamp" }).notNull(),
+    note: text("note").notNull().default(""),
+    movedByName: text("moved_by_name"),
+    photoKeys: text("photo_keys", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    leader: text("leader"),
+    target: real("target"),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [index("inv_transfers_moved_idx2").on(t.movedAt)],
+);
+
+/** Target produksi per kunci barang (padanan `productionTargets`); history = JSON. */
+export const productionTargets = sqliteTable("inv_production_targets", {
+  key: text("key").primaryKey(),
+  label: text("label").notNull(),
+  unit: text("unit").notNull(),
+  target: real("target").notNull(),
+  setBy: integer("set_by"),
+  setByName: text("set_by_name"),
+  setAt: integer("set_at", { mode: "timestamp" }).notNull(),
+  history: text("history", { mode: "json" }).$type<unknown[]>().notNull().default(sql`'[]'`),
+});
+
+/** Alasan target produksi tidak tercapai (padanan `productionTargetReasons`). */
+export const productionTargetReasons = sqliteTable(
+  "inv_production_target_reasons",
+  {
+    id: id(),
+    key: text("key").notNull(),
+    workDate: text("work_date").notNull(),
+    label: text("label").notNull(),
+    target: real("target").notNull(),
+    actual: real("actual").notNull(),
+    reason: text("reason").notNull(),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    createdAt: integer("created_at", { mode: "timestamp" }),
+  },
+  (t) => [index("inv_pt_reason_idx2").on(t.key, t.workDate)],
+);
+
+/** Buku kas proyek uditch (padanan `uditchEntries`): masuk/keluar per akun. */
+export const uditchEntries = sqliteTable(
+  "ops_uditch_entries",
+  {
+    id: id(),
+    entryDate: text("entry_date").notNull(),
+    account: text("account").notNull(),
+    direction: text("direction").notNull(),
+    item: text("item").notNull().default(""),
+    qty: real("qty"),
+    party: text("party"),
+    price: real("price"),
+    total: real("total").notNull().default(0),
+    category: text("category"),
+    note: text("note"),
+    remark: text("remark"),
+    pic: text("pic"),
+    sourceKey: text("source_key"),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    updatedByName: text("updated_by_name"),
+    ...created,
+  },
+  (t) => [index("ops_uditch_date_idx2").on(t.entryDate)],
+);
+
 export type Account = typeof accounts.$inferSelect;
 export type Contact = typeof contacts.$inferSelect;
 export type Item = typeof items.$inferSelect;
