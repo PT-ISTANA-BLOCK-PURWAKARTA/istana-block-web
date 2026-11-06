@@ -160,6 +160,8 @@ export const vehicles = sqliteTable(
     /** Masa berlaku STNK & KIR (YYYY-MM-DD); peringatan di Ringkasan bila sisa <= 30 hari. */
     stnkExpiry: text("stnk_expiry"),
     kirExpiry: text("kir_expiry"),
+    /** Tag rekap armada (padanan `vehicles.tag` app lama), mis. "Truk 1". */
+    tag: text("tag"),
     ...created,
   },
   (t) => [uniqueIndex("ops_vehicles_gps_device").on(t.gpsDeviceId)],
@@ -227,6 +229,8 @@ export const orders = sqliteTable(
     ongkir: integer("ongkir").notNull().default(0),
     discount: integer("discount").notNull().default(0),
     taxable: integer("taxable", { mode: "boolean" }).notNull().default(false),
+    /** PO internal (antar unit sendiri, padanan `orders.isInternal`): tidak menagih pelanggan. */
+    isInternal: integer("is_internal", { mode: "boolean" }).notNull().default(false),
     note: text("note").notNull().default(""),
     /** Nomor faktur/surat jalan Zahir asal impor (anti-dobel). */
     externalRef: text("external_ref"),
@@ -254,6 +258,10 @@ export const orderLines = sqliteTable(
     qty: real("qty").notNull(),
     unit: text("unit").notNull().default(""),
     price: integer("price").notNull().default(0),
+    /** Jumlah yang benar-benar dimuat saat muat bertahap (padanan `orderItems.loadedQuantity`); kosong = sebesar qty. */
+    loadedQty: real("loaded_qty"),
+    /** Kunci stok gudang saat barang disiapkan (padanan `orderItems.stockKey`). */
+    stockKey: text("stock_key"),
     sort: integer("sort").notNull().default(0),
   },
   (t) => [index("ops_ol_order_idx").on(t.orderId)],
@@ -288,6 +296,12 @@ export const deliveries = sqliteTable(
     arrivalCorrectedBy: integer("arrival_corrected_by"),
     arrivalCorrectionMadeAt: integer("arrival_correction_made_at", { mode: "timestamp" }),
     arrivalCorrectionReason: text("arrival_correction_reason"),
+    /** Nama pengguna yang mengoreksi jam tiba (padanan `deliveries.arrivalCorrectedByName`). */
+    arrivalCorrectedByName: text("arrival_corrected_by_name"),
+    /** Nama pengguna yang menandai "Sudah dimuat" (padanan `deliveries.loadedByName`). */
+    loadedByName: text("loaded_by_name"),
+    /** Catatan muat dari gudang, mis. selisih jumlah (padanan `deliveries.loadNote`). */
+    loadNote: text("load_note"),
     receivedBy: text("received_by").notNull().default(""),
     proofKey: text("proof_key"),
     note: text("note").notNull().default(""),
@@ -363,6 +377,8 @@ export const productions = sqliteTable(
     gradeB: real("grade_b"),
     /** Khusus buis: tumbuk|cor|tulangan. */
     method: text("method").$type<ProductionMethod>(),
+    /** Bagian adukan, mis. "kepalaan" (padanan `productionOutputs.mixPart`). */
+    mixPart: text("mix_part"),
     /** Semen curah (kg), khusus paving. */
     cementKg: real("cement_kg"),
     /** Adukan cor bersama (inv_production_batches.id); cement_bags dokumen ini dikosongkan agar rasio tak ganda. */
@@ -711,6 +727,10 @@ export const pushSubscriptions = sqliteTable(
     p256dh: text("p256dh").notNull(),
     auth: text("auth").notNull(),
     userAgent: text("user_agent").notNull().default(""),
+    /** Hasil kirim terakhir dari layanan push (padanan `pushSubscriptions.lastResult`), dipakai cron membuang langganan mati. */
+    lastResult: text("last_result"),
+    lastSentAt: integer("last_sent_at", { mode: "timestamp" }),
+    lastTitle: text("last_title"),
     ...created,
   },
   (t) => [uniqueIndex("ops_push_endpoint_uq").on(t.endpoint), index("ops_push_user_idx").on(t.userId)],
@@ -862,6 +882,13 @@ export const strengthTests = sqliteTable(
     labSignedAt: integer("lab_signed_at", { mode: "timestamp" }),
     leaderSignedBy: integer("leader_signed_by"),
     leaderSignedAt: integer("leader_signed_at", { mode: "timestamp" }),
+    /** Kadar absorpsi hasil uji, teks bebas (padanan `strengthTests.absorption`). */
+    absorption: text("absorption"),
+    /** Absorpsi diambil dari sertifikat, bukan hasil uji sendiri (padanan `absorptionOnCertificate`). */
+    absorptionOnCertificate: integer("absorption_on_certificate", { mode: "boolean" }).notNull().default(false),
+    /** TTD pembuat benda uji (padanan `strengthTests.makerSignedBy/At`). */
+    makerSignedBy: integer("maker_signed_by"),
+    makerSignedAt: integer("maker_signed_at", { mode: "timestamp" }),
     ...created,
   },
   (t) => [index("qc_st_date_idx").on(t.reportDate)],
@@ -880,6 +907,8 @@ export const strengthSamples = sqliteTable(
     weightKg: real("weight_kg"),
     areaCm2: real("area_cm2"),
     maxLoadKn: real("max_load_kn"),
+    /** Kondisi permukaan benda uji, mis. "retak halus" (padanan `strengthTestSamples.surface`). */
+    surface: text("surface"),
   },
   (t) => [index("qc_ss_test_idx").on(t.testId)],
 );
@@ -943,6 +972,13 @@ export const goodsReceipts = sqliteTable(
     testSkipLevel: text("test_skip_level").$type<SkipLevel>(),
     testSkipReason: text("test_skip_reason"),
     testSkippedBy: integer("test_skipped_by"),
+    testSkippedByName: text("test_skipped_by_name"),
+    /** Kantor merapikan (settle) laporan cepat satpam: siapa & kapan (padanan `goodsReceipts.settledBy/At`). */
+    settledBy: integer("settled_by"),
+    settledByName: text("settled_by_name"),
+    settledAt: integer("settled_at", { mode: "timestamp" }),
+    /** Salinan JSON isian satpam sebelum dirapikan; kosong = belum pernah di-settle (padanan `goodsReceipts.original`). */
+    original: text("original"),
     createdBy: createdBy(),
     ...created,
   },
@@ -1288,6 +1324,8 @@ export const productSpecs = sqliteTable(
     active: integer("active", { mode: "boolean" }).notNull().default(true),
     /** Opsional: barang web (fin_items.id) yang dipakai produksi untuk spesifikasi ini. */
     itemId: text("item_id"),
+    /** Kunci R2 foto spesifikasi (folder spesifikasi/); padanan `productSpecs.photoUrl`. */
+    photoKey: text("photo_key"),
     createdBy: createdBy(),
     ...created,
   },

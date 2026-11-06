@@ -11,3 +11,6 @@ next-env.d.ts
 # cadangan database (berisi data pelanggan & hash password) — jangan masuk repo
 backup-*.sql
 *.sql.bak
+
+# Hasil generate skrip impor data (1 MB, dibuat ulang dengan scripts/porting/import-inventori-ops.py)
+scripts/porting/import/

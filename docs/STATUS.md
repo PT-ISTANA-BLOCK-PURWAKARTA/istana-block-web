@@ -1,4 +1,4 @@
-# Status terkini — 27 Oktober 2026
+# Status terkini — 6 November 2026
 
 Ringkasan kondisi situs `istana-block-web` (Next.js + OpenNext Cloudflare + D1). Indeks dokumen lain: [README.md](README.md).
 
@@ -6,10 +6,16 @@ Ringkasan kondisi situs `istana-block-web` (Next.js + OpenNext Cloudflare + D1).
 
 | Item | Kondisi |
 |---|---|
+| Akun Cloudflare | Istana Block (`a5dec0cac9600d717295b2b7699a3857`), dipatok lewat `account_id` di `wrangler.jsonc`. |
 | Worker | `istana-block-web` di `https://istana-block-web.abdussalimsan.workers.dev` |
 | Domain `istanablockpurwakarta.com` | Masih WordPress lama. **Belum cutover.** |
-| D1 remote | Migrasi 0000–0006 terpasang. |
-| Backup D1 sebelum migrasi | Folder lokal pemilik: `backup-sebelum-operasional-2026-10-26.sql`, `backup-sebelum-0006-2026-10-27.sql`. |
+| D1 remote | `istana-block-web-db` (`2bd61157-3c54-4dfb-b06a-013499c67708`), akun Istana Block. Migrasi `0000`–`0008` terpasang: 74 tabel. |
+| Schema 6 Nov | `0007` menambah 22 kolom ke tabel lama, `0008` membuat 13 tabel baru. Keduanya `ADD`/`CREATE` saja, tanpa `DROP`. |
+| Data app lama | Diimpor 6 Nov 2026: ±5.398 baris di 31 tabel, dicocokkan ulang dengan sumber. |
+| Foto app lama | KV `PHOTOS` → R2 `istana-block-media`: 270 objek. Kolom `*_key` di DB sudah menunjuk key R2. |
+| Backup D1 | `backup-sebelum-operasional-2026-10-26.sql`, `backup-sebelum-0006-2026-10-27.sql`, plus ekspor D1 app lama yang menjadi sumber impor. |
+
+Angka impor terbesar: `ops_uditch_entries` 2.150, `ops_activity_logs` 1.110, `ops_customer_leads` 812, `ops_delivery_history` 434, `inv_productions` 163, `ops_order_lines` 115, `ops_orders` 112, `ops_deliveries` 112, `fin_items` 112, `fin_contacts` 51, `ops_delivery_proofs` 46, `users` 29 (id 100001+), `ops_payslips` 24, `ops_delivery_notes` 21, `ops_vehicles` 14, `inv_production_targets` 12, `ops_fleet_expenses` 10, `ops_sales_invoices` 7, `ops_quotations` 4, `ops_driver_schedules` 1.
 
 ### Riwayat deploy
 
@@ -19,30 +25,47 @@ Ringkasan kondisi situs `istana-block-web` (Next.js + OpenNext Cloudflare + D1).
 | 26 Okt | `750ff122` | SEO (PR #10) |
 | 27 Okt | `be40b8f6` | PR #11 (kunci cache parameter iklan) + PR #12 (setara app live) + migrasi 0006 |
 
+Perubahan 6 Nov hanya schema, data, dan dokumen; belum ada versi Worker baru. Halaman untuk 13 tabel baru belum dibuat, jadi deploy menunggu irisan A–F.
+
 ## 2. PR yang sudah di-merge
 
 | PR | Isi |
 |---|---|
 | #8 | Port inventori-ops menjadi menu Operasional. |
-| #9 | Skrip migrasi data + guard arsip. **Tidak dipakai** (fresh start); dibiarkan inert. |
+| #9 | Skrip migrasi data + guard arsip. Tidak dipakai; penggantinya `scripts/porting/import-inventori-ops.py` (6 Nov). |
 | #10 | SEO P1, P8, P5, P12c, P2e. |
 | #11 | Daftar parameter pelacak iklan (gclid/utm/fbclid, dll.) yang diabaikan dari kunci cache dilengkapi. |
 | #12 | Operasional setara app live (rincian di bawah). |
 
 Isi PR #12: Rekap Pelanggan + Sasaran Mutu 13/14/16/20/22; stok opname & cat genteng digabung ke stok web; produksi Grade A/B/Reject, metode Buis, adukan cor bersama, sinkron mix ke produksi paving, TTD ketidaksesuaian; spesifikasi produk; moda "Diambil sendiri"; uji lumpur (skip, ubah hasil, TTD bertingkat); koreksi jam tiba; batalkan status Selesai/Sampai tanpa menyentuh stok; TTD hadir kalender.
 
-## 3. App lama dan keputusan data
+## 3. App lama dan data
 
 - `app.kirimistanablock.com` (akun Cloudflare lain) masih dipakai operasional harian. Versinya lebih baru daripada repo `istana-block-inventori-ops` (commit tunggal 18 Okt); fitur baru direkonstruksi dari bundel JS live (lihat [rekonstruksi-app-live/](rekonstruksi-app-live/KEPUTUSAN.md)).
-- **Keputusan 27 Okt: fresh start.** Data lama tidak dimigrasi. App lama tetap jalan sampai web dipakai; simpan backup final sebelum dimatikan. Dokumen migrasi dipindah ke [arsip/](arsip/migrasi-data-inventori-ops.md).
+- **Data lama dimigrasi 6 Nov 2026.** Ekspor D1 app lama → `scripts/porting/import-inventori-ops.py` → 43 berkas SQL → `wrangler d1 execute` ke `istana-block-web-db`. Id baris dipertahankan (pengguna digeser ke 100001+), peran dipetakan ke peran web, foto KV dipindah ke R2 dengan key yang sama. Cara pakai: [porting/README.md](porting/README.md).
+- App lama tetap jalan sampai cutover. Setelah cutover app lama ditutup; hindari input ganda di kedua sisi sebelum itu.
 
-## 4. Belum di-port
+## 4. Sisa pekerjaan: kode dan UI
 
-Sengaja/ditunda: antrean offline sopir (app live juga tidak punya), resolve short-link Google Maps ke koordinat, peta live di Ringkasan, peringatan SIM di Ringkasan, reset password pengguna.
+Schema 13 tabel baru sudah terpasang, tetapi belum ada definisi Drizzle di `src/db/erp.ts` dan belum dipakai kode mana pun. Rincian per irisan ada di [porting/PETA-GAP-PORTING.md](porting/PETA-GAP-PORTING.md) bagian 4.
+
+| Modul | Tabel | Sisa pekerjaan |
+|---|---|---|
+| Faktur penjualan | `ops_sales_invoices` | Halaman, aksi, cetak, pembayaran. Keputusan pemilik: masuk piutang `fin_*` atau berdiri sendiri. |
+| Penawaran | `ops_quotations` | Halaman + konversi penawaran ke pesanan. |
+| Surat jalan | `ops_delivery_notes` | Halaman & penomoran; cetak `/operasional/cetak/surat-jalan` sudah ada. |
+| Uditch | `ops_uditch_entries` | Halaman + izin baru (pengganti `canManageUditch`). |
+| Gaji | `ops_payslips` | Halaman + penanda tangan. |
+| Armada & biaya | `ops_fleet_expenses`, `ops_driver_schedules` | Bagian biaya di `/operasional/armada`, jadwal di `/operasional/sopir`. |
+| Target & hapus produksi | `inv_production_targets`, `inv_production_target_reasons`, `inv_production_deletions` | Target di `/operasional/produksi`, pembatalan produksi dengan alasan. |
+| Transfer stok | `inv_transfers` | Halaman transfer antar gudang + foto/TTD. |
+| Alamat pelanggan | `ops_customer_addresses` | Kelola alamat di `/operasional/pelanggan`. |
+
+Ditunda sejak sebelumnya: antrean offline sopir (app live juga tidak punya), resolve short-link Google Maps ke koordinat, peta live di Ringkasan, peringatan SIM di Ringkasan, reset password pengguna.
 
 ## 5. Pengujian dan bug terbuka
 
-- Belum diuji di produksi dengan akun nyata.
+- Belum diuji di produksi dengan akun nyata, termasuk data hasil impor.
 - Di preview lokal belum diuji: impor Excel leads, TTD hadir kalender, peran gudang/sopir, hapus spesifikasi produk, akses kantor ke uji pasir untuk TTD Sekretaris.
 - Bug kecil: mix harian dengan nama produk yang tak cocok barang tidak membuat baris produksi, tanpa peringatan.
 
