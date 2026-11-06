@@ -9,7 +9,7 @@ Ringkasan kondisi situs `istana-block-web` (Next.js + OpenNext Cloudflare + D1).
 | Akun Cloudflare | Istana Block (`a5dec0cac9600d717295b2b7699a3857`), dipatok lewat `account_id` di `wrangler.jsonc`. |
 | Worker | `istana-block-web` di `https://istana-block-web.abdussalimsan.workers.dev` |
 | Domain `istanablockpurwakarta.com` | Masih WordPress lama. **Belum cutover.** |
-| D1 remote | `istana-block-web-db` (`2bd61157-3c54-4dfb-b06a-013499c67708`), akun Istana Block. Migrasi `0000`–`0008` terpasang: 74 tabel. |
+| D1 remote | `istana-block-web-db` (`2bd61157-3c54-4dfb-b06a-013499c67708`) di akun Cloudflare **Istanablock** (`a5dec0ca…`). Migrasi 0000–0008 terpasang. |
 | Schema 6 Nov | `0007` menambah 22 kolom ke tabel lama, `0008` membuat 13 tabel baru. Keduanya `ADD`/`CREATE` saja, tanpa `DROP`. |
 | Data app lama | Diimpor 6 Nov 2026: ±5.398 baris di 31 tabel, dicocokkan ulang dengan sumber. |
 | Foto app lama | KV `PHOTOS` → R2 `istana-block-media`: 270 objek. Kolom `*_key` di DB sudah menunjuk key R2. |
