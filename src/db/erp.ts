@@ -1331,6 +1331,28 @@ export const productSpecs = sqliteTable(
   },
   (t) => [index("qc_ps_line_idx").on(t.line, t.name), index("qc_ps_item_idx").on(t.itemId)],
 );
+/**
+ * Slip gaji karyawan (padanan `payslips` app lama). earnings/deductions = JSON array baris
+ * { quantity?, description, amount? }; totalnya dihitung di halaman.
+ */
+export const payslips = sqliteTable(
+  "ops_payslips",
+  {
+    id: id(),
+    employeeName: text("employee_name").notNull(),
+    slipDate: text("slip_date").notNull(),
+    earnings: text("earnings", { mode: "json" }).$type<Record<string, unknown>[]>().notNull(),
+    deductions: text("deductions", { mode: "json" }).$type<Record<string, unknown>[]>().notNull(),
+    kasbonNote: text("kasbon_note"),
+    note: text("note"),
+    signerId: integer("signer_id"),
+    signerName: text("signer_name"),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [index("ops_payslips_date_idx").on(t.slipDate)],
+);
+
 export type Account = typeof accounts.$inferSelect;
 export type Contact = typeof contacts.$inferSelect;
 export type Item = typeof items.$inferSelect;
