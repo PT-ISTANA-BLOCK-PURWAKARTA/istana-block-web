@@ -1573,6 +1573,62 @@ export const uditchEntries = sqliteTable(
   (t) => [index("ops_uditch_date_idx2").on(t.entryDate)],
 );
 
+/** Jadwal ketersediaan sopir per hari (padanan `driverSchedules`). */
+export const driverSchedules = sqliteTable(
+  "ops_driver_schedules",
+  {
+    id: id(),
+    driverId: text("driver_id").notNull(),
+    day: text("day").notNull(),
+    status: text("status").notNull(),
+    untilTime: text("until_time"),
+    note: text("note"),
+    setBy: integer("set_by"),
+    setByName: text("set_by_name"),
+    ...created,
+  },
+  (t) => [uniqueIndex("ops_driver_sched_uq2").on(t.driverId, t.day)],
+);
+
+/** Rencana pesanan (padanan `plannedOrders`): belum jadi PO. items = JSON. */
+export const plannedOrders = sqliteTable(
+  "ops_planned_orders",
+  {
+    id: id(),
+    customerName: text("customer_name").notNull(),
+    project: text("project"),
+    expectedDate: integer("expected_date", { mode: "timestamp" }).notNull(),
+    items: text("items", { mode: "json" }).$type<Record<string, unknown>[]>().notNull(),
+    note: text("note"),
+    status: text("status").notNull().default("rencana"),
+    quotationId: text("quotation_id"),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    ...created,
+  },
+  (t) => [index("ops_planned_date_idx2").on(t.expectedDate)],
+);
+
+/** Arsip produksi yang dihapus beserta alasannya (padanan `productionDeletions`). */
+export const productionDeletions = sqliteTable(
+  "inv_production_deletions",
+  {
+    id: id(),
+    kind: text("kind").notNull(),
+    refId: text("ref_id"),
+    workDate: text("work_date"),
+    label: text("label").notNull(),
+    qty: real("qty"),
+    unit: text("unit"),
+    snapshot: text("snapshot", { mode: "json" }).$type<Record<string, unknown>>().notNull().default(sql`'{}'`),
+    reason: text("reason"),
+    deletedBy: integer("deleted_by"),
+    deletedByName: text("deleted_by_name"),
+    deletedAt: integer("deleted_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [index("inv_prod_del_at_idx2").on(t.deletedAt)],
+);
+
 export type Account = typeof accounts.$inferSelect;
 export type Contact = typeof contacts.$inferSelect;
 export type Item = typeof items.$inferSelect;
