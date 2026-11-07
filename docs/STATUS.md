@@ -63,7 +63,7 @@ Yang benar-benar belum, urut prioritas (rencana: [porting/RENCANA-1-3.md](portin
 
 1. **Form input/ubah + cetak PDF** dokumen: gaji (slip A5), surat jalan (A4 3 rangkap), penawaran, faktur jual. Halaman baca & aksi sederhana (buat/hapus slip, buat surat jalan) sudah ada.
 2. **Faktur jual → piutang** `fin_*`: butuh keputusan akun pendapatan & perlakuan 7 faktur hasil impor.
-3. **Form tulis** untuk 4 tabel 0009 (buku gerbang, kasbon, Dana Cepi, piutang Cepi) — sekarang baca saja.
+3. **Form tulis 4 tabel 0009** sudah ada (buku gerbang: catat OUT, "Kembali" untuk IN, hapus rit non-surat-jalan; kasbon; Dana Cepi; piutang Cepi). Sisa: koreksi jam OUT/IN manual dan hapus berjurnal, belum ada uji otomatis.
 4. **Workers Paid → deploy → cutover domain** (lihat bagian 6 dan 10).
 
 Catatan data per 8 Nov 2026: `ops_vehicle_trips` sudah berisi 11 rit hasil impor; `ops_kasbon_entries`, `ops_fleet_cash`, `ops_cepi_loans` masih kosong karena app lama juga kosong. `ops_fleet_expenses` berisi 19 baris: 9 baris app lama (7 Nov, 5 ber-sub kategori, 4 ber-`trip_ref`) **ditambah 10 baris lama bertanggal 4 Nov yang sudah tidak ada di app lama** — menunggu keputusan pemilik apakah dihapus.

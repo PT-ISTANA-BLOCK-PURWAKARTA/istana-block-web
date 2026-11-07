@@ -2,13 +2,17 @@ import { desc, sql } from "drizzle-orm";
 import { PageHead } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
+import { can } from "@/lib/roles";
+import { tambahDanaCepi, hapusDanaCepi } from "./actions";
 
 export const metadata = { title: "Dana Cepi" };
 
 const rupiah = (n: number | null | undefined) => "Rp " + Math.round(n ?? 0).toLocaleString("id-ID");
+const hariIni = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
 
 export default async function DanaCepi() {
-  await opsAccess();
+  const { user } = await opsAccess();
+  const boleh = can(user.roles, "keuangan");
   const db = await getDb();
   const [ringkas, rows] = await Promise.all([
     // Saldo = dana masuk dari kantor + pendapatan lain yang dipegang Cepi − biaya mobil bersumber "Dana Cepi".
@@ -37,6 +41,18 @@ export default async function DanaCepi() {
         </p>
         {saldo < 0 && <p style={{ margin: 0, color: "#b91c1c" }}>Saldo minus — pengeluaran Dana Cepi lebih besar dari dana masuk yang tercatat.</p>}
       </div>
+      {boleh && (
+        <form action={tambahDanaCepi} className="card" style={{ padding: 16, marginBottom: 20, display: "grid", gap: 10 }}>
+          <strong>Catat dana masuk dari kantor</strong>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <input name="tanggal" type="date" defaultValue={hariIni()} required style={{ flex: 1, minWidth: 150 }} aria-label="Tanggal" />
+            <input name="jumlah" inputMode="numeric" placeholder="Jumlah (Rp)" required style={{ flex: 1, minWidth: 150 }} />
+            <input name="sumber" placeholder="Dari / sumber (mis. Kantor, Lina)" style={{ flex: 2, minWidth: 200 }} />
+            <input name="catatan" placeholder="Catatan" style={{ flex: 2, minWidth: 180 }} />
+          </div>
+          <div><button type="submit" className="btn">Simpan</button></div>
+        </form>
+      )}
       <div className="admin-table">
         <table>
           <thead>
@@ -46,6 +62,7 @@ export default async function DanaCepi() {
               <th style={{ textAlign: "right" }}>Jumlah</th>
               <th>Catatan</th>
               <th>Dicatat oleh</th>
+              {boleh && <th />}
             </tr>
           </thead>
           <tbody>
@@ -56,9 +73,17 @@ export default async function DanaCepi() {
                 <td style={{ textAlign: "right" }}>{rupiah(row.amount)}</td>
                 <td>{row.note || "-"}</td>
                 <td>{row.createdByName || "-"}</td>
+                {boleh && (
+                  <td>
+                    <form action={hapusDanaCepi}>
+                      <input type="hidden" name="id" value={row.id} />
+                      <button type="submit" className="link">Hapus</button>
+                    </form>
+                  </td>
+                )}
               </tr>
             ))}
-            {!rows.length && <tr><td colSpan={5} className="muted">Belum ada dana masuk ke Cepi.</td></tr>}
+            {!rows.length && <tr><td colSpan={boleh ? 6 : 5} className="muted">Belum ada dana masuk ke Cepi.</td></tr>}
           </tbody>
         </table>
       </div>

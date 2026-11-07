@@ -2,6 +2,8 @@ import { desc, sql } from "drizzle-orm";
 import { PageHead } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
+import { can } from "@/lib/roles";
+import { catatKeluar, catatMasuk, hapusTrip } from "./actions";
 
 export const metadata = { title: "Buku gerbang" };
 
@@ -30,12 +32,17 @@ const lama = (keluar: Date | null, masuk: Date | null) => {
   const h = Math.floor(menit / 60);
   return h ? `${h}j ${menit % 60}m` : `${menit}m`;
 };
+/** Nilai awal input datetime-local: waktu WIB sekarang. */
+const sekarang = () => new Date().toLocaleString("sv-SE", ops).replace(" ", "T").slice(0, 16);
 
 export default async function Gerbang() {
-  await opsAccess();
+  const { user } = await opsAccess();
+  const boleh = can(user.roles, "muat") || can(user.roles, "pengiriman") || can(user.roles, "keuangan");
   const db = await getDb();
-  const [perMobil, rows] = await Promise.all([
+  const [perMobil, armada, sopir, rows] = await Promise.all([
     db.all<{ plate: string | null; n: number }>(sql`select plate, count(*) n from ops_vehicle_trips group by plate order by n desc limit 8`),
+    db.all<{ plate: string }>(sql`select plate from ops_vehicles where active = 1 order by plate`),
+    db.all<{ name: string }>(sql`select name from ops_drivers where active = 1 order by name`),
     db.select().from(schema.vehicleTrips).orderBy(desc(schema.vehicleTrips.outAt), desc(schema.vehicleTrips.id)).limit(100),
   ]);
   const belumKembali = rows.filter((r) => r.outAt && !r.inAt).length;
@@ -45,6 +52,29 @@ export default async function Gerbang() {
         title="Buku gerbang"
         sub={`${rows.length} rit terakhir${belumKembali ? ` · ${belumKembali} belum tercatat kembali` : ""}. OUT = keluar pabrik, IN = kembali ke pabrik.`}
       />
+      {boleh && (
+        <form action={catatKeluar} className="card" style={{ padding: 16, marginBottom: 20, display: "grid", gap: 10 }}>
+          <strong>Catat kendaraan keluar (OUT)</strong>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <input name="keluar" type="datetime-local" defaultValue={sekarang()} required style={{ flex: 1, minWidth: 190 }} aria-label="Jam keluar" />
+            <input name="plat" placeholder="No polisi" list="gerbang-plat" required style={{ flex: 1, minWidth: 150 }} />
+            <input name="sopir" placeholder="Sopir" list="gerbang-sopir" style={{ flex: 1, minWidth: 150 }} />
+            <select name="keperluan" defaultValue="belanja" style={{ flex: 1, minWidth: 150 }} aria-label="Keperluan">
+              {Object.entries(KEPERLUAN).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <input name="barang" placeholder="Barang / muatan" style={{ flex: 1, minWidth: 180 }} />
+            <input name="tujuan" placeholder="Tujuan" style={{ flex: 1, minWidth: 180 }} />
+            <input name="catatan" placeholder="Keterangan" style={{ flex: 1, minWidth: 180 }} />
+          </div>
+          <div><button type="submit" className="btn">Catat OUT</button></div>
+          <datalist id="gerbang-plat">{armada.map((v) => <option key={v.plate} value={v.plate} />)}</datalist>
+          <datalist id="gerbang-sopir">{sopir.map((s) => <option key={s.name} value={s.name} />)}</datalist>
+        </form>
+      )}
       {perMobil.length > 0 && (
         <div className="admin-table" style={{ marginBottom: 16 }}>
           <table>
@@ -70,6 +100,7 @@ export default async function Gerbang() {
               <th>IN</th>
               <th>Lama</th>
               <th>Dicatat</th>
+              {boleh && <th />}
             </tr>
           </thead>
           <tbody>
@@ -84,9 +115,25 @@ export default async function Gerbang() {
                 <td>{jamMasuk(r.outAt, r.inAt)}</td>
                 <td>{lama(r.outAt, r.inAt)}</td>
                 <td>{[r.outByName && `out ${r.outByName}`, r.inByName && `in ${r.inByName}`].filter(Boolean).join(" · ") || "-"}</td>
+                {boleh && (
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    {!r.inAt && (
+                      <form action={catatMasuk} style={{ display: "inline" }}>
+                        <input type="hidden" name="id" value={r.id} />
+                        <button type="submit" className="link">Kembali</button>
+                      </form>
+                    )}
+                    {!r.deliveryId && (
+                      <form action={hapusTrip} style={{ display: "inline", marginLeft: 8 }}>
+                        <input type="hidden" name="id" value={r.id} />
+                        <button type="submit" className="link">Hapus</button>
+                      </form>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
-            {!rows.length && <tr><td colSpan={9} className="muted">Belum ada catatan keluar-masuk kendaraan.</td></tr>}
+            {!rows.length && <tr><td colSpan={boleh ? 10 : 9} className="muted">Belum ada catatan keluar-masuk kendaraan.</td></tr>}
           </tbody>
         </table>
       </div>

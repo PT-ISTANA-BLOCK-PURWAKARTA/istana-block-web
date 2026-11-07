@@ -2,14 +2,18 @@ import { desc, sql } from "drizzle-orm";
 import { PageHead } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
+import { can } from "@/lib/roles";
+import { tambahKasbon, hapusKasbon } from "./actions";
 
 export const metadata = { title: "Kasbon karyawan" };
 
 const rupiah = (n: number | null | undefined) => "Rp " + Math.round(n ?? 0).toLocaleString("id-ID");
 const JENIS: Record<string, string> = { kasbon: "Kasbon", bayar: "Bayar" };
+const hariIni = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
 
 export default async function Kasbon() {
-  await opsAccess();
+  const { user } = await opsAccess();
+  const boleh = can(user.roles, "keuangan");
   const db = await getDb();
   const [rekap, rows] = await Promise.all([
     db.all<{ employee_name: string; kasbon: number | null; bayar: number | null }>(
@@ -30,6 +34,22 @@ export default async function Kasbon() {
         title="Kasbon karyawan"
         sub={`${rows.length} catatan · kasbon ${rupiah(totalKasbon)} · dibayar ${rupiah(totalBayar)} · sisa ${rupiah(totalKasbon - totalBayar)}.`}
       />
+      {boleh && (
+        <form action={tambahKasbon} className="card" style={{ padding: 16, marginBottom: 20, display: "grid", gap: 10 }}>
+          <strong>Catat kasbon / pembayaran</strong>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <input name="karyawan" placeholder="Nama karyawan" required style={{ flex: 2, minWidth: 200 }} />
+            <input name="tanggal" type="date" defaultValue={hariIni()} required style={{ flex: 1, minWidth: 150 }} aria-label="Tanggal" />
+            <select name="jenis" defaultValue="kasbon" style={{ flex: 1, minWidth: 130 }} aria-label="Jenis">
+              <option value="kasbon">Kasbon</option>
+              <option value="bayar">Bayar</option>
+            </select>
+            <input name="jumlah" inputMode="numeric" placeholder="Jumlah (Rp)" required style={{ flex: 1, minWidth: 150 }} />
+            <input name="catatan" placeholder="Catatan" style={{ flex: 2, minWidth: 180 }} />
+          </div>
+          <div><button type="submit" className="btn">Simpan</button></div>
+        </form>
+      )}
       <div className="admin-table" style={{ marginBottom: 16 }}>
         <table>
           <thead>
@@ -66,6 +86,7 @@ export default async function Kasbon() {
               <th style={{ textAlign: "right" }}>Jumlah</th>
               <th>Catatan</th>
               <th>Dicatat oleh</th>
+              {boleh && <th />}
             </tr>
           </thead>
           <tbody>
@@ -77,9 +98,17 @@ export default async function Kasbon() {
                 <td style={{ textAlign: "right" }}>{rupiah(r.amount)}</td>
                 <td>{r.note || "-"}</td>
                 <td>{r.createdByName || "-"}</td>
+                {boleh && (
+                  <td>
+                    <form action={hapusKasbon}>
+                      <input type="hidden" name="id" value={r.id} />
+                      <button type="submit" className="link">Hapus</button>
+                    </form>
+                  </td>
+                )}
               </tr>
             ))}
-            {!rows.length && <tr><td colSpan={6} className="muted">Belum ada catatan kasbon.</td></tr>}
+            {!rows.length && <tr><td colSpan={boleh ? 7 : 6} className="muted">Belum ada catatan kasbon.</td></tr>}
           </tbody>
         </table>
       </div>
