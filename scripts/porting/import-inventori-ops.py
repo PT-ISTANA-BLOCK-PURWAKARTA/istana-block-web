@@ -288,7 +288,9 @@ TRANSAKSI = {
     "ops_payslips": ("payslips", [
         ("id", "id", "s"), ("employee_name", "employeeName", "s"), ("slip_date", "slipDate", "s"),
         ("earnings", "earnings", "j_arr"), ("deductions", "deductions", "j_arr"),
-        ("kasbon_note", "kasbonNote", "s"), ("note", "note", "s"),
+        ("kasbon_note", "kasbonNote", "s"),
+        ("pay_kind", "payKind", "s_null"), ("period_from", "periodFrom", "s_null"), ("period_to", "periodTo", "s_null"),
+        ("note", "note", "s"),
         ("signer_id", "signerId", "uid"), ("signer_name", "signerName", "s"),
         ("created_by", "createdBy", "uid"), ("created_by_name", "createdByName", "s"),
         ("created_at", "createdAt", "ts0"), ("updated_at", "updatedAt", "ts0")]),
@@ -303,6 +305,9 @@ TRANSAKSI = {
         ("approval_status", "approvalStatus", "s"), ("approved_by", "approvedBy", "uid"),
         ("approved_by_name", "approvedByName", "s"), ("approved_at", "approvedAt", "ts"),
         ("approval_note", "approvalNote", "s"), ("source_key", "sourceKey", "s"),
+        ("subcategory", "subcategory", "s_null"), ("trip_ref", "tripRef", "s_null"),
+        ("due_date", "dueDate", "s_null"), ("tempo_paid_at", "tempoPaidAt", "ts"),
+        ("tempo_paid_by_name", "tempoPaidByName", "s_null"), ("tempo_reminded_on", "tempoRemindedOn", "s_null"),
         ("created_by", "createdBy", "uid"), ("created_by_name", "createdByName", "s"),
         ("updated_by_name", "updatedByName", "s"),
         ("created_at", "createdAt", "ts0"), ("updated_at", "updatedAt", "ts0")]),
@@ -396,6 +401,41 @@ TRANSAKSI = {
         ("created_by", "createdBy", "uid"), ("created_by_name", "createdByName", "s_null"),
         ("updated_by_name", "updatedByName", "s_null"),
         ("created_at", "createdAt", "ts"), ("updated_at", "updatedAt", "ts")]),
+    # Porting 0093-0101: id sumber INTEGER tanpa padanan teks, jadi pakai "iters" (900001+).
+    "ops_vehicle_trips": ("vehicleTrips", [
+        ("id", "id", "iters"), ("delivery_id", "deliveryId", "s_null"),
+        ("vehicle_id", "vehicleId", "s_null"), ("plate", "plateNumber", "s_null"),
+        ("driver_id", "driverId", "s_null"), ("driver_name", "driverName", "s_null"),
+        ("purpose", "purpose", "s"), ("cargo", "cargo", "s_null"),
+        ("destination", "destination", "s_null"), ("note", "note", "s_null"),
+        ("out_at", "outAt", "ts"), ("in_at", "inAt", "ts"),
+        ("out_by_name", "outByName", "s_null"), ("in_by_name", "inByName", "s_null"),
+        ("created_by", "createdBy", "uid"),
+        ("created_at", "createdAt", "ts0"), ("updated_at", "updatedAt", "ts0")]),
+    "ops_kasbon_entries": ("kasbonEntries", [
+        ("id", "id", "iters"), ("employee_name", "employeeName", "s"),
+        ("entry_date", "entryDate", "s"), ("kind", "kind", "s"),
+        ("amount", "amount", "raw0"), ("note", "note", "s_null"),
+        ("created_by", "createdBy", "uid"), ("created_by_name", "createdByName", "s_null"),
+        ("created_at", "createdAt", "ts0")]),
+    "ops_fleet_cash": ("fleetCash", [
+        ("id", "id", "iters"), ("entry_date", "entryDate", "s"),
+        ("amount", "amount", "raw0"), ("source", "source", "s_null"), ("note", "note", "s_null"),
+        ("created_by", "createdBy", "uid"), ("created_by_name", "createdByName", "s_null"),
+        ("created_at", "createdAt", "ts0")]),
+    "ops_cepi_loans": ("cepiLoans", [
+        ("id", "id", "iters"), ("entry_date", "entryDate", "s"), ("kind", "kind", "s"),
+        ("amount", "amount", "raw0"), ("method", "method", "s_null"), ("note", "note", "s_null"),
+        ("created_by", "createdBy", "uid"), ("created_by_name", "createdByName", "s_null"),
+        ("created_at", "createdAt", "ts0")]),
+}
+
+# Kolom yang ditambahkan sesudah tabelnya terlanjur diimpor: diterbitkan sebagai UPDATE,
+# bukan INSERT, supaya baris yang sudah ada tidak bentrok primary key.
+BACKFILL = {
+    "ops_fleet_expenses": ("fleetExpenses", ["subcategory", "trip_ref", "due_date",
+                                             "tempo_paid_at", "tempo_paid_by_name", "tempo_reminded_on"]),
+    "ops_payslips": ("payslips", ["pay_kind", "period_from", "period_to"]),
 }
 
 def lit(v):
@@ -468,6 +508,10 @@ def build(con, spec, user_map, target=None):
         use = [c for c in cols if not tgt or c[0] in tgt]
         names = [c[0] for c in use]
         notnull = {c for c, t in tgt.items() if t and t[1]}
+        # Snapshot sumber boleh parsial (mis. hanya tabel yang baru diporting) — lewati yang tidak ada.
+        if not con.execute("select 1 from sqlite_master where type = 'table' and name = ?", (src,)).fetchone():
+            print(f"lewati {tbl}: tabel sumber {src} tidak ada di snapshot")
+            continue
         rows = con.execute(f'SELECT * FROM "{src}"').fetchall()
         cur_cols = [d[0] for d in con.execute(f'SELECT * FROM "{src}" LIMIT 0').description]
         vals = []
@@ -514,11 +558,35 @@ def build(con, spec, user_map, target=None):
         out[tbl] = (names, vals)
     return out
 
+def emit_backfill(con, out):
+    """UPDATE kolom baru pada tabel yang barisnya sudah diimpor lebih dulu (bukan INSERT)."""
+    os.makedirs(out, exist_ok=True)
+    for tbl, (src, cols) in BACKFILL.items():
+        cur_cols = [d[0] for d in con.execute(f'SELECT * FROM "{src}" LIMIT 0').description]
+        stmts = []
+        for r in con.execute(f'SELECT * FROM "{src}"'):
+            row = dict(zip(cur_cols, r))
+            sets = []
+            for col in cols:
+                v = row.get(col)
+                if v in (None, ""): continue
+                if col == "tempo_paid_at":
+                    v = ts(v)
+                    if v is None: continue
+                sets.append(f"{col}={lit(v)}")
+            if not sets: continue
+            stmts.append(f'UPDATE "{tbl}" SET {", ".join(sets)} WHERE id={lit(str(row["id"]))};')
+        path = os.path.join(out, f"03-backfill-{tbl}.sql")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(stmts) + "\n")
+        print(f"{path}: {len(stmts)} baris")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", required=True)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--group", default="semua", choices=["master", "transaksi", "semua"])
+    ap.add_argument("--group", default="semua", choices=["master", "transaksi", "semua", "backfill"])
     ap.add_argument("--schema", default=None, help="SQLite berisi schema tujuan (untuk cek NOT NULL & kolom)")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
@@ -533,6 +601,9 @@ def main():
                 if rows: target[tbl] = {r[1]: (r[2], bool(r[3])) for r in rows}
         print(f"schema tujuan: {len(target)} tabel terbaca")
     user_map = {str(r[0]): 100000 + int(r[0]) for r in con.execute("SELECT id FROM users")}
+    if a.group == "backfill":
+        emit_backfill(con, a.out)
+        return
     groups = []
     if a.group in ("master", "semua"): groups.append(("01-master", MASTER))
     if a.group in ("transaksi", "semua"): groups.append(("02-transaksi", TRANSAKSI))

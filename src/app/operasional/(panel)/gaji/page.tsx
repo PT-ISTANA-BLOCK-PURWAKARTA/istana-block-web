@@ -13,6 +13,14 @@ const total = (rows: Record<string, unknown>[], key: string) =>
 
 const rupiah = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
+const PAY_KIND: Record<string, string> = { mingguan: "Mingguan", bulanan: "Bulanan" };
+/** Jenis gajian + periode (gajian mingguan dihitung Jumat–Kamis). */
+const periode = (r: { payKind: string | null; periodFrom: string | null; periodTo: string | null }) => {
+  const jenis = r.payKind ? (PAY_KIND[r.payKind] ?? r.payKind) : "";
+  const rentang = r.periodFrom && r.periodTo ? `${r.periodFrom} → ${r.periodTo}` : "";
+  return [jenis, rentang].filter(Boolean).join(" · ") || "-";
+};
+
 export default async function Gaji() {
   const { user } = await opsAccess();
   const boleh = can(user.roles, "keuangan");
@@ -46,6 +54,7 @@ export default async function Gaji() {
             <tr>
               <th>Tanggal</th>
               <th>Karyawan</th>
+              <th>Jenis · periode</th>
               <th style={{ textAlign: "right" }}>Pendapatan</th>
               <th style={{ textAlign: "right" }}>Potongan</th>
               <th style={{ textAlign: "right" }}>Diterima</th>
@@ -61,6 +70,7 @@ export default async function Gaji() {
                 <tr key={r.id}>
                   <td>{r.slipDate}</td>
                   <td>{r.employeeName}</td>
+                  <td>{periode(r)}</td>
                   <td style={{ textAlign: "right" }}>{masuk ? rupiah(masuk) : "-"}</td>
                   <td style={{ textAlign: "right" }}>{keluar ? rupiah(keluar) : "-"}</td>
                   <td style={{ textAlign: "right" }}>{masuk || keluar ? rupiah(masuk - keluar) : "-"}</td>
@@ -71,7 +81,7 @@ export default async function Gaji() {
             })}
             {!rows.length && (
               <tr>
-                <td colSpan={boleh ? 8 : 7} className="muted">
+                <td colSpan={boleh ? 9 : 8} className="muted">
                   Belum ada slip gaji.
                 </td>
               </tr>

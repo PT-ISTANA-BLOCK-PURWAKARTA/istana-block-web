@@ -47,19 +47,26 @@ Isi PR #12: Rekap Pelanggan + Sasaran Mutu 13/14/16/20/22; stok opname & cat gen
 
 ## 4. Sisa pekerjaan: kode dan UI
 
-Schema 13 tabel baru sudah terpasang, tetapi belum ada definisi Drizzle di `src/db/erp.ts` dan belum dipakai kode mana pun. Rincian per irisan ada di [porting/PETA-GAP-PORTING.md](porting/PETA-GAP-PORTING.md) bagian 4.
+Seluruh tabel hasil porting sudah punya halaman baca di `/operasional` (lihat `docs/porting/PETA-GAP-PORTING.md`). Migrasi `0009_ops_0093_0101` (8 Nov 2026) menutup batch ops 0093–0101 dan menambah empat halaman baru:
 
-| Modul | Tabel | Sisa pekerjaan |
+| Migrasi ops | Isi web | Halaman |
 |---|---|---|
-| Faktur penjualan | `ops_sales_invoices` | Halaman, aksi, cetak, pembayaran. Keputusan pemilik: masuk piutang `fin_*` atau berdiri sendiri. |
-| Penawaran | `ops_quotations` | Halaman + konversi penawaran ke pesanan. |
-| Surat jalan | `ops_delivery_notes` | Halaman & penomoran; cetak `/operasional/cetak/surat-jalan` sudah ada. |
-| Uditch | `ops_uditch_entries` | Halaman + izin baru (pengganti `canManageUditch`). |
-| Gaji | `ops_payslips` | Halaman + penanda tangan. |
-| Armada & biaya | `ops_fleet_expenses`, `ops_driver_schedules` | Bagian biaya di `/operasional/armada`, jadwal di `/operasional/sopir`. |
-| Target & hapus produksi | `inv_production_targets`, `inv_production_target_reasons`, `inv_production_deletions` | Target di `/operasional/produksi`, pembatalan produksi dengan alasan. |
-| Transfer stok | `inv_transfers` | Halaman transfer antar gudang + foto/TTD. |
-| Alamat pelanggan | `ops_customer_addresses` | Kelola alamat di `/operasional/pelanggan`. |
+| `0093` | `ops_vehicle_trips` — buku keluar-masuk kendaraan | `/operasional/gerbang` |
+| `0094` | `qc_strength_samples.batch_code` | kolom tersimpan, belum ditampilkan di form ISO |
+| `0095` | `ops_kasbon_entries` — kasbon & bayar karyawan | `/operasional/kasbon` |
+| `0096`–`0099` | sub kategori, trip, jatuh tempo & pelunasan biaya armada | kolom baru di `/operasional/biaya-armada` |
+| `0100` | `ops_payslips.pay_kind`, `period_from`, `period_to` | kolom "Jenis · periode" di `/operasional/gaji` |
+| `0097` | `ops_fleet_cash` — Dana Cepi | `/operasional/dana-cepi` |
+| `0101` | `ops_cepi_loans` — piutang PIC kendaraan | `/operasional/piutang-cepi` |
+
+Yang benar-benar belum, urut prioritas (rencana: [porting/RENCANA-1-3.md](porting/RENCANA-1-3.md)):
+
+1. **Form input/ubah + cetak PDF** dokumen: gaji (slip A5), surat jalan (A4 3 rangkap), penawaran, faktur jual. Halaman baca & aksi sederhana (buat/hapus slip, buat surat jalan) sudah ada.
+2. **Faktur jual → piutang** `fin_*`: butuh keputusan akun pendapatan & perlakuan 7 faktur hasil impor.
+3. **Form tulis** untuk 4 tabel 0009 (buku gerbang, kasbon, Dana Cepi, piutang Cepi) — sekarang baca saja.
+4. **Workers Paid → deploy → cutover domain** (lihat bagian 6 dan 10).
+
+Catatan data per 8 Nov 2026: `ops_vehicle_trips` sudah berisi 11 rit hasil impor; `ops_kasbon_entries`, `ops_fleet_cash`, `ops_cepi_loans` masih kosong karena app lama juga kosong. `ops_fleet_expenses` berisi 19 baris: 9 baris app lama (7 Nov, 5 ber-sub kategori, 4 ber-`trip_ref`) **ditambah 10 baris lama bertanggal 4 Nov yang sudah tidak ada di app lama** — menunggu keputusan pemilik apakah dihapus.
 
 Ditunda sejak sebelumnya: antrean offline sopir (app live juga tidak punya), resolve short-link Google Maps ke koordinat, peta live di Ringkasan, peringatan SIM di Ringkasan, reset password pengguna.
 
