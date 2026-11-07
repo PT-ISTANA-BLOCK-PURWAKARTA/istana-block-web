@@ -909,6 +909,7 @@ export const strengthSamples = sqliteTable(
     maxLoadKn: real("max_load_kn"),
     /** Kondisi permukaan benda uji, mis. "retak halus" (padanan `strengthTestSamples.surface`). */
     surface: text("surface"),
+    batchCode: text("batch_code"),
   },
   (t) => [index("qc_ss_test_idx").on(t.testId)],
 );
@@ -1343,6 +1344,9 @@ export const payslips = sqliteTable(
     slipDate: text("slip_date").notNull(),
     earnings: text("earnings", { mode: "json" }).$type<Record<string, unknown>[]>().notNull(),
     deductions: text("deductions", { mode: "json" }).$type<Record<string, unknown>[]>().notNull(),
+    payKind: text("pay_kind"),
+    periodFrom: text("period_from"),
+    periodTo: text("period_to"),
     kasbonNote: text("kasbon_note"),
     note: text("note"),
     signerId: integer("signer_id"),
@@ -1487,6 +1491,12 @@ export const fleetExpenses = sqliteTable(
     approvedByName: text("approved_by_name"),
     approvedAt: integer("approved_at", { mode: "timestamp" }),
     approvalNote: text("approval_note"),
+    subcategory: text("subcategory"),
+    tripRef: text("trip_ref"),
+    dueDate: text("due_date"),
+    tempoPaidAt: integer("tempo_paid_at", { mode: "timestamp" }),
+    tempoPaidByName: text("tempo_paid_by_name"),
+    tempoRemindedOn: text("tempo_reminded_on"),
     sourceKey: text("source_key"),
     createdBy: createdBy(),
     createdByName: text("created_by_name"),
@@ -1627,6 +1637,80 @@ export const productionDeletions = sqliteTable(
     deletedAt: integer("deleted_at", { mode: "timestamp" }).notNull(),
   },
   (t) => [index("inv_prod_del_at_idx2").on(t.deletedAt)],
+);
+
+/** Buku keluar-masuk kendaraan di gerbang (padanan `vehicleTrips`). */
+export const vehicleTrips = sqliteTable(
+  "ops_vehicle_trips",
+  {
+    id: id(),
+    deliveryId: text("delivery_id"),
+    vehicleId: text("vehicle_id"),
+    plate: text("plate"),
+    driverId: text("driver_id"),
+    driverName: text("driver_name"),
+    purpose: text("purpose").notNull().default("lain"),
+    cargo: text("cargo"),
+    destination: text("destination"),
+    note: text("note"),
+    outAt: integer("out_at", { mode: "timestamp" }),
+    inAt: integer("in_at", { mode: "timestamp" }),
+    outByName: text("out_by_name"),
+    inByName: text("in_by_name"),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [uniqueIndex("ops_vt_delivery_uq").on(t.deliveryId), index("ops_vt_out_idx").on(t.outAt)],
+);
+
+/** Kasbon karyawan/sopir: kind = kasbon | bayar (padanan `kasbonEntries`). */
+export const kasbonEntries = sqliteTable(
+  "ops_kasbon_entries",
+  {
+    id: id(),
+    employeeName: text("employee_name").notNull(),
+    entryDate: text("entry_date").notNull(),
+    kind: text("kind").notNull(),
+    amount: real("amount").notNull(),
+    note: text("note"),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    createdAt: integer("created_at", { mode: "timestamp" }),
+  },
+  (t) => [index("ops_kasbon_name_idx").on(t.employeeName, t.entryDate)],
+);
+
+/** Dana masuk kas PIC kendaraan (padanan `fleetCash`). */
+export const fleetCash = sqliteTable(
+  "ops_fleet_cash",
+  {
+    id: id(),
+    entryDate: text("entry_date").notNull(),
+    amount: real("amount").notNull(),
+    source: text("source"),
+    note: text("note"),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    createdAt: integer("created_at", { mode: "timestamp" }),
+  },
+  (t) => [index("ops_fleet_cash_date_idx").on(t.entryDate)],
+);
+
+/** Piutang PIC kendaraan: pinjam | bayar (padanan `cepiLoans`). */
+export const cepiLoans = sqliteTable(
+  "ops_cepi_loans",
+  {
+    id: id(),
+    entryDate: text("entry_date").notNull(),
+    kind: text("kind").notNull(),
+    amount: real("amount").notNull(),
+    method: text("method"),
+    note: text("note"),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    createdAt: integer("created_at", { mode: "timestamp" }),
+  },
+  (t) => [index("ops_cepi_loans_date_idx").on(t.entryDate)],
 );
 
 export type Account = typeof accounts.$inferSelect;
