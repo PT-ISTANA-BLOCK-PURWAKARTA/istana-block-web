@@ -29,7 +29,7 @@
   "/img/produk/greffel-beton.webp": { "w": 500, "v": [320] },
   "/img/produk/kanstin.webp": { "w": 800, "v": [320, 480] },
   "/img/produk/paving-block.webp": { "w": 1600, "v": [320, 480, 800, 1200] },
-  "/img/produk/u-ditch.webp": { "w": 800, "v": [320, 480] },
+  "/img/produk/u-ditch.webp": { "w": 1600, "v": [320, 480, 800, 1200] },
   "/img/tkdn/buis-beton.webp": { "w": 1200, "v": [480, 800] },
   "/img/tkdn/paving-fullpave.webp": { "w": 1200, "v": [480, 800] },
   "/img/tkdn/paving-grass-block.webp": { "w": 1200, "v": [480, 800] },
