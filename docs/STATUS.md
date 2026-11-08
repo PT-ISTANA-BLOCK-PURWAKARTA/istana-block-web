@@ -66,7 +66,9 @@ Yang benar-benar belum, urut prioritas (rencana: [porting/RENCANA-1-3.md](portin
 3. **Form tulis 4 tabel 0009** sudah ada (buku gerbang: catat OUT, "Kembali" untuk IN, hapus rit non-surat-jalan; kasbon; Dana Cepi; piutang Cepi). Sisa: koreksi jam OUT/IN manual dan hapus berjurnal, belum ada uji otomatis.
 4. **Workers Paid → deploy → cutover domain** (lihat bagian 6 dan 10).
 
-Catatan data per 8 Nov 2026: `ops_vehicle_trips` sudah berisi 11 rit hasil impor; `ops_kasbon_entries`, `ops_fleet_cash`, `ops_cepi_loans` masih kosong karena app lama juga kosong. `ops_fleet_expenses` berisi 19 baris: 9 baris app lama (7 Nov, 5 ber-sub kategori, 4 ber-`trip_ref`) **ditambah 10 baris lama bertanggal 4 Nov yang sudah tidak ada di app lama** — menunggu keputusan pemilik apakah dihapus.
+Catatan data per 8 Nov 2026: `ops_vehicle_trips` berisi 11 rit hasil impor; `ops_kasbon_entries`, `ops_fleet_cash`, `ops_cepi_loans` masih kosong karena app lama juga kosong. Sepuluh baris `ops_fleet_expenses` bertanggal 4 Nov (sudah tidak ada di app lama) dihapus; rollback ada di `../03-backup-d1/rollback-fleet-4nov-2026-11-08.json`.
+
+Impor delta 8 Nov menyusulkan 72 baris yang dibuat sesudah impor 6 Nov: pelanggan 1, alamat 11, barang 11, pesanan 11, baris pesanan 11, pengiriman 11, surat jalan 6, faktur 6, biaya armada 4. Setelah itu jumlah baris di web **sama persis** dengan app lama untuk 9 tabel tersebut. Catatan: pengiriman hasil impor ini baru dokumen — stok keluar & jurnal HPP-nya belum diposting, dan faktur belum masuk piutang `fin_*`.
 
 Ditunda sejak sebelumnya: antrean offline sopir (app live juga tidak punya), resolve short-link Google Maps ke koordinat, peta live di Ringkasan, peringatan SIM di Ringkasan, reset password pengguna.
 

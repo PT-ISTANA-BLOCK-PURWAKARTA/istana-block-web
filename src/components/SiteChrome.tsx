@@ -101,7 +101,7 @@ export function SiteFooter({ s }: { s: Settings }) {
         <div className="footer-bottom">
           <div className="wrap">
             <span>© {year} {s.legal_name}</span>
-            <span>Area kirim: {s.service_area}</span>
+            <span>Area kirim: {s.service_area} · <Link prefetch={false} href="/kredit-foto">Kredit foto</Link></span>
           </div>
         </div>
       </footer>

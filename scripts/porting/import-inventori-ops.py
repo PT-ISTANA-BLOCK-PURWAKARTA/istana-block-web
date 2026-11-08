@@ -500,10 +500,12 @@ def coerce(cells, notnull):
         out.append(lit(val))
     return out
 
-def build(con, spec, user_map, target=None):
-    """target: dict {tabel: {kolom: tipe}} dari schema tujuan; kolom tak dikenal dilewati."""
+def build(con, spec, user_map, target=None, skip=None):
+    """target: dict {tabel: {kolom: tipe}} dari schema tujuan; kolom tak dikenal dilewati.
+    skip: dict {tabel: set(id)} — baris yang sudah ada di tujuan tidak diterbitkan lagi (mode delta)."""
     out = {}
     for tbl, (src, cols) in spec.items():
+        ada = (skip or {}).get(tbl) or set()
         tgt = (target or {}).get(tbl, {})
         use = [c for c in cols if not tgt or c[0] in tgt]
         names = [c[0] for c in use]
@@ -515,6 +517,7 @@ def build(con, spec, user_map, target=None):
         rows = con.execute(f'SELECT * FROM "{src}"').fetchall()
         cur_cols = [d[0] for d in con.execute(f'SELECT * FROM "{src}" LIMIT 0').description]
         vals = []
+        lewat = 0
         for idx, r in enumerate(rows, 1):
             row = dict(zip(cur_cols, r))
             cells = []
@@ -554,7 +557,14 @@ def build(con, spec, user_map, target=None):
                 elif tx == "day_or_created": val = day(v) or day(row.get("createdAt"))
                 else: raise SystemExit(f"transform tidak dikenal: {tx}")
                 cells.append((tcol, val, typ))
+            if ada:
+                ident = next((v for c, v, _ in cells if c == "id"), None)
+                if ident is not None and str(ident) in ada:
+                    lewat += 1
+                    continue
             vals.append("(" + ",".join(coerce(cells, notnull)) + ")")
+        if lewat:
+            print(f"{tbl}: {lewat} baris dilewati (sudah ada di tujuan)")
         out[tbl] = (names, vals)
     return out
 
@@ -588,6 +598,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--group", default="semua", choices=["master", "transaksi", "semua", "backfill"])
     ap.add_argument("--schema", default=None, help="SQLite berisi schema tujuan (untuk cek NOT NULL & kolom)")
+    ap.add_argument("--skip-existing", default=None, help="JSON {tabel: [id]} yang sudah ada di tujuan (mode delta)")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     con = sqlite3.connect(a.src)
@@ -604,11 +615,16 @@ def main():
     if a.group == "backfill":
         emit_backfill(con, a.out)
         return
+    skip = None
+    if a.skip_existing:
+        raw = json.load(open(a.skip_existing, encoding="utf-8"))
+        skip = {k: {str(x) for x in v} for k, v in raw.items()}
+        print("mode delta:", ", ".join(f"{k}={len(v)}" for k, v in skip.items()))
     groups = []
     if a.group in ("master", "semua"): groups.append(("01-master", MASTER))
     if a.group in ("transaksi", "semua"): groups.append(("02-transaksi", TRANSAKSI))
     for prefix, spec in groups:
-        built = build(con, spec, user_map, target)
+        built = build(con, spec, user_map, target, skip)
         for tbl, (names, vals) in built.items():
             path = os.path.join(a.out, f"{prefix}-{tbl}.sql")
             with open(path, "w", encoding="utf-8") as f:

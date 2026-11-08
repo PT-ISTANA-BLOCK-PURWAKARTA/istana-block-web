@@ -33,7 +33,8 @@
     "admin:create": "node scripts/create-admin.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "foto:produk": "node tools/foto-produk.mjs"
   },
   "dependencies": {
     "@fontsource/plus-jakarta-sans": "^5.2.8",
