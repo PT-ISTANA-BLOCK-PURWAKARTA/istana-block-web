@@ -91,12 +91,12 @@ MASTER = {
     "ops_drivers": ("drivers", [
         ("id", "id", "s"), ("name", "name", "s"), ("phone", "phone", "s"), ("active", "isAvailable", "b"),
         ("note", "id", "const_empty"), ("license_no", "licenseNumber", "s_null"),
-        ("license_expiry", "licenseExpiryDate", "s_null"),
+        ("license_expiry", "licenseExpiryDate", "day"),
         ("created_at", "createdAt", "ts"), ("updated_at", "updatedAt", "ts")]),
     "ops_vehicles": ("vehicles", [
         ("id", "id", "s"), ("plate", "plateNumber", "s"), ("name", "vehicleType", "s"),
         ("capacity", "capacityNote", "s"), ("active", "isActive", "b"), ("note", "id", "const_empty"),
-        ("stnk_expiry", "stnkExpiryDate", "s_null"), ("kir_expiry", "kirExpiryDate", "s_null"),
+        ("stnk_expiry", "stnkExpiryDate", "day"), ("kir_expiry", "kirExpiryDate", "day"),
         ("tag", "tag", "s_null"), ("created_at", "createdAt", "ts"), ("updated_at", "updatedAt", "ts")]),
     "qc_product_specs": ("productSpecs", [
         ("id", "id", "s"), ("line", "line", "s"), ("name", "name", "s"), ("variant", "variant", "s_null"),

@@ -66,18 +66,34 @@ export function formatAmount(n: number | null | undefined, opts: { blankZero?: b
 const BULAN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 const BULAN_PANJANG = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-/** "2026-10-17" → "17 Okt 2026" */
+/**
+ * Normalisasi nilai tanggal dari DB ke "YYYY-MM-DD".
+ * Impor app lama bisa menyisakan epoch milidetik sebagai teks ("1797051600000"); nilai
+ * seperti itu dulu membuat `tgl()` mencetak "undefined undefined 1797051600000".
+ */
+export function tanggalIso(v: string | number | null | undefined): string {
+  if (v == null || v === "") return "";
+  const s = String(v).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if (/^\d{10,}$/.test(s)) return new Date(Number(s) + 7 * 3600 * 1000).toISOString().slice(0, 10);
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+}
+
+/** "2026-10-17" (atau epoch milidetik) → "17 Okt 2026" */
 export function tgl(date: string | null | undefined): string {
-  if (!date) return "";
-  const [y, m, d] = date.split("-").map(Number);
-  return `${d} ${BULAN[m - 1]} ${y}`;
+  const iso = tanggalIso(date);
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  return Number.isFinite(m) && BULAN[m - 1] ? `${d} ${BULAN[m - 1]} ${y}` : iso;
 }
 
 /** "2026-10-17" → "17 Oktober 2026" */
 export function tglPanjang(date: string | null | undefined): string {
-  if (!date) return "";
-  const [y, m, d] = date.split("-").map(Number);
-  return `${d} ${BULAN_PANJANG[m - 1]} ${y}`;
+  const iso = tanggalIso(date);
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  return Number.isFinite(m) && BULAN_PANJANG[m - 1] ? `${d} ${BULAN_PANJANG[m - 1]} ${y}` : iso;
 }
 
 export function terbilang(n: number): string {
