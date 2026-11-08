@@ -21,8 +21,9 @@ const ATURAN = [
   { cocok: /^img\/pabrik\/pabrik-mesin-paving\.webp$/, lebar: [400, 800, 1200] },
   // Thumbnail galeri: sizes 285px (desktop) atau 375px (ponsel).
   { cocok: /^img\/galeri\/galeri-\d+-thumb\.webp$/, lebar: [320] },
-  // Foto produk persegi 800px: kartu +-300-380px, hero produk 404px tinggi.
-  { cocok: /^img\/produk\/.+\.webp$/, lebar: [480] },
+  // Foto produk persegi: kartu 300-380px (sizes di ProductCard) dan hero produk 404px.
+  // Sumber 1200-1600px supaya layar Retina tetap tajam.
+  { cocok: /^img\/produk\/.+\.webp$/, lebar: [320, 480, 800, 1200] },
   // Lembar spesifikasi/TKDN 1200px: kolom 220-560px.
   { cocok: /^img\/tkdn\/.+\.webp$/, lebar: [480, 800] },
 ];
