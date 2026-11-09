@@ -10,7 +10,7 @@ import { listPages } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
-  title: "Pengiriman Paving, U-Ditch & Buis Beton",
+  title: "Area Kirim Paving & Beton",
   description: "Armada sendiri dari pabrik Purwakarta ke Karawang, Cikampek, Subang, Bandung, hingga Jabodetabek untuk skala proyek. Cara hitung ongkir dan cara pesan.",
   alternates: { canonical: "/area-pengiriman" },
 };

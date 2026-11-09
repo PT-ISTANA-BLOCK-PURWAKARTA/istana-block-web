@@ -4,7 +4,7 @@ import { listProducts } from "@/lib/queries";
 import { categories } from "@/db/schema";
 
 export const metadata: Metadata = {
-  title: "Produk & Daftar Harga Beton Pracetak",
+  title: "Harga Paving, U-Ditch & Buis",
   description: "Daftar harga paving block, U-Ditch, buis beton, kanstin, genteng beton, dan jasa pasang dari pabrik Istana Block Purwakarta.",
   alternates: { canonical: "/produk" },
 };

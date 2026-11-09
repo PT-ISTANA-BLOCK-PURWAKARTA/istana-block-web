@@ -11,7 +11,7 @@ import { listProducts } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
-  title: "Paket Material Proyek & Dokumen TKDN",
+  title: "Paket Material Proyek & TKDN",
   description: "Paving block, kanstin, U-Ditch, buis beton, dan genteng beton dalam satu penawaran tertulis. Harga acuan pabrik, sertifikat TKDN Kemenperin, dan armada sendiri.",
   alternates: { canonical: "/paket-proyek" },
 };

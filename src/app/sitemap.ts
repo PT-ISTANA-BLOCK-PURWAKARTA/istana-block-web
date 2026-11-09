@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const u = imageUrl(key);
     return u ? { images: [u.startsWith("http") ? u : `${base}${u}`] } : {};
   };
-  return [
+  const entri: MetadataRoute.Sitemap = [
     { url: `${base}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${base}/produk`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/artikel`, changeFrequency: "weekly", priority: 0.6 },
@@ -29,4 +29,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...articles.map((a) => ({ url: `${base}/artikel/${a.slug}`, lastModified: a.updatedAt, changeFrequency: "monthly" as const, priority: 0.6, ...photo(a.coverKey) })),
     ...pages.map((pg) => ({ url: `${base}/${pg.slug}`, lastModified: pg.updatedAt, changeFrequency: "monthly" as const, priority: pg.kind === "area" ? 0.7 : 0.5 })),
   ];
+  // Hasil impor: semua updated_at seragam, jadi lastmod tidak memberi sinyal apa pun dan
+  // Google cenderung mengabaikannya. Buang bila hanya ada satu tanggal; otomatis kembali
+  // berguna begitu tanggal ubah konten benar-benar berbeda.
+  const tanggal = new Set(entri.map((e) => (e.lastModified ? String(e.lastModified) : "")).filter(Boolean));
+  if (tanggal.size <= 1) for (const e of entri) delete e.lastModified;
+  return entri;
 }

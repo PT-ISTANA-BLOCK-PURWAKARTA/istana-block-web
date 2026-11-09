@@ -8,6 +8,9 @@
 	"main": "worker.ts",
 	// Minify bundel: tanpa ini modul Operasional membuat Worker ±3,5 MB gzip, di atas batas 3 MB Workers Free.
 	"minify": true,
+	// Batas CPU Workers Paid. Di paket Free angka ini ditolak saat deploy; 10 ms bawaan Free
+	// membuat render dingin gagal 1102 (STATUS §6). Naikkan hanya bila paket sudah berbayar.
+	"limits": { "cpu_ms": 30000 },
 	"compatibility_date": "2026-09-01",
 	"compatibility_flags": [
 		"nodejs_compat",

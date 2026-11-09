@@ -7,7 +7,7 @@ import { getSettings, isMapsEmbedUrl } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Kontak & Lokasi Pabrik",
-  description: "Alamat pabrik, jam operasional, WhatsApp, dan telepon Istana Block Purwakarta.",
+  description: "Alamat pabrik Istana Block di Purwakarta, jam operasional, nomor WhatsApp dan telepon, serta petunjuk lokasi lewat Google Maps.",
   alternates: { canonical: "/kontak" },
 };
 
