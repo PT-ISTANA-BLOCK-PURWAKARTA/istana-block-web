@@ -675,3 +675,22 @@ a.kpi:hover .k-label { color: var(--biru); }
 .admin input[type="file"] { font: inherit; font-size: 14px; max-width: 100%; }
 .admin input[type="file"]::file-selector-button { margin-right: 10px; min-height: 40px; padding: 0 14px; border: 1px solid var(--p-line-strong); border-radius: var(--p-radius-sm); background: #fff; color: var(--biru-tua); font: inherit; font-weight: 600; cursor: pointer; }
 .driver input[type="file"]::file-selector-button { min-height: 48px; padding: 0 18px; background: var(--info-bg); border-color: var(--biru); }
+
+/* ---------- Penguatan responsif panel (8 Nov 2026) ---------- */
+@media (max-width: 900px) {
+  .admin-head { margin-bottom: 16px; }
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+}
+@media (max-width: 640px) {
+  .admin-main { padding: 14px 12px 56px; }
+  /* Tabel data digeser mendatar, bukan dipersempit sampai kolom gepeng. */
+  .admin-table table { min-width: 560px; }
+  .report-sheet { padding: 18px 16px 14px; }
+  .kop { flex-wrap: wrap; gap: 12px; }
+  .kop-logo { width: 110px; }
+  .print-page { padding: 10mm 8mm 12mm; }
+  .print-head { flex-wrap: wrap; gap: 14px; }
+  .print-title { text-align: left; }
+  .print-meta { flex-direction: column; gap: 10px; }
+  .print-meta > div { max-width: 100%; }
+}

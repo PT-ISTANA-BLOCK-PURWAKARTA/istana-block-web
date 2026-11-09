@@ -400,3 +400,25 @@ a.area-card:hover h3 { color: var(--biru); }
   .prose .table-scroll table { font-size: 14px; }
   .prose .table-scroll th, .prose .table-scroll td { padding: 10px 11px; }
 }
+
+/* ---------- Penguatan responsif (8 Nov 2026) ---------- */
+/* Dekorasi berposisi absolut tidak boleh melebarkan halaman (terukur: beranda +14px di 768px). */
+.hero, .product-hero, .calc-band { overflow-x: clip; }
+@media (max-width: 1024px) {
+  .hero-art .deco, .product-art .deco { display: none; }
+  .hero, .product-hero { gap: 32px; }
+}
+@media (max-width: 960px) {
+  .hero-art { height: 420px; }
+  .product-art { height: 380px; }
+  .calc-band .wrap { gap: 32px; }
+  .section-head { margin-bottom: 26px; }
+}
+@media (max-width: 720px) {
+  .site-footer .wrap { gap: 24px; }
+  .footer-bottom .wrap { padding-bottom: 104px; }
+}
+@media (max-width: 400px) {
+  .hero h1 { font-size: 30px; }
+  .main-nav { font-size: 14px; gap: 4px 14px; }
+}
