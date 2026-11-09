@@ -10,6 +10,7 @@ import "./globals.css";
 import "./panel.css";
 import "./ui.css";
 import { getEnv } from "@/db";
+import { indexingOn } from "@/lib/host";
 
 export async function generateMetadata(): Promise<Metadata> {
   const env = await getEnv();
@@ -37,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
     // Demo tetap noindex. Situs publik mengizinkan pratinjau gambar besar dan cuplikan tanpa batas di hasil
     // pencarian. Layout panel dan halaman 404/cetak menimpa seluruh objek robots dengan index:false sendiri.
     robots:
-      env.DEMO_MODE === "1"
+      env.DEMO_MODE === "1" || !indexingOn(env.SEARCH_INDEXING)
         ? { index: false, follow: false }
         : { index: true, follow: true, googleBot: { "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
   };
@@ -52,7 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         {env.DEMO_MODE === "1" && (
           <div className="demo-strip no-print" role="note">
-            <b>Versi demo</b> · semua pesanan, faktur, dan laporan di sini adalah data contoh fiktif. Situs resmi: istanablockpurwakarta.com
+            <b>Versi demo</b> · semua pesanan, faktur, dan laporan di sini adalah data contoh fiktif. Situs resmi: istanablock.com
           </div>
         )}
         {children}

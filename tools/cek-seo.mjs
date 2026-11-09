@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Pagar regresi SEO (KOMP-01): kesalahan yang menjatuhkan situs kompetitor ditangkap mesin, bukan mata.
 //
-//   node tools/cek-seo.mjs <baseUrl> [--json] [--skip-ttfb] [--prod-host istanablockpurwakarta.com]
+//   node tools/cek-seo.mjs <baseUrl> [--json] [--skip-ttfb] [--prod-host istanablock.com]
 //   npm run cek:seo -- https://istana-block-web.abdussalimsan.workers.dev
 //
 // Hanya modul bawaan Node >= 22 (fetch, http/https, zlib); tanpa npm install. Semua pemeriksaan membaca
@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 // Konstanta
 // ---------------------------------------------------------------------------
 
-export const PROD_HOST_BAWAAN = "istanablockpurwakarta.com";
+export const PROD_HOST_BAWAAN = "istanablock.com";
 const UA = "cek-seo/1.0 (pagar regresi istana-block-web)";
 const TIMEOUT_MS = 20_000;
 // Staging berjalan di Workers paket Free (batas CPU 10 ms): jangan menyerbunya.

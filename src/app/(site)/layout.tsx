@@ -19,7 +19,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <SiteHeader s={s} />
       <main id="isi">{children}</main>
       <SiteFooter s={s} />
-      <GoogleTagManager id={env.GTM_ID} siteUrl={env.SITE_URL} />
+      <GoogleTagManager id={env.GTM_ID} siteUrl={env.SITE_URL} indexing={env.SEARCH_INDEXING} />
     </>
   );
 }

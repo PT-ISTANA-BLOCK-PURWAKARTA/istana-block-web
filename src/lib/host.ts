@@ -21,3 +21,17 @@ export function isCanonicalHost(host: string | null | undefined, siteUrl: string
   const base = canonical.replace(/^www\./, "");
   return h === base || h === `www.${base}`;
 }
+
+/**
+ * Saklar indeks pencarian (var SEARCH_INDEXING di wrangler.jsonc): hanya nilai "on" yang membuka indeks.
+ * Selain itu (termasuk kosong) SEMUA host, juga SITE_URL, noindex + robots Disallow + tanpa GTM.
+ * Dipakai src/middleware.ts, src/app/robots.ts, src/app/layout.tsx, dan GoogleTagManager.
+ */
+export function indexingOn(value: string | null | undefined): boolean {
+  return value === "on";
+}
+
+/** Boleh diindeks = saklar "on" DAN host situs resmi. */
+export function isIndexable(host: string | null | undefined, siteUrl: string | null | undefined, indexing: string | null | undefined): boolean {
+  return indexingOn(indexing) && isCanonicalHost(host, siteUrl);
+}

@@ -78,7 +78,7 @@ export default async function Internal({ searchParams }: { searchParams: Promise
       </section>
 
       <footer className="portal-foot">
-        <Link href="/">Kembali ke istanablockpurwakarta.com</Link>
+        <Link href="/">Kembali ke istanablock.com</Link>
       </footer>
     </main>
   );
