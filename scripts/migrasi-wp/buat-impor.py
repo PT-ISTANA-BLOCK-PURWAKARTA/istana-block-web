@@ -77,6 +77,9 @@ def rapikan_markdown(md, sasaran):
     # Sisa HTML mentah tidak dirender react-markdown: buang tag-nya, sisakan teks.
     md = re.sub(r"</?[a-zA-Z][^>]{0,200}>", "", md)
     md = re.sub(r"\[/?[a-z_]{2,}\][^\n]{0,80}", "", md, flags=re.I)  # shortcode sisa
+    # H1 di dalam isi kerap sisa blok tema WordPress ("# About Us") dan membuat halaman punya
+    # dua H1 bersama judul dari template. Buang barisnya; sub-judul tetap H2 ke bawah.
+    md = re.sub(r"(?m)^#\s+.*$", "", md)
     md = md.replace("\u00a0", " ").replace("\u200b", "")
     md = re.sub(r"[ \t]+\n", "\n", md)
     md = re.sub(r"\n{3,}", "\n\n", md)
