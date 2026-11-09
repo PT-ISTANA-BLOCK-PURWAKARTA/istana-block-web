@@ -14,3 +14,7 @@ backup-*.sql
 
 # Hasil generate skrip impor data (1 MB, dibuat ulang dengan scripts/porting/import-inventori-ops.py)
 scripts/porting/import/
+
+# Hasil crawling & impor artikel WordPress (dibuat ulang: scripts/migrasi-wp/)
+scripts/migrasi-wp/wp-corpus/
+drizzle/data/

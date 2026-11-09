@@ -97,10 +97,16 @@ Audit 19 Okt, 12 prioritas ([seo/](seo/README.md)):
 
 | Status | Butir |
 |---|---|
-| Selesai | P7 |
+| Selesai | P7, P6 |
 | Sebagian | P1, P2, P3, P4, P5, P8, P9, P11, P12 |
-| Belum | P6 |
 | Di luar kode | P10 |
+
+**Impor konten WordPress (9 Nov 2026).** Situs lama punya 196 artikel (median 1.350 kata); situs baru
+hanya 1 artikel. Seluruh isi diambil lewat REST API, diubah HTML → Markdown, dan **194 artikel
+diterbitkan** (2 dibuang: satu duplikat 96,8%, satu <200 kata). Sitemap kini **216 URL** (22 → 216),
+semuanya `Article` schema + judul/deskripsi dari Yoast yang sudah dipotong ke batas SERP. Skrip dapat
+dijalankan ulang: [migrasi-wp/](../../scripts/migrasi-wp/README.md). Gambar isi tidak ikut (627 berkas
+media terlalu berat) — sampul artikel memakai foto produk yang sudah ada.
 
 Empat gerbang cutover belum lulus: stabil, pelacakan terbukti, harga & isi, domain.
 
