@@ -6,7 +6,7 @@ import { Icon, type IconName } from "@/components/panel/Icon";
 import { EmailLoginForm, OpsLogin } from "./LoginForms";
 
 export const APP_META: Record<ModuleKey, { icon: IconName; title: string; lead: string; how: string }> = {
-  web: { icon: "web", title: "Situs", lead: "Produk, harga, artikel, dan halaman istanablockpurwakarta.com.", how: "Masuk dengan email" },
+  web: { icon: "web", title: "Situs", lead: "Produk, harga, artikel, dan halaman istanablock.com.", how: "Masuk dengan email" },
   operasional: { icon: "truck", title: "Operasional", lead: "Pesanan, pengiriman, stok gudang, dan posisi truk.", how: "Nomor HP & PIN, atau email" },
   keuangan: { icon: "ledger", title: "Keuangan", lead: "Faktur, kas & bank, pembelian, dan laporan keuangan.", how: "Masuk dengan email" },
 };

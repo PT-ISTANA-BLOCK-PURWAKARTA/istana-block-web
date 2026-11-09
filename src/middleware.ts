@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import legacyRedirects from "@/data/legacy-redirects.json";
-import { isCanonicalHost } from "@/lib/host";
+import { isIndexable } from "@/lib/host";
 import { SESSION_COOKIE } from "@/lib/session";
 
 // Berjalan di Edge runtime: hanya Web API (URL, Map, Response), tanpa modul Node.
@@ -115,7 +115,7 @@ export function middleware(req: NextRequest) {
   // sengaja tidak diberi header ini. Host dibaca dari URL request, bukan header x-forwarded-host yang bisa
   // dipalsukan, dan cache worker.ts memakai host di kunci URL, jadi header ini tidak bocor ke domain resmi.
   const res = NextResponse.next();
-  if (process.env.DEMO_MODE === "1" || !isCanonicalHost(req.nextUrl.host, process.env.SITE_URL)) {
+  if (process.env.DEMO_MODE === "1" || !isIndexable(req.nextUrl.host, process.env.SITE_URL, process.env.SEARCH_INDEXING)) {
     res.headers.set("x-robots-tag", "noindex, nofollow");
   }
   return res;

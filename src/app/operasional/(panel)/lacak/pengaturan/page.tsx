@@ -13,7 +13,7 @@ export default async function GpsSetup() {
   await requireOwner();
   const db = await getDb();
   const h = await headers();
-  const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host") ?? "istanablockpurwakarta.com"}`;
+  const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host") ?? "istanablock.com"}`;
   const [hint, vehicles, last] = await Promise.all([
     gpsKeyHint(db),
     db.select().from(schema.vehicles).orderBy(asc(schema.vehicles.plate)),
