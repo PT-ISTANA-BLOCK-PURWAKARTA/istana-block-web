@@ -20,6 +20,10 @@
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
 	},
+	// Workers Paid: batas CPU per request dinaikkan dari 10 ms bawaan (halaman Operasional dan ekspor berat).
+	"limits": {
+		"cpu_ms": 30000
+	},
 	"observability": {
 		"enabled": true
 	},
