@@ -78,8 +78,15 @@ Ditunda sejak sebelumnya: antrean offline sopir (app live juga tidak punya), res
 - Di preview lokal belum diuji: impor Excel leads, TTD hadir kalender, peran gudang/sopir, hapus spesifikasi produk, akses kantor ke uji pasir untuk TTD Sekretaris.
 - Bug kecil: mix harian dengan nama produk yang tak cocok barang tidak membuat baris produksi, tanpa peringatan.
 
-## 6. Error 1102 (CPU Workers Free 10 ms)
+## 6. Error 1102 (CPU Workers Free 10 ms) — SELESAI 9 Nov 2026
 
+Paket **Workers Paid aktif**; `wrangler.jsonc` memakai `"limits": { "cpu_ms": 30000 }` dan sudah
+di-deploy (versi `0062297a`, 9 Nov 05:29 UTC). Uji sesudah deploy: **100 permintaan dingin** ke 10
+halaman publik (query unik, konkurensi 5) → 100% HTTP 200, **0 halaman 1102**; **60 permintaan
+no-store** ke `/operasional/masuk` & `/akuntansi/masuk` (dijamin tanpa cache) → 60 HTTP 200, 0 gagal.
+Latensi median render dingin ±0,95 dtk, p95 ±3,3 dtk.
+
+Catatan riwayat (paket Free):
 - Render dingin Next sekitar 33 ms CPU (median). Uji 200 permintaan dingin (`?cold=` acak): 27/200 gagal.
 - Halaman ter-cache stabil; klik iklan (gclid/utm) dilayani dari cache.
 - **Solusi pasti:** Workers Paid + `"limits": {"cpu_ms": 30000}` di `wrangler.jsonc`. Jangan ditambahkan di paket Free.
@@ -107,7 +114,7 @@ Empat gerbang cutover belum lulus: stabil, pelacakan terbukti, harga & isi, doma
 
 ## 9. Tugas pemilik
 
-1. Upgrade Workers Paid.
+1. ~~Upgrade Workers Paid.~~ **Sudah (9 Nov 2026).**
 2. Kunci VAPID: `node scripts/make-vapid-keys.mjs`, lalu `npx wrangler secret put VAPID_PRIVATE_KEY`, kunci publik ke `vars.VAPID_PUBLIC_KEY`, lalu deploy.
 3. Buat akun peran qc, mandor, satpam, manajer_qc, pimpinan.
 4. Isi ulang data induk: barang + kelompok produksi/metode (nama genteng wajib memuat Natural/Hitam/Merah), spesifikasi produk, sopir, kendaraan.
