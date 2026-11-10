@@ -25,7 +25,6 @@ export function SiteHeader({ s }: { s: Settings }) {
           </summary>
           <nav aria-label="Menu utama (ponsel)" className="mnav-panel">
             <NavLinks />
-            <a href="/artikel">Artikel</a>
           </nav>
         </details>
       </div>
