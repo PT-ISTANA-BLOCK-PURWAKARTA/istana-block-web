@@ -13,19 +13,48 @@ from html.parser import HTMLParser
 
 AKAR = os.path.dirname(os.path.abspath(__file__)) + "/wp-corpus"
 BLOK_ABAIKAN = {"script", "style", "noscript", "iframe", "form", "button", "svg", "nav", "footer", "header"}
+
+# Peta URL gambar WordPress -> key R2 (dibuat wp-gambar.py). Bila ada, gambar ikut ditulis
+# sebagai ![](/media/<key>) sehingga isi artikel tidak kehilangan gambarnya.
+PETA_GAMBAR = {}
+if os.path.exists(f"{AKAR}/gambar-peta.json"):
+    PETA_GAMBAR = json.load(open(f"{AKAR}/gambar-peta.json", encoding="utf-8"))
+
+
+def kandidat(src, srcset):
+    """Daftar URL calon, terbaik lebih dulu (sama dengan wp-gambar.py)."""
+    asli = re.sub(r"-\d+x\d+(\.(jpg|jpeg|png|webp))$", r"", src, flags=re.I)
+    besar = []
+    for bagian in (srcset or "").split(","):
+        bagian = bagian.strip().split(" ")[0]
+        if bagian:
+            m = re.search(r"-(\d+)x(\d+)\.(jpg|jpeg|png|webp)", bagian, re.I)
+            besar.append((int(m.group(1)) if m else 0, bagian))
+    besar.sort(reverse=True)
+    hasil = []
+    for u in [asli] + [u for _, u in besar] + [src]:
+        if u and u not in hasil:
+            hasil.append(u)
+    return hasil
+
+
 POTONG_BOILER = [
     r"The post .*? appeared first on .*?\.",
     r"\s*\[/?vc_[^\]]*\]",
     r"\s*\[/?et_pb[^\]]*\]",
     r"\s*\[/?caption[^\]]*\]",
     r"\s*\[/?gallery[^\]]*\]",
-    r"\s*\[/?[a-z_]+[^\]]*\]",  # shortcode sisa
+    # Hanya shortcode yang dikenal. Pola lama "\[[a-z_]+[^\]]*\]" juga memakan
+    # teks alternatif gambar ("![Judul (gambar 1)](...)"), sehingga gambarnya hilang.
+    r"\s*\[/?(?:caption|gallery|embed|video|audio|playlist|contact-form-7|wpforms|vc_[a-z_]*|et_pb_[a-z_]*|su_[a-z_]*|table|row|column|button|toc)(?:\s[^\]]*)?\]",
 ]
 
 
 class MD(HTMLParser):
-    def __init__(self):
+    def __init__(self, judul=""):
         super().__init__(convert_charrefs=True)
+        self.judul = judul
+        self.no_gambar = 0
         self.out = []
         self.abai = 0
         self.daftar = []          # tumpukan jenis daftar: 'ul'/'ol'
@@ -92,6 +121,18 @@ class MD(HTMLParser):
             alt = re.sub(r"\s+", " ", (a.get("alt") or "")).strip()
             if src:
                 self.gambar.append({"src": src, "alt": alt})
+                info = None
+                for url in kandidat(src, a.get("srcset") or ""):
+                    info = PETA_GAMBAR.get(url)
+                    if info and info.get("key"):
+                        break
+                if info and info.get("key"):
+                    self.no_gambar += 1
+                    # Alt kosong dari WordPress: pakai judul artikel + urutan supaya gambar
+                    # tetap punya teks alternatif untuk mesin pencari gambar dan pembaca layar.
+                    teks = alt or f"{self.judul} (gambar {self.no_gambar})"
+                    self.baris_baru()
+                    self.tulis(f"\n![{teks}](/media/{info['key']})\n")
         elif tag == "table":
             self.dalam_tabel += 1
             self.baris_baru()
@@ -157,8 +198,8 @@ class MD(HTMLParser):
             self.tulis(t)
 
 
-def ke_markdown(html):
-    p = MD()
+def ke_markdown(html, judul=""):
+    p = MD(judul)
     p.feed(html or "")
     s = "".join(p.out)
     for pola in POTONG_BOILER:
@@ -181,7 +222,7 @@ def main():
         for it in data:
             judul = htmlmod.unescape(re.sub(r"<[^>]+>", "", (it.get("title") or {}).get("rendered", ""))).strip()
             isi_html = (it.get("content") or {}).get("rendered", "")
-            md, gambar, tautan = ke_markdown(isi_html)
+            md, gambar, tautan = ke_markdown(isi_html, judul)
             y = it.get("yoast_head_json") or {}
             ringkas = htmlmod.unescape(re.sub(r"<[^>]+>", "", (it.get("excerpt") or {}).get("rendered", ""))).strip()
             fm = {

@@ -10,12 +10,22 @@ mengubah tangan: ambil dari REST API, ubah HTML → Markdown, lalu tulis SQL unt
 # 1. Ambil seluruh konten (posts, pages) + simpan JSON & teks bersih
 python scripts/migrasi-wp/crawl-wp.py      # -> scripts/migrasi-wp/wp-corpus/raw/, <tipe>/<slug>.md
 
-# 2. HTML -> Markdown (react-markdown: tabel GFM, tanpa HTML mentah)
+# 2. Unduh gambar isi artikel, ubah ke WebP, siapkan unggahan R2
+python scripts/migrasi-wp/wp-gambar.py     # -> wp-corpus/gambar/, gambar-peta.json
+#    lalu unggah: satu perintah per baris di wp-corpus/unggah.txt (bisa paralel)
+#    npx wrangler r2 object put istana-block-media/<key> --file <path> --content-type image/webp --remote
+
+# 3. HTML -> Markdown (tabel GFM, tanpa HTML mentah, gambar -> /media/<key>)
 python scripts/migrasi-wp/wp2md.py         # -> scripts/migrasi-wp/wp-corpus/md/…
 
-# 3. Bentuk SQL impor + rollback
+# 4. Bentuk SQL impor + rollback
 python scripts/migrasi-wp/buat-impor.py    # -> drizzle/data/2026-11-impor-artikel-wp/*.sql
 ```
+
+Gambar **tidak** disimpan sebagai aset Worker: 510 berkas WebP (29,6 MB, median 1.080 px) masuk R2
+bucket `istana-block-media` dengan key `artikel/<slug>/<hash>.webp`, lalu disajikan route
+`/media/[...key]` (cache 1 tahun, immutable). Isi artikel menulis `![alt](/media/artikel/...)`.
+Alt kosong dari WordPress diisi "judul artikel (gambar N)" agar tidak ada gambar tanpa teks alternatif.
 
 Lalu terapkan ke D1 (satu perintah per berkas):
 

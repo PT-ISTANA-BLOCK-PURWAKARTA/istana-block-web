@@ -69,11 +69,16 @@ def rapikan_markdown(md, sasaran):
         jalur = re.sub(r"^https?://(www\.)?istanablockpurwakarta\.com", "", url)
         jalur = "/" + jalur.strip("/") if jalur.strip("/") else "/"
         jalur = jalur.split("?")[0].split("#")[0]
+        # Gambar di R2 (/media/...) selalu dipertahankan.
+        if jalur.startswith("/media/"):
+            return m.group(0)
         if jalur.rstrip("/") in sasaran or jalur == "/":
             return f"[{teks}]({jalur.rstrip('/') or '/'})"
         return teks  # sasaran tidak ada di situs baru: lepaskan tautannya, teks tetap
 
-    md = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+|/[^)\s]*)\)", ganti, md)
+    # (?<!!) penting: tanpa itu gambar Markdown "![alt](/media/...)" ikut diperlakukan
+    # sebagai tautan dan gambarnya berubah jadi teks biasa.
+    md = re.sub(r"(?<!!)\[([^\]]+)\]\((https?://[^)\s]+|/[^)\s]*)\)", ganti, md)
     # Sisa HTML mentah tidak dirender react-markdown: buang tag-nya, sisakan teks.
     md = re.sub(r"</?[a-zA-Z][^>]{0,200}>", "", md)
     md = re.sub(r"\[/?[a-z_]{2,}\][^\n]{0,80}", "", md, flags=re.I)  # shortcode sisa
