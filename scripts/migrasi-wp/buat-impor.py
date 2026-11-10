@@ -12,7 +12,8 @@ import unicodedata
 from datetime import datetime, timedelta, timezone
 
 AKAR = os.path.dirname(os.path.abspath(__file__)) + "/wp-corpus"
-_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# __file__ = <repo>/scripts/migrasi-wp/<nama>: naik tiga tingkat ke akar repo.
+_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 REPO = _REPO.replace("\\", "/")
 KELUAR = f"{REPO}/drizzle/data/2026-11-impor-artikel-wp"
 WIB = timezone(timedelta(hours=7))

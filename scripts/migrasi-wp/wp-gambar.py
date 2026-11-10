@@ -69,9 +69,9 @@ def ambil(url, coba=3):
     return None
 
 
-def proses(item):
+def proses(item, tipe="posts"):
     slug = item["slug"]
-    berkas_artikel = f"{AKAR}/md/posts/{slug}.md"
+    berkas_artikel = f"{AKAR}/md/{tipe}/{slug}.md"
     if slug in LEWATI or not os.path.exists(berkas_artikel):
         return slug, []
     html = (item.get("content") or {}).get("rendered", "")
@@ -98,18 +98,23 @@ def main():
     posts = json.load(open(f"{AKAR}/raw/posts.json", encoding="utf-8"))
     os.makedirs(f"{AKAR}/gambar", exist_ok=True)
     peta, tugas = {}, []
+    halaman = json.load(open(f"{AKAR}/raw/pages.json", encoding="utf-8"))
     for it in posts:
-        slug, gambar = proses(it)
+        slug, gambar = proses(it, "posts")
         for g in gambar:
-            tugas.append((slug, g))
+            tugas.append((slug, g, "artikel"))
+    for it in halaman:
+        slug, gambar = proses(it, "pages")
+        for g in gambar:
+            tugas.append((slug, g, "halaman"))
 
     print(f"gambar unik akan diproses: {len({t[1]['url'] for t in tugas})} dari {len(tugas)} slot")
 
     def kerjakan(pasangan):
-        slug, g = pasangan
+        slug, g, awalan = pasangan
         key = None
         kunci_hash = hashlib.sha1(g["url"].encode()).hexdigest()[:10]
-        tujuan = f"artikel/{slug}/{kunci_hash}.webp"
+        tujuan = f"{awalan}/{slug}/{kunci_hash}.webp"
         path = f"{AKAR}/gambar/{slug}"
         os.makedirs(path, exist_ok=True)
         keluaran = f"{path}/{kunci_hash}.webp"
