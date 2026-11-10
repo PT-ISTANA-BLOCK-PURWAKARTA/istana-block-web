@@ -133,13 +133,22 @@ Empat gerbang cutover belum lulus: stabil, pelacakan terbukti, harga & isi, doma
 
 ## 10. Cara deploy
 
-Resep build (Next 15.5 di OpenNext; build di WSL, deploy dari Windows):
+Resep yang **terbukti 10 Nov 2026** (Next 15.5 di OpenNext, build & deploy dari WSL; versi `fbfe5aee`):
 
-1. Build di WSL pada salinan `~/ibw-ops`: sinkron dengan tar dari repo, kecuali `node_modules`, `.git`, `.wrangler`, `.next`, `.open-next`, `.dev.vars`.
-2. Jalankan `~/build_ops_unsupported.sh`. OpenNext menolak Next 15.5 sejak sekitar 21 Okt, jadi skrip memakai flag `--dangerouslyUseUnsupportedNextVersion`. Upgrade ke Next 16 adalah tindak lanjut.
-3. Ukur dengan `wrangler deploy --dry-run`. Batas 3.072 KiB gzip; terakhir 2.927 KiB.
-4. Salin `.open-next` ke repo Windows.
-5. Deploy dari Windows (login wrangler ada di Windows) dengan `OPEN_NEXT_DEPLOY=true`. Tanpa itu wrangler mengalihkan ke `opennextjs-cloudflare deploy` yang crash di Windows.
+1. `wrangler deploy` dari Windows **tidak bisa dipakai**: wrangler Windows tidak punya kredensial
+   (`CLOUDFLARE_API_TOKEN`), dan `next build` di Windows mati `thread 'main' has overflowed its stack`
+   (`ERR_RUNTIME_FAILURE`).
+2. Siapkan salinan kerja WSL `~/ibw-ops` dari tar repo (kecuali `node_modules`, `.git`, `.next`,
+   `.open-next`, `.wrangler`, `drizzle/data`, `scripts/migrasi-wp/wp-corpus`), lalu `npm ci` di dalamnya.
+3. Build: `npx opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion`
+   (OpenNext menolak Next 15.5; tanpa flag ini build berhenti dengan pesan
+   "If you want to proceed anyway, use the --dangerouslyUseUnsupportedNextVersion flag"). ~25 menit.
+4. Deploy dari WSL: `CLOUDFLARE_ACCOUNT_ID=<akun> node node_modules/wrangler/bin/wrangler.js deploy`.
+   Commit `2ad6f7c` dkk. mendeploy ke versi `fbfe5aee-2fdc-4e97-b73a-6b04092d11ce`, 216 URL, cek SEO 3476/3476.
+5. Kalau `npm ci` gagal karena registry tidak terjangkau dari WSL (pernah terjadi), salin `node_modules`
+   dari Windows: `tar -cf - node_modules | tar -xf - -C ~/ibw-ops`.
+6. Perubahan isi (artikel/halaman/gambar) **tidak butuh build**: cukup D1/R2 + request baru. Build hanya
+   perlu bila yang berubah ada di bundel Worker (mis. `src/data/legacy-redirects.json`, rute, CSS).
 
 Migrasi remote: backup dulu dengan `wrangler d1 export istana-block-db --remote`, lalu `wrangler d1 migrations apply DB --remote`. Catatan: `wrangler d1 --local` hanya jalan di WSL.
 
