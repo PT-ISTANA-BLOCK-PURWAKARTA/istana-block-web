@@ -1,34 +1,35 @@
 #!/usr/bin/env python3
-"""WordPress HTML -> Markdown bersih (untuk react-markdown: tanpa HTML mentah).
+"""WordPress HTML -> Markdown bersih berbasis BeautifulSoup4 (tanpa HTML mentah & tanpa tautan putus).
 
-Masukan : wp-corpus/raw/posts.json, wp-corpus/raw/pages.json
-Keluaran: wp-corpus/md/<tipe>/<slug>.md  (frontmatter YAML + markdown)
-          wp-corpus/md/indeks.json       (statistik + daftar gambar)
+Masukan : wp-corpus/raw/posts.json, wp-corpus/raw/pages.json, wp-corpus/gambar-peta.json
+Keluaran: wp-corpus/md/<tipe>/<slug>.md  (frontmatter JSON + markdown)
+          wp-corpus/md/indeks.json       (statistik + daftar gambar & tautan)
 """
 import html as htmlmod
 import json
 import os
 import re
-from html.parser import HTMLParser
+from bs4 import BeautifulSoup, NavigableString, Tag
 
 AKAR = os.path.dirname(os.path.abspath(__file__)) + "/wp-corpus"
-BLOK_ABAIKAN = {"script", "style", "noscript", "iframe", "form", "button", "svg", "nav", "footer", "header"}
+ABAI_TAG = {"script", "style", "noscript", "iframe", "form", "button", "svg", "nav", "footer", "header"}
+ABAI_CLASS = ("elementor-widget-counter", "elementor-counter", "elementor-widget-spacer", "elementor-screen-only")
 
-# Peta URL gambar WordPress -> key R2 (dibuat wp-gambar.py). Bila ada, gambar ikut ditulis
-# sebagai ![](/media/<key>) sehingga isi artikel tidak kehilangan gambarnya.
 PETA_GAMBAR = {}
 if os.path.exists(f"{AKAR}/gambar-peta.json"):
     PETA_GAMBAR = json.load(open(f"{AKAR}/gambar-peta.json", encoding="utf-8"))
 
 
-def kandidat(src, srcset):
+def kandidat(src, srcset=""):
     """Daftar URL calon, terbaik lebih dulu (sama dengan wp-gambar.py)."""
-    asli = re.sub(r"-\d+x\d+(\.(jpg|jpeg|png|webp))$", r"", src, flags=re.I)
+    if not src:
+        return []
+    asli = re.sub(r"-\d+x\d+(\.(jpg|jpeg|png|webp|gif))$", r"\1", src, flags=re.I)
     besar = []
     for bagian in (srcset or "").split(","):
         bagian = bagian.strip().split(" ")[0]
         if bagian:
-            m = re.search(r"-(\d+)x(\d+)\.(jpg|jpeg|png|webp)", bagian, re.I)
+            m = re.search(r"-(\d+)x(\d+)\.(jpg|jpeg|png|webp|gif)", bagian, re.I)
             besar.append((int(m.group(1)) if m else 0, bagian))
     besar.sort(reverse=True)
     hasil = []
@@ -40,176 +41,250 @@ def kandidat(src, srcset):
 
 POTONG_BOILER = [
     r"The post .*? appeared first on .*?\.",
-    r"\s*\[/?vc_[^\]]*\]",
-    r"\s*\[/?et_pb[^\]]*\]",
-    r"\s*\[/?caption[^\]]*\]",
-    r"\s*\[/?gallery[^\]]*\]",
-    # Hanya shortcode yang dikenal. Pola lama "\[[a-z_]+[^\]]*\]" juga memakan
-    # teks alternatif gambar ("![Judul (gambar 1)](...)"), sehingga gambarnya hilang.
     r"\s*\[/?(?:caption|gallery|embed|video|audio|playlist|contact-form-7|wpforms|vc_[a-z_]*|et_pb_[a-z_]*|su_[a-z_]*|table|row|column|button|toc)(?:\s[^\]]*)?\]",
 ]
 
 
-class MD(HTMLParser):
+def norm_inline(s):
+    return re.sub(r"[ \t\r\n]+", " ", s)
+
+
+def wrap_mark(text, marker):
+    """Bungkus inline bold/italic tanpa meninggalkan spasi di dalam penanda & tanpa mematahkan blok."""
+    if not text or not text.strip():
+        return text
+    # Jangan bungkus blok gambar atau multiline penuh dengan **...**
+    if "\n" in text or "![" in text:
+        parts = re.split(r"(\n+|!\[[^\]]*\]\([^)]+\))", text)
+        out = []
+        for p in parts:
+            if not p or not p.strip() or p.startswith("\n") or p.startswith("!["):
+                out.append(p)
+            else:
+                out.append(wrap_mark(p, marker))
+        return "".join(out)
+    lead = text[: len(text) - len(text.lstrip(" \t\r\n"))]
+    trail = text[len(text.rstrip(" \t\r\n")) :]
+    core = text.strip(" \t\r\n")
+    if not core:
+        return text
+    # Hindari penanda ganda jika sudah terbungkus
+    if core.startswith(marker) and core.endswith(marker) and len(core) > len(marker) * 2:
+        return text
+    return f"{lead}{marker}{core}{marker}{trail}"
+
+
+class Converter:
     def __init__(self, judul=""):
-        super().__init__(convert_charrefs=True)
         self.judul = judul
         self.no_gambar = 0
-        self.out = []
-        self.abai = 0
-        self.daftar = []          # tumpukan jenis daftar: 'ul'/'ol'
-        self.dalam_tabel = 0
-        self.baris = []
-        self.sel = []
-        self.prefiks = ""
         self.gambar = []
         self.tautan = []
+        self.in_heading = False
 
-    # ---------- util ----------
-    def tulis(self, s):
-        self.out.append(s)
+    def render_children(self, el):
+        chunks = []
+        for ch in el.children:
+            s = self.render(ch)
+            if s:
+                # Pisahkan dua tautan yang menempel langsung (mis. tombol CTA Elementor bersebelahan)
+                if chunks and chunks[-1].rstrip().endswith(")") and s.lstrip().startswith("[") and re.search(r"\]\([^)]+\)\s*$", chunks[-1]):
+                    chunks.append(" · ")
+                chunks.append(s)
+        return "".join(chunks)
 
-    def baris_baru(self):
-        if self.out and not self.out[-1].endswith("\n\n"):
-            self.out.append("\n")
+    def render_img(self, el):
+        src = (el.get("data-lazy-src") or el.get("data-src") or el.get("src") or "").strip()
+        if not src or src.startswith("data:"):
+            return ""
+        alt = norm_inline(el.get("alt") or "").strip()
+        srcset = el.get("srcset") or ""
+        self.gambar.append({"src": src, "alt": alt})
+        info = None
+        for url in kandidat(src, srcset):
+            info = PETA_GAMBAR.get(url)
+            if info and info.get("key"):
+                break
+        if info and info.get("key"):
+            self.no_gambar += 1
+            teks = alt or f"{self.judul} (gambar {self.no_gambar})"
+            teks = teks.replace("[", "(").replace("]", ")")
+            return f"\n\n![{teks}](/media/{info['key']})\n\n"
+        return ""
 
-    # ---------- tag ----------
-    def handle_starttag(self, tag, attrs):
-        a = dict(attrs)
-        if tag in BLOK_ABAIKAN:
-            self.abai += 1
-            return
-        if self.abai:
-            return
-        if self.dalam_tabel and tag not in ("table", "tr", "td", "th"):
-            # Semua penanda inline di dalam sel ditulis ke buffer sel, bukan ke dokumen.
-            masuk = {"strong": "**", "b": "**", "em": "*", "i": "*", "br": " "}.get(tag)
-            if masuk:
-                self.sel.append(masuk)
-            return
-        if tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
-            self.baris_baru()
-            self.tulis("\n" + "#" * int(tag[1]) + " ")
-        elif tag == "p":
-            self.baris_baru()
-            self.tulis("\n")
-        elif tag == "br":
-            self.tulis("  \n")
-        elif tag in ("strong", "b"):
-            self.tulis("**")
-        elif tag in ("em", "i"):
-            self.tulis("*")
-        elif tag == "blockquote":
-            self.baris_baru()
-            self.tulis("\n> ")
-        elif tag in ("ul", "ol"):
-            self.baris_baru()
-            self.daftar.append(tag)
-        elif tag == "li":
-            self.baris_baru()
-            if self.daftar and self.daftar[-1] == "ol":
-                self.tulis("\n1. ")
-            else:
-                self.tulis("\n- ")
-        elif tag == "a":
-            href = (a.get("href") or "").strip()
-            if href and not href.startswith("#"):
-                self.tautan.append(href)
-                self.tulis("[")
-        elif tag == "img":
-            src = (a.get("src") or a.get("data-src") or "").strip()
-            alt = re.sub(r"\s+", " ", (a.get("alt") or "")).strip()
-            if src:
-                self.gambar.append({"src": src, "alt": alt})
-                info = None
-                for url in kandidat(src, a.get("srcset") or ""):
-                    info = PETA_GAMBAR.get(url)
-                    if info and info.get("key"):
-                        break
-                if info and info.get("key"):
-                    self.no_gambar += 1
-                    # Alt kosong dari WordPress: pakai judul artikel + urutan supaya gambar
-                    # tetap punya teks alternatif untuk mesin pencari gambar dan pembaca layar.
-                    teks = alt or f"{self.judul} (gambar {self.no_gambar})"
-                    self.baris_baru()
-                    self.tulis(f"\n![{teks}](/media/{info['key']})\n")
-        elif tag == "table":
-            self.dalam_tabel += 1
-            self.baris_baru()
-            self._baris_tabel = 0
-        elif tag == "tr" and self.dalam_tabel:
-            self.baris = []
-        elif tag in ("td", "th") and self.dalam_tabel:
-            self.sel = []
-        elif tag == "hr":
-            self.tulis("\n\n---\n\n")
+    def render_table(self, el):
+        rows = []
+        for tr in el.find_all("tr"):
+            cells = []
+            for cell in tr.find_all(["th", "td"], recursive=False):
+                # render isi sel sebagai inline bersih
+                txt = norm_inline(self.render_children(cell)).strip().replace("|", "\\|")
+                cells.append(txt)
+            if any(cells):
+                rows.append(cells)
+        if not rows:
+            return ""
+        max_cols = max(len(r) for r in rows)
+        out = []
+        for i, r in enumerate(rows):
+            padded = r + [""] * (max_cols - len(r))
+            out.append("| " + " | ".join(padded) + " |")
+            if i == 0:
+                out.append("| " + " | ".join(["---"] * max_cols) + " |")
+        return "\n\n" + "\n".join(out) + "\n\n"
 
-    def handle_endtag(self, tag):
-        if tag in BLOK_ABAIKAN:
-            self.abai = max(0, self.abai - 1)
-            return
-        if self.abai:
-            return
-        if self.dalam_tabel and tag not in ("table", "tr", "td", "th"):
-            if tag in ("strong", "b"):
-                self.sel.append("**")
-            return
-        if tag in ("h1", "h2", "h3", "h4", "h5", "h6", "p"):
-            self.tulis("\n\n")
-        elif tag in ("strong", "b"):
-            self.tulis("**")
-        elif tag in ("em", "i"):
-            self.tulis("*")
-        elif tag in ("ul", "ol"):
-            if self.daftar:
-                self.daftar.pop()
-            self.tulis("\n\n")
-        elif tag == "li":
-            self.tulis("\n")
-        elif tag == "a":
-            self.tulis("]")
-        elif tag == "table":
-            self.dalam_tabel = max(0, self.dalam_tabel - 1)
-            self.tulis("\n\n")
-        elif tag in ("td", "th") and self.dalam_tabel:
-            self.baris.append(re.sub(r"\s+", " ", "".join(self.sel)).strip())
-            self.sel = []
-        elif tag == "tr" and self.dalam_tabel:
-            if any(self.baris):
-                self.tulis("| " + " | ".join(self.baris) + " |\n")
-                if getattr(self, "_baris_tabel", 0) == 0:
-                    self.tulis("|" + "|".join([" --- "] * len(self.baris)) + "|\n")
-                self._baris_tabel = getattr(self, "_baris_tabel", 0) + 1
+    def render_list(self, el, ordered=False, depth=0):
+        lines = []
+        idx = 0
+        indent = "  " * depth
+        for li in el.find_all("li", recursive=False):
+            idx += 1
+            sub_lists = []
+            # Render isi li tanpa nested ul/ol dulu
+            parts = []
+            for ch in li.children:
+                if isinstance(ch, Tag) and ch.name in ("ul", "ol"):
+                    sub_lists.append(self.render_list(ch, ch.name == "ol", depth + 1))
+                else:
+                    parts.append(self.render(ch))
+            text = norm_inline("".join(parts)).strip()
+            if text:
+                prefix = f"{idx}." if ordered else "-"
+                lines.append(f"{indent}{prefix} {text}")
+            for sl in sub_lists:
+                if sl.strip():
+                    lines.append(sl.strip("\n"))
+        if not lines:
+            return ""
+        return ("\n\n" if depth == 0 else "\n") + "\n".join(lines) + ("\n\n" if depth == 0 else "\n")
 
-    def handle_data(self, data):
-        if self.abai or self.dalam_tabel and False:
-            return
-        if self.dalam_tabel and not self.sel:
-            # teks di dalam sel ditangkap lewat _teks_sel
-            pass
-        t = re.sub(r"\s+", " ", data)
-        if not t.strip():
-            if self.out and not self.out[-1].endswith((" ", "\n")):
-                self.tulis(" ")
-            return
-        if self.dalam_tabel:
-            self.sel.append(t)
-        else:
-            self.tulis(t)
+    def render(self, node):
+        if isinstance(node, NavigableString):
+            # Abaikan komentar HTML
+            if type(node).__name__ == "Comment":
+                return ""
+            return re.sub(r"[ \t\r\n]+", " ", str(node))
+        if not isinstance(node, Tag):
+            return ""
+        name = (node.name or "").lower()
+        if name in ABAI_TAG:
+            return ""
+        classes = node.get("class") or []
+        if isinstance(classes, str):
+            classes = classes.split()
+        if any(c in ABAI_CLASS for c in classes):
+            return ""
+
+        if name in ("h1", "h2", "h3", "h4", "h5", "h6"):
+            prev = self.in_heading
+            self.in_heading = True
+            txt = norm_inline(self.render_children(node)).strip()
+            self.in_heading = prev
+            if not txt:
+                return ""
+            level = int(name[1])
+            return f"\n\n{'#' * level} {txt}\n\n"
+
+        if name == "p":
+            inner = self.render_children(node).strip()
+            if not inner:
+                return ""
+            # Rapikan spasi di baris dalam paragraf, pertahankan line break eksplisit (  \n)
+            return f"\n\n{inner}\n\n"
+
+        if name == "br":
+            return " " if self.in_heading else "  \n"
+
+        if name in ("strong", "b"):
+            inner = self.render_children(node)
+            if self.in_heading:
+                return inner
+            return wrap_mark(inner, "**")
+
+        if name in ("em", "i"):
+            inner = self.render_children(node)
+            if self.in_heading:
+                return inner
+            return wrap_mark(inner, "*")
+
+        if name == "a":
+            href = (node.get("href") or "").strip()
+            inner = self.render_children(node)
+            if "![" in inner:
+                return inner
+            clean = norm_inline(inner).strip()
+            if not clean:
+                return ""
+            if not href or href.startswith("#") or href.lower().startswith("javascript:"):
+                return inner
+            self.tautan.append(href)
+            # Pertahankan spasi luar jika ada di inner
+            lead = inner[: len(inner) - len(inner.lstrip(" \t"))]
+            trail = inner[len(inner.rstrip(" \t")) :]
+            return f"{lead}[{clean}]({href}){trail}"
+
+        if name == "img":
+            return self.render_img(node)
+
+        if name == "figure":
+            img_md = ""
+            cap_txt = ""
+            for img in node.find_all("img"):
+                img_md += self.render_img(img)
+            cap = node.find("figcaption")
+            if cap:
+                cap_txt = norm_inline(self.render_children(cap)).strip()
+            if img_md:
+                if cap_txt:
+                    return f"\n\n{img_md.strip()}\n*{cap_txt}*\n\n"
+                return img_md
+            return self.render_children(node)
+
+        if name == "figcaption":
+            return ""
+
+        if name == "blockquote":
+            inner = self.render_children(node).strip()
+            if not inner:
+                return ""
+            lines = [f"> {ln.strip()}" if ln.strip() else ">" for ln in inner.splitlines()]
+            return "\n\n" + "\n".join(lines) + "\n\n"
+
+        if name in ("ul", "ol"):
+            return self.render_list(node, ordered=(name == "ol"))
+
+        if name == "table":
+            return self.render_table(node)
+
+        if name == "hr":
+            return "\n\n---\n\n"
+
+        if name in ("div", "section", "article", "main", "aside"):
+            inner = self.render_children(node).strip()
+            return f"\n\n{inner}\n\n" if inner else ""
+
+        return self.render_children(node)
 
 
 def ke_markdown(html, judul=""):
-    p = MD(judul)
-    p.feed(html or "")
-    s = "".join(p.out)
+    soup = BeautifulSoup(html or "", "html.parser")
+    conv = Converter(judul)
+    s = conv.render_children(soup)
     for pola in POTONG_BOILER:
         s = re.sub(pola, " ", s, flags=re.S | re.I)
     s = htmlmod.unescape(s)
-    s = re.sub(r"[ \t]+", " ", s)
-    s = re.sub(r" *\n *", "\n", s)
+    s = s.replace("\u00a0", " ").replace("\u200b", "")
+    # Rapikan spasi per baris (tanpa merusak trailing double-space line break)
+    lines = []
+    for ln in s.splitlines():
+        had_br = ln.endswith("  ")
+        cleaned = re.sub(r"[ \t]+", " ", ln).strip()
+        if cleaned and had_br:
+            cleaned += "  "
+        lines.append(cleaned)
+    s = "\n".join(lines)
     s = re.sub(r"\n{3,}", "\n\n", s)
-    s = re.sub(r"\(\s*\)", "", s)
-    return s.strip(), p.gambar, p.tautan
+    return s.strip(), conv.gambar, conv.tautan
 
 
 def main():
@@ -231,6 +306,7 @@ def main():
                 "tautan": it.get("link"),
                 "terbit": it.get("date"),
                 "diubah": it.get("modified"),
+                "featured_media": it.get("featured_media") or 0,
                 "judul_seo": y.get("title"),
                 "deskripsi_seo": y.get("description"),
                 "ringkas": ringkas,
@@ -245,7 +321,7 @@ def main():
         indeks[tipe] = daftar
         total = sum(x["kata"] for x in daftar)
         gmbr = sum(x["gambar"] for x in daftar)
-        print(f"{tipe:6} {len(daftar):3} item | {total:7} kata markdown | {gmbr:4} gambar")
+        print(f"{tipe:6} {len(daftar):3} item | {total:7} kata markdown | {gmbr:4} gambar | {sum(len(x['daftar_tautan']) for x in daftar):4} tautan")
     json.dump(indeks, open(f"{AKAR}/md/indeks.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
     semua_gambar = [g["src"] for t in indeks.values() for it in t for g in it["daftar_gambar"]]

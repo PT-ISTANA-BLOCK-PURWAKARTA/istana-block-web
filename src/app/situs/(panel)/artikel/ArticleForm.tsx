@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import type { Article } from "@/db/schema";
+import { articleCategories, type Article } from "@/db/schema";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { ImageField } from "@/components/admin/ImageField";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { RichEditor } from "@/components/editor/RichEditor";
-import { Switch } from "@/components/ui";
+import { Select, Switch } from "@/components/ui";
 import { saveArticle } from "../../actions/articles";
 
 export function ArticleForm({ article, coverSrc }: { article?: Article; coverSrc: string | null }) {
@@ -21,10 +21,19 @@ export function ArticleForm({ article, coverSrc }: { article?: Article; coverSrc
             <input id="title" name="title" defaultValue={a?.title} required />
           </div>
           <div className="field">
+            <label htmlFor="category">Kategori topik</label>
+            <Select
+              id="category"
+              name="category"
+              defaultValue={a?.category ?? articleCategories[0]}
+              options={articleCategories.map((c) => ({ value: c, label: c }))}
+            />
+          </div>
+          <div className="field">
             <label htmlFor="slug">Slug URL <span className="help">kosongkan untuk dibuat dari judul</span></label>
             <input id="slug" name="slug" defaultValue={a?.slug} />
           </div>
-          <div className="field" style={{ justifyContent: "flex-end" }}>
+          <div className="field full" style={{ justifyContent: "flex-end" }}>
             <Switch name="published" defaultChecked={a?.published ?? false} label="Terbitkan" help="Tampil di situs setelah disimpan" />
           </div>
           <div className="field full">

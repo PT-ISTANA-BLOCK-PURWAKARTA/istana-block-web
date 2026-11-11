@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/db";
+import { articleCategories } from "@/db/schema";
 import type { FormState } from "@/components/admin/FormMessage";
 import { requireAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/format";
@@ -13,6 +14,7 @@ import { deleteImage, saveImage, UploadError } from "@/lib/media";
 const ArticleInput = z.object({
   title: z.string().trim().min(5, "Judul minimal 5 huruf.").max(160),
   slug: z.string().trim().max(80),
+  category: z.enum(articleCategories),
   excerpt: z.string().trim().max(300),
   content: z.string().max(60000),
   seoTitle: z.string().trim().max(70),
@@ -55,6 +57,7 @@ export async function saveArticle(_prev: FormState, form: FormData): Promise<For
   const values = {
     title: d.title,
     slug,
+    category: d.category,
     excerpt: d.excerpt,
     content: d.content,
     seoTitle: d.seoTitle || null,
@@ -69,6 +72,23 @@ export async function saveArticle(_prev: FormState, form: FormData): Promise<For
 
   revalidatePath("/", "layout");
   redirect(`/situs/artikel?ok=${encodeURIComponent(d.title)}`);
+}
+
+export async function toggleArticlePublished(id: number) {
+  await requireAdmin();
+  const db = await getDb();
+  const a = await db.query.articles.findFirst({ where: eq(schema.articles.id, id) });
+  if (!a) return;
+  const nextPublished = !a.published;
+  await db
+    .update(schema.articles)
+    .set({
+      published: nextPublished,
+      publishedAt: nextPublished ? (a.publishedAt ?? new Date()) : a.publishedAt,
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.articles.id, id));
+  revalidatePath("/", "layout");
 }
 
 export async function deleteArticle(id: number) {

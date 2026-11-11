@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArticleCard } from "@/components/ArticleCard";
 import { Calculator } from "@/components/Calculator";
 import { ClientLogos } from "@/components/ClientLogos";
 import { FaqList } from "@/components/FaqList";
@@ -11,9 +12,9 @@ import { JsonLd } from "@/components/JsonLd";
 import { ProductCard } from "@/components/ProductCard";
 import { responsif } from "@/lib/img";
 import { getEnv } from "@/db";
-import { rupiah, tanggal, waLink } from "@/lib/format";
+import { imageUrl, rupiah, tanggal, waLink } from "@/lib/format";
 import { webSite } from "@/lib/jsonld";
-import { listArticles, listProducts, listTestimonials } from "@/lib/queries";
+import { listArticleSummaries, listProducts, listTestimonials } from "@/lib/queries";
 import { getSettings, parseFaq } from "@/lib/settings";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -33,7 +34,7 @@ const TILE_COLORS = [
 ];
 
 export default async function Home() {
-  const [s, all, reviews, articles, env] = await Promise.all([getSettings(), listProducts(), listTestimonials(), listArticles(3), getEnv()]);
+  const [s, all, reviews, articles, env] = await Promise.all([getSettings(), listProducts(), listTestimonials(), listArticleSummaries(3), getEnv()]);
   const products = all.filter((p) => p.featured && p.category !== "Jasa");
   const faq = parseFaq(s.home_faq);
   const jasa = all.find((p) => p.category === "Jasa");
@@ -242,15 +243,23 @@ export default async function Home() {
             <h2>Panduan &amp; artikel</h2>
             <Link href="/artikel" style={{ fontWeight: 600 }}>Semua artikel →</Link>
           </div>
-          <div className="grid-cards">
+          <div className="grid-cards artikel-grid">
             {articles.map((a) => (
-              <Link href={`/artikel/${a.slug}`} className="card" key={a.id}>
-                <div className="card-body" style={{ paddingTop: 10 }}>
-                  <span className="small muted">{tanggal(a.publishedAt)}</span>
-                  <h3 style={{ fontSize: 21 }}>{a.title}</h3>
-                  <p>{a.excerpt}</p>
-                </div>
-              </Link>
+              <ArticleCard
+                key={a.id}
+                headingLevel="h3"
+                item={{
+                  id: a.id,
+                  slug: a.slug,
+                  title: a.title,
+                  category: a.category,
+                  excerpt: a.excerpt,
+                  coverSrc: imageUrl(a.coverKey),
+                  publishedDate: tanggal(a.publishedAt),
+                  publishedMs: a.publishedAt ? a.publishedAt.getTime() : 0,
+                  readMinutes: a.readMinutes,
+                }}
+              />
             ))}
           </div>
         </section>

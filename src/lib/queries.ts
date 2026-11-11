@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import type { PageKind } from "@/db/schema";
 import { memo } from "./memo";
@@ -45,6 +45,61 @@ const articlesPublished = cache((limit: number) =>
 /** `limit` kosong = semua artikel terbit. */
 export function listArticles(limit?: number) {
   return articlesPublished(limit ?? 0);
+}
+
+export type ArticleSummary = {
+  id: number;
+  slug: string;
+  title: string;
+  category: string;
+  excerpt: string;
+  coverKey: string | null;
+  publishedAt: Date | null;
+  readMinutes: number;
+};
+
+const articleSummaries = cache((limit: number) =>
+  memo(`article-summaries:${limit}`, async (): Promise<ArticleSummary[]> => {
+    const db = await getDb();
+    const q = db
+      .select({
+        id: articles.id,
+        slug: articles.slug,
+        title: articles.title,
+        category: articles.category,
+        excerpt: articles.excerpt,
+        coverKey: articles.coverKey,
+        publishedAt: articles.publishedAt,
+        contentLen: sql<number>`length(${articles.content})`,
+      })
+      .from(articles)
+      .where(eq(articles.published, true))
+      .orderBy(desc(articles.publishedAt), desc(articles.id));
+    const rows = await (limit > 0 ? q.limit(limit) : q);
+    return rows.map((r) => ({
+      id: r.id,
+      slug: r.slug,
+      title: r.title,
+      category: r.category,
+      excerpt: r.excerpt,
+      coverKey: r.coverKey,
+      publishedAt: r.publishedAt,
+      readMinutes: Math.max(1, Math.round((r.contentLen || 0) / 1200)),
+    }));
+  }),
+);
+
+/** Ringkasan artikel terbit tanpa memuat isi markdown penuh (hemat memori & bandwidth). */
+export function listArticleSummaries(limit?: number) {
+  return articleSummaries(limit ?? 0);
+}
+
+export async function getRelatedArticles(category: string, excludeSlug: string, limit = 3): Promise<ArticleSummary[]> {
+  const all = await listArticleSummaries();
+  const same = all.filter((a) => a.category === category && a.slug !== excludeSlug);
+  if (same.length >= limit) return same.slice(0, limit);
+  const rest = all.filter((a) => a.category !== category && a.slug !== excludeSlug);
+  return [...same, ...rest].slice(0, limit);
 }
 
 export const getArticleBySlug = cache((slug: string) =>

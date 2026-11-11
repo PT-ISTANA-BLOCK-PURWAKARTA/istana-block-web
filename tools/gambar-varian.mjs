@@ -26,6 +26,8 @@ const ATURAN = [
   { cocok: /^img\/produk\/.+\.webp$/, lebar: [320, 480, 800, 1200] },
   // Lembar spesifikasi/TKDN 1200px: kolom 220-560px.
   { cocok: /^img\/tkdn\/.+\.webp$/, lebar: [480, 800] },
+  // Sampul cadangan artikel 1200x675: kartu 300-600px dan hero artikel.
+  { cocok: /^img\/artikel\/.+\.webp$/, lebar: [480, 800] },
 ];
 
 // Varian hasil skrip ini (-480.webp dst.) bukan sumber baru.

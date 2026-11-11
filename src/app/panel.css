@@ -694,3 +694,13 @@ a.kpi:hover .k-label { color: var(--biru); }
   .print-meta { flex-direction: column; gap: 10px; }
   .print-meta > div { max-width: 100%; }
 }
+
+/* ---------- Daftar & paging artikel admin ---------- */
+.admin-row-actions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px 12px; white-space: nowrap; }
+.admin-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.admin .pager-nums { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.admin .pager-num { min-width: 36px; height: 36px; padding: 0 8px; border-radius: 9px; border: 1px solid var(--p-line-strong); background: #fff; color: var(--biru-tua); font-weight: 600; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.admin .pager-num:hover { border-color: var(--biru); background: var(--info-bg); }
+.admin .pager-num.is-active { background: var(--biru-tua); border-color: var(--biru-tua); color: #fff; }
+.admin .pager-gap { padding: 0 4px; color: var(--p-muted); }
+.admin .is-disabled { opacity: .45; pointer-events: none; }

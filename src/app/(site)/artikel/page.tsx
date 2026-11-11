@@ -1,54 +1,96 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { imageUrl, tanggal } from "@/lib/format";
-import { listArticles } from "@/lib/queries";
+import { articleCategories } from "@/db/schema";
+import { imageUrl, tanggal, waLink } from "@/lib/format";
+import { listArticleSummaries } from "@/lib/queries";
+import { getSettings } from "@/lib/settings";
+import { ArticleCatalog, type ArticleSort } from "./ArticleCatalog";
+import type { ArticleCardItem } from "@/components/ArticleCard";
 
-export const metadata: Metadata = {
-  title: "Artikel & Panduan Material Beton",
-  description: "Panduan memilih, menghitung, dan memasang paving block, U-Ditch, buis beton, kanstin, dan genteng beton dari Istana Block Purwakarta.",
-  alternates: { canonical: "/artikel" },
-};
+type SP = { q?: string; kategori?: string; urut?: string; hal?: string };
 
-export default async function ArtikelPage() {
-  const articles = await listArticles();
+export async function generateMetadata({ searchParams }: { searchParams: Promise<SP> }): Promise<Metadata> {
+  const sp = await searchParams;
+  const hasSearch = Boolean((sp.q ?? "").trim());
+  return {
+    title: "Artikel & Panduan Material Beton",
+    description: "Panduan memilih, menghitung, dan memasang paving block, U-Ditch, buis beton, kanstin, dan genteng beton dari Istana Block Purwakarta.",
+    alternates: { canonical: "/artikel" },
+    ...(hasSearch ? { robots: { index: false, follow: true } } : {}),
+  };
+}
+
+export default async function ArtikelPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const [sp, articles, settings] = await Promise.all([searchParams, listArticleSummaries(), getSettings()]);
+  const initialQuery = (sp.q ?? "").trim().slice(0, 100);
+  const initialCategory = (articleCategories as readonly string[]).includes(sp.kategori ?? "") ? (sp.kategori as string) : "";
+  const initialSort: ArticleSort = sp.urut === "terlama" || sp.urut === "judul" ? sp.urut : "terbaru";
+  const initialPage = Math.max(1, parseInt(sp.hal ?? "1", 10) || 1);
+
+  const items: ArticleCardItem[] = articles.map((a) => ({
+    id: a.id,
+    slug: a.slug,
+    title: a.title,
+    category: a.category,
+    excerpt: a.excerpt,
+    coverSrc: imageUrl(a.coverKey),
+    publishedDate: tanggal(a.publishedAt),
+    publishedMs: a.publishedAt ? a.publishedAt.getTime() : 0,
+    readMinutes: a.readMinutes,
+  }));
+
   return (
     <div className="wrap section" style={{ paddingTop: 24 }}>
-      <nav aria-label="Lokasi halaman" className="breadcrumb"><ol><li><Link href="/">Beranda</Link></li><li>Artikel</li></ol></nav>
-      <div className="section-head" style={{ marginTop: 12 }}>
-        <h1 style={{ fontSize: "clamp(34px, 4vw, 52px)" }}>Artikel &amp; panduan</h1>
-      </div>
-      {/* Pengantar tetap tampil walau daftar artikel masih sedikit, supaya halaman ini tidak tipis. */}
-      <div className="stack" style={{ gap: 12, maxWidth: 820, paddingBottom: 24 }}>
-        <p className="hero-lead" style={{ fontSize: 18 }}>
-          Kumpulan panduan dari pabrik Istana Block Purwakarta untuk pemilik rumah, kontraktor, dan petugas pengadaan yang sedang memilih material beton. Isinya seputar cara memilih jenis dan ukuran, menghitung kebutuhan, sampai memasang paving block, U-Ditch, buis beton, kanstin, dan genteng beton.
+      <nav aria-label="Lokasi halaman" className="breadcrumb">
+        <ol>
+          <li><Link href="/">Beranda</Link></li>
+          <li>Artikel</li>
+        </ol>
+      </nav>
+
+      <header className="artikel-head">
+        <div className="artikel-head-top">
+          <h1 style={{ fontSize: "clamp(34px, 4vw, 52px)" }}>Artikel &amp; panduan</h1>
+          <span className="artikel-total-pill">{items.length} panduan · {articleCategories.length} topik material</span>
+        </div>
+        <p className="hero-lead" style={{ fontSize: 18, maxWidth: 780 }}>
+          Kumpulan panduan memilih jenis dan mutu, menghitung kebutuhan volume, serta pemasangan paving block, U-Ditch, buis beton, kanstin, dan genteng beton langsung dari pabrik Purwakarta.
         </p>
-        <p>
-          Setiap artikel ditulis supaya bisa dipakai sebelum Anda meminta penawaran: Anda tahu produk apa yang cocok, berapa volume yang perlu dipesan, dan keterangan apa yang perlu disiapkan. Daftar harga ada di halaman <Link href="/produk">Produk</Link>, pilihan pola pemasangan di halaman <Link href="/pola-paving">Pola paving</Link>, dan wilayah kirim di halaman <Link href="/area-pengiriman">Area pengiriman</Link>.
-        </p>
-        <p>
-          Belum menemukan jawaban yang Anda cari? Kirim produk, perkiraan volume, dan lokasi proyek ke admin lewat halaman <Link href="/kontak">Kontak</Link>. Admin membalas dengan penawaran berisi harga produk dan ongkir untuk lokasi Anda, jadi Anda tidak perlu menebak biaya sebelum memesan.
-        </p>
-      </div>
-      {articles.length === 0 && <p className="muted">Belum ada artikel.</p>}
-      <div className="grid-cards">
-        {articles.map((a) => {
-          const img = imageUrl(a.coverKey);
-          return (
-            <Link href={`/artikel/${a.slug}`} className="card" key={a.id}>
-              {img && (
-                <div className="card-media hexlong">
-                  <img src={img} alt="" width={800} height={800} loading="lazy" decoding="async" />
-                </div>
-              )}
-              <div className="card-body" style={{ paddingTop: img ? 0 : 10 }}>
-                <span className="small muted">{tanggal(a.publishedAt)}</span>
-                <h2 style={{ fontSize: 21 }}>{a.title}</h2>
-                <p>{a.excerpt}</p>
-              </div>
+      </header>
+
+      <ArticleCatalog
+        items={items}
+        categories={articleCategories}
+        initialQuery={initialQuery}
+        initialCategory={initialCategory}
+        initialSort={initialSort}
+        initialPage={initialPage}
+      />
+
+      {/* Panduan pengantar dipindah ke bawah daftar agar artikel langsung tampil di layar pertama, namun tetap tersedia untuk pembaca & SEO. */}
+      <section className="artikel-guide panel" aria-labelledby="panduan-pakai-artikel">
+        <div className="artikel-guide-copy">
+          <h2 id="panduan-pakai-artikel">Memakai panduan ini sebelum memesan material</h2>
+          <p>
+            Setiap artikel disusun supaya pemilik rumah, kontraktor, dan tim pengadaan bisa menentukan spesifikasi sebelum meminta penawaran resmi: mulai dari pemilihan mutu K-300 hingga K-450, estimasi isi per m², sampai syarat akses truk bongkar di lokasi proyek.
+          </p>
+          <p>
+            Untuk membandingkan spesifikasi dan harga terkini, buka halaman <Link href="/produk">Produk</Link>, hitung kombinasi motif di <Link href="/pola-paving">Kalkulator pola paving</Link>, atau periksa jangkauan armada di <Link href="/area-pengiriman">Area pengiriman</Link>.
+          </p>
+        </div>
+        <aside className="cta-aside hexpat artikel-guide-cta">
+          <h2>Butuh penawaran proyek?</h2>
+          <p>Kirim produk, perkiraan volume, dan titik lokasi proyek — admin membalas dengan rincian harga dan ongkir.</p>
+          <div className="actions">
+            <a className="btn btn-primary" href={waLink(settings.whatsapp, "Halo Istana Block, saya membaca artikel panduan dan ingin minta penawaran.")} target="_blank" rel="noopener">
+              Minta penawaran
+            </a>
+            <Link className="btn btn-ghost" style={{ borderColor: "#fff", color: "#fff" }} href="/kontak">
+              Halaman kontak
             </Link>
-          );
-        })}
-      </div>
+          </div>
+        </aside>
+      </section>
     </div>
   );
 }

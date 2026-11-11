@@ -3,6 +3,8 @@
 
 Hasil:
   wp-corpus/raw/<tipe>.json      -> JSON mentah (semua field yang diminta)
+  wp-corpus/raw/media_by_id.json -> Metadata featured_media {id: {source_url, alt_text, width, height, sizes}}
+  wp-corpus/raw/categories.json  -> Kategori WordPress
   wp-corpus/<tipe>/<slug>.md     -> teks bersih + frontmatter (untuk dipakai ulang)
   wp-corpus/ringkasan.json       -> indeks + statistik
 """
@@ -11,7 +13,7 @@ from html.parser import HTMLParser
 
 BASE = "https://istanablockpurwakarta.com"
 OUT = os.path.dirname(os.path.abspath(__file__)) + "/wp-corpus"
-UA = {"User-Agent": "crawl-wp/1.0 (migrasi konten; kontak: pemilik situs)"}
+UA = {"User-Agent": "crawl-wp/1.1 (migrasi konten; kontak: pemilik situs)"}
 FIELDS = "id,slug,link,date,modified,status,title,content,excerpt,categories,tags,featured_media,yoast_head_json,meta"
 
 
@@ -76,10 +78,10 @@ def tipe_konten():
     return hasil
 
 
-def ambil_semua(rest_base):
+def ambil_semua(rest_base, fields=FIELDS):
     item, hal = [], 1
     while True:
-        url = f"{BASE}/wp-json/wp/v2/{rest_base}?per_page=100&page={hal}&_fields={FIELDS}"
+        url = f"{BASE}/wp-json/wp/v2/{rest_base}?per_page=100&page={hal}&_fields={fields}"
         try:
             raw, head = get(url)
         except urllib.error.HTTPError as e:
@@ -90,8 +92,6 @@ def ambil_semua(rest_base):
         if not bagian:
             break
         item.extend(bagian)
-        # Jangan bergantung pada header X-WP-Total (kadang tak dikirim): lanjut selama
-        # halaman ini penuh 100 item.
         if len(bagian) < 100:
             break
         hal += 1
@@ -100,11 +100,70 @@ def ambil_semua(rest_base):
     return item
 
 
+def ambil_media_ids(media_ids):
+    """Ambil metadata media WordPress untuk seluruh featured_media ID."""
+    ids = sorted({int(x) for x in media_ids if x})
+    hasil = {}
+    fields = "id,source_url,alt_text,media_details"
+    for i in range(0, len(ids), 50):
+        chunk = ids[i:i + 50]
+        q = ",".join(str(x) for x in chunk)
+        url = f"{BASE}/wp-json/wp/v2/media?include={q}&per_page=100&_fields={fields}"
+        try:
+            raw, _ = get(url)
+            for m in json.loads(raw):
+                md = m.get("media_details") or {}
+                sizes = {
+                    k: v.get("source_url")
+                    for k, v in (md.get("sizes") or {}).items()
+                    if isinstance(v, dict) and v.get("source_url")
+                }
+                hasil[str(m["id"])] = {
+                    "id": m["id"],
+                    "source_url": m.get("source_url"),
+                    "alt_text": (m.get("alt_text") or "").strip(),
+                    "width": md.get("width"),
+                    "height": md.get("height"),
+                    "sizes": sizes,
+                }
+        except Exception as e:
+            print(f"  ! batch media gagal ({e}), fallback satuan...")
+            for mid in chunk:
+                try:
+                    raw, _ = get(f"{BASE}/wp-json/wp/v2/media/{mid}?_fields={fields}")
+                    m = json.loads(raw)
+                    md = m.get("media_details") or {}
+                    sizes = {
+                        k: v.get("source_url")
+                        for k, v in (md.get("sizes") or {}).items()
+                        if isinstance(v, dict) and v.get("source_url")
+                    }
+                    hasil[str(m["id"])] = {
+                        "id": m["id"],
+                        "source_url": m.get("source_url"),
+                        "alt_text": (m.get("alt_text") or "").strip(),
+                        "width": md.get("width"),
+                        "height": md.get("height"),
+                        "sizes": sizes,
+                    }
+                except Exception as e2:
+                    print(f"    ! media {mid} gagal: {e2}")
+    return hasil
+
+
 def main():
     os.makedirs(f"{OUT}/raw", exist_ok=True)
     types = tipe_konten()
     print("tipe:", ", ".join(sorted(types)))
     ringkasan = {"sumber": BASE, "diambil": time.strftime("%Y-%m-%d %H:%M:%S"), "tipe": {}}
+    all_featured_ids = set()
+
+    try:
+        cats_raw, _ = get(f"{BASE}/wp-json/wp/v2/categories?per_page=100")
+        json.dump(json.loads(cats_raw), open(f"{OUT}/raw/categories.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    except Exception as e:
+        print(f"  ! categories: gagal ({e})")
+
     for rest, asli in sorted(types.items()):
         if rest in ("media", "comments", "blocks", "navigation", "font-families", "global-styles", "settings", "users", "menus", "menu-items", "templates", "template-parts", "pattern-directory"):
             continue
@@ -117,6 +176,8 @@ def main():
         json.dump(item, open(f"{OUT}/raw/{rest}.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         stat = []
         for it in item:
+            if it.get("featured_media"):
+                all_featured_ids.add(it["featured_media"])
             judul = bersih((it.get("title") or {}).get("rendered", ""))
             isi = bersih((it.get("content") or {}).get("rendered", ""))
             y = it.get("yoast_head_json") or {}
@@ -126,6 +187,7 @@ def main():
                 "tautan": it.get("link"),
                 "terbit": it.get("date"),
                 "diubah": it.get("modified"),
+                "featured_media": it.get("featured_media") or 0,
                 "judul_seo": y.get("title"),
                 "deskripsi_seo": y.get("description"),
                 "kata": len(isi.split()),
@@ -142,6 +204,12 @@ def main():
             "item": stat,
         }
         print(f"  {rest:12} {len(stat):3} item | {total_kata:6} kata | median {ringkasan['tipe'][rest]['median_kata']}")
+
+    if all_featured_ids:
+        media_map = ambil_media_ids(all_featured_ids)
+        json.dump(media_map, open(f"{OUT}/raw/media_by_id.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        print(f"  featured_media: {len(media_map)}/{len(all_featured_ids)} diambil ke raw/media_by_id.json")
+
     json.dump(ringkasan, open(f"{OUT}/ringkasan.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print("total kata seluruh situs:", sum(v["total_kata"] for v in ringkasan["tipe"].values()))
 

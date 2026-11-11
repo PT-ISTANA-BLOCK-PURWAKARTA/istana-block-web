@@ -73,12 +73,23 @@ export const products = sqliteTable(
   (t) => [index("products_published_idx").on(t.published, t.sortOrder)],
 );
 
+export const articleCategories = [
+  "Paving & Grass Block",
+  "Genteng & Atap",
+  "Beton Cor & Konstruksi",
+  "Buis & Gorong-gorong",
+  "U-Ditch & Saluran",
+  "Kanstin",
+] as const;
+export type ArticleCategory = (typeof articleCategories)[number];
+
 export const articles = sqliteTable(
   "articles",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     slug: text("slug").notNull().unique(),
     title: text("title").notNull(),
+    category: text("category").notNull().default("Paving & Grass Block"),
     excerpt: text("excerpt").notNull().default(""),
     content: text("content").notNull().default(""),
     coverKey: text("cover_key"),
@@ -88,7 +99,10 @@ export const articles = sqliteTable(
     seoDescription: text("seo_description"),
     ...timestamps,
   },
-  (t) => [index("articles_published_idx").on(t.published, t.publishedAt)],
+  (t) => [
+    index("articles_published_idx").on(t.published, t.publishedAt),
+    index("articles_cat_idx").on(t.published, t.category, t.publishedAt),
+  ],
 );
 
 export const testimonials = sqliteTable("testimonials", {
