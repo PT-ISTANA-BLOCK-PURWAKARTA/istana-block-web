@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { articleCategories, type Article } from "@/db/schema";
+import { isRealArticleCover } from "@/lib/article-cover";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { ImageField } from "@/components/admin/ImageField";
 import { SubmitButton } from "@/components/admin/SubmitButton";
@@ -41,7 +42,7 @@ export function ArticleForm({ article, coverSrc }: { article?: Article; coverSrc
             <textarea id="excerpt" name="excerpt" rows={2} maxLength={300} defaultValue={a?.excerpt} />
           </div>
         </div>
-        <ImageField name="cover" current={coverSrc} label="Gambar sampul" />
+        <ImageField name="cover" current={isRealArticleCover(coverSrc) ? coverSrc : null} label="Gambar sampul (opsional — kosong = sampul dinamis otomatis)" />
         <div className="field">
           <span className="label" id="content-label">Isi artikel <span className="help">pakai tombol di atas untuk judul, daftar, tautan, dan gambar</span></span>
           <RichEditor name="content" labelledBy="content-label" defaultValue={a?.content ?? ""} folder="artikel" draftKey={`artikel:${a?.id ?? "baru"}`} placeholder="Tulis isi artikel. Mulai dengan paragraf pembuka, lalu tambahkan Judul untuk tiap bagian." minHeight={460} />

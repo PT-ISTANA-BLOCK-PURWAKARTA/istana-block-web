@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArticleCard, type ArticleCardItem } from "@/components/ArticleCard";
-import { responsif } from "@/lib/img";
+import { ArticleCover } from "@/components/ArticleCover";
 
 const PER_PAGE = 12;
 
@@ -251,19 +251,17 @@ export function ArticleCatalog({
 
       {spotlight && (
         <Link prefetch={false} href={`/artikel/${spotlight.slug}`} className="card artikel-spotlight">
-          {spotlight.coverSrc && (
-            <div className="artikel-spotlight-media hexlong">
-              <img
-                src={spotlight.coverSrc}
-                {...responsif(spotlight.coverSrc, "(max-width: 900px) 92vw, 540px")}
-                alt={spotlight.title}
-                width={1200}
-                height={675}
-                fetchPriority="high"
-                decoding="async"
-              />
-            </div>
-          )}
+          <div className="artikel-spotlight-media hexlong">
+            <ArticleCover
+              variant="spotlight"
+              title={spotlight.title}
+              category={spotlight.category}
+              excerpt={spotlight.excerpt}
+              coverSrc={spotlight.coverSrc}
+              sizes="(max-width: 900px) 92vw, 540px"
+              priority
+            />
+          </div>
           <div className="artikel-spotlight-body">
             <div className="artikel-card-meta">
               <span className="artikel-badge-new">Terbaru</span>

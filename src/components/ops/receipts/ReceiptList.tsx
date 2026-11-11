@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { deleteReceipt } from "@/app/operasional/actions/receipts";
+import { PhotoLightboxGrid } from "@/components/ImageLightbox";
 import { ConfirmAction } from "@/components/erp/ConfirmAction";
 import { Icon } from "@/components/panel/Icon";
 import { downloadWorkbook } from "@/lib/ops/excel";
@@ -62,14 +63,15 @@ function ReceiptCard({ row, canTest, onRateDelivery, onRatePrice }: { row: Recei
         </p>
       )}
       {row.photoKeys.length > 0 && (
-        <div className="rcv-photos">
-          {row.photoKeys.map((key) => (
-            <a key={key} href={berkasUrl(key)} target="_blank" rel="noreferrer" className="rcv-thumb">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={berkasUrl(key)} alt="Foto barang" loading="lazy" />
-            </a>
-          ))}
-        </div>
+        <PhotoLightboxGrid
+          containerClassName="rcv-photos"
+          itemClassName="rcv-thumb"
+          items={row.photoKeys.map((key, i) => ({
+            src: berkasUrl(key),
+            alt: `Foto ${row.itemName} (${i + 1})`,
+            caption: `${row.itemName} · ${whenText(row.receivedAt)}${row.photoKeys.length > 1 ? ` (${i + 1}/${row.photoKeys.length})` : ""}`,
+          }))}
+        />
       )}
       {row.notes && <p className="small">{row.notes}</p>}
       {(row.speedRating || row.priceRating || row.tier) && (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Kpis, Ok, PageHead, RangeForm } from "@/components/erp/ui";
+import { AttachmentLink } from "@/components/ops/calendar/AttachmentLink";
 import { CalendarView } from "@/components/ops/calendar/CalendarView";
 import { monthGrid, wibKey, wibTime, TYPE_LABEL, type EventView } from "@/components/ops/calendar/common";
 import { RecapExport } from "@/components/ops/calendar/RecapExport";
@@ -149,7 +150,7 @@ function RecapCard({ item, canManage, nowMs, meId }: { item: RecapItem; canManag
             {signedBy.length > 0 && <span className="muted"> ({signedBy.map((p) => p.name).join(", ")})</span>}
           </p>
         )}
-        {r && r.files.length > 0 && <div className="files">{r.files.map((f) => <a key={f.key} href={`/operasional/berkas/${f.key}`} target="_blank" rel="noreferrer">{f.name}</a>)}</div>}
+        {r && r.files.length > 0 && <div className="files">{r.files.map((f) => <AttachmentLink key={f.key} fileKey={f.key} name={f.name} />)}</div>}
       </div>
       <div className="side">
         {r ? <span className="badge badge-on">Sudah diisi</span> : <span className={`badge ${past ? "badge-warn" : "badge-off"}`}>{past ? "Belum diisi" : "Akan datang"}</span>}

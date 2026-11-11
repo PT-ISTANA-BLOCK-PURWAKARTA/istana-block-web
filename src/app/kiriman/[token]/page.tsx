@@ -5,6 +5,7 @@ import { Fragment } from "react";
 import { AutoRefresh } from "@/components/ops/delivery/AutoRefresh";
 import { Steps } from "@/components/ops/delivery/Steps";
 import { TrackMap } from "@/components/ops/delivery/TrackMap";
+import { PhotoLightboxGrid } from "@/components/ImageLightbox";
 import { STATUS_LABEL } from "@/components/ops/delivery/status";
 import { getDb } from "@/db";
 import { formatQty, tgl } from "@/lib/erp/util";
@@ -131,14 +132,14 @@ export default async function Kiriman({ params }: { params: Promise<{ token: str
         {photos.length > 0 && (
           <section className="kr-card">
             <h2>Foto bukti</h2>
-            <div className="kr-photos">
-              {photos.map((i) => (
-                <a key={i} href={`/kiriman/${token}/foto/${i}`} target="_blank" rel="noopener noreferrer">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/kiriman/${token}/foto/${i}`} alt={`Foto bukti ${i + 1}`} loading="lazy" />
-                </a>
-              ))}
-            </div>
+            <PhotoLightboxGrid
+              containerClassName="kr-photos"
+              items={photos.map((i) => ({
+                src: `/kiriman/${token}/foto/${i}`,
+                alt: `Foto bukti ${i + 1}`,
+                caption: `Foto bukti pengiriman ${i + 1}`,
+              }))}
+            />
           </section>
         )}
 

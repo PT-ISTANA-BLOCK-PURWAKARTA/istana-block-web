@@ -6,6 +6,7 @@ import { ActionForm, PendingContext } from "@/components/admin/ActionForm";
 import { DateField } from "@/components/ui";
 import { LISTS } from "@/lib/ops/shared/isoForms";
 import type { CalendarAttendee, CalendarFile } from "@/db/erp";
+import { AttachmentLink } from "./AttachmentLink";
 import { whenText, type EventView } from "./common";
 
 export type ResultData = {
@@ -172,7 +173,7 @@ export function ResultForm({ event, result, decisions: saved, names }: { event: 
         <div className="cal-files">
           {files.map((f) => (
             <div key={f.key} className="cal-file">
-              <a href={`/operasional/berkas/${f.key}`} target="_blank" rel="noreferrer">{f.name}</a>
+              <AttachmentLink fileKey={f.key} name={f.name} />
               <span className="small">{sizeText(f.size)}</span>
               <button type="button" className="icon-btn" aria-label={`Hapus ${f.name}`} onClick={() => setFiles((l) => l.filter((x) => x.key !== f.key))}>&times;</button>
             </div>

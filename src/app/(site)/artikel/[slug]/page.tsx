@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArticleCard } from "@/components/ArticleCard";
+import { ArticleCover } from "@/components/ArticleCover";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
 import { getEnv } from "@/db";
+import { extractArticleTopics, isRealArticleCover } from "@/lib/article-cover";
 import { imageUrl, tanggal, waLink } from "@/lib/format";
 import { getArticleBySlug, getRelatedArticles } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
@@ -18,6 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = a.seoTitle || a.title;
   const description = a.seoDescription || a.excerpt;
   const img = imageUrl(a.coverKey);
+  const ogImg = isRealArticleCover(img) ? img : null;
   return {
     // seoTitle dari panel sudah lengkap dengan merek; "absolute" mencegah template layout menempelkan akhiran merek kedua.
     title: a.seoTitle ? { absolute: a.seoTitle } : fitTitle(a.title),
@@ -30,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `/artikel/${a.slug}`,
       publishedTime: a.publishedAt?.toISOString(),
       modifiedTime: a.updatedAt.toISOString(),
-      images: img ? [img] : [{ url: "/og-default.jpg", width: 1200, height: 630 }],
+      images: ogImg ? [ogImg] : [{ url: "/og-default.jpg", width: 1200, height: 630 }],
     },
   };
 }
@@ -41,6 +44,8 @@ export default async function ArticlePage({ params }: Props) {
   if (!a) notFound();
   const [related] = await Promise.all([getRelatedArticles(a.category, a.slug, 3)]);
   const img = imageUrl(a.coverKey);
+  const ogImg = isRealArticleCover(img) ? img : null;
+  const topics = ogImg ? [] : extractArticleTopics(a.content, 3);
   const readMinutes = Math.max(1, Math.round(a.content.length / 1200));
 
   return (
@@ -55,7 +60,7 @@ export default async function ArticlePage({ params }: Props) {
           datePublished: a.publishedAt?.toISOString(),
           dateModified: a.updatedAt.toISOString(),
           mainEntityOfPage: `${env.SITE_URL}/artikel/${a.slug}`,
-          ...(img ? { image: img.startsWith("http") ? img : `${env.SITE_URL}${img}` } : {}),
+          ...(ogImg ? { image: ogImg.startsWith("http") ? ogImg : `${env.SITE_URL}${ogImg}` } : {}),
           author: { "@type": "Organization", name: s.company_name },
           publisher: { "@id": `${env.SITE_URL}/#business` },
         }}
@@ -74,7 +79,18 @@ export default async function ArticlePage({ params }: Props) {
         <h1 style={{ fontSize: "clamp(32px, 4vw, 50px)" }}>{a.title}</h1>
         {a.excerpt && <p className="hero-lead">{a.excerpt}</p>}
       </header>
-      {img && <img className="article-cover hexlong" src={img} alt={a.title} width={1200} height={675} fetchPriority="high" decoding="async" style={{ marginBottom: 32 }} />}
+      <div className="article-cover-wrap">
+        <ArticleCover
+          variant="hero"
+          title={a.title}
+          category={a.category}
+          excerpt={a.excerpt}
+          coverSrc={ogImg}
+          topics={topics}
+          sizes="(max-width: 960px) 92vw, 820px"
+          priority
+        />
+      </div>
       <Markdown>{a.content}</Markdown>
       <aside className="cta-aside hexpat" style={{ marginTop: 40, maxWidth: 720 }}>
         <h2>Butuh material untuk proyek Anda?</h2>

@@ -40,7 +40,7 @@ Contoh: carport 10 × 5 m dengan paving bata → 50 m² × 44 × 1,05 = **2.310 
 
 Tepi area paving perlu dikunci dengan kanstin agar paving tidak bergeser. Ukur keliling area yang tidak menempel dinding, lalu bagi dengan panjang satu kanstin.
 
-Gunakan [kalkulator pola paving](/pola-paving) untuk menghitung otomatis per motif dan warna, lalu kirim hasilnya ke admin untuk penawaran lengkap dengan ongkir.', '/img/artikel/sampul-panduan.webp', 1, unixepoch());
+Gunakan [kalkulator pola paving](/pola-paving) untuk menghitung otomatis per motif dan warna, lalu kirim hasilnya ke admin untuk penawaran lengkap dengan ongkir.', NULL, 1, unixepoch());
 INSERT INTO pages (slug, title, kind, excerpt, content, published, seo_title, seo_description) VALUES ('paving-block-karawang-cikampek', 'Paving Block Karawang & Cikampek', 'area', 'Paving block, U-Ditch, dan buis beton dikirim dari pabrik Purwakarta ke Karawang dan Cikampek dengan armada sendiri. Jarak, wilayah, dan cara cek ongkir.', 'Pabrik Istana Block ada di Pasawahan, Purwakarta. Pesanan untuk Karawang dan Cikampek dikirim langsung dari pabrik dengan armada sendiri, yaitu truk crane dan truk flatbed.
 
 ## Jarak dan waktu tempuh dari pabrik

@@ -5,6 +5,7 @@ import { Hex } from "@/components/Hex";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
 import { ProductCard } from "@/components/ProductCard";
+import { SpecSheetGrid } from "@/components/SpecSheetGrid";
 import { responsif } from "@/lib/img";
 import specSheets from "@/data/spec-sheets.json";
 import { getEnv } from "@/db";
@@ -224,14 +225,7 @@ export default async function ProductPage({ params }: Props) {
                 <h2 id="lembar">Lembar spesifikasi &amp; TKDN</h2>
                 <p className="muted small">Klik untuk melihat ukuran penuh.</p>
               </div>
-              <div className={`sheets${sheets.length === 1 ? " single" : ""}`}>
-                {sheets.map((x) => (
-                  <a key={x.src} href={x.src} target="_blank" rel="noopener" className="sheet">
-                    <img src={x.src} {...responsif(x.src, sheets.length === 1 ? "(max-width: 720px) 90vw, 540px" : "(max-width: 720px) 90vw, 280px")} alt={x.alt} width={x.w} height={x.h} loading="lazy" decoding="async" />
-                    <span>{x.title}<i aria-hidden="true">↗</i></span>
-                  </a>
-                ))}
-              </div>
+              <SpecSheetGrid items={sheets} />
             </section>
           );
         })()}

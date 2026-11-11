@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { NavLinks } from "./NavLinks";
+import { MobileMenuTrigger, TelegramMobileNav } from "./MobileNav";
 import { HexDivider } from "./HexDivider";
 import type { Settings } from "@/lib/settings";
 import { telLink, waLink } from "@/lib/format";
 
 export function SiteHeader({ s }: { s: Settings }) {
+  const waHref = waLink(s.whatsapp, "Halo Istana Block, saya mau minta penawaran.");
   return (
     <header className="site-header">
       <a href="#isi" className="skip-link">Langsung ke isi</a>
@@ -14,19 +16,16 @@ export function SiteHeader({ s }: { s: Settings }) {
         </Link>
         <nav aria-label="Menu utama" className="main-nav">
           <NavLinks />
-          <a className="btn btn-primary btn-sm" href={waLink(s.whatsapp, "Halo Istana Block, saya mau minta penawaran.")} target="_blank" rel="noopener">
+          <a className="btn btn-primary btn-sm" href={waHref} target="_blank" rel="noopener">
             Minta penawaran
           </a>
         </nav>
-        <details className="mnav">
-          <summary aria-label="Buka menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M4 12h12M4 17h16" /></svg>
-            Menu
-          </summary>
-          <nav aria-label="Menu utama (ponsel)" className="mnav-panel">
-            <NavLinks />
-          </nav>
-        </details>
+        <div className="mobile-head-actions">
+          <a className="btn btn-primary btn-sm mobile-cta" href={waHref} target="_blank" rel="noopener">
+            Penawaran
+          </a>
+          <MobileMenuTrigger />
+        </div>
       </div>
     </header>
   );
@@ -34,6 +33,8 @@ export function SiteHeader({ s }: { s: Settings }) {
 
 export function SiteFooter({ s }: { s: Settings }) {
   const year = new Date().getFullYear();
+  const waHref = waLink(s.whatsapp, "Halo Istana Block, saya mau minta penawaran.");
+  const telHref = telLink(s.phone);
   return (
     <>
       <div style={{ marginTop: 40 }}>
@@ -63,7 +64,7 @@ export function SiteFooter({ s }: { s: Settings }) {
             <br />
             <a href={waLink(s.whatsapp)} target="_blank" rel="noopener">WhatsApp {s.whatsapp}</a>
             <br />
-            <a href={telLink(s.phone)}>Telepon {s.phone}</a>
+            <a href={telHref}>Telepon {s.phone}</a>
             <br />
             {s.phone_office && (
               <>
@@ -77,8 +78,8 @@ export function SiteFooter({ s }: { s: Settings }) {
             <b>Produk &amp; layanan</b>
             <ul className="footer-links">
               <li><Link prefetch={false} href="/produk">Semua produk</Link></li>
-              <li><Link prefetch={false} href="/pola-paving">Kalkulator pola paving</Link></li>
               <li><Link prefetch={false} href="/paket-proyek">Paket proyek</Link></li>
+              <li><Link prefetch={false} href="/pola-paving">Kalkulator pola paving</Link></li>
               <li><Link prefetch={false} href="/produk/jasa-pasang-paving">Jasa pasang paving</Link></li>
               <li><Link prefetch={false} href="/area-pengiriman">Area pengiriman</Link></li>
             </ul>
@@ -104,13 +105,13 @@ export function SiteFooter({ s }: { s: Settings }) {
           </div>
         </div>
       </footer>
-      <nav aria-label="Hubungi kami" className="mobile-bar">
-        <a className="wa" href={waLink(s.whatsapp, "Halo Istana Block, saya mau minta penawaran.")} target="_blank" rel="noopener">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-13.2 7.9L3 21l1.2-4.6A9 9 0 1 1 21 12z" /></svg>
-          Minta penawaran
-        </a>
-        <a className="tel" href={telLink(s.phone)}>Telepon</a>
-      </nav>
+      <TelegramMobileNav
+        companyName={s.company_name}
+        hours={s.hours}
+        phone={s.phone}
+        waHref={waHref}
+        telHref={telHref}
+      />
     </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ZoomableImage } from "@/components/ImageLightbox";
 import { Kpis } from "@/components/erp/ui";
 import { Icon } from "@/components/panel/Icon";
 import { DeliveryDialog, OverallBadge, PriceChip, PriceDialog, SpeedChip, receiptOverall } from "@/components/ops/receipts/ReceiptRatings";
@@ -414,10 +415,13 @@ export function SupplierBoard({
                 <article key={row.id} className="rcv-card sup-card">
                   <div className="sup-card-row">
                     {photo && (
-                      <a href={berkasUrl(photo)} target="_blank" rel="noreferrer" className="rcv-thumb">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={berkasUrl(photo)} alt="Foto" loading="lazy" />
-                      </a>
+                      <ZoomableImage
+                        src={berkasUrl(photo)}
+                        alt={`Foto ${sourceLabel(row)} — ${row.itemName}`}
+                        caption={`${sourceLabel(row)} · ${row.itemName} · ${whenFull(row.receivedAt)}`}
+                        className="rcv-thumb"
+                        loading="lazy"
+                      />
                     )}
                     <div className="sup-card-main">
                       <div className="rcv-top">

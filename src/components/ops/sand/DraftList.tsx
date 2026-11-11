@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { completeSandTest, deleteSandDraft } from "@/app/operasional/actions/sand";
+import { ZoomableImage } from "@/components/ImageLightbox";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { ConfirmAction } from "@/components/erp/ConfirmAction";
 import { Icon } from "@/components/panel/Icon";
@@ -38,11 +39,14 @@ function CompleteDialog({ draft, now, onClose }: { draft: DraftView; now: number
     <Modal title="Isi hasil uji lumpur" sub={`${draft.sandType} · ${sourceLabel(draft)} · mulai ${whenText(draft.testedAt)} (sudah ${elapsed(draft.testedAt, now)})`} onClose={onClose}>
       {early && <p className="flag flag-warn">Baru {elapsed(draft.testedAt, now)} — sebaiknya tunggu minimal 1 jam agar lumpur mengendap sempurna.</p>}
       {draft.startPhotoKey && (
-        <a href={berkasUrl(draft.startPhotoKey)} target="_blank" rel="noreferrer" className="sand-start-photo">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={berkasUrl(draft.startPhotoKey)} alt="Foto awal" />
+        <ZoomableImage
+          src={berkasUrl(draft.startPhotoKey)}
+          alt="Foto awal (setelah dikocok)"
+          caption={`${draft.sandType} · ${sourceLabel(draft)} — Foto awal (setelah dikocok)`}
+          className="sand-start-photo"
+        >
           <span className="small muted">Foto awal (setelah dikocok)</span>
-        </a>
+        </ZoomableImage>
       )}
       <DialogForm action={completeSandTest} onSaved={onClose}>
         <input type="hidden" name="id" value={draft.id} />

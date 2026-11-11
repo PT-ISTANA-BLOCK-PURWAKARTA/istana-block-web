@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PhotoLightboxGrid } from "@/components/ImageLightbox";
 import { berkasUrl, elapsed, whenText } from "@/components/ops/receipts/util";
 import { EditSandButton } from "./EditSandButton";
 import { SandAckBar, type AckTodo } from "./SandAckBar";
@@ -104,7 +105,10 @@ export function SandTestList({
       <div className="rcv-grid">
         {rows.map((row) => {
           const level = row.siltPercent === null ? null : siltLevel(row.siltPercent, row.maxSiltPercent);
-          const photos = [row.startPhotoKey, row.photoKey].filter((key): key is string => Boolean(key));
+          const photos = [
+            row.startPhotoKey ? { key: row.startPhotoKey, label: "Foto awal (setelah dikocok)" } : null,
+            row.photoKey ? { key: row.photoKey, label: "Foto hasil uji" } : null,
+          ].filter((p): p is { key: string; label: string } => Boolean(p));
           return (
             <article key={row.id} className="rcv-card sand-test">
               <div className="rcv-top">
@@ -118,15 +122,21 @@ export function SandTestList({
                 {row.decision ? <span className={`badge ${DECISION_BADGE[row.decision]}`}>{DECISION_LABELS[row.decision]}</span> : <span className="badge badge-warn">Mengendap</span>}
               </div>
               <div className="sand-test-body">
-                <div className="rcv-photos sand-test-photos">
-                  {photos.map((key) => (
-                    <a key={key} href={berkasUrl(key)} target="_blank" rel="noreferrer" className="rcv-thumb">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={berkasUrl(key)} alt="Foto uji" loading="lazy" />
-                    </a>
-                  ))}
-                  {!photos.length && <span className="rcv-thumb sand-draft-none"><Icon name="sand" size={26} /></span>}
-                </div>
+                {photos.length > 0 ? (
+                  <PhotoLightboxGrid
+                    containerClassName="rcv-photos sand-test-photos"
+                    itemClassName="rcv-thumb"
+                    items={photos.map((p) => ({
+                      src: berkasUrl(p.key),
+                      alt: p.label,
+                      caption: `${sourceLabel(row)} · ${row.sandType} — ${p.label}`,
+                    }))}
+                  />
+                ) : (
+                  <div className="rcv-photos sand-test-photos">
+                    <span className="rcv-thumb sand-draft-none"><Icon name="sand" size={26} /></span>
+                  </div>
+                )}
                 <div className="sand-test-main">
                   {level && row.siltPercent !== null ? (
                     <>

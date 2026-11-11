@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, eq, or } from "drizzle-orm";
 import { deleteDelivery } from "@/app/operasional/actions/deliveries";
+import { PhotoLightboxGrid } from "@/components/ImageLightbox";
 import { ConfirmAction } from "@/components/erp/ConfirmAction";
 import { JournalView } from "@/components/erp/JournalView";
 import { BackLink, Ok, PageHead } from "@/components/erp/ui";
@@ -121,14 +122,14 @@ export default async function PengirimanDetail({ params, searchParams }: { param
             {d.receivedBy && <p>Diterima oleh <b>{d.receivedBy}</b>{d.deliveredAt ? ` · ${stamp(d.deliveredAt)}` : ""}</p>}
             {d.status === "terkirim" && !d.receivedBy && <p className="muted small">Diselesaikan dari kantor tanpa nama penerima.</p>}
             {proofKeys.length > 0 && (
-              <div className="dl-proofs">
-                {proofKeys.map((k, i) => (
-                  <a key={k} href={`/operasional/bukti/${k}`} target="_blank" rel="noopener noreferrer">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`/operasional/bukti/${k}`} alt={`Bukti ${d.number} foto ${i + 1}`} loading="lazy" />
-                  </a>
-                ))}
-              </div>
+              <PhotoLightboxGrid
+                containerClassName="dl-proofs"
+                items={proofKeys.map((k, i) => ({
+                  src: `/operasional/bukti/${k}`,
+                  alt: `Bukti ${d.number} foto ${i + 1}`,
+                  caption: `Bukti ${d.number} foto ${i + 1}${d.receivedBy ? ` · diterima ${d.receivedBy}` : ""}`,
+                }))}
+              />
             )}
             {canEdit && d.status !== "batal" && <ProofUploader id={d.id} count={uploadCount} max={MAX_DELIVERY_PROOFS} />}
           </section>

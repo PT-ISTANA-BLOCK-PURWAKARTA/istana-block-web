@@ -1,5 +1,6 @@
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { MarkdownImage } from "@/components/MarkdownImage";
 
 // Tabel dibungkus agar bisa digeser ke samping di layar kecil tanpa melebarkan halaman.
 const components: Components = {
@@ -8,9 +9,9 @@ const components: Components = {
       <table {...props} />
     </div>
   ),
-  // Foto di isi artikel/halaman biasanya jauh di bawah lipatan: tunda muat dan decode di luar utas utama.
-  // Sampul artikel bukan lewat sini (itu <img className="article-cover"> di halamannya sendiri).
-  img: ({ node: _node, alt, ...props }) => <img loading="lazy" decoding="async" alt={alt ?? ""} {...props} />,
+  // Foto di isi artikel/halaman dibuka dalam modal backdrop saat diklik agar tidak membuka tab baru.
+  // Sampul artikel bukan lewat sini (itu <ArticleCover> di halamannya sendiri).
+  img: ({ node: _node, ...props }) => <MarkdownImage {...props} />,
 };
 
 // react-markdown tidak merender HTML mentah (tanpa rehype-raw), jadi aman dari skrip yang disisipkan.

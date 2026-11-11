@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { ImageLightbox } from "@/components/ImageLightbox";
 import { shrinkImage } from "./shrinkImage";
 
 /** Memilih gambar, mengecilkannya di browser (maks 1600 px, WebP) lalu mengirim lewat form. */
@@ -8,6 +9,7 @@ export function ImageField({ name, current, label = "Gambar" }: { name: string; 
   const [preview, setPreview] = useState<string | null>(current);
   const [info, setInfo] = useState<string>("");
   const [fileName, setFileName] = useState("");
+  const [zoom, setZoom] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
 
   async function onChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -28,7 +30,13 @@ export function ImageField({ name, current, label = "Gambar" }: { name: string; 
     <div className="field">
       <label htmlFor={`${name}-file`}>{label}</label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
-        {preview ? <img src={preview} alt="" className="image-preview" /> : <div className="image-preview hexpat-light" aria-hidden="true" />}
+        {preview ? (
+          <button type="button" className="ib-preview-btn" aria-label="Perbesar pratinjau gambar" onClick={() => setZoom(true)}>
+            <img src={preview} alt="" className="image-preview" />
+          </button>
+        ) : (
+          <div className="image-preview hexpat-light" aria-hidden="true" />
+        )}
         <div className="stack" style={{ gap: 8 }}>
           <div className="ui-file">
             <input ref={ref} id={`${name}-file`} name={name} type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" onChange={onChange} />
@@ -47,6 +55,7 @@ export function ImageField({ name, current, label = "Gambar" }: { name: string; 
           )}
         </div>
       </div>
+      {preview && <ImageLightbox items={[{ src: preview, alt: label, caption: fileName || label }]} index={zoom ? 0 : null} onClose={() => setZoom(false)} />}
     </div>
   );
 }

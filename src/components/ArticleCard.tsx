@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { responsif } from "@/lib/img";
+import { ArticleCover } from "@/components/ArticleCover";
 
 export type ArticleCardItem = {
   id: number;
@@ -25,20 +25,18 @@ export function ArticleCard({
   const Heading = headingLevel;
   return (
     <Link prefetch={false} href={`/artikel/${item.slug}`} className="card artikel-card">
-      {item.coverSrc && (
-        <div className="card-media hexlong">
-          <img
-            src={item.coverSrc}
-            {...responsif(item.coverSrc, "(max-width: 640px) 92vw, (max-width: 960px) 46vw, 380px")}
-            alt={item.title}
-            width={800}
-            height={450}
-            loading={eager ? "eager" : "lazy"}
-            decoding="async"
-          />
-        </div>
-      )}
-      <div className="card-body" style={{ paddingTop: item.coverSrc ? 2 : 10 }}>
+      <div className="card-media hexlong">
+        <ArticleCover
+          variant="card"
+          title={item.title}
+          category={item.category}
+          excerpt={item.excerpt}
+          coverSrc={item.coverSrc}
+          sizes="(max-width: 640px) 92vw, (max-width: 960px) 46vw, 380px"
+          priority={eager}
+        />
+      </div>
+      <div className="card-body" style={{ paddingTop: 2 }}>
         <div className="artikel-card-meta">
           <span className="artikel-cat">{item.category}</span>
           {item.publishedDate && <span className="small muted">{item.publishedDate}</span>}

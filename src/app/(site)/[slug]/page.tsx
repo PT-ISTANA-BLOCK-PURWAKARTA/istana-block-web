@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArticleCover } from "@/components/ArticleCover";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
 import { getEnv } from "@/db";
@@ -102,7 +103,19 @@ export default async function StaticPage({ params }: Props) {
           </a>
         )}
       </header>
-      {img && <img className="article-cover hexlong" src={img} alt="" width={1200} height={675} fetchPriority="high" decoding="async" style={{ marginBottom: 32 }} />}
+      {img && (
+        <div className="article-cover-wrap">
+          <ArticleCover
+            variant="hero"
+            title={pg.title}
+            category={isArea ? "Area pengiriman" : "Panduan Material"}
+            excerpt={pg.excerpt ?? ""}
+            coverSrc={img}
+            sizes="(max-width: 960px) 92vw, 820px"
+            priority
+          />
+        </div>
+      )}
       <Markdown>{pg.content}</Markdown>
       <aside className="cta-aside hexpat" style={{ marginTop: 40, maxWidth: 720 }}>
         {isArea ? (

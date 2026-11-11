@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { ZoomableImage } from "@/components/ImageLightbox";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { fillProductionFromMix, saveProduction } from "@/app/operasional/actions/stock";
@@ -262,11 +263,14 @@ export function ProductionForm(p: ProductionFormProps) {
         </div>
         <ProofInput id="pr-photo" label="Foto hasil produksi" help={p.photoKey ? "ambil foto baru untuk mengganti" : "opsional"} />
         {p.photoKey && (
-          <a href={`/operasional/berkas/${p.photoKey}`} target="_blank" rel="noreferrer" className="prd-photo">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/operasional/berkas/${p.photoKey}`} alt="Foto produksi tersimpan" />
+          <ZoomableImage
+            src={`/operasional/berkas/${p.photoKey}`}
+            alt="Foto produksi tersimpan"
+            caption={p.batchCode ? `Foto produksi ${p.batchCode}` : "Foto produksi tersimpan"}
+            className="prd-photo"
+          >
             <span className="small muted">Foto tersimpan</span>
-          </a>
+          </ZoomableImage>
         )}
       </section>
 

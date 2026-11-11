@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, eq, inArray } from "drizzle-orm";
 import { deleteProduction } from "@/app/operasional/actions/stock";
+import { ZoomableImage } from "@/components/ImageLightbox";
 import { ConfirmAction } from "@/components/erp/ConfirmAction";
 import { JournalView } from "@/components/erp/JournalView";
 import { BackLink, Ok, PageHead, Rp } from "@/components/erp/ui";
@@ -113,10 +114,14 @@ export default async function ProduksiDetail({ params, searchParams }: { params:
         {p.photoKey && (
           <section className="admin-card">
             <span className="muted small">Foto produksi</span>
-            <a href={`/operasional/berkas/${p.photoKey}`} target="_blank" rel="noreferrer" className="prd-photo" style={{ marginTop: 6 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/operasional/berkas/${p.photoKey}`} alt="Foto produksi" />
-            </a>
+            <div style={{ marginTop: 6 }}>
+              <ZoomableImage
+                src={`/operasional/berkas/${p.photoKey}`}
+                alt="Foto produksi"
+                caption={`Foto produksi ${p.number} (${tgl(p.date)})`}
+                className="prd-photo"
+              />
+            </div>
           </section>
         )}
         {table("hasil", "Hasil produksi")}

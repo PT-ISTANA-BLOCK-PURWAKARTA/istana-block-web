@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PhotoLightboxGrid } from "@/components/ImageLightbox";
 import { Ok } from "@/components/erp/ui";
 import { DriverActions } from "@/components/ops/DriverActions";
 import { LocationShare } from "@/components/ops/LocationShare";
@@ -34,6 +35,11 @@ export default async function TugasDetail({ params, searchParams }: { params: Pr
   const base = driverBase(t);
   const onRoad = t.status === "berangkat" || t.status === "tiba" || (t.status === "tertunda" && !!t.departedAt);
   const uploadCount = await proofRowCount(db, t.id);
+  const proofItems = t.proofKeys.map((k, i) => ({
+    src: `/operasional/bukti/${k}`,
+    alt: `Foto bukti ${i + 1}`,
+    caption: `Foto bukti ${t.number} (${i + 1})`,
+  }));
   return (
     <>
       <AutoRefresh seconds={30} />
@@ -80,14 +86,7 @@ export default async function TugasDetail({ params, searchParams }: { params: Pr
         <section className="driver-card">
           <h2>Sudah terkirim</h2>
           <p>Diterima oleh <b>{t.receivedBy || "–"}</b>{t.deliveredAt ? ` · ${jam(t.deliveredAt)}` : ""}</p>
-          {t.proofKeys.length > 0 && (
-            <div className="dl-proofs">
-              {t.proofKeys.map((k, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <a key={k} href={`/operasional/bukti/${k}`} target="_blank" rel="noopener noreferrer"><img src={`/operasional/bukti/${k}`} alt={`Foto bukti ${i + 1}`} loading="lazy" /></a>
-              ))}
-            </div>
-          )}
+          {t.proofKeys.length > 0 && <PhotoLightboxGrid items={proofItems} containerClassName="dl-proofs" />}
         </section>
       ) : (
         <DriverActions
@@ -102,12 +101,7 @@ export default async function TugasDetail({ params, searchParams }: { params: Pr
       {t.status !== "terkirim" && t.status !== "batal" && t.proofKeys.length > 0 && (
         <section className="driver-card">
           <h2>Foto bukti ({t.proofKeys.length})</h2>
-          <div className="dl-proofs">
-            {t.proofKeys.map((k, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <a key={k} href={`/operasional/bukti/${k}`} target="_blank" rel="noopener noreferrer"><img src={`/operasional/bukti/${k}`} alt={`Foto bukti ${i + 1}`} loading="lazy" /></a>
-            ))}
-          </div>
+          <PhotoLightboxGrid items={proofItems} containerClassName="dl-proofs" />
         </section>
       )}
     </>

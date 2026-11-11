@@ -14,7 +14,7 @@
 .prd-mix-list { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
 .prd-bahan > summary { cursor: pointer; padding: 2px 0; }
 .prd-bahan[open] > summary { margin-bottom: 12px; }
-.prd-photo { display: inline-flex; align-items: center; gap: 10px; }
+.prd-photo { display: inline-flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 0; font: inherit; color: inherit; cursor: zoom-in; text-align: left; }
 .prd-photo img { width: 96px; height: 96px; object-fit: cover; border-radius: 10px; border: 1px solid var(--p-line); }
 .admin .prd-form .prd-save { min-height: 54px; font-size: 17px; }
 

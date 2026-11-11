@@ -695,6 +695,9 @@ a.kpi:hover .k-label { color: var(--biru); }
   .print-meta > div { max-width: 100%; }
 }
 
+.ib-preview-btn { border: 0; padding: 0; background: transparent; border-radius: 14px; cursor: zoom-in; display: inline-block; }
+.ib-preview-btn:hover .image-preview { outline: 2px solid var(--biru); }
+
 /* ---------- Daftar & paging artikel admin ---------- */
 .admin-row-actions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px 12px; white-space: nowrap; }
 .admin-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }

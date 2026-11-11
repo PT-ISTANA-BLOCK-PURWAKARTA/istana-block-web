@@ -31,7 +31,7 @@
 .sand-draft-img { width: 76px; height: 76px; border-radius: 10px; object-fit: cover; flex: 0 0 auto; background: var(--latar); }
 .sand-draft-none { display: inline-flex; align-items: center; justify-content: center; color: var(--p-muted); border: 1px solid var(--p-line); }
 .sand-draft-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
-.sand-start-photo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.sand-start-photo { display: flex; align-items: center; gap: 12px; text-decoration: none; border: 0; background: transparent; padding: 0; font: inherit; color: inherit; cursor: zoom-in; text-align: left; }
 .sand-start-photo img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; }
 
 /* Daftar hasil */

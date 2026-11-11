@@ -8,6 +8,7 @@ import { requireAdmin } from "@/lib/auth";
 import { imageUrl, tanggal } from "@/lib/format";
 import { deleteArticle, toggleArticlePublished } from "../../actions/articles";
 import { ArticleToggleButton } from "./ArticleToggleButton";
+import { isRealArticleCover } from "@/lib/article-cover";
 
 export const metadata = { title: "Artikel" };
 
@@ -197,7 +198,8 @@ export default async function AdminArtikel({ searchParams }: { searchParams: Pro
           </thead>
           <tbody>
             {rows.map((a) => {
-              const img = imageUrl(a.coverKey);
+              const rawImg = imageUrl(a.coverKey);
+              const img = isRealArticleCover(rawImg) ? rawImg : null;
               return (
                 <tr key={a.id}>
                   <td>

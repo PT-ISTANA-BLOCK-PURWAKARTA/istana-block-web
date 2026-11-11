@@ -17,7 +17,7 @@ REPO = _REPO.replace("\\", "/")
 KELUAR = f"{REPO}/drizzle/data/2026-11-impor-artikel-wp"
 WIB = timezone(timedelta(hours=7))
 
-SAMPUL_CADANGAN = "/img/artikel/sampul-panduan.webp"
+SAMPUL_CADANGAN = None
 
 HALAMAN_BARU = {
     "/", "/produk", "/paket-proyek", "/galeri", "/artikel", "/kontak", "/area-pengiriman",
@@ -128,6 +128,10 @@ def kutip(s):
     return "'" + (s or "").replace("'", "''") + "'"
 
 
+def kutip_opt(s):
+    return "NULL" if not s else kutip(s)
+
+
 def main():
     idx = json.load(open(f"{AKAR}/md/indeks.json", encoding="utf-8"))
     posts = idx["posts"]
@@ -171,7 +175,7 @@ def main():
 
         info_cov = cover_peta.get(slug)
         cover_key = info_cov["key"] if (info_cov and info_cov.get("key")) else SAMPUL_CADANGAN
-        if cover_key == SAMPUL_CADANGAN:
+        if not cover_key:
             sumber_hitung["placeholder"] += 1
         else:
             sumber_hitung["R2-featured"] += 1
@@ -191,7 +195,7 @@ def main():
         kata = len(md.split())
         baris.append(
             "INSERT INTO articles (slug, title, category, excerpt, content, cover_key, published, published_at, seo_title, seo_description, created_at, updated_at) "
-            f"VALUES ({kutip(slug)}, {kutip(judul)}, {kutip(kat)}, {kutip(ringkas_bersih)}, {kutip(md)}, {kutip(cover_key)}, 1, {waktu(p['terbit'])}, "
+            f"VALUES ({kutip(slug)}, {kutip(judul)}, {kutip(kat)}, {kutip(ringkas_bersih)}, {kutip(md)}, {kutip_opt(cover_key)}, 1, {waktu(p['terbit'])}, "
             f"{kutip(seo_judul)}, {kutip(ringkas_bersih)}, unixepoch(), unixepoch()) "
             f"ON CONFLICT(slug) DO UPDATE SET title=excluded.title, category=excluded.category, excerpt=excluded.excerpt, content=excluded.content, "
             f"cover_key=excluded.cover_key, published=1, published_at=excluded.published_at, seo_title=excluded.seo_title, "
@@ -211,13 +215,13 @@ def main():
             f.write("-- Impor ulang bersih artikel WordPress (thumbnail R2 + tautan pulih + kategori).\n")
             f.write("\n".join(baris[i:i + per_file]) + "\n")
 
-    # Update artikel asli (native) agar punya kategori & sampul konsisten bila cover_key masih kosong
+    # Update artikel asli (native) agar punya kategori & tanpa fallback raster statis
     with open(f"{keluar}/00-native.sql", "w", encoding="utf-8", newline="\n") as f:
         f.write(
-            f"UPDATE articles SET category = 'Paving & Grass Block', "
-            f"cover_key = COALESCE(NULLIF(cover_key, ''), '{SAMPUL_CADANGAN}'), "
-            f"updated_at = unixepoch() "
-            f"WHERE slug = 'cara-menghitung-kebutuhan-paving-block';\n"
+            "UPDATE articles SET category = 'Paving & Grass Block', "
+            "cover_key = NULLIF(cover_key, '/img/artikel/sampul-panduan.webp'), "
+            "updated_at = unixepoch() "
+            "WHERE slug = 'cara-menghitung-kebutuhan-paving-block';\n"
         )
 
     with open(f"{keluar}/rollback.sql", "w", encoding="utf-8", newline="\n") as f:
