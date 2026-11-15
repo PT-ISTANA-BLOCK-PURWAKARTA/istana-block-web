@@ -199,46 +199,120 @@ function createTurfTexture(maxAnisotropy: number) {
 
 function createRulerTexture(lengthCm: number): THREE.CanvasTexture {
   const canvas = document.createElement("canvas");
-  const widthPx = Math.min(2048, Math.max(512, Math.round(lengthCm * 6)));
-  const heightPx = 64;
+  const widthPx = Math.min(4096, Math.max(1024, Math.round(lengthCm * 8)));
+  const heightPx = 160;
   canvas.width = widthPx;
   canvas.height = heightPx;
 
   const ctx = canvas.getContext("2d");
   if (ctx) {
-    // Kuning meteran konstruksi (#fbbf24)
-    ctx.fillStyle = "#fbbf24";
+    // Kuning meteran konstruksi (#facc15)
+    ctx.fillStyle = "#facc15";
     ctx.fillRect(0, 0, widthPx, heightPx);
 
-    // Garis pembatas atas & bawah
-    ctx.fillStyle = "#1e293b";
-    ctx.fillRect(0, 0, widthPx, 2);
-    ctx.fillRect(0, heightPx - 2, widthPx, 2);
+    // Garis pembatas atas & bawah tebal gelap
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(0, 0, widthPx, 6);
+    ctx.fillRect(0, heightPx - 6, widthPx, 6);
 
     const pxPerCm = widthPx / lengthCm;
-    ctx.font = "bold 20px system-ui, -apple-system, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
 
+    // Checkerband desimeter di bagian atas pita meteran (standar rambu ukur surveyor / safety tape)
+    for (let cm = 0; cm < lengthCm; cm += 10) {
+      const x1 = Math.round(cm * pxPerCm);
+      const x2 = Math.round((cm + 10) * pxPerCm);
+      if (Math.floor(cm / 10) % 2 === 1) {
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(x1, 6, x2 - x1, 20);
+      }
+    }
+
+    // Tanda garis centimeter, 5cm, 10cm, 50cm, 100cm
+    for (let cm = 0; cm <= lengthCm; cm += 1) {
+      const x = Math.round(cm * pxPerCm);
+      const isMeter = cm % 100 === 0;
+      const isHalfMeter = cm % 50 === 0;
+      const isDecimeter = cm % 10 === 0;
+      const isFiveCm = cm % 5 === 0;
+
+      if (isMeter) {
+        ctx.fillStyle = "#dc2626"; // Aksen merah untuk tanda meter
+        ctx.fillRect(x - 3, 26, 6, 48);
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(x - 2, 74, 4, 30);
+      } else if (isHalfMeter) {
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(x - 2.5, 26, 5, 42);
+      } else if (isDecimeter) {
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(x - 2, 26, 4, 32);
+      } else if (isFiveCm) {
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(x - 1.5, 26, 3, 22);
+      } else if (pxPerCm >= 5) {
+        ctx.fillStyle = "#64748b";
+        ctx.fillRect(x - 1, 26, 2, 14);
+      }
+    }
+
+    // Label Angka Meter & Desimeter
     for (let cm = 0; cm <= lengthCm; cm += 10) {
-      const x = cm * pxPerCm;
+      const x = Math.round(cm * pxPerCm);
       const isMeter = cm % 100 === 0;
       const isHalfMeter = cm % 50 === 0;
 
-      const tickH = isMeter ? 26 : isHalfMeter ? 16 : 9;
-      ctx.fillStyle = "#1e293b";
-      ctx.fillRect(x - (isMeter ? 1.5 : 1), 0, isMeter ? 3 : 2, tickH);
-
       if (isMeter) {
-        const mVal = cm / 100;
+        const mVal = (cm / 100).toFixed(0);
+        // Pill gelap berlatar belakang kontras tinggi
         ctx.fillStyle = "#0f172a";
-        ctx.fillText(`${mVal}m`, Math.min(widthPx - 26, Math.max(26, x)), 44);
+        const badgeW = 90;
+        const badgeH = 50;
+        const bx = Math.min(widthPx - badgeW - 6, Math.max(6, x - badgeW / 2));
+        const by = 96;
+        if (typeof ctx.roundRect === "function") {
+          ctx.beginPath();
+          ctx.roundRect(bx, by, badgeW, badgeH, 10);
+          ctx.fill();
+        } else {
+          ctx.fillRect(bx, by, badgeW, badgeH);
+        }
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 34px system-ui, -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`${mVal} m`, bx + badgeW / 2, by + badgeH / 2);
+      } else if (isHalfMeter && pxPerCm * 50 >= 90) {
+        const mVal = (cm / 100).toFixed(1);
+        ctx.fillStyle = "#ffffff";
+        const badgeW = 76;
+        const badgeH = 40;
+        const bx = Math.min(widthPx - badgeW - 6, Math.max(6, x - badgeW / 2));
+        const by = 104;
+        ctx.strokeStyle = "#0f172a";
+        ctx.lineWidth = 3;
+        if (typeof ctx.roundRect === "function") {
+          ctx.beginPath();
+          ctx.roundRect(bx, by, badgeW, badgeH, 8);
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          ctx.fillRect(bx, by, badgeW, badgeH);
+          ctx.strokeRect(bx, by, badgeW, badgeH);
+        }
+
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "800 24px system-ui, -apple-system, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`${mVal}m`, bx + badgeW / 2, by + badgeH / 2);
       }
     }
   }
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
   tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
   return tex;
 }
@@ -1030,18 +1104,32 @@ export function Paving3DView({
     }
 
     // 3D Penggaris / Meteran Skala (pada tepi depan paving)
+    // Dimiringkan -39° menghadap kamera dengan tinggi 11.5 cm agar terbaca jelas & tidak gepeng
     const rulerLen = padW;
     const rulerTex = createRulerTexture(rulerLen);
-    const rulerGeo = new THREE.PlaneGeometry(rulerLen, 4.5);
+    const rulerHeight = 11.5;
+    const rulerGeo = new THREE.PlaneGeometry(rulerLen, rulerHeight);
     const rulerMat = new THREE.MeshBasicMaterial({
       map: rulerTex,
       side: THREE.DoubleSide,
     });
     const rulerMesh = new THREE.Mesh(rulerGeo, rulerMat);
-    rulerMesh.rotateX(-Math.PI / 2);
-    const rulerZ = showKanstin ? padD / 2 + NAT + KANSTIN_WIDTH + 2.8 : padD / 2 + 2.8;
-    rulerMesh.position.set(0, 0.15, rulerZ);
+    rulerMesh.rotateX(-Math.PI * 0.22);
+    const frontEdgeZ = showKanstin ? padD / 2 + NAT + KANSTIN_WIDTH : padD / 2;
+    const rulerZ = frontEdgeZ + 6.0;
+    const rulerY = 4.4;
+    rulerMesh.position.set(0, rulerY, rulerZ);
     patternGroup.add(rulerMesh);
+
+    // Balok penopang meteran 3D di belakang pita meteran
+    const backingGeo = new THREE.BoxGeometry(rulerLen, 2.5, 4.0);
+    const backingMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.85,
+    });
+    const backingMesh = new THREE.Mesh(backingGeo, backingMat);
+    backingMesh.position.set(0, 1.25, frontEdgeZ + 3.0);
+    patternGroup.add(backingMesh);
 
     // Sesuaikan area bayangan & batas jarak kamera dengan ukuran potongan
     const nextMetrics: SceneMetrics = { slabW, slabD, tebalCm };
@@ -1123,25 +1211,60 @@ export function Paving3DView({
       </div>
 
       <div className={css.scaleHud} aria-label={`Skala: lebar ${(vw / 100).toFixed(1)} m, panjang ${(vh / 100).toFixed(1)} m`} data-pp-noprint>
+        <div className={css.scaleHeader}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21.3 8.7 8.7 21.3c-1 1-2.5 1-3.4 0l-2.6-2.6c-1-1-1-2.5 0-3.4L15.3 2.7c1-1 2.5-1 3.4 0l2.6 2.6c1 1 1 2.5 0 3.4Z" />
+            <path d="m14.5 3.5 2 2" />
+            <path d="m11.5 6.5 2 2" />
+            <path d="m8.5 9.5 2 2" />
+            <path d="m5.5 12.5 2 2" />
+          </svg>
+          <span>PENGGARIS SKALA METER</span>
+        </div>
         <div className={css.scaleRuler}>
-          <span className={css.scaleTick}>0</span>
-          <span className={css.scaleBar} />
-          <span className={css.scaleTick}>1 m</span>
-          {vw >= 180 && (
-            <>
-              <span className={css.scaleBar} />
-              <span className={css.scaleTick}>2 m</span>
-            </>
-          )}
-          {vw >= 280 && (
-            <>
-              <span className={css.scaleBar} />
-              <span className={css.scaleTick}>3 m</span>
-            </>
-          )}
+          <div className={css.scaleRulerTape}>
+            <span className={css.scaleRulerMarker}>
+              <b>0</b>
+            </span>
+            <div className={css.scaleRulerSegment}>
+              <span className={css.scaleRulerSubtick} />
+              <span className={css.scaleRulerSubtick} />
+              <span className={css.scaleRulerSubtick} />
+              <span className={css.scaleRulerSubtick} />
+            </div>
+            <span className={css.scaleRulerMarker}>
+              <b>1 m</b>
+            </span>
+            {vw >= 180 && (
+              <>
+                <div className={css.scaleRulerSegment}>
+                  <span className={css.scaleRulerSubtick} />
+                  <span className={css.scaleRulerSubtick} />
+                  <span className={css.scaleRulerSubtick} />
+                  <span className={css.scaleRulerSubtick} />
+                </div>
+                <span className={css.scaleRulerMarker}>
+                  <b>2 m</b>
+                </span>
+              </>
+            )}
+            {vw >= 280 && (
+              <>
+                <div className={css.scaleRulerSegment}>
+                  <span className={css.scaleRulerSubtick} />
+                  <span className={css.scaleRulerSubtick} />
+                  <span className={css.scaleRulerSubtick} />
+                  <span className={css.scaleRulerSubtick} />
+                </div>
+                <span className={css.scaleRulerMarker}>
+                  <b>3 m</b>
+                </span>
+              </>
+            )}
+          </div>
         </div>
         <div className={css.scaleLabel}>
-          📏 Skala: <strong>{(vw / 100).toFixed(1)} m × {(vh / 100).toFixed(1)} m</strong>
+          Ukuran: <strong>{(vw / 100).toFixed(1)} m × {(vh / 100).toFixed(1)} m</strong> <span className={css.scaleArea}>({((vw * vh) / 10000).toFixed(1)} m²)</span>
         </div>
       </div>
 
