@@ -12,5 +12,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ key: st
   obj.writeHttpMetadata(headers);
   headers.set("etag", obj.httpEtag);
   headers.set("cache-control", "public, max-age=31536000, immutable");
+  headers.set("x-content-type-options", "nosniff");
+  headers.set("x-frame-options", "SAMEORIGIN");
   return new Response(obj.body as ReadableStream, { headers });
 }

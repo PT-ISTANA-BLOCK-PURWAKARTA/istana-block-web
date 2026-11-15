@@ -113,8 +113,54 @@ function forget(key: string) {
 
 function respond(entry: Entry, status: "HIT" | "HIT-EDGE" | "STALE" | "MISS") {
   const headers = new Headers(entry.headers);
+  const cc = headers.get("cache-control") ?? "";
+  // Next.js force-dynamic memancarkan no-store yang memblokir Chrome bf-cache pada rute publik;
+  // ganti menjadi max-age=0, must-revalidate agar tetap segar tanpa mematikan bf-cache.
+  if (!cc || /no-store/i.test(cc)) {
+    headers.set("cache-control", "public, max-age=0, must-revalidate");
+  }
   headers.set("x-ib-cache", status);
+  if (!headers.has("strict-transport-security")) {
+    headers.set("strict-transport-security", "max-age=63072000; includeSubDomains; preload");
+  }
+  if (!headers.has("x-content-type-options")) {
+    headers.set("x-content-type-options", "nosniff");
+  }
+  if (!headers.has("x-frame-options")) {
+    headers.set("x-frame-options", "SAMEORIGIN");
+  }
+  if (!headers.has("referrer-policy")) {
+    headers.set("referrer-policy", "strict-origin-when-cross-origin");
+  }
+  if (!headers.has("permissions-policy")) {
+    headers.set("permissions-policy", "camera=(), microphone=(), geolocation=(self)");
+  }
   return new Response(entry.body, { status: 200, headers });
+}
+
+function addSecurityHeaders(res: Response, isLocal: boolean): Response {
+  if (isLocal) return res;
+  const h = new Headers(res.headers);
+  if (!h.has("strict-transport-security")) {
+    h.set("strict-transport-security", "max-age=63072000; includeSubDomains; preload");
+  }
+  if (!h.has("x-content-type-options")) {
+    h.set("x-content-type-options", "nosniff");
+  }
+  if (!h.has("x-frame-options")) {
+    h.set("x-frame-options", "SAMEORIGIN");
+  }
+  if (!h.has("referrer-policy")) {
+    h.set("referrer-policy", "strict-origin-when-cross-origin");
+  }
+  if (!h.has("permissions-policy")) {
+    h.set("permissions-policy", "camera=(), microphone=(), geolocation=(self)");
+  }
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers: h,
+  });
 }
 
 async function fromEdge(key: string): Promise<Entry | null> {
@@ -151,8 +197,34 @@ async function toEdge(key: string, entry: Entry, ttl: number) {
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+
+    // Paksa HTTPS & domain kanonikal apex (bukan localhost/127.0.0.1)
+    const isLocal = url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname.endsWith(".local");
+    const proto = req.headers.get("x-forwarded-proto") || (url.protocol ? url.protocol.replace(":", "") : "https");
+    const isHttp = proto === "http";
+    const isWww = url.hostname.toLowerCase() === "www.istanablock.com";
+
+    if (!isLocal && (isHttp || isWww)) {
+      const targetHost = isWww ? "istanablock.com" : url.host;
+      const targetUrl = `https://${targetHost}${url.pathname}${url.search}`;
+      return new Response(null, {
+        status: 301,
+        headers: {
+          location: targetUrl,
+          "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "SAMEORIGIN",
+          "referrer-policy": "strict-origin-when-cross-origin",
+          "cache-control": "public, max-age=86400",
+        },
+      });
+    }
+
     const ttl = ttlFor(req, url);
-    if (ttl === null) return handler.fetch(req, env, ctx);
+    if (ttl === null) {
+      const direct = await handler.fetch(req, env, ctx);
+      return addSecurityHeaders(direct, isLocal);
+    }
 
     const { clean, tracking } = splitTracking(url);
     const key = await cacheKey(req, clean, env.CF_VERSION_METADATA?.id ?? "lokal");
@@ -205,8 +277,14 @@ export default {
     }
 
     const res: Response = await handler.fetch(forward(), env, ctx);
-    if (res.status !== 200 || res.headers.has("set-cookie")) return withTracking(res, clean, tracking);
-    const entry: Entry = { expires: now + ttl * 1000, headers: [...res.headers], body: await res.arrayBuffer() };
+    if (res.status !== 200 || res.headers.has("set-cookie")) {
+      return addSecurityHeaders(withTracking(res, clean, tracking), isLocal);
+    }
+    const resHeaders = new Headers(res.headers);
+    if (!isLocal && !resHeaders.has("strict-transport-security")) {
+      resHeaders.set("strict-transport-security", "max-age=63072000; includeSubDomains; preload");
+    }
+    const entry: Entry = { expires: now + ttl * 1000, headers: [...resHeaders], body: await res.arrayBuffer() };
     remember(key, entry);
     ctx.waitUntil(toEdge(key, entry, ttl));
     return respond(entry, "MISS");

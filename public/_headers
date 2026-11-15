@@ -3,18 +3,25 @@
 # bukan respons buatan Worker (/media lewat R2, video /reel/*.mp4 lewat src/app/reel/[file]/route.ts).
 # Tanpa berkas ini semua aset dikirim "max-age=0, must-revalidate" dan kunjungan ulang harus cek ke server.
 
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Permissions-Policy: camera=(), microphone=(), geolocation=(self)
+
 # Nama berkas di _next/static memuat hash isi, jadi aman disimpan setahun.
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Nama berkas tidak ber-hash: cukup sehari supaya foto yang diganti dengan nama sama tidak basi lama.
+# Nama berkas tidak ber-hash: 30 hari untuk aset gambar/merek/reel/katalog agar kunjungan ulang cepat.
 /img/*
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=2592000
 /brand/*
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=2592000
 /reel/*
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=2592000
 
-# Katalog PDF (bila diunggah ke public/katalog): nama tidak ber-hash, jadi sehari saja.
+# Katalog PDF (bila diunggah ke public/katalog): cache 30 hari.
 /katalog/*
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=2592000

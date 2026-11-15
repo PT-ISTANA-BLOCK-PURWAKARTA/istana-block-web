@@ -8,9 +8,6 @@
 	"main": "worker.ts",
 	// Minify bundel: tanpa ini modul Operasional membuat Worker ±3,5 MB gzip, di atas batas 3 MB Workers Free.
 	"minify": true,
-	// Batas CPU Workers Paid. Di paket Free angka ini ditolak saat deploy; 10 ms bawaan Free
-	// membuat render dingin gagal 1102 (STATUS §6). Naikkan hanya bila paket sudah berbayar.
-	"limits": { "cpu_ms": 30000 },
 	"compatibility_date": "2026-09-01",
 	"compatibility_flags": [
 		"nodejs_compat",
@@ -41,7 +38,7 @@
 		"SITE_URL": "https://istanablock.com",
 		// Saklar indeks pencarian. "off" = SEMUA host (juga SITE_URL) noindex, robots Disallow, tanpa GTM, selama
 		// WordPress lama masih hidup. Ubah ke "on" saat flip (lalu deploy: versi baru membuang cache lama).
-		"SEARCH_INDEXING": "off",
+		"SEARCH_INDEXING": "on",
 		// Container Google Tag Manager (Google Ads AW-858211595 + GA4). Hanya dimuat di host SITE_URL
 		// atau saat uji Tag Assistant (?gtm_debug); lihat docs/pelacakan-google-ads.md.
 		"GTM_ID": "GTM-PXSMDXD8"

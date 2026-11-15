@@ -12,6 +12,13 @@ next-env.d.ts
 backup-*.sql
 *.sql.bak
 
+# Kunci akun & kredensial lokal
+*.local.json
+akun-*.local.json
+.dev.vars*
+*.pem
+wrangler.local.jsonc
+
 # Hasil generate skrip impor data (1 MB, dibuat ulang dengan scripts/porting/import-inventori-ops.py)
 scripts/porting/import/
 
