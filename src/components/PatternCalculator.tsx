@@ -1078,7 +1078,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const [shareUrl, setShareUrl] = useState("");
   const [status, setStatus] = useState("");
   const [fallback, setFallback] = useState("");
-  const [view3d, setView3d] = useState(false);
+  const [view3d, setView3d] = useState(true);
   const touched = useRef(false);
 
   // Tanpa initialQuery dari server: pulihkan pilihan dari URL setelah dimuat.

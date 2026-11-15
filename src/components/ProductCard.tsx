@@ -9,7 +9,16 @@ export function ProductCard({ p }: { p: Product }) {
     // prefetch mati: tiap prefetch = satu request ke Worker (batas CPU paket Free).
     <Link prefetch={false} href={`/produk/${p.slug}`} className="card">
       <div className={`card-media hexlong ${img ? "" : "hexpat-light"}`}>
-        {img ? <img src={img} {...responsif(img, "(max-width: 560px) 90vw, (max-width: 1000px) 45vw, 380px")} alt={`Foto ${p.name}`} width={1600} height={1200} loading="lazy" decoding="async" /> : <span>Foto {p.name.toLowerCase()} menyusul</span>}
+        {img ? (
+          <>
+            <img src={img} {...responsif(img, "(max-width: 560px) 90vw, (max-width: 1000px) 45vw, 380px")} alt={`Foto ${p.name}`} width={1600} height={1200} loading="lazy" decoding="async" />
+            <span className="card-watermark" aria-hidden="true">
+              <img src="/brand/logo-istana-block-300.webp" alt="" width={300} height={90} loading="lazy" decoding="async" />
+            </span>
+          </>
+        ) : (
+          <span>Foto {p.name.toLowerCase()} menyusul</span>
+        )}
       </div>
       <div className="card-body">
         <div className="card-badges">

@@ -1,6 +1,6 @@
 -- Isi info bisnis di D1 untuk data terstruktur LocalBusiness, peta, dan profil resmi.
 -- Sumber: audit SEO 19 Okt 2026 (temuan P9, TB-08, LK-03, LK-05, AI-04). Nilai berasal dari situs lama
--- (blok JSON-LD HomeAndConstructionBusiness di https://istanablockpurwakarta.com/ dan tautan Maps di /kontak/).
+-- (blok JSON-LD HomeAndConstructionBusiness di https://istanablock.com/ dan tautan Maps di /kontak/).
 -- BERKAS INI TIDAK DIJALANKAN OTOMATIS. Jalankan sendiri, satu kali, setelah kode baru tayang.
 --
 -- SEBELUM MENJALANKAN: cocokkan "Rating Google" dan "Jumlah ulasan Google" di panel /situs -> Info & kontak
@@ -62,6 +62,6 @@ UPDATE settings
 -- ---------------------------------------------------------------------------
 -- Pemeriksaan sesudah dijalankan (jalankan terpisah, sebagai --command):
 --   SELECT key, value FROM settings WHERE key IN ('geo_lat', 'geo_lng', 'same_as', 'maps_url', 'maps_embed_url', 'google_rating', 'google_review_count');
--- Lalu uji https://istanablockpurwakarta.com/ di Rich Results Test dan Schema Markup Validator
+-- Lalu uji https://istanablock.com/ di Rich Results Test dan Schema Markup Validator
 -- (cari HomeAndConstructionBusiness: geo, sameAs, hasMap, openingHoursSpecification, postalCode).
 -- ---------------------------------------------------------------------------

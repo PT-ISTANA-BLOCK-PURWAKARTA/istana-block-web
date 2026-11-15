@@ -99,6 +99,7 @@ export function ArticleCover({
             decoding="async"
           >
             <span className="article-zoom-pill" aria-hidden="true">Perbesar gambar</span>
+            <span className="artikel-brand-pill" aria-hidden="true">istanablock.com</span>
           </ZoomableImage>
         </figure>
       );
@@ -139,17 +140,22 @@ export function ArticleCover({
   if (hasReal) {
     const resp = sizes ? responsif(coverSrc, sizes) : {};
     return (
-      /* eslint-disable-next-line @next/next/no-img-element */
-      <img
-        src={coverSrc}
-        {...resp}
-        alt={title}
-        width={1200}
-        height={675}
-        loading={priority ? "eager" : "lazy"}
-        fetchPriority={priority ? "high" : undefined}
-        decoding="async"
-      />
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={coverSrc}
+          {...resp}
+          alt={title}
+          width={1200}
+          height={675}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
+          decoding="async"
+        />
+        <span className="artikel-brand-pill" aria-hidden="true">
+          istanablock.com
+        </span>
+      </>
     );
   }
 

@@ -439,7 +439,7 @@ npm run admin:create -- --email admin@istanablock.com --name "Admin" --password 
 
 Cek setelah deploy: buka `https://<nama-worker>.<akun>.workers.dev/internal`, pilih Situs, login, unggah satu foto produk, lalu pastikan gambarnya tampil di halaman produk dan file-nya muncul di bucket R2 (**Storage & databases → R2 → istana-block-media**).
 
-Lalu sambungkan domain: **Cloudflare dashboard → Workers & Pages → istana-block-web → Settings → Domains & Routes → Add → Custom domain** (`istanablockpurwakarta.com` dan `www`). Kalau Cloudflare menolak karena record DNS untuk nama itu sudah ada (A/CNAME ke hosting WordPress), hapus dulu record lama tersebut di menu DNS, lalu ulangi. Siapkan cadangan WordPress sebelumnya.
+Lalu sambungkan domain: **Cloudflare dashboard → Workers & Pages → istana-block-web → Settings → Domains & Routes → Add → Custom domain** (`istanablock.com` dan `www`). Kalau Cloudflare menolak karena record DNS untuk nama itu sudah ada (A/CNAME ke hosting WordPress), hapus dulu record lama tersebut di menu DNS, lalu ulangi. Siapkan cadangan WordPress sebelumnya.
 
 > **Paket Workers.** Bundle Worker ini sekitar 7,4 MB tanpa kompresi, jauh di bawah batas 64 MiB. Paket gratis membatasi waktu CPU 10 ms per request. Merender halaman Next.js bisa melewati batas itu, dan di staging muncul error 503 "error code: 1102" yang putus-sambung. Proses login (hash password) juga bisa melewatinya. Karena itu `worker.ts` menyimpan halaman publik di cache (lihat di bawah). Bila 1102 masih muncul, pakai **Workers Paid (USD 5/bulan)**. Kuota gratis D1 (5 GB, 5 juta baris dibaca/hari) dan R2 (10 GB, 1 juta operasi tulis/bulan) jauh di atas kebutuhan situs ini.
 
@@ -492,7 +492,7 @@ Kalau skema database diubah (`src/db/schema.ts`): `npm run db:generate`, lalu `n
 ## Pindah dari WordPress — yang perlu dicek
 
 1. **Redirect.** `src/data/legacy-redirects.json` memetakan 199 alamat dari situs lama (194 dari sitemap, 5 arsip WordPress: kategori, penulis, feed): 180 dialihkan 301 ke halaman baru yang paling dekat isinya (produk, kalkulator, area, profil, artikel), 19 halaman yang tidak relevan lagi diberi 410. Kalau nanti artikel lama dipindahkan lewat admin, ganti target redirect-nya ke `/artikel/<slug>`.
-2. **Search Console.** Kirim ulang `https://istanablockpurwakarta.com/sitemap.xml` setelah situs baru tayang, lalu pantau laporan *Halaman* untuk 404 yang belum terpetakan.
+2. **Search Console.** Kirim ulang `https://istanablock.com/sitemap.xml` setelah situs baru tayang, lalu pantau laporan *Halaman* untuk 404 yang belum terpetakan.
 3. **Google Maps.** Di *Info & kontak*, isi tautan profil Google Bisnis (untuk chip rating dan tombol "Baca ulasan") dan URL embed peta (peta tampil di halaman Kontak).
 
 ## Data awal & yang perlu dilengkapi

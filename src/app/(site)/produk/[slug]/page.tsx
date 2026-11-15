@@ -196,9 +196,16 @@ export default async function ProductPage({ params }: Props) {
             <div className="hex" aria-hidden="true" style={{ position: "absolute", right: 4, top: 0, width: 210, height: 242, background: "var(--biru-muda)", transform: "rotate(7deg)" }} />
             <Hex size={84} color="#FE5722" className="deco" style={{ right: 18, bottom: 6, transform: "rotate(-6deg)" }} />
             <Hex size={48} color="#B5B4AF" className="deco" style={{ left: 8, bottom: 40, transform: "rotate(9deg)" }} />
-            <figure className={`hex ${img ? "" : "hexpat-light"}`}>
+            <figure className={`hex ${img ? "" : "hexpat-light"}`} style={{ position: "relative" }}>
               {/* Gambar hero = LCP: prioritas tinggi dan tidak lazy. */}
-              {img ? <img src={img} {...responsif(img, "(max-width: 720px) 254px, 404px")} alt={`Foto ${p.name}`} width={1600} height={1200} fetchPriority="high" loading="eager" decoding="async" /> : <figcaption>Foto {p.name.toLowerCase()} menyusul</figcaption>}
+              {img ? (
+                <>
+                  <img src={img} {...responsif(img, "(max-width: 720px) 254px, 404px")} alt={`Foto ${p.name}`} width={1600} height={1200} fetchPriority="high" loading="eager" decoding="async" />
+                  <span className="card-watermark product-hero-watermark" aria-hidden="true">
+                    <img src="/brand/logo-istana-block-300.webp" alt="" width={300} height={90} loading="lazy" decoding="async" />
+                  </span>
+                </>
+              ) : <figcaption>Foto {p.name.toLowerCase()} menyusul</figcaption>}
             </figure>
           </div>
         </section>

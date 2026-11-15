@@ -67,7 +67,7 @@ Peringatan:
 ## 4. Pemeriksaan sesudah deploy
 
 - `curl -sI https://istana-block-web.abdussalimsan.workers.dev/produk/paving-block` memuat `x-robots-tag: noindex, nofollow`; `/robots.txt` di host itu `Disallow: /` tanpa `Sitemap`.
-- `https://istanablockpurwakarta.com` (dan `-A AdsBot-Google`): tanpa `x-robots-tag`, `robots.txt` berisi `Allow: /` dan `Sitemap`. Uji juga `curl -H "X-Forwarded-Host: x.workers.dev" https://istanablockpurwakarta.com/robots.txt`: tetap `Allow: /`.
+- `https://istanablock.com` (dan `-A AdsBot-Google`): tanpa `x-robots-tag`, `robots.txt` berisi `Allow: /` dan `Sitemap`. Uji juga `curl -H "X-Forwarded-Host: x.workers.dev" https://istanablock.com/robots.txt`: tetap `Allow: /`.
 - `curl -sI /sitemap_index.xml` -> 301 ke `/sitemap.xml`; `/feed` -> 410; `/category/blog-artikel` -> 301 ke `/artikel`.
 - `curl -sI /_next/static/<berkas>.js` memuat `cache-control: ... immutable`.
 - `/llms.txt` dan `/pricing.md` terbuka dan angkanya sama dengan halaman produk.
@@ -121,10 +121,10 @@ $env:LOKASI_UKUR = "Purwakarta"
 node tools/cek-seo.mjs https://istana-block-web.abdussalimsan.workers.dev
 
 # produksi (T-1 sebelum pindah domain, dan sesudahnya)
-node tools/cek-seo.mjs https://istanablockpurwakarta.com
+node tools/cek-seo.mjs https://istanablock.com
 
 # lewat npm; keluaran mesin-baca untuk disimpan
-npm run cek:seo -- https://istanablockpurwakarta.com --json
+npm run cek:seo -- https://istanablock.com --json
 ```
 
 | Opsi | Fungsi |
@@ -132,7 +132,7 @@ npm run cek:seo -- https://istanablockpurwakarta.com --json
 | `<baseUrl>` | Wajib. Tanpa argumen skrip berhenti dengan exit code 2 |
 | `--json` | Keluaran JSON (ringkasan + semua hasil), tanpa teks progres |
 | `--skip-ttfb` | Lewati pengukuran TTFB (5 permintaan x 3 halaman) |
-| `--prod-host <domain>` | Domain yang dianggap produksi (bawaan `istanablockpurwakarta.com`, `www.`-nya ikut) |
+| `--prod-host <domain>` | Domain yang dianggap produksi (bawaan `istanablock.com`, `www.`-nya ikut) |
 | env `LOKASI_UKUR` | Catatan lokasi ukur di laporan TTFB. Backlog mencatat TTFB kompetitor 0,10-0,21 s vs 0,50-0,80 s tergantung lokasi |
 
 **Arti hasil.** Tiap pemeriksaan berlabel salah satu dari tiga:
@@ -142,7 +142,7 @@ npm run cek:seo -- https://istanablockpurwakarta.com --json
 - Exit code 2: salah pakai atau skrip sendiri gagal jalan (bukan hasil pemeriksaan).
 
 **Mode host** (otomatis dari baseUrl). Sitemap selalu berisi domain produksi walau dibaca dari staging, jadi origin ditulis ulang ke baseUrl dan canonical dibandingkan lewat path.
-- *Produksi* (`istanablockpurwakarta.com`): `noindex` di header/meta = GAGAL; `robots.txt` wajib terbuka dan memuat `Sitemap:`; `<loc>` dan canonical wajib berdomain produksi; pengalihan http dan www ikut diperiksa.
+- *Produksi* (`istanablock.com`): `noindex` di header/meta = GAGAL; `robots.txt` wajib terbuka dan memuat `Sitemap:`; `<loc>` dan canonical wajib berdomain produksi; pengalihan http dan www ikut diperiksa.
 - *Non-produksi* (workers.dev, localhost): `noindex` dan `Disallow: /` justru diharapkan (LULUS); host tanpa itu = GAGAL (PERINGATAN di localhost); pengalihan http/www dilewati.
 
 **Yang diperiksa.**
@@ -187,10 +187,10 @@ Bagian KOMP-02 yang belum: berkas PDF katalog di `public/katalog/` dan aturan ca
 - **Putuskan judul `/area-pengiriman`** (lihat 7.3) dan konfirmasi `/kontak` dan `/galeri` memang boleh tipis.
 - **Pastikan `/produk/paving-block` ada di sitemap produksi** (dipakai untuk anggaran JS, uji 5xx, dan TTFB; bila tidak ada, skrip memakai produk pertama di sitemap).
 - **Setujui daftar `PUSTAKA_BERAT`** untuk penjaga dependensi, atau minta dibuang.
-- **Katalog PDF**: pilih berkas mana yang dipakai (PDF lama di WordPress 1.961.587 B, butir MG-15). Isian "Tautan katalog" di `/situs` adalah `<input type="url">`, jadi **harus URL absolut `https://`** (mis. `https://istanablockpurwakarta.com/katalog/nama.pdf` bila ditaruh di `public/katalog/`); path relatif `/katalog/...` ditolak browser meski validasi server menerimanya. Bila ditaruh di `public/katalog/`, tambahkan aturan cache `/katalog/*` di `public/_headers`.
+- **Katalog PDF**: pilih berkas mana yang dipakai (PDF lama di WordPress 1.961.587 B, butir MG-15). Isian "Tautan katalog" di `/situs` adalah `<input type="url">`, jadi **harus URL absolut `https://`** (mis. `https://istanablock.com/katalog/nama.pdf` bila ditaruh di `public/katalog/`); path relatif `/katalog/...` ditolak browser meski validasi server menerimanya. Bila ditaruh di `public/katalog/`, tambahkan aturan cache `/katalog/*` di `public/_headers`.
 - **GTM**: buat pemicu untuk `a[data-cta="katalog"]` sebagai konversi **Secondary** (seperti `a[data-cta="kalkulator"]` di langkah 7 bagian 3); jangan dijumlahkan dengan konversi WhatsApp Primary. Tautan "Hitung kebutuhan paving" sengaja **tanpa** `data-cta="kalkulator"` karena atribut itu menandai lead WhatsApp di dalam kalkulator; klik masuk ke kalkulator terukur lewat pageview `/pola-paving`.
 - **Setelah 30 hari**, bandingkan klik kalkulator dan katalog dengan klik WhatsApp. Tanpa data GA4, dampaknya tidak boleh diklaim.
-- **Setelah deploy**: `curl https://istanablockpurwakarta.com/sitemap.xml | grep -c "<image:loc>"` (harapan: 24 + jumlah produk berfoto + artikel bersampul) dan cek Search Console, Sitemap, tanpa galat. Validasi node `WebSite` di Rich Results Test atau Schema Markup Validator; nama situs di hasil pencarian baru berubah setelah Google merayap ulang dan tidak dijamin.
+- **Setelah deploy**: `curl https://istanablock.com/sitemap.xml | grep -c "<image:loc>"` (harapan: 24 + jumlah produk berfoto + artikel bersampul) dan cek Search Console, Sitemap, tanpa galat. Validasi node `WebSite` di Rich Results Test atau Schema Markup Validator; nama situs di hasil pencarian baru berubah setelah Google merayap ulang dan tidak dijamin.
 - **Putuskan** apakah halaman CMS (`[slug]`) yang punya sampul ikut masuk sitemap gambar (saat ini tidak; KOMP-06 hanya menyebut galeri, produk, artikel).
 - Hero produk paving bisa memuat empat tombol bila `catalog_url` terisi. **Lihat tampilannya di staging pada lebar 375 px.**
 

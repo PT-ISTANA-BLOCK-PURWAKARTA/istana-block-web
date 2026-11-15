@@ -372,7 +372,7 @@ Nomor WhatsApp, telepon, email, dan jam operasional ada di halaman [Kontak](/kon
 ', 1, 'Profil Istana Block Purwakarta, Pabrik Beton Sejak 2016', 'PT Istana Block Purwakarta memproduksi paving block, U-Ditch, buis beton, kanstin, dan genteng beton di Pasawahan sejak 2016, dengan armada kirim sendiri.');
 INSERT INTO pages (slug, title, kind, excerpt, content, published, seo_title, seo_description) VALUES ('privacy-policy', 'Kebijakan Privasi', 'info', 'Data apa yang diproses saat Anda membuka situs Istana Block atau menghubungi kami lewat WhatsApp, telepon, dan email, serta hak Anda menurut UU PDP.', '**Berlaku sejak:** 15 Oktober 2026
 
-Kebijakan ini menjelaskan data pribadi apa yang diproses saat Anda membuka istanablockpurwakarta.com atau menghubungi kami, untuk apa data itu dipakai, dan apa hak Anda menurut Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP).
+Kebijakan ini menjelaskan data pribadi apa yang diproses saat Anda membuka istanablock.com atau menghubungi kami, untuk apa data itu dipakai, dan apa hak Anda menurut Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP).
 
 ## Siapa kami
 

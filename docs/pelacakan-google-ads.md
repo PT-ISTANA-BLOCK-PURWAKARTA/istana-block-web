@@ -3,7 +3,7 @@
 Situs baru memuat container Google Tag Manager **GTM-PXSMDXD8**, container yang sama dengan situs WordPress lama. ID-nya ada di `wrangler.jsonc` → `vars.GTM_ID`, dan dipasang oleh `src/components/GoogleTagManager.tsx` di layout situs publik. Panel internal (`/situs`, `/operasional`, `/akuntansi`, `/internal`) tidak memuat GTM.
 
 **Kapan GTM dimuat.**
-- Di `istanablockpurwakarta.com` (host dari `SITE_URL`) dan `www.istanablockpurwakarta.com`: selalu.
+- Di `istanablock.com` (host dari `SITE_URL`) dan `www.istanablock.com`: selalu.
 - Di host lain (`*.workers.dev`, Worker demo): hanya bila URL berisi `?gtm_debug=…`, yaitu saat diuji lewat Tag Assistant. Tanda ini diingat selama tab terbuka.
 - Hasilnya, kunjungan staging biasa tidak masuk data Google Ads maupun GA4.
 
@@ -36,7 +36,7 @@ Container sudah punya pemicu klik tautan yang cocok dengan tombol situs baru:
 - `185515958_4`: URL berisi `wa.me|whatsapp.com|whatsapp:|wa.link`. Ini mencakup header, bar bawah ponsel, halaman produk, kontak, dan kalkulator.
 - `185515958_12`: URL diawali `tel:`.
 
-Buat dua tag **Google Ads Conversion Tracking** (Conversion ID `858211595`, label dari langkah 2), satu per pemicu. Pada kedua tag, tambahkan **exception**: *Page Hostname* tidak sama dengan `istanablockpurwakarta.com`. Dengan begitu klik saat uji di staging tidak dihitung. Semua tombol WhatsApp membuka tab baru, jadi tidak perlu pengaturan *wait for tags*.
+Buat dua tag **Google Ads Conversion Tracking** (Conversion ID `858211595`, label dari langkah 2), satu per pemicu. Pada kedua tag, tambahkan **exception**: *Page Hostname* tidak sama dengan `istanablock.com`. Dengan begitu klik saat uji di staging tidak dihitung. Semua tombol WhatsApp membuka tab baru, jadi tidak perlu pengaturan *wait for tags*.
 
 **Publish** container.
 
@@ -48,7 +48,7 @@ Buat dua tag **Google Ads Conversion Tracking** (Conversion ID `858211595`, labe
 
 ## 5. Setelah domain dipindah (Hari-H)
 
-1. Ulangi uji Tag Assistant di `https://istanablockpurwakarta.com/`. Kali ini klik WhatsApp harus **Fired**.
+1. Ulangi uji Tag Assistant di `https://istanablock.com/`. Kali ini klik WhatsApp harus **Fired**.
 2. Google Ads → Goals → Conversions → *Diagnostics*: konversi uji muncul dalam ±3 jam.
 3. Setelah "WhatsApp klik" berstatus **Recording conversions**, jadikan **Primary**.
 4. Jadikan conversion action lama **form kontak Elementor** (label `5bUECOKZrfEcEIuKnZkD`) **Secondary**. Jangan dihapus. Situs baru tidak punya form, jadi bila tetap Primary, Smart Bidding menunggu konversi yang tidak akan datang.

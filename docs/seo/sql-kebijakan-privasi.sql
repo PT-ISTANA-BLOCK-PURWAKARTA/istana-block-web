@@ -23,7 +23,7 @@
 
 UPDATE pages SET content = '**Berlaku sejak:** 15 Oktober 2026
 
-Kebijakan ini menjelaskan data pribadi apa yang diproses saat Anda membuka istanablockpurwakarta.com atau menghubungi kami, untuk apa data itu dipakai, dan apa hak Anda menurut Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP).
+Kebijakan ini menjelaskan data pribadi apa yang diproses saat Anda membuka istanablock.com atau menghubungi kami, untuk apa data itu dipakai, dan apa hak Anda menurut Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP).
 
 ## Siapa kami
 
