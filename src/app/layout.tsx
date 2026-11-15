@@ -7,7 +7,6 @@ import "@fontsource/plus-jakarta-sans/500.css";
 import "@fontsource/plus-jakarta-sans/600.css";
 import "@fontsource/plus-jakarta-sans/700.css";
 import "./globals.css";
-import "./panel.css";
 import "./ui.css";
 import { getEnv } from "@/db";
 import { indexingOn } from "@/lib/host";
@@ -18,6 +17,13 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(env.SITE_URL || "http://localhost:3000"),
     title: { default: "Istana Block Purwakarta", template: "%s | Istana Block Purwakarta" },
     applicationName: "Istana Block Purwakarta",
+    icons: {
+      icon: [
+        { url: "/icon-192.webp", sizes: "192x192", type: "image/webp" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      ],
+      apple: [{ url: "/icon-192.png", sizes: "192x192" }],
+    },
     // Gambar cadangan untuk halaman tanpa openGraph sendiri (/produk, /kontak, /area-pengiriman, /paket-proyek,
     // /artikel). Halaman yang mendefinisikan openGraph menggantikan seluruh objek ini, jadi tidak tertimpa.
     openGraph: {
@@ -26,15 +32,26 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       images: [
         {
+          url: "/og-default.webp",
+          width: 1200,
+          height: 630,
+          type: "image/webp",
+          alt: "Mesin cetak paving di pabrik Istana Block Purwakarta dengan paving yang baru dicetak",
+        },
+        {
           url: "/og-default.jpg",
           width: 1200,
           height: 630,
+          type: "image/jpeg",
           alt: "Mesin cetak paving di pabrik Istana Block Purwakarta dengan paving yang baru dicetak",
         },
       ],
     },
     // Gambar twitter:image diambil Next dari openGraph.images halaman yang sama.
     twitter: { card: "summary_large_image" },
+    verification: {
+      google: "K4Ff9MpaPeTTBDTHWSoS8-9t6OWJSLRxpfvqZ5AiYVw",
+    },
     // Demo tetap noindex. Situs publik mengizinkan pratinjau gambar besar dan cuplikan tanpa batas di hasil
     // pencarian. Layout panel dan halaman 404/cetak menimpa seluruh objek robots dengan index:false sendiri.
     robots:

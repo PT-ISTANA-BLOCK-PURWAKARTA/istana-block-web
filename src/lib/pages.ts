@@ -21,6 +21,8 @@ export const RESERVED_PAGE_SLUGS = [
   "pola-paving",
   "area-pengiriman",
   "paket-proyek",
+  "sampel",
+  "katalog",
   "sitemap.xml",
   "robots.txt",
   "api",

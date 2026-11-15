@@ -50,6 +50,7 @@ export function RichEditor({
   draftKey,
   maxLength = 60000,
   minHeight = 420,
+  onContentChange,
 }: {
   name: string;
   defaultValue?: string;
@@ -60,6 +61,7 @@ export function RichEditor({
   draftKey: string;
   maxLength?: number;
   minHeight?: number;
+  onContentChange?: (markdown: string) => void;
 }) {
   const storeKey = `ib-draf:${draftKey}`;
   const [mode, setMode] = useState<"visual" | "markdown">("visual");
@@ -77,6 +79,9 @@ export function RichEditor({
   modeRef.current = mode;
   sourceRef.current = source;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const liveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onChangeRef = useRef(onContentChange);
+  onChangeRef.current = onContentChange;
   const editorRef = useRef<Editor | null>(null);
   // Belum diubah → kirim isi asli apa adanya (tanpa diformat ulang oleh editor).
   const dirty = useRef(false);
@@ -131,6 +136,12 @@ export function RichEditor({
 
   /** Sinkronkan input tersembunyi + draf browser, ditunda sedikit agar ringan saat mengetik. */
   function scheduleSync(ed: Editor | null) {
+    if (liveTimer.current) clearTimeout(liveTimer.current);
+    liveTimer.current = setTimeout(() => {
+      if (!onChangeRef.current) return;
+      const md = modeRef.current === "markdown" || !ed ? sourceRef.current : ed.getMarkdown();
+      onChangeRef.current(md);
+    }, 120);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       const md = modeRef.current === "markdown" || !ed ? sourceRef.current : ed.getMarkdown();
@@ -252,6 +263,7 @@ export function RichEditor({
     else editor.commands.setContent(draft.md, { contentType: "markdown", emitUpdate: false });
     dirty.current = true;
     if (hidden.current) hidden.current.value = draft.md;
+    onChangeRef.current?.(draft.md);
     setDraft(null);
     setStatus({ tone: "info", text: "Draf dipulihkan. Simpan supaya tidak hilang." });
   }

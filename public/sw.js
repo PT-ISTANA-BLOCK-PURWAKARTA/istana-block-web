@@ -18,16 +18,18 @@ self.addEventListener("push", (event) => {
     data = { body: event.data ? event.data.text() : "" };
   }
   const tag = data.tag || "istana-block";
+  const isAlarm = tag.startsWith("alarm-");
+  const isUrgent = tag.startsWith("calendar-") || isAlarm || tag.startsWith("delivery-");
   event.waitUntil(
     Promise.all([
       self.registration.showNotification(data.title || "Istana Block", {
         body: data.body || "Ada pembaruan di aplikasi operasional.",
-        icon: "/brand/logo-istana-block.png",
-        badge: "/brand/logo-istana-block.png",
+        icon: "/icon-192.png",
+        badge: "/icon-192.png",
         tag,
         renotify: Boolean(data.tag),
-        requireInteraction: tag.startsWith("calendar-"),
-        vibrate: [200, 100, 200],
+        requireInteraction: isUrgent,
+        vibrate: isAlarm ? [800, 300, 800, 300, 800, 300, 1500, 500, 800, 300, 800] : [200, 100, 200],
         data: { url: data.url || "/operasional" },
       }),
       // Halaman yang sedang terbuka bisa memuat ulang datanya.

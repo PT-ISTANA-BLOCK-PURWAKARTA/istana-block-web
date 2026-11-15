@@ -22,7 +22,7 @@
 | 2 | 2.8–9.7 | Jendela browser masuk → beranda asli scroll ke kalkulator → klik motif Hexagon → ketik 12 lalu 8 → hasil 2.722 pcs disorot | "Kalkulator paving" / "Butuh berapa blok? Langsung ketahuan." / "Isi panjang dan lebar. Sudah termasuk cadangan 5%." |
 | 3 | 9.7–13.7 | Klik "Kirim ke admin" → gelembung WhatsApp berisi teks prefill asli | "Kirim ke admin, sekali klik." / "Pesan WhatsApp terisi otomatis." |
 | 4 | 13.7–18.5 | Pindah ke halaman U-Ditch asli → scroll ke tabel harga → sorot baris Rp640.000 | "Daftar harga" / "Harga per ukuran, terbuka." / "12 ukuran U-Ditch dan 5 cover, lengkap dengan berat." |
-| 5 | 18.5–22.0 | Outro: logo, nama, ringkasan fitur, domain; sisi akhir memudar ke latar agar loop mulus | "Hitung, cek harga, pesan — dari satu situs." / istanablockpurwakarta.com |
+| 5 | 18.5–22.0 | Outro: logo, nama, ringkasan fitur, domain; sisi akhir memudar ke latar agar loop mulus | "Hitung, cek harga, pesan — dari satu situs." / istanablock.com |
 
 Transisi: konten lama keluar dulu, baru konten baru masuk; pergantian halaman memudar lewat warna latar, bukan crossfade.
 

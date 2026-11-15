@@ -5,7 +5,7 @@
   "buis-beton": "Halo Istana Block, saya minta penawaran buis beton. Diameter: ... cm, Jenis (tumbuk/cor/bertulang): ..., Jumlah: ... pcs, Perlu tutup (ya/tidak): ..., Lokasi kirim: ...",
   "kanstin": "Halo Istana Block, saya ingin tanya harga kanstin. Jenis (S/KS/DKI/taman/jumbo/trotoar/stopper ban): ..., Jumlah (buah) atau panjang total (m): ..., Lokasi kirim: ...",
   "genteng-beton": "Halo Istana Block, saya ingin tanya harga genteng beton. Model (Garuda/Flat): ..., Luas atap (m²): ..., Aksesoris (nok/lisplang/nok ujung/triway): ..., Lokasi kirim: ...",
-  "greffel-beton": "Halo Istana Block, saya ingin tanya harga greffel beton. Ukuran: ..., Jumlah: ... pcs, Lokasi kirim: ...",
+  "greffel-beton": "Halo Istana Block, saya ingin tanya harga gravel (greffel) beton. Ukuran: ..., Jumlah: ... pcs, Lokasi kirim: ...",
   "jasa-pasang-paving": "Halo Istana Block, saya ingin tanya paket paving + pemasangan. Paket (Small/Medium/Large): ..., Luas: ... m², Kondisi lahan: ..., Lokasi: ...",
   "cek-ongkir": "Halo Istana Block, saya ingin cek ongkir. Produk: ..., Volume: ..., Lokasi kirim (alamat/titik peta): ..., Akses truk di lokasi: ...",
   "proyek": "Halo Istana Block, saya ingin minta penawaran paket material proyek.\nLokasi proyek: ...\nKebutuhan (produk & volume): ...\nPerlu salinan sertifikat TKDN (ya/tidak): ...",
@@ -14,5 +14,8 @@
   "pola-paving": "Halo Istana Block, saya ingin konsultasi memilih pola paving untuk proyek saya. Area: ..., Luas: ... m²",
   "area:paving-block-karawang-cikampek": "Halo Istana Block, saya mau pesan untuk proyek di Karawang/Cikampek. Kebutuhan (produk & volume): ..., Lokasi: ...",
   "area:paving-block-subang": "Halo Istana Block, saya mau pesan untuk proyek di Subang. Kebutuhan (produk & volume): ..., Lokasi: ...",
-  "area:paving-block-bekasi-cikarang": "Halo Istana Block, saya mau pesan untuk proyek di Bekasi/Cikarang. Kebutuhan (produk & volume): ..., Lokasi: ... Mohon info minimal order dan ongkirnya."
+  "area:paving-block-bekasi-cikarang": "Halo Istana Block, saya mau pesan untuk proyek di Bekasi/Cikarang. Kebutuhan (produk & volume): ..., Lokasi: ... Mohon info minimal order dan ongkirnya.",
+  "area:paving-block-purwakarta": "Halo Istana Block, saya mau pesan untuk proyek di Purwakarta. Kebutuhan (produk & volume): ..., Lokasi kecamatan: ... Mohon info jadwal kirim dan ongkir pabrik.",
+  "area:paving-block-bandung-barat-cimahi": "Halo Istana Block, saya mau pesan untuk proyek di Bandung Barat / Cimahi. Kebutuhan (produk & volume): ..., Lokasi: ... Mohon info jadwal kirim armada crane via Tol Cipularang.",
+  "area:paving-block-cianjur": "Halo Istana Block, saya mau pesan untuk proyek di Cianjur. Kebutuhan (produk & volume): ..., Lokasi: ... Mohon info jadwal kirim dan ongkir ke lokasi."
 }

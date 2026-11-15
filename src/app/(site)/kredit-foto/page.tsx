@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Kredit foto",
@@ -37,7 +38,7 @@ const STOK = [
 export default function KreditFoto() {
   return (
     <div className="wrap section" style={{ paddingTop: 24 }}>
-      <nav aria-label="Lokasi halaman" className="breadcrumb"><ol><li><a href="/">Beranda</a></li><li>Kredit foto</li></ol></nav>
+      <nav aria-label="Lokasi halaman" className="breadcrumb"><ol><li><Link href="/">Beranda</Link></li><li>Kredit foto</li></ol></nav>
       <div className="section-head" style={{ marginTop: 12 }}>
         <h1 style={{ fontSize: "clamp(30px, 3.4vw, 44px)" }}>Kredit foto</h1>
         <p className="muted small">

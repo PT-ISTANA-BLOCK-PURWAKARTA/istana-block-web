@@ -1,3 +1,5 @@
+import type { ArticleCoverMeta } from "@/db/schema";
+
 export const LEGACY_FALLBACK_COVER = "/img/artikel/sampul-panduan.webp";
 
 export function isRealArticleCover(src: string | null | undefined): src is string {
@@ -21,6 +23,73 @@ export function extractArticleTopics(markdown: string, max = 3): string[] {
     if (out.length >= max) break;
   }
   return out;
+}
+
+export function normalizeCoverTopicsInput(raw: string): string[] {
+  return raw
+    .split(/\r?\n|,/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((s) => (s.length > 44 ? `${s.slice(0, 42).replace(/\s+\S*$/, "")}…` : s));
+}
+
+export function sanitizeCoverMeta(
+  meta: { title?: string; excerpt?: string; topics?: string[]; theme?: string } | null | undefined,
+  allowedThemes: readonly string[],
+): ArticleCoverMeta | null {
+  if (!meta) return null;
+  const title = meta.title?.trim() || undefined;
+  const excerpt = meta.excerpt?.trim() || undefined;
+  const topics = meta.topics?.map((t) => t.trim()).filter(Boolean).slice(0, 3);
+  const theme =
+    meta.theme && allowedThemes.includes(meta.theme) ? (meta.theme as ArticleCoverMeta["theme"]) : undefined;
+  const out: ArticleCoverMeta = {};
+  if (title) out.title = title;
+  if (excerpt) out.excerpt = excerpt;
+  if (topics && topics.length > 0) out.topics = topics;
+  if (theme) out.theme = theme;
+  return Object.keys(out).length ? out : null;
+}
+
+export type ResolvedArticleCover = {
+  title: string;
+  badgeCategory: string;
+  themeCategory: string;
+  excerpt: string;
+  topics: string[];
+  hasCustomOverride: boolean;
+};
+
+/** Gabungkan field artikel dengan kustomisasi sampul opsional agar situs & preview admin identik. */
+export function resolveArticleCover({
+  title,
+  category,
+  excerpt = "",
+  content = "",
+  coverMeta,
+}: {
+  title: string;
+  category: string;
+  excerpt?: string;
+  content?: string;
+  coverMeta?: ArticleCoverMeta | null;
+}): ResolvedArticleCover {
+  const customTitle = coverMeta?.title?.trim() || "";
+  const customExcerpt = coverMeta?.excerpt?.trim() || "";
+  const customTopics = coverMeta?.topics?.map((t) => t.trim()).filter(Boolean).slice(0, 3);
+  const customTheme = coverMeta?.theme?.trim() || "";
+
+  return {
+    title: customTitle || title.trim() || "Judul artikel Anda…",
+    badgeCategory: category,
+    themeCategory: customTheme || category,
+    excerpt: customExcerpt || excerpt.trim(),
+    topics: customTopics && customTopics.length > 0 ? customTopics : extractArticleTopics(content, 3),
+    hasCustomOverride: Boolean(
+      customTitle || customExcerpt || (customTopics && customTopics.length > 0) || customTheme,
+    ),
+  };
 }
 
 export type CategoryTheme = {

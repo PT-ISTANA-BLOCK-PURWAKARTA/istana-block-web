@@ -1,8 +1,9 @@
 /*
- * Komponen form Istana Block (dipakai Situs, Operasional, Keuangan, portal).
- * Satu bentuk untuk semua kontrol: tinggi 42 px, sudut 10 px, garis abu kebiruan, fokus biru merek,
- * pilihan aktif berlatar biru muda dengan tanda centang. Daftar & kalender muncul di atas halaman
- * (portal), jadi tidak terpotong tabel; di ponsel tampil sebagai lembar dari bawah.
+ * Komponen UI & form standar Istana Block (dipakai Situs Publik, Operasional, Keuangan, Admin).
+ * - Internal (bawaan): ringkas 42 px, sudut 10 px, garis #cdd3df, fokus biru merek.
+ * - Situs publik (.ui-site-ctrl): tinggi 48 px, sudut 14 px, garis 1,5 px #8a93a6, fokus oranye 3 px.
+ * - Daftar pilihan & kalender muncul via portal di document.body agar tidak terpotong tabel/kartu;
+ *   pada layar ponsel (< 640 px) tampil sebagai bottom sheet (.is-sheet).
  */
 :root {
   --ui-h: 42px;
@@ -13,69 +14,252 @@
   --ui-active: #e8eefa;
   --ui-muted: #5b6478;
   --ui-shadow: 0 1px 2px rgba(14, 42, 107, .06), 0 14px 34px -10px rgba(14, 42, 107, .32);
+
+  /* Varian situs publik */
+  --ui-site-h: 48px;
+  --ui-site-r: 14px;
+  --ui-site-line: #8a93a6;
 }
 
-/* ---------- Select ---------- */
-.ui-select, .ui-date { position: relative; width: 100%; min-width: 0; }
-.ui-select-trigger {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: var(--ui-h);
-  padding: 7px 10px 7px 12px; border: 1px solid var(--ui-line); border-radius: var(--ui-r); background: #fff;
-  font: inherit; font-size: 15px; color: var(--tinta); text-align: left; cursor: pointer;
+/* ---------- Select (.ui-select, .ui-select-trigger / .ui-trigger) ---------- */
+.ui-select,
+.ui-date {
+  position: relative;
+  width: 100%;
+  min-width: 0;
 }
-.ui-select-trigger:hover { border-color: #aeb8cc; }
-.ui-select-trigger:focus-visible, .ui-select.is-open .ui-select-trigger { outline: 2px solid var(--biru); outline-offset: 0; border-color: var(--biru); }
-.ui-select-trigger:disabled { background: var(--ui-hover); color: var(--ui-muted); cursor: not-allowed; }
-.ui-select-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ui-select-value.is-placeholder { color: var(--ui-muted); }
-.ui-chevron { flex: none; color: var(--ui-muted); transition: transform .15s ease; }
-.ui-select.is-open .ui-chevron { transform: rotate(180deg); }
+
+.ui-select-trigger,
+.ui-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--ui-h);
+  padding: 7px 10px 7px 12px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r);
+  background: #fff;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--tinta);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+
+.ui-select-trigger:hover:not(:disabled),
+.ui-trigger:hover:not(:disabled) {
+  border-color: #aeb8cc;
+}
+
+.ui-select-trigger:focus-visible,
+.ui-trigger:focus-visible,
+.ui-select.is-open .ui-select-trigger,
+.ui-select.is-open .ui-trigger {
+  outline: 2px solid var(--biru);
+  outline-offset: 0;
+  border-color: var(--biru);
+}
+
+.ui-select-trigger:disabled,
+.ui-trigger:disabled,
+.ui-select.is-disabled .ui-select-trigger,
+.ui-select.is-disabled .ui-trigger {
+  background: var(--ui-hover);
+  color: var(--ui-muted);
+  cursor: not-allowed;
+}
+
+.ui-select-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-select-value.is-placeholder {
+  color: var(--ui-muted);
+}
+
+.ui-chevron {
+  flex: none;
+  color: var(--ui-muted);
+  transition: transform .15s ease;
+}
+
+.ui-select.is-open .ui-chevron {
+  transform: rotate(180deg);
+}
+
 /* Input bayangan untuk nilai form & validasi "wajib diisi". */
 /* !important: aturan lama `.admin .field input` / `.lines-row input` lebih spesifik dan akan membesarkannya. */
-.ui-proxy { position: absolute !important; left: 50%; bottom: 0; width: 1px !important; min-height: 0 !important; height: 1px !important; padding: 0 !important; border: 0 !important; opacity: 0; pointer-events: none; }
+.ui-proxy {
+  position: absolute !important;
+  left: 50%;
+  bottom: 0;
+  width: 1px !important;
+  min-height: 0 !important;
+  height: 1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+}
 
+/* ---------- Dropdown Popover & Mobile Sheet (.ui-pop) ---------- */
 .ui-pop {
-  position: fixed; z-index: 1000; display: flex; flex-direction: column; max-height: min(340px, 60vh);
-  background: #fff; border: 1px solid var(--ui-line-soft); border-radius: 12px; box-shadow: var(--ui-shadow);
-  font-family: var(--font-isi); color: var(--tinta); overflow: hidden;
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  max-height: min(340px, 60vh);
+  background: #fff;
+  border: 1px solid var(--ui-line-soft);
+  border-radius: 12px;
+  box-shadow: var(--ui-shadow);
+  font-family: var(--font-isi);
+  color: var(--tinta);
+  overflow: hidden;
   animation: ui-pop-in .12s ease-out;
 }
 @keyframes ui-pop-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .ui-pop.is-up { animation-name: ui-pop-up; }
 @keyframes ui-pop-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
 .ui-select-search {
-  margin: 8px 8px 4px; min-height: 38px; padding: 6px 10px 6px 34px; border: 1px solid var(--ui-line); border-radius: 9px; font: inherit; font-size: 14.5px;
+  margin: 8px 8px 4px;
+  min-height: 38px;
+  padding: 6px 10px 6px 34px;
+  border: 1px solid var(--ui-line);
+  border-radius: 9px;
+  font: inherit;
+  font-size: 14.5px;
+  color: var(--tinta);
   background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6478' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='M16 16l4 4'/%3E%3C/svg%3E") no-repeat 10px center;
 }
-.ui-select-search:focus { outline: 2px solid var(--biru); outline-offset: 0; border-color: var(--biru); }
-.ui-pop ul { list-style: none; margin: 0; padding: 4px; overflow-y: auto; overscroll-behavior: contain; }
+.ui-select-search:focus {
+  outline: 2px solid var(--biru);
+  outline-offset: 0;
+  border-color: var(--biru);
+}
+
+.ui-pop ul {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 .ui-pop ul:focus { outline: none; }
-.ui-opt-group { padding: 10px 10px 4px; font-size: 12px; font-weight: 600; color: var(--ui-muted); }
-.ui-opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 8px; font-size: 14.5px; line-height: 1.35; cursor: pointer; }
+
+.ui-opt-group {
+  padding: 10px 10px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ui-muted);
+}
+
+.ui-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14.5px;
+  line-height: 1.35;
+  cursor: pointer;
+}
 .ui-opt.is-active { background: var(--ui-hover); }
-.ui-opt[aria-selected="true"] { background: var(--ui-active); color: var(--biru-tua); font-weight: 600; }
+.ui-opt[aria-selected="true"] {
+  background: var(--ui-active);
+  color: var(--biru-tua);
+  font-weight: 600;
+}
+.ui-opt[aria-selected="true"].is-active { background: #dce6f9; }
 .ui-opt[aria-selected="true"] svg { color: var(--biru); flex: none; }
-.ui-opt[aria-disabled="true"] { color: #9aa3b5; cursor: not-allowed; }
+.ui-opt[aria-disabled="true"] { color: #768096; cursor: not-allowed; }
 .ui-opt-label { display: flex; flex-direction: column; min-width: 0; }
 .ui-opt-label small { font-size: 12.5px; font-weight: 400; color: var(--ui-muted); }
 .ui-opt-empty { padding: 12px 10px; font-size: 14px; color: var(--ui-muted); }
 
-/* Ponsel: lembar dari bawah layar. */
-.ui-backdrop { position: fixed; inset: 0; z-index: 999; background: rgba(14, 26, 54, .38); animation: ui-fade .15s ease-out; }
+/* Ponsel (< 640 px): lembar dari bawah layar. */
+.ui-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(14, 26, 54, .38);
+  animation: ui-fade .15s ease-out;
+}
 @keyframes ui-fade { from { opacity: 0; } }
-.ui-pop.is-sheet { left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 72vh; border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom); animation: ui-sheet .18s ease-out; }
+.ui-pop.is-sheet {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
+  width: auto;
+  max-height: 72vh;
+  border-radius: 18px 18px 0 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  animation: ui-sheet .18s ease-out;
+}
 @keyframes ui-sheet { from { transform: translateY(24px); opacity: .4; } }
-.ui-sheet-head { padding: 14px 16px 6px; font-family: var(--font-judul); font-weight: 600; font-size: 16px; color: var(--biru-tua); }
+.ui-sheet-head {
+  padding: 14px 16px 6px;
+  font-family: var(--font-judul);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--biru-tua);
+}
 .ui-pop.is-sheet .ui-opt { min-height: 46px; font-size: 15.5px; }
 
-/* ---------- Tanggal ---------- */
+/* ---------- DateField & Calendar (.ui-date, .ui-cal) ---------- */
 .ui-date input[type="text"] {
-  width: 100%; min-height: var(--ui-h); padding: 7px 12px; padding-right: 42px !important; border: 1px solid var(--ui-line); border-radius: var(--ui-r);
-  background: #fff; font: inherit; font-size: 15px; color: var(--tinta); font-variant-numeric: tabular-nums;
+  width: 100%;
+  min-height: var(--ui-h);
+  padding: 7px 12px;
+  padding-right: 42px !important;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r);
+  background: #fff;
+  font: inherit;
+  font-size: 15px;
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+  transition: border-color .15s ease;
 }
-.ui-date input[type="text"]:focus { outline: 2px solid var(--biru); outline-offset: 0; border-color: var(--biru); }
-.ui-date.is-bad input[type="text"] { border-color: var(--bahaya); outline-color: var(--bahaya); }
-.ui-date-btn { position: absolute; top: 4px; right: 4px; width: 34px; height: calc(100% - 8px); max-height: 34px; display: grid; place-items: center; border: 0; border-radius: 7px; background: transparent; color: var(--biru); cursor: pointer; }
-.ui-date-btn:hover, .ui-date.is-open .ui-date-btn { background: var(--ui-active); }
+.ui-date input[type="text"]:hover:not(:disabled) { border-color: #aeb8cc; }
+.ui-date input[type="text"]:focus {
+  outline: 2px solid var(--biru);
+  outline-offset: 0;
+  border-color: var(--biru);
+}
+.ui-date.is-bad input[type="text"] {
+  border-color: var(--bahaya);
+  outline-color: var(--bahaya);
+}
+.ui-date-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 34px;
+  height: calc(100% - 8px);
+  max-height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--biru);
+  cursor: pointer;
+}
+.ui-date-btn:hover,
+.ui-date.is-open .ui-date-btn { background: var(--ui-active); }
+.ui-date-btn:focus-visible { outline: 2px solid var(--biru); outline-offset: 0; }
 .ui-date-err { display: block; margin-top: 4px; font-size: 12.5px; color: var(--bahaya); }
 
 .ui-cal { width: 300px; max-height: none; padding: 10px; gap: 6px; }
@@ -83,6 +267,10 @@
 .cal-head { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; gap: 4px; }
 .cal-nav { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 9px; background: transparent; color: var(--biru-tua); cursor: pointer; }
 .cal-nav:hover { background: var(--ui-hover); }
+.cal-nav:focus-visible,
+.cal-title:focus-visible,
+.cal-month:focus-visible,
+.cal-link:focus-visible { outline: 2px solid var(--biru); outline-offset: -2px; }
 .cal-title { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 36px; border: 0; border-radius: 9px; background: transparent; font-family: var(--font-judul); font-size: 15.5px; font-weight: 600; color: var(--biru-tua); cursor: pointer; }
 .cal-title:hover { background: var(--ui-hover); }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
@@ -94,24 +282,161 @@
 .cal-day:focus-visible { outline: 2px solid var(--biru); outline-offset: -2px; }
 .cal-day.is-today { box-shadow: inset 0 0 0 1.5px var(--oranye); font-weight: 700; }
 .cal-day.is-sel { background: var(--biru-tua); color: #fff; font-weight: 700; box-shadow: none; }
-.cal-day:disabled { color: #c3c8d3; cursor: not-allowed; background: none; }
+.cal-day:disabled { color: #9aa3b5; cursor: not-allowed; background: none; }
 .cal-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px 0; }
-.cal-month { min-height: 44px; border: 1px solid var(--ui-line-soft); border-radius: 10px; background: #fff; font: inherit; font-size: 14.5px; cursor: pointer; }
+.cal-month { min-height: 44px; border: 1px solid var(--ui-line-soft); border-radius: 10px; background: #fff; font: inherit; font-size: 14.5px; color: var(--tinta); cursor: pointer; }
 .cal-month:hover { background: var(--ui-hover); }
 .cal-month.is-today { border-color: var(--oranye); }
 .cal-month.is-sel { background: var(--biru-tua); border-color: var(--biru-tua); color: #fff; font-weight: 600; }
 .cal-foot { display: flex; justify-content: space-between; gap: 8px; padding-top: 6px; border-top: 1px solid var(--ui-line-soft); }
 .cal-link { min-height: 34px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: var(--biru); cursor: pointer; }
 .cal-link:hover { background: var(--ui-active); }
-.cal-link:disabled { color: #c3c8d3; }
+.cal-link:disabled { color: #9aa3b5; }
 
-/* Ukuran ringkas di bilah filter & baris rincian. */
-.filter-bar .ui-select-trigger, .filter-bar .ui-date input[type="text"], .period-custom .ui-select-trigger, .period-custom .ui-date input[type="text"] { min-height: 38px; font-size: 14.5px; }
-.filter-bar .ui-select, .filter-bar .ui-date, .period-custom .ui-date { min-width: 150px; }
+/* Ukuran ringkas bawaan pada bilah filter & baris rincian internal. */
+.filter-bar .ui-select-trigger,
+.filter-bar .ui-trigger,
+.filter-bar .ui-date input[type="text"],
+.period-custom .ui-select-trigger,
+.period-custom .ui-trigger,
+.period-custom .ui-date input[type="text"] {
+  min-height: 38px;
+  font-size: 14.5px;
+}
+.filter-bar .ui-select,
+.filter-bar .ui-date,
+.period-custom .ui-date {
+  min-width: 150px;
+}
 .period-custom .ui-select { min-width: 260px; }
-.lines-row .ui-select-trigger, .lines-row .ui-date input[type="text"] { min-height: 40px; border-radius: 9px; }
+.lines-row .ui-select-trigger,
+.lines-row .ui-trigger,
+.lines-row .ui-date input[type="text"] {
+  min-height: 40px;
+  border-radius: 9px;
+}
 
-/* ---------- Checkbox, radio, sakelar ---------- */
+/* ---------- Form Controls (.ui-form-grid, .ui-input-sm, .ui-site-ctrl) ---------- */
+/* Tata letak kisi formulir responsif independen (tanpa bergantung pada pembungkus .admin). */
+.ui-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  align-items: start;
+}
+.ui-form-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ui-form-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ui-form-grid .span-2 { grid-column: span 2; }
+.ui-form-grid .span-3 { grid-column: span 3; }
+.ui-form-grid .span-4,
+.ui-form-grid .span-all { grid-column: 1 / -1; }
+
+@media (max-width: 1024px) {
+  .ui-form-grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ui-form-grid .span-3 { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .ui-form-grid,
+  .ui-form-grid.cols-3,
+  .ui-form-grid.cols-4 { grid-template-columns: minmax(0, 1fr); }
+  .ui-form-grid .span-2,
+  .ui-form-grid .span-3 { grid-column: 1 / -1; }
+}
+
+/* Input ringkas (internal/toolbar rapat). */
+.ui-input-sm {
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid var(--ui-line);
+  border-radius: 9px;
+  background: #fff;
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 1.35;
+  color: var(--tinta);
+  transition: border-color .15s ease;
+}
+.ui-input-sm:hover:not(:disabled) { border-color: #aeb8cc; }
+.ui-input-sm:focus,
+.ui-input-sm:focus-visible {
+  outline: 2px solid var(--biru);
+  outline-offset: 0;
+  border-color: var(--biru);
+}
+.ui-input-sm:disabled {
+  background: var(--ui-hover);
+  color: var(--ui-muted);
+  cursor: not-allowed;
+}
+.ui-select.ui-input-sm .ui-select-trigger,
+.ui-select.ui-input-sm .ui-trigger,
+.ui-date.ui-input-sm input[type="text"] {
+  min-height: 38px;
+  border-radius: 9px;
+  font-size: 14.5px;
+}
+
+/* Varian kontrol situs publik (.ui-site-ctrl): tinggi 48 px, radius 14 px, garis 1,5 px #8a93a6, fokus oranye 3 px. */
+.ui-select.ui-site-ctrl .ui-select-trigger,
+.ui-select.ui-site-ctrl .ui-trigger,
+.calc-form .ui-select-trigger,
+.calc-form .ui-trigger,
+.ui-date.ui-site-ctrl input[type="text"],
+input.ui-site-ctrl,
+select.ui-site-ctrl,
+textarea.ui-site-ctrl {
+  min-height: var(--ui-site-h);
+  padding: 10px 14px;
+  border: 1.5px solid var(--ui-site-line);
+  border-radius: var(--ui-site-r);
+  background: #fff;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--tinta);
+}
+.ui-select.ui-site-ctrl .ui-select-trigger,
+.ui-select.ui-site-ctrl .ui-trigger,
+.calc-form .ui-select-trigger,
+.calc-form .ui-trigger {
+  padding: 10px 12px 10px 14px;
+}
+.ui-date.ui-site-ctrl input[type="text"] {
+  padding-right: 46px !important;
+}
+.ui-date.ui-site-ctrl .ui-date-btn {
+  top: 5px;
+  right: 5px;
+  width: 38px;
+  height: calc(100% - 10px);
+  max-height: 38px;
+  border-radius: 10px;
+}
+.ui-select.ui-site-ctrl .ui-select-trigger:hover:not(:disabled),
+.ui-select.ui-site-ctrl .ui-trigger:hover:not(:disabled),
+.calc-form .ui-select-trigger:hover:not(:disabled),
+.ui-date.ui-site-ctrl input[type="text"]:hover:not(:disabled),
+input.ui-site-ctrl:hover:not(:disabled),
+select.ui-site-ctrl:hover:not(:disabled),
+textarea.ui-site-ctrl:hover:not(:disabled) {
+  border-color: #626d84;
+}
+.ui-select.ui-site-ctrl .ui-select-trigger:focus-visible,
+.ui-select.ui-site-ctrl .ui-trigger:focus-visible,
+.ui-select.ui-site-ctrl.is-open .ui-select-trigger,
+.ui-select.ui-site-ctrl.is-open .ui-trigger,
+.calc-form .ui-select-trigger:focus-visible,
+.calc-form .ui-select.is-open .ui-select-trigger,
+.ui-date.ui-site-ctrl input[type="text"]:focus,
+input.ui-site-ctrl:focus,
+select.ui-site-ctrl:focus,
+textarea.ui-site-ctrl:focus {
+  outline: 3px solid var(--oranye);
+  outline-offset: 1px;
+  border-color: var(--biru);
+}
+
+/* ---------- Checkbox, Radio, Switch (.ui-switch) ---------- */
 .admin input[type="checkbox"]:not([role="switch"]), .login-card input[type="checkbox"], .ui-check input[type="checkbox"] {
   appearance: none; flex: none; width: 20px; height: 20px; margin: 0; border: 1.5px solid #aeb8cc; border-radius: 6px; background: #fff; display: inline-grid; place-items: center; cursor: pointer; vertical-align: middle;
 }
@@ -127,17 +452,60 @@
 .admin input[type="radio"]:checked { border-color: var(--biru-tua); }
 .admin input[type="radio"]:checked::after { transform: scale(1); }
 
-.ui-switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; font-size: 15px; color: var(--tinta); }
-.ui-switch input { appearance: none; position: relative; flex: none; width: 42px; height: 24px; margin: 0; border-radius: 999px; background: #c6ccd8; cursor: pointer; transition: background .15s ease; }
-.ui-switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .15s ease; }
+.ui-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--tinta);
+}
+.ui-switch input {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  border-radius: 999px;
+  background: #98a2b5;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.ui-switch input::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+  transition: transform .15s ease;
+}
 .ui-switch input:checked { background: #1d7a43; }
 .ui-switch input:checked::after { transform: translateX(18px); }
 .ui-switch input:focus-visible { outline: 2px solid var(--biru); outline-offset: 2px; }
+.ui-switch.ui-site-ctrl input:focus-visible { outline: 3px solid var(--oranye); outline-offset: 2px; }
 .ui-switch input:disabled { opacity: .5; cursor: not-allowed; }
+.ui-switch:has(input:disabled) { cursor: not-allowed; }
 .ui-switch small { display: block; font-weight: 400; font-size: 13px; color: var(--ui-muted); }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-pop, .ui-backdrop, .ui-chevron, .ui-switch input, .ui-switch input::after { animation: none !important; transition: none !important; }
+  .ui-pop,
+  .ui-backdrop,
+  .ui-chevron,
+  .ui-select-trigger,
+  .ui-trigger,
+  .ui-date input[type="text"],
+  .ui-input-sm,
+  .ui-switch input,
+  .ui-switch input::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* ---------- Editor isi (artikel, halaman, deskripsi produk) ---------- */
@@ -238,9 +606,7 @@
 .ui-file-name { font-size: 14px; color: var(--ui-muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .faq-rows .repeater-row textarea { field-sizing: content; max-height: 260px; }
 
-/* Situs publik (kalkulator): ikut ukuran input situs — 48 px, garis 1,5 px, fokus oranye. */
-.calc-form .ui-select-trigger { min-height: 48px; padding: 10px 12px 10px 14px; border: 1.5px solid #8a93a6; border-radius: 14px; font-size: 16px; }
-.calc-form .ui-select-trigger:focus-visible, .calc-form .ui-select.is-open .ui-select-trigger { outline: 3px solid var(--oranye); outline-offset: 1px; border-color: var(--biru); }
+/* .calc-form mewarisi aturan .ui-site-ctrl di bagian kontrol form situs publik di atas. */
 
 /* Penanda Worker demo (DEMO_MODE=1). */
 .demo-strip { position: relative; z-index: 40; padding: 6px 16px; background: #fff3cd; border-bottom: 1px solid #f0d58a; color: #5c4400; font-size: 13px; line-height: 1.4; text-align: center; }

@@ -12,7 +12,15 @@ export function SiteHeader({ s }: { s: Settings }) {
       <a href="#isi" className="skip-link">Langsung ke isi</a>
       <div className="wrap">
         <Link prefetch={false} href="/" className="brand" aria-label={`${s.company_name}, ke beranda`}>
-          <img src="/brand/logo-istana-block.webp" alt="Istana Block Purwakarta" width={147} height={44} className="brand-logo" />
+          <img
+            src="/brand/logo-istana-block.webp"
+            srcSet="/brand/logo-istana-block-300.webp 300w, /brand/logo-istana-block.webp 501w"
+            sizes="147px"
+            alt="Istana Block Purwakarta"
+            width={147}
+            height={44}
+            className="brand-logo"
+          />
         </Link>
         <nav aria-label="Menu utama" className="main-nav">
           <NavLinks />
@@ -43,7 +51,14 @@ export function SiteFooter({ s }: { s: Settings }) {
       <footer className="site-footer hexpat" id="kontak">
         <div className="wrap">
           <div className="footer-brand">
-            <img src="/brand/logo-istana-block-putih.webp" alt="Istana Block Purwakarta" width={174} height={52} />
+            <img
+            src="/brand/logo-istana-block-putih.webp"
+            srcSet="/brand/logo-istana-block-putih-300.webp 300w, /brand/logo-istana-block-putih.webp 501w"
+            sizes="174px"
+            alt="Istana Block Purwakarta"
+            width={174}
+            height={52}
+          />
             <p>{s.legal_name} · sejak {s.founded_year}. Pabrik paving block, U-Ditch, buis beton, kanstin, dan genteng beton.</p>
           </div>
           <div>
@@ -82,6 +97,7 @@ export function SiteFooter({ s }: { s: Settings }) {
               <li><Link prefetch={false} href="/pola-paving">Kalkulator pola paving</Link></li>
               <li><Link prefetch={false} href="/produk/jasa-pasang-paving">Jasa pasang paving</Link></li>
               <li><Link prefetch={false} href="/area-pengiriman">Area pengiriman</Link></li>
+              <li><Link prefetch={false} href="/katalog">Katalog produk (PDF)</Link></li>
             </ul>
           </div>
           <div>
@@ -89,8 +105,7 @@ export function SiteFooter({ s }: { s: Settings }) {
             <ul className="footer-links">
               <li><Link prefetch={false} href="/profil">Profil perusahaan</Link></li>
               <li><Link prefetch={false} href="/sertifikat-tkdn">Sertifikat TKDN</Link></li>
-              {/* Tautan katalog diisi pemilik di panel /situs; kosong = tidak dirender. data-cta dibaca pemicu GTM. */}
-              {s.catalog_url && <li><a href={s.catalog_url} target="_blank" rel="noopener" data-cta="katalog">Unduh katalog (PDF)</a></li>}
+              <li><Link prefetch={false} href="/sampel">Katalog sampel &amp; QR</Link></li>
               <li><Link prefetch={false} href="/galeri">Galeri proyek</Link></li>
               <li><Link prefetch={false} href="/artikel">Artikel</Link></li>
               <li><Link prefetch={false} href="/kontak">Kontak &amp; lokasi</Link></li>

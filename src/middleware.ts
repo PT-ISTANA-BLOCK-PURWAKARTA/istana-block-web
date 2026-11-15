@@ -68,6 +68,20 @@ function oldPanelPath(path: string) {
 }
 
 export function middleware(req: NextRequest) {
+  // Paksa HTTPS & kanonikal domain apex
+  const isLocal = req.nextUrl.hostname === "localhost" || req.nextUrl.hostname === "127.0.0.1" || req.nextUrl.hostname.endsWith(".local");
+  const proto = req.headers.get("x-forwarded-proto") || req.nextUrl.protocol.replace(":", "");
+  const isHttp = proto === "http";
+  const isWww = req.nextUrl.hostname.toLowerCase() === "www.istanablock.com";
+
+  if (!isLocal && (isHttp || isWww)) {
+    const targetHost = isWww ? "istanablock.com" : req.nextUrl.host;
+    const url = new URL(`https://${targetHost}${req.nextUrl.pathname}${req.nextUrl.search}`);
+    const res = NextResponse.redirect(url, 301);
+    res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+    return res;
+  }
+
   const { pathname } = req.nextUrl;
   // (a) "/produk/" → "/produk" (kecuali beranda).
   const path = pathname !== "/" && pathname.endsWith("/") ? pathname.replace(/\/+$/, "") || "/" : pathname;

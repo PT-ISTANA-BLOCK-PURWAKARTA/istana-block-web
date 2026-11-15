@@ -9,11 +9,15 @@ export function ProductCard({ p }: { p: Product }) {
     // prefetch mati: tiap prefetch = satu request ke Worker (batas CPU paket Free).
     <Link prefetch={false} href={`/produk/${p.slug}`} className="card">
       <div className={`card-media hexlong ${img ? "" : "hexpat-light"}`}>
-        {img ? <img src={img} {...responsif(img, "(max-width: 560px) 90vw, (max-width: 1000px) 45vw, 380px")} alt={`Foto ${p.name}`} width={800} height={800} loading="lazy" decoding="async" /> : <span>Foto {p.name.toLowerCase()} menyusul</span>}
+        {img ? <img src={img} {...responsif(img, "(max-width: 560px) 90vw, (max-width: 1000px) 45vw, 380px")} alt={`Foto ${p.name}`} width={1600} height={1200} loading="lazy" decoding="async" /> : <span>Foto {p.name.toLowerCase()} menyusul</span>}
       </div>
       <div className="card-body">
+        <div className="card-badges">
+          <span className="card-badge card-badge-cat">{p.category}</span>
+          {p.tkdn && <span className="card-badge card-badge-tkdn">TKDN {p.tkdn.replace(/%$/, "")}%</span>}
+        </div>
         <h3>{p.name}</h3>
-        <p>{p.summary}</p>
+        <p className="card-summary">{p.summary}</p>
         <div className="card-foot">
           <span className="tabular">{priceLabel(p)}</span>
           <span className="card-arrow hex" aria-hidden="true">→</span>

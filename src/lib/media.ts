@@ -15,9 +15,9 @@ export class UploadError extends Error {}
 
 /**
  * Folder R2. produk/artikel/halaman publik lewat /media; selebihnya privat lewat /operasional/bukti (pengiriman)
- * atau /operasional/berkas (penerimaan, uji-pasir, produksi, ttd, kalender).
+ * atau /operasional/berkas (penerimaan, uji-pasir, produksi, ttd, kalender, armada).
  */
-export type MediaFolder = "produk" | "artikel" | "halaman" | "pengiriman" | "penerimaan" | "uji-pasir" | "produksi" | "ttd" | "kalender";
+export type MediaFolder = "produk" | "artikel" | "halaman" | "pengiriman" | "penerimaan" | "uji-pasir" | "produksi" | "ttd" | "kalender" | "armada";
 
 /** Simpan gambar ke R2. Mengembalikan key, atau null bila tidak ada file. */
 export async function saveImage(file: FormDataEntryValue | null, folder: MediaFolder) {

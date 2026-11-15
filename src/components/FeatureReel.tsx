@@ -41,7 +41,7 @@ export function FeatureReel() {
     return () => io.disconnect();
   }, []);
 
-  const src = fmt ? `/reel/reel-${fmt}${withSound ? "-suara" : ""}` : undefined; // tanpa ekstensi: .mp4 lalu .webm
+  const src = fmt ? `/reel/reel-${fmt}${withSound ? "-suara" : ""}` : undefined; // tanpa ekstensi: .webm lalu .mp4
 
   useEffect(() => setPlaying(false), [src]);
 
@@ -75,7 +75,7 @@ export function FeatureReel() {
         <picture className="reel-poster" aria-hidden="true">
           <source media={MOBILE_QUERY} srcSet="/reel/reel-9x16.webp" type="image/webp" />
           <source srcSet="/reel/reel-16x9.webp" type="image/webp" />
-          <img src="/reel/reel-16x9.jpg" alt="" width={1280} height={720} loading="lazy" decoding="async" />
+          <img src="/reel/reel-16x9.webp" alt="" width={1280} height={720} loading="lazy" decoding="async" />
         </picture>
         {src && (inView || withSound || playing) && (
           <video
@@ -92,8 +92,8 @@ export function FeatureReel() {
             onPlaying={() => setPlaying(true)}
             onEnded={withSound ? backToLoop : undefined}
           >
-            <source src={`${src}.mp4`} type="video/mp4" />
             <source src={`${src}.webm`} type="video/webm" />
+            <source src={`${src}.mp4`} type="video/mp4" />
             {withSound && <track kind="captions" src="/reel/reel-suara.vtt" srcLang="id" label="Bahasa Indonesia" />}
           </video>
         )}

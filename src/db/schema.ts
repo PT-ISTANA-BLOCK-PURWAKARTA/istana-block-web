@@ -82,6 +82,12 @@ export const articleCategories = [
   "Kanstin",
 ] as const;
 export type ArticleCategory = (typeof articleCategories)[number];
+export type ArticleCoverMeta = {
+  title?: string;
+  excerpt?: string;
+  topics?: string[];
+  theme?: ArticleCategory;
+};
 
 export const articles = sqliteTable(
   "articles",
@@ -93,6 +99,7 @@ export const articles = sqliteTable(
     excerpt: text("excerpt").notNull().default(""),
     content: text("content").notNull().default(""),
     coverKey: text("cover_key"),
+    coverMeta: text("cover_meta", { mode: "json" }).$type<ArticleCoverMeta | null>(),
     published: integer("published", { mode: "boolean" }).notNull().default(false),
     publishedAt: integer("published_at", { mode: "timestamp" }),
     seoTitle: text("seo_title"),

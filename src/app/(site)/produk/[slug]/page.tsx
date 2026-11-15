@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CatalogPreviewButton } from "@/components/CatalogModalTrigger";
 import { Hex } from "@/components/Hex";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
@@ -9,32 +10,86 @@ import { SpecSheetGrid } from "@/components/SpecSheetGrid";
 import { responsif } from "@/lib/img";
 import specSheets from "@/data/spec-sheets.json";
 import { getEnv } from "@/db";
-import type { PriceRow } from "@/db/schema";
+import type { PriceRow, Product } from "@/db/schema";
 import { imageUrl, priceLabel, rupiah, tanggal, telLink, waLink } from "@/lib/format";
 import { productOffers } from "@/lib/jsonld";
 import { getProductBySlug, listProducts } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
-import { fitTitle } from "@/lib/title";
+import { clampDescription, clampTitle, fitTitle } from "@/lib/title";
+
+const CATALOG_PAGE_BY_PRODUCT: Record<string, number> = {
+  "paving-block": 3,
+  "jasa-pasang-paving": 4,
+  kanstin: 5,
+  "buis-beton": 6,
+  "greffel-beton": 7,
+  "u-ditch": 9,
+  "genteng-beton": 10,
+};
 
 type Props = { params: Promise<{ slug: string }> };
 
+/** Menyeragamkan label tampil "Gravel (Greffel)" untuk greffel-beton sebelum/sesudah migrasi D1 tanpa menyentuh slug/gambar atau membungkus ulang. */
+function formatGravelText(text: string): string {
+  return text.replace(
+    /(gravel\s*\(\s*gr[ae]ff?(?:el|le)\s*\))|(?<![/-])\b(gr[ae]ff?(?:el|le))\b(?!-)/gi,
+    (full, wrapped: string | undefined, word: string | undefined) => {
+      if (wrapped) return full;
+      if (!word) return full;
+      return word[0] === word[0].toUpperCase() ? "Gravel (Greffel)" : "gravel (greffel)";
+    },
+  );
+}
+
+function normalizeProductDisplay(p: Product): Product {
+  if (p.slug !== "greffel-beton") return p;
+  return {
+    ...p,
+    name: formatGravelText(p.name),
+    summary: formatGravelText(p.summary),
+    description: formatGravelText(p.description),
+    seoTitle: p.seoTitle ? formatGravelText(p.seoTitle) : p.seoTitle,
+    seoDescription: p.seoDescription ? formatGravelText(p.seoDescription) : p.seoDescription,
+    waText: p.waText ? formatGravelText(p.waText) : p.waText,
+    specs: p.specs.map((x) => ({ label: formatGravelText(x.label), value: formatGravelText(x.value) })),
+    priceRows: p.priceRows.map((r) => ({
+      ...r,
+      group: formatGravelText(r.group),
+      variant: formatGravelText(r.variant),
+      detail: formatGravelText(r.detail),
+    })),
+    faq: p.faq.map((f) => ({ q: formatGravelText(f.q), a: formatGravelText(f.a) })),
+  };
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const p = await getProductBySlug((await params).slug);
-  if (!p) return { title: "Produk tidak ditemukan", robots: { index: false } };
+  const raw = await getProductBySlug((await params).slug);
+  if (!raw) return { title: "Produk tidak ditemukan", robots: { index: false } };
+  const p = normalizeProductDisplay(raw);
   const fallbackTitle = `Harga ${p.name} Purwakarta`;
-  const title = p.seoTitle || fallbackTitle;
+  const title = clampTitle(p.seoTitle || fallbackTitle);
   const price = priceLabel(p);
   let summary = p.summary;
   const room = 155 - price.length - 2;
   if (summary.length > room) summary = summary.slice(0, room).replace(/[\s,.;:]+\S*$/, "") + "…";
-  const description = p.seoDescription || `${summary} ${price}.`;
+  const description = clampDescription(p.seoDescription || `${summary} ${price}.`);
   const img = imageUrl(p.imageKey);
   return {
     // seoTitle dari panel sudah lengkap dengan merek; "absolute" mencegah template layout menempelkan akhiran merek kedua.
-    title: p.seoTitle ? { absolute: p.seoTitle } : fitTitle(fallbackTitle),
+    title: p.seoTitle ? { absolute: clampTitle(p.seoTitle) } : fitTitle(fallbackTitle),
     description,
     alternates: { canonical: `/produk/${p.slug}` },
-    openGraph: { title, description, url: `/produk/${p.slug}`, images: img ? [img] : [{ url: "/og-default.jpg", width: 1200, height: 630 }] },
+    openGraph: {
+      title,
+      description,
+      url: `/produk/${p.slug}`,
+      images: img
+        ? [img]
+        : [
+            { url: "/og-default.webp", width: 1200, height: 630, type: "image/webp" },
+            { url: "/og-default.jpg", width: 1200, height: 630, type: "image/jpeg" },
+          ],
+    },
   };
 }
 
@@ -56,12 +111,13 @@ function groupRows(rows: PriceRow[]) {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const [p, s, env, all] = await Promise.all([getProductBySlug(slug), getSettings(), getEnv(), listProducts()]);
-  if (!p) notFound();
+  const [raw, s, env, all] = await Promise.all([getProductBySlug(slug), getSettings(), getEnv(), listProducts()]);
+  if (!raw) notFound();
+  const p = normalizeProductDisplay(raw);
   const img = imageUrl(p.imageKey);
   const groups = groupRows(p.priceRows);
   const hasDetail = p.priceRows.some((r) => r.detail);
-  const related = all.filter((x) => x.id !== p.id && x.category !== "Jasa").slice(0, 3);
+  const related = all.filter((x) => x.id !== p.id && x.category !== "Jasa").slice(0, 3).map(normalizeProductDisplay);
   // Offer di JSON-LD hanya dari angka yang tampil di halaman (hero dan tabel); tanpa angka → tanpa offers.
   const offers = productOffers(p, env.SITE_URL);
   const url = `${env.SITE_URL}/produk/${p.slug}`;
@@ -72,10 +128,13 @@ export default async function ProductPage({ params }: Props) {
   const noPrices = p.priceRows.length > 0 && p.priceRows.every((r) => r.price == null);
   // CTA sekunder: kalkulator hanya untuk paving. Tautan biasa (server-rendered), bukan widget, jadi terbaca crawler tanpa JS.
   const calcLink = p.category === "Paving" ? <a className="btn btn-ghost" href="/pola-paving">Hitung kebutuhan paving</a> : null;
-  // Katalog hanya tampil bila pemilik mengisi tautannya di panel /situs; kosong = tanpa tombol mati.
-  const catalogLink = s.catalog_url ? (
-    <a className="btn btn-ghost" href={s.catalog_url} target="_blank" rel="noopener" data-cta="katalog">Unduh katalog (PDF)</a>
-  ) : null;
+  const catalogLink = (
+    <CatalogPreviewButton
+      whatsapp={s.whatsapp}
+      initialPage={CATALOG_PAGE_BY_PRODUCT[p.slug] ?? 1}
+      label="Lihat katalog (PDF)"
+    />
+  );
 
   return (
     <>
@@ -139,7 +198,7 @@ export default async function ProductPage({ params }: Props) {
             <Hex size={48} color="#B5B4AF" className="deco" style={{ left: 8, bottom: 40, transform: "rotate(9deg)" }} />
             <figure className={`hex ${img ? "" : "hexpat-light"}`}>
               {/* Gambar hero = LCP: prioritas tinggi dan tidak lazy. */}
-              {img ? <img src={img} {...responsif(img, "(max-width: 720px) 254px, 404px")} alt={`Foto ${p.name}`} width={800} height={800} fetchPriority="high" loading="eager" decoding="async" /> : <figcaption>Foto {p.name.toLowerCase()} menyusul</figcaption>}
+              {img ? <img src={img} {...responsif(img, "(max-width: 720px) 254px, 404px")} alt={`Foto ${p.name}`} width={1600} height={1200} fetchPriority="high" loading="eager" decoding="async" /> : <figcaption>Foto {p.name.toLowerCase()} menyusul</figcaption>}
             </figure>
           </div>
         </section>
@@ -276,6 +335,23 @@ export default async function ProductPage({ params }: Props) {
               {related.map((x) => (
                 <ProductCard key={x.id} p={x} />
               ))}
+            </div>
+            <div className="chips" style={{ marginTop: 22 }} aria-label="Referensi teknis dan sampel terkait">
+              <Link className="chip-link" href="/sampel">Cek sampel &amp; hitung cepat</Link>
+              <Link className="chip-link" href={`/katalog?halaman=${CATALOG_PAGE_BY_PRODUCT[p.slug] ?? 1}`}>Buka halaman {p.name} di Katalog</Link>
+              <Link className="chip-link" href="/sertifikat-tkdn">Sertifikat TKDN Kemenperin</Link>
+              {p.slug === "paving-block" && (
+                <>
+                  <Link className="chip-link" href="/solusi-paving-block-industri-tahan-beban-berat-perawatan-hemat">Solusi paving kawasan industri</Link>
+                  <Link className="chip-link" href="/pasang-paving-istanablock">Profil produksi &amp; pemasangan</Link>
+                </>
+              )}
+              {p.slug === "jasa-pasang-paving" && (
+                <>
+                  <Link className="chip-link" href="/servis">Layanan pemasangan &amp; servis</Link>
+                  <Link className="chip-link" href="/pasang-paving-istanablock">Standar pemasangan pabrik</Link>
+                </>
+              )}
             </div>
           </section>
         )}

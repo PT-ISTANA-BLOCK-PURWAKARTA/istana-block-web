@@ -11,15 +11,16 @@ import { sendDueReminders } from "./cron/calendar";
 import { remindBackup } from "./cron/backup";
 import { sendScheduledSummaries } from "./cron/summary";
 import { remindIsoSchedules } from "./cron/iso";
+import { remindFleetTempo } from "./cron/tempo";
 import type { CronContext } from "./cron/types";
 
 export type { CronContext, CronDb } from "./cron/types";
 
-/** Titik masuk dari worker.ts: jalankan keempat job secara paralel. */
+/** Titik masuk dari worker.ts: jalankan seluruh job cron operasional secara paralel. */
 export async function runScheduledJobs(env: CloudflareEnv, _ctx: ExecutionContext) {
   // 40 dari 50 subrequest Workers Free untuk fetch push; sisanya cadangan kueri D1 dan lainnya.
   const c: CronContext = { env, db: drizzle(env.DB, { schema }), now: new Date(), budget: { fetchLeft: 40 } };
-  const jobs = { sendDueReminders, remindBackup, sendScheduledSummaries, remindIsoSchedules };
+  const jobs = { sendDueReminders, remindBackup, sendScheduledSummaries, remindIsoSchedules, remindFleetTempo };
   const results = await Promise.allSettled(Object.values(jobs).map((job) => job(c)));
   results.forEach((r, i) => {
     if (r.status === "rejected") console.error(`[cron] ${Object.keys(jobs)[i]} gagal:`, r.reason);

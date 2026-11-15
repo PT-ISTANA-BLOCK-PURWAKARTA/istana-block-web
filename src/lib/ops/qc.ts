@@ -211,6 +211,7 @@ export type StrengthSampleRow = {
   id: string;
   position: number;
   sampleName: string;
+  batchCode: string | null;
   madeAt: string | null;
   testedAt: string | null;
   weightKg: number | null;
@@ -255,7 +256,7 @@ function withSamples(tests: Omit<StrengthTestRow, "samples">[], samples: (typeof
   for (const s of samples) byTest.set(s.testId, [...(byTest.get(s.testId) ?? []), s]);
   return tests.map((t) => ({
     ...t,
-    samples: (byTest.get(t.id) ?? []).map((s) => ({ id: s.id, position: s.position, sampleName: s.sampleName, madeAt: s.madeAt, testedAt: s.testedAt, weightKg: s.weightKg, areaCm2: s.areaCm2, maxLoadKn: s.maxLoadKn, ...evaluateSample(t.concreteGrade, s) })),
+    samples: (byTest.get(t.id) ?? []).map((s) => ({ id: s.id, position: s.position, sampleName: s.sampleName, batchCode: s.batchCode ?? null, madeAt: s.madeAt, testedAt: s.testedAt, weightKg: s.weightKg, areaCm2: s.areaCm2, maxLoadKn: s.maxLoadKn, ...evaluateSample(t.concreteGrade, s) })),
   }));
 }
 

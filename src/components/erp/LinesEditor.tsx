@@ -93,6 +93,24 @@ export function LinesEditor({
     ...(mode === "purchase" ? accounts.map((a) => ({ value: `acc:${a.id}`, label: `${a.code} · ${a.name}`, group: "Biaya langsung ke akun" })) : []),
   ];
 
+  const addPresetFee = (label: string) => {
+    if (!groups.jasa.length) return;
+    const low = label.toLowerCase();
+    const keyword = low.replace(/^(biaya|ongkir)\s+/i, "");
+    const jasa =
+      groups.jasa.find((it) => it.name.toLowerCase().includes(low)) ??
+      groups.jasa.find((it) => it.name.toLowerCase().includes(keyword)) ??
+      groups.jasa[0];
+    const next: EditorLine = {
+      ref: `item:${jasa.id}`,
+      description: label,
+      qty: "1",
+      unit: jasa.unit || "kali",
+      price: jasa.sellPrice ? String(jasa.sellPrice) : "",
+    };
+    setRows((rs) => (rs.length === 1 && !rs[0].ref && !rs[0].description && !rs[0].price ? [next] : [...rs, next]));
+  };
+
   return (
     <div className="lines">
       <input type="hidden" name="lines" value={json} />
@@ -128,9 +146,27 @@ export function LinesEditor({
         })}
       </div>
       <div className="lines-foot">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRows((rs) => [...rs, blank()])}>
-          + Tambah baris
-        </button>
+        <div className="stack" style={{ gap: 8 }}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRows((rs) => [...rs, blank()])}>
+            + Tambah baris
+          </button>
+          {mode === "sales" && groups.jasa.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+              <span className="small muted">Tambahan cepat:</span>
+              {(["Biaya muat", "Biaya bongkar", "Biaya langsir", "Ongkir tambahan"] as const).map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ fontSize: 12.5, minHeight: 30, padding: "2px 10px" }}
+                  onClick={() => addPresetFee(label)}
+                >
+                  + {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <dl className="totals">
           <dt>Subtotal</dt>
           <dd className="tabular">{formatAmount(t.subtotal)}</dd>

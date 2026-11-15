@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { asc, desc, sql } from "drizzle-orm";
 import { PageHead, Rp } from "@/components/erp/ui";
+import { PavingStockSummary, type PavingSummaryItem } from "@/components/ops/stock/PavingStockSummary";
 import { getDb, schema } from "@/db";
 import { productLines } from "@/db/erp";
 import { ITEM_KIND_LABEL } from "@/lib/erp/accounting";
@@ -38,6 +39,20 @@ export default async function Stok({ searchParams }: { searchParams: Promise<{ j
     const s = p.toString();
     return `/operasional/stok${s ? `?${s}` : ""}`;
   };
+  const pavingSummaryItems: PavingSummaryItem[] =
+    (!jenis || jenis === "barang_jadi") && (!kelompok || kelompok === "paving")
+      ? items
+          .filter((i) => lineOf(i) === "paving")
+          .map((i) => ({
+            id: i.id,
+            name: i.name,
+            unit: i.unit,
+            qty: levels.get(i.id)?.qty ?? 0,
+            pending: pend.get(i.id) ?? 0,
+            opname: counts.get(i.id) ?? null,
+          }))
+      : [];
+
   return (
     <>
       <PageHead title="Stok barang" sub="Stok bertambah dari hasil produksi (Grade A), pembelian, dan penyesuaian; berkurang saat surat jalan berangkat. Cat genteng memindahkan stok natural ke warna.">
@@ -61,6 +76,7 @@ export default async function Stok({ searchParams }: { searchParams: Promise<{ j
           ))}
         </nav>
       )}
+      {pavingSummaryItems.length > 0 && <PavingStockSummary items={pavingSummaryItems} />}
       <div className="admin-table">
         <table>
           <thead><tr><th>Barang</th><th>Jenis</th><th className="num">Stok</th><th className="num">Dijadwalkan kirim</th><th className="num">Bebas</th>{canFinance && <th className="num">Harga pokok</th>}{canFinance && <th className="num">Nilai</th>}</tr></thead>

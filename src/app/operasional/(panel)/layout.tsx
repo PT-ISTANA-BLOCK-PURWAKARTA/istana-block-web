@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PanelShell, type ShellItem } from "@/components/panel/PanelShell";
 import { opsAccess } from "@/lib/erp/ops";
 import { DutyBar } from "@/components/ops/duty/DutyBar";
+import { OpsAlarmListener } from "@/components/ops/OpsAlarmListener";
 import { myTodayCount } from "@/lib/ops/calendar";
 import { backupOverdue } from "@/lib/ops/security";
 import { qcPending } from "@/lib/ops/qc";
@@ -45,7 +46,7 @@ const ITEMS: ShellItem[] = [
   { href: "/operasional/keamanan", label: "Keamanan", group: "Kantor", icon: "shield", perm: "keamanan" },
   { href: "/operasional/jadwal-sopir", label: "Jadwal sopir", group: "Data", icon: "clock", perm: ["pengiriman", "keuangan"] },
   { href: "/operasional/gerbang", label: "Buku gerbang", group: "Data", icon: "truck", perm: ["muat", "pengiriman", "keamanan", "keuangan"] },
-  { href: "/operasional/biaya-armada", label: "Biaya armada", group: "Data", icon: "car", perm: ["keuangan"] },
+  { href: "/operasional/biaya-armada", label: "Biaya armada", group: "Data", icon: "car", perm: ["keuangan", "pengiriman", "laporan", "ttd_pimpinan", "setujui_qc"] },
   { href: "/operasional/dana-cepi", label: "Dana Cepi", group: "Data", icon: "pay", perm: ["keuangan"] },
   { href: "/operasional/piutang-cepi", label: "Piutang Cepi", group: "Data", icon: "ledger", perm: ["keuangan"] },
   { href: "/operasional/gaji", label: "Gaji", group: "Kantor", icon: "report", perm: ["keuangan"] },
@@ -68,6 +69,7 @@ export default async function OperasionalLayout({ children }: { children: React.
   return (
     <PanelShell module="operasional" tag="Operasional" items={items} user={user}>
       <DutyBar me={user} />
+      <OpsAlarmListener />
       {children}
     </PanelShell>
   );

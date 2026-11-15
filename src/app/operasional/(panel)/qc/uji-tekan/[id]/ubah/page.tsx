@@ -36,7 +36,7 @@ export default async function UjiTekanUbah({ params }: { params: Promise<{ id: s
     addressedTo: test.addressedTo,
     composition: test.composition.length ? test.composition : DEFAULT_COMPOSITION,
     notes: test.notes,
-    samples: test.samples.map((s) => ({ sampleName: s.sampleName, madeAt: s.madeAt ?? "", testedAt: s.testedAt ?? "", weightKg: numText(s.weightKg), areaCm2: numText(s.areaCm2), maxLoadKn: numText(s.maxLoadKn) })),
+    samples: test.samples.map((s) => ({ sampleName: s.sampleName, batchCode: s.batchCode ?? "", madeAt: s.madeAt ?? "", testedAt: s.testedAt ?? "", weightKg: numText(s.weightKg), areaCm2: numText(s.areaCm2), maxLoadKn: numText(s.maxLoadKn) })),
   };
   return (
     <>

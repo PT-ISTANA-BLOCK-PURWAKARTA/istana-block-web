@@ -3,13 +3,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArticleCover } from "@/components/ArticleCover";
 import { JsonLd } from "@/components/JsonLd";
+import { LocalEstimator } from "@/components/LocalEstimator";
+import { LocalMobileDock } from "@/components/LocalMobileDock";
+import { LocalTrustBadges } from "@/components/LocalTrustBadges";
 import { Markdown } from "@/components/Markdown";
+import "@/components/local-enhancements.css";
 import { getEnv } from "@/db";
 import { imageUrl, telLink, waLink } from "@/lib/format";
 import { PAGE_SLUG_RE } from "@/lib/pages";
-import { getPageBySlug } from "@/lib/queries";
+import { getPageBySlug, listPages } from "@/lib/queries";
 import { getSettings } from "@/lib/settings";
-import { fitTitle } from "@/lib/title";
+import { clampDescription, clampTitle, fitTitle } from "@/lib/title";
+
+const H1_OVERRIDES: Record<string, string> = {
+  "pasang-paving-istanablock": "Profil Produksi & Pemasangan Paving Block",
+  servis: "Layanan Pemasangan Paving & Beton Precast",
+};
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -21,23 +30,36 @@ async function load(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const pg = await load((await params).slug);
   if (!pg) return { title: "Halaman tidak ditemukan", robots: { index: false } };
-  const title = pg.seoTitle || pg.title;
-  const description = pg.seoDescription || pg.excerpt || undefined;
+  const title = clampTitle(pg.seoTitle || pg.title);
+  const rawDesc = pg.seoDescription || pg.excerpt || "";
+  const description = rawDesc ? clampDescription(rawDesc) : undefined;
   const img = imageUrl(pg.coverKey);
   return {
     // seoTitle dari panel sudah lengkap dengan merek; "absolute" mencegah template layout menempelkan akhiran merek kedua.
-    title: pg.seoTitle ? { absolute: pg.seoTitle } : fitTitle(pg.title),
+    title: pg.seoTitle ? { absolute: clampTitle(pg.seoTitle) } : fitTitle(pg.title),
     description,
     alternates: { canonical: `/${pg.slug}` },
-    openGraph: { title, description, url: `/${pg.slug}`, images: img ? [img] : [{ url: "/og-default.jpg", width: 1200, height: 630 }] },
+    openGraph: {
+      title,
+      description,
+      url: `/${pg.slug}`,
+      images: img
+        ? [img]
+        : [
+            { url: "/og-default.webp", width: 1200, height: 630, type: "image/webp" },
+            { url: "/og-default.jpg", width: 1200, height: 630, type: "image/jpeg" },
+          ],
+    },
   };
 }
 
 export default async function StaticPage({ params }: Props) {
   const { slug } = await params;
-  const [pg, s, env] = await Promise.all([load(slug), getSettings(), getEnv()]);
+  const [pg, s, env, allPages] = await Promise.all([load(slug), getSettings(), getEnv(), listPages()]);
   if (!pg) notFound();
   const isArea = pg.kind === "area";
+  const siblingInfoPages = allPages.filter((x) => x.slug !== pg.slug && x.slug !== "sampel" && x.slug !== "katalog");
+  const displayTitle = H1_OVERRIDES[pg.slug] ?? pg.title;
   const img = imageUrl(pg.coverKey);
   const url = `${env.SITE_URL}/${pg.slug}`;
   // Nama area untuk tombol dan pesan WhatsApp: judul tanpa awalan produk ("Paving Block Subang" jadi "Subang").
@@ -45,6 +67,28 @@ export default async function StaticPage({ params }: Props) {
   const waText = isArea
     ? `Halo Istana Block, saya ingin cek harga + ongkir ke ${areaName}. Produk: ..., Volume: ..., Lokasi: ...`
     : `Halo Istana Block, saya membaca halaman "${pg.title}" dan ingin bertanya.`;
+  // Ekstrak kecamatan untuk kalkulator interaktif
+  const kecMatch = pg.content.match(/\*\*Kecamatan:\*\*\s*([^\n]+)/i);
+  const districts = kecMatch
+    ? kecMatch[1]
+        .split(/,|dan/i)
+        .map((d) => d.replace(/[\.\*]/g, "").trim())
+        .filter((d) => d.length > 2)
+    : [areaName];
+
+  // Ekstrak FAQ untuk Rich Snippets Google (Schema FAQPage)
+  const faqMatches = isArea
+    ? Array.from(pg.content.matchAll(/###\s+([^\n?]+(?:\?|[^\n]+))\n+([\s\S]*?)(?=(?:\n###|\n##|$))/g))
+    : [];
+  const faqEntities = faqMatches.slice(0, 8).map((m) => ({
+    "@type": "Question",
+    name: m[1].trim(),
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: m[2].replace(/[#*_\[\]\(\)]/g, "").trim(),
+    },
+  }));
+
   const crumbs = [
     { name: "Beranda", item: env.SITE_URL },
     ...(isArea ? [{ name: "Area pengiriman", item: `${env.SITE_URL}/area-pengiriman` }] : []),
@@ -73,6 +117,15 @@ export default async function StaticPage({ params }: Props) {
             "@type": "BreadcrumbList",
             itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, item: c.item })),
           },
+          ...(faqEntities.length > 0
+            ? [
+                {
+                  "@context": "https://schema.org",
+                  "@type": "FAQPage",
+                  mainEntity: faqEntities,
+                },
+              ]
+            : []),
         ]}
       />
       <nav aria-label="Lokasi halaman" className="breadcrumb">
@@ -88,7 +141,7 @@ export default async function StaticPage({ params }: Props) {
             <span className="pill pill-orange">Area pengiriman</span>
           </div>
         )}
-        <h1 style={{ fontSize: "clamp(32px, 4vw, 50px)" }}>{pg.title}</h1>
+        <h1 style={{ fontSize: "clamp(32px, 4vw, 50px)" }}>{displayTitle}</h1>
         {pg.excerpt && <p className="hero-lead">{pg.excerpt}</p>}
         {/* Halaman area adalah pintu masuk trafik geo: CTA di atas lipatan, tidak menunggu akhir artikel. */}
         {isArea && (
@@ -103,6 +156,8 @@ export default async function StaticPage({ params }: Props) {
           </a>
         )}
       </header>
+      {isArea && <LocalTrustBadges areaName={areaName} />}
+      {isArea && <LocalEstimator areaName={areaName} districts={districts} whatsapp={s.whatsapp} />}
       {img && (
         <div className="article-cover-wrap">
           <ArticleCover
@@ -134,6 +189,21 @@ export default async function StaticPage({ params }: Props) {
         </a>
         <a href={telLink(s.phone)}>atau telepon {s.phone}</a>
       </aside>
+      <section className="info-links-box panel" style={{ marginTop: 32, maxWidth: 820 }} aria-labelledby="info-terkait-heading">
+        <h2 id="info-terkait-heading" style={{ fontSize: 22 }}>Panduan, area kirim &amp; dokumen terkait</h2>
+        <div className="chips" style={{ marginTop: 8 }}>
+          <Link prefetch={false} className="chip-link" href="/produk">Daftar produk &amp; harga</Link>
+          <Link prefetch={false} className="chip-link" href="/katalog">Katalog PDF (11 hal.)</Link>
+          <Link prefetch={false} className="chip-link" href="/sampel">Katalog sampel &amp; QR</Link>
+          <Link prefetch={false} className="chip-link" href="/paket-proyek">Paket proyek</Link>
+          {siblingInfoPages.map((p) => (
+            <Link key={p.id} prefetch={false} className="chip-link" href={`/${p.slug}`}>
+              {H1_OVERRIDES[p.slug] ?? p.title}
+            </Link>
+          ))}
+        </div>
+      </section>
+      {isArea && <LocalMobileDock areaName={areaName} whatsapp={s.whatsapp} />}
     </article>
   );
 }

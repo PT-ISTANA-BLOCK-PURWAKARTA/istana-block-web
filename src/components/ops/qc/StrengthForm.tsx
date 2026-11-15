@@ -7,7 +7,7 @@ import { SubmitButton } from "@/components/admin/SubmitButton";
 import { createStrengthTest, updateStrengthTest } from "@/app/operasional/actions/qc";
 import { DateField } from "@/components/ui";
 import { parseQty, today } from "@/lib/erp/util";
-import { evaluateSample, standardTable, STANDARD_AREA_CM2 } from "@/lib/ops/shared/strength";
+import { batchAverages, evaluateSample, standardTable, STANDARD_AREA_CM2 } from "@/lib/ops/shared/strength";
 import { fromRows, qnum, toRows } from "./labels";
 import { MaterialEditor } from "./MaterialEditor";
 import { emptySample as blankSample, type SampleInitial, type StrengthInitial } from "./strengthInit";
@@ -24,6 +24,25 @@ export function StrengthForm({ initial, back }: { initial: StrengthInitial; back
   const [comp, setComp] = useState(() => toRows(initial.composition));
   const set = (i: number, patch: Partial<SampleInitial>) => setSamples((rows) => rows.map((s, j) => (j === i ? { ...s, ...patch } : s)));
   const standard = standardTable(grade, pn(samples[0]?.areaCm2 ?? "") ?? STANDARD_AREA_CM2);
+  const batches = batchAverages(
+    grade,
+    samples.map((s) => ({ batchCode: s.batchCode, sampleName: s.sampleName, madeAt: s.madeAt || null, testedAt: s.testedAt || null, maxLoadKn: pn(s.maxLoadKn), areaCm2: pn(s.areaCm2) })),
+  );
+  const addBatchThree = () => {
+    setSamples((rows) => {
+      const last = rows[rows.length - 1];
+      const existingBatches = new Set(rows.map((r) => r.batchCode.trim()).filter(Boolean));
+      const batch = last?.batchCode.trim() || `B-${String(existingBatches.size + 1).padStart(2, "0")}`;
+      const base: SampleInitial = { ...emptySample(last), batchCode: batch };
+      const count = Math.min(3, MAX_SAMPLES - rows.length);
+      if (count <= 0) return rows;
+      // Jika baris terakhir masih kosong & belum ada kode batch, isi batch yang sama agar langsung jadi grup 3 sampel.
+      if (rows.length === 1 && !last.sampleName.trim() && !last.maxLoadKn.trim() && !last.batchCode.trim()) {
+        return Array.from({ length: Math.min(3, MAX_SAMPLES) }, () => ({ ...base }));
+      }
+      return [...rows, ...Array.from({ length: count }, () => ({ ...base }))];
+    });
+  };
 
   return (
     <ActionForm action={initial.id ? updateStrengthTest : createStrengthTest} className="stack" style={{ gap: 20 }}>
@@ -51,6 +70,7 @@ export function StrengthForm({ initial, back }: { initial: StrengthInitial; back
                 <div className="field qc-s-name"><label htmlFor={`s-name-${i}`}>Benda uji {i + 1}</label><input id={`s-name-${i}`} value={s.sampleName} onChange={(e) => set(i, { sampleName: e.target.value })} placeholder="Paving 6 cm" maxLength={100} /></div>
                 <div className="field"><label htmlFor={`s-made-${i}`}>Tgl pembuatan</label><DateField id={`s-made-${i}`} value={s.madeAt} onChange={(v) => set(i, { madeAt: v })} /></div>
                 <div className="field"><label htmlFor={`s-test-${i}`}>Tgl ditest</label><DateField id={`s-test-${i}`} value={s.testedAt} onChange={(v) => set(i, { testedAt: v })} /></div>
+                <div className="field"><label htmlFor={`s-batch-${i}`}>Kode batch</label><input id={`s-batch-${i}`} value={s.batchCode} onChange={(e) => set(i, { batchCode: e.target.value })} placeholder="mis. B-01" maxLength={60} /></div>
                 <div className="field"><label htmlFor={`s-w-${i}`}>Berat (kg)</label><input id={`s-w-${i}`} className="num" inputMode="decimal" value={s.weightKg} onChange={(e) => set(i, { weightKg: e.target.value })} /></div>
                 <div className="field"><label htmlFor={`s-a-${i}`}>Luas (cm²)</label><input id={`s-a-${i}`} className="num" inputMode="decimal" value={s.areaCm2} onChange={(e) => set(i, { areaCm2: e.target.value })} /></div>
                 <div className="field"><label htmlFor={`s-k-${i}`}>Tekanan (kN)</label><input id={`s-k-${i}`} className="num" inputMode="decimal" value={s.maxLoadKn} onChange={(e) => set(i, { maxLoadKn: e.target.value })} /></div>
@@ -64,9 +84,22 @@ export function StrengthForm({ initial, back }: { initial: StrengthInitial; back
             );
           })}
         </div>
-        <div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           <button type="button" className="btn btn-ghost btn-sm" disabled={samples.length >= MAX_SAMPLES} onClick={() => setSamples((rows) => [...rows, emptySample(rows[rows.length - 1])])}>+ Tambah benda uji</button>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={samples.length >= MAX_SAMPLES} onClick={addBatchThree}>+3 sampel (batch sama)</button>
         </div>
+        {batches.length > 0 && (
+          <div style={{ borderTop: "1px solid var(--p-line)", paddingTop: 10 }}>
+            <div className="small muted" style={{ marginBottom: 6, fontWeight: 600 }}>Rata-rata per batch &amp; fase umur (≥ 2 sampel)</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {batches.map((b, idx) => (
+                <span key={idx} className={`badge ${b.passed === null ? "badge-info" : b.passed ? "badge-on" : "badge-danger"}`}>
+                  {b.batch || b.name} ({b.count}x, {b.ageDays ?? "-"} hr): {qnum(b.strength) || "-"} kg/cm²{b.target ? ` / target ${qnum(b.target)}` : ""}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="form-grid">

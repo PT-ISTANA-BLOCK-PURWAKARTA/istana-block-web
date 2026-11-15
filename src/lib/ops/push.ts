@@ -84,7 +84,7 @@ async function encryptPayload(payload: Uint8Array, subscription: { p256dh: strin
 
 /** Subjek VAPID: alamat situs (https) atau mailto. */
 function vapidSubject(env: CloudflareEnv) {
-  return /^https:\/\//.test(env.SITE_URL ?? "") ? env.SITE_URL : "mailto:admin@istanablockpurwakarta.com";
+  return /^https:\/\//.test(env.SITE_URL ?? "") ? env.SITE_URL : "mailto:admin@istanablock.com";
 }
 
 /** Penandatangan VAPID: kunci diimpor sekali per pengiriman, JWT dipakai ulang per layanan push tujuan. */

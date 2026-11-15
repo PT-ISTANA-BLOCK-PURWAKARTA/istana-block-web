@@ -1,9 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { waLink } from "@/lib/format";
 import css from "./PatternCalculator.module.css";
+
+const Paving3DView = dynamic(() => import("./Paving3DView"), {
+  ssr: false,
+  loading: () => (
+    <div className={css.loading3d} role="status">
+      Menyiapkan pratinjau 3D...
+    </div>
+  ),
+});
 
 /* =====================================================================
    Data: warna, produk, motif
@@ -35,7 +45,7 @@ function mixHex(hex: string, to: number, amt: number) {
 }
 /** Variasi warna tiap blok (deterministik) agar pratinjau tampak seperti beton asli. */
 const TONES = [-0.075, -0.05, -0.025, 0, 0.025, 0.05, 0.075];
-const SHADES = Object.fromEntries(
+export const SHADES = Object.fromEntries(
   COLOR_IDS.map((c) => [c, TONES.map((t) => (t < 0 ? mixHex(COLORS[c].hex, 0, -t) : mixHex(COLORS[c].hex, 255, t * 1.4)))]),
 ) as Record<ColorId, string[]>;
 
@@ -1068,6 +1078,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const [shareUrl, setShareUrl] = useState("");
   const [status, setStatus] = useState("");
   const [fallback, setFallback] = useState("");
+  const [view3d, setView3d] = useState(false);
   const touched = useRef(false);
 
   // Tanpa initialQuery dari server: pulihkan pilihan dari URL setelah dimuat.
@@ -1146,6 +1157,9 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const m = motifOf(st.jenis, st.motif);
   const colors = effectiveColors(st);
   const colorKey = colors.join("");
+  const colors3D = useMemo(() => colorKey.split("").filter(isColor), [colorKey]);
+  const motif3D = useMemo(() => ({ id: m.id, name: m.name, rot: m.rot }), [m.id, m.name, m.rot]);
+  const unit3D = useMemo(() => unitOf(st.jenis, m.id), [st.jenis, m.id]);
   const thumbKey = st.warna.map((c) => (P.colors.includes(c) ? c : P.colors[0])).join("");
   const r = useMemo(() => compute(st), [st]);
   const lines = useMemo(() => detailLines(st, r), [st, r]);
@@ -1153,6 +1167,10 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const waHref = waLink(whatsapp, waMessage(lines, shareUrl));
   const dupColors = new Set(colors).size < colors.length;
   const [vw, vh] = P.view;
+  const tiles3D = useMemo(
+    () => (view3d ? layoutTiles(unit3D, P.shape, vw, vh, m.rot ?? 0) : []),
+    [view3d, unit3D, P.shape, vw, vh, m.rot],
+  );
   const shareText = r.auto.map((x) => `${COLORS[x.c].name} ${fmtPct(x.share)}`).join(", ");
   const previewLabel = `Pratinjau tampak atas motif ${m.name}, paving ${P.name} ${P.size}, ${shareText}. Potongan area ${fmt(vw / 100)} × ${fmt(vh / 100)} meter dengan skala sebenarnya.`;
 
@@ -1559,17 +1577,55 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
           <div className={css.previewCard}>
             <div className={css.prevHead}>
               <h2 id="pp-prev-h">Pratinjau motif</h2>
-              <span>Tampak atas · skala asli</span>
+              <span>{view3d ? `3D interaktif · tebal ${st.tebal} cm` : "Tampak atas · skala asli"}</span>
             </div>
-            <div className={css.stage}>
-              <PatternArt jenis={st.jenis} motif={m.id} colorKey={colorKey} w={vw} h={vh} label={previewLabel} rich />
-              <span className={css.dims} aria-hidden="true">
-                {fmt(vw / 100)} × {fmt(vh / 100)} m
-              </span>
-              <span className={css.scale} style={{ width: `${10000 / vw}%` }} aria-hidden="true">
-                <span>1 m</span>
-                <i />
-              </span>
+            <div className={css.viewToggle} role="group" aria-label="Mode pratinjau" data-pp-noprint>
+              <button
+                type="button"
+                className={`${css.viewBtn} ${!view3d ? css.viewBtnActive : ""}`}
+                aria-pressed={!view3d}
+                onClick={() => setView3d(false)}
+              >
+                2D Tampak Atas
+              </button>
+              <button
+                type="button"
+                className={`${css.viewBtn} ${view3d ? css.viewBtnActive : ""}`}
+                aria-pressed={view3d}
+                onClick={() => setView3d(true)}
+              >
+                3D Interaktif
+              </button>
+            </div>
+            <div className={`${css.stage} ${view3d ? css.stage3d : ""}`}>
+              {view3d ? (
+                <Paving3DView
+                  jenis={st.jenis}
+                  shape={P.shape}
+                  motif={motif3D}
+                  u={unit3D}
+                  colors={colors3D}
+                  shades={SHADES}
+                  tiles={tiles3D}
+                  vw={vw}
+                  vh={vh}
+                  tebalCm={st.tebal}
+                  showKanstin={st.k}
+                  kanstinCm={st.ks}
+                  onFallback2D={() => setView3d(false)}
+                />
+              ) : (
+                <>
+                  <PatternArt jenis={st.jenis} motif={m.id} colorKey={colorKey} w={vw} h={vh} label={previewLabel} rich />
+                  <span className={css.dims} aria-hidden="true">
+                    {fmt(vw / 100)} × {fmt(vh / 100)} m
+                  </span>
+                  <span className={css.scale} style={{ width: `${10000 / vw}%` }} aria-hidden="true">
+                    <span>1 m</span>
+                    <i />
+                  </span>
+                </>
+              )}
             </div>
             <p className={css.prevTitle}>
               <b>{m.name}</b> · {P.name} {P.size} · tebal {st.tebal} cm

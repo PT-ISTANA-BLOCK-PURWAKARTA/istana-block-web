@@ -5,7 +5,19 @@ import { ImageLightbox } from "@/components/ImageLightbox";
 import { shrinkImage } from "./shrinkImage";
 
 /** Memilih gambar, mengecilkannya di browser (maks 1600 px, WebP) lalu mengirim lewat form. */
-export function ImageField({ name, current, label = "Gambar" }: { name: string; current: string | null; label?: string }) {
+export function ImageField({
+  name,
+  current,
+  label = "Gambar",
+  onPreviewChange,
+  hideRemoveCheckbox = false,
+}: {
+  name: string;
+  current: string | null;
+  label?: string;
+  onPreviewChange?: (url: string | null) => void;
+  hideRemoveCheckbox?: boolean;
+}) {
   const [preview, setPreview] = useState<string | null>(current);
   const [info, setInfo] = useState<string>("");
   const [fileName, setFileName] = useState("");
@@ -23,7 +35,9 @@ export function ImageField({ name, current, label = "Gambar" }: { name: string; 
       if (ref.current) ref.current.files = dt.files;
       setInfo(`Dikecilkan: ${(file.size / 1024).toFixed(0)} KB → ${(out.size / 1024).toFixed(0)} KB`);
     }
-    setPreview(URL.createObjectURL(out));
+    const url = URL.createObjectURL(out);
+    setPreview(url);
+    onPreviewChange?.(url);
   }
 
   return (
@@ -48,9 +62,14 @@ export function ImageField({ name, current, label = "Gambar" }: { name: string; 
           </div>
           <span className="help">JPG/PNG/WebP, maks 5 MB. Otomatis dikecilkan sebelum diunggah.</span>
           {info && <span className="help">{info}</span>}
-          {current && (
+          {current && !hideRemoveCheckbox && (
             <label className="check" style={{ fontWeight: 500, minHeight: 0 }}>
-              <input type="checkbox" name={`${name}_remove`} value="1" /> Hapus gambar saat ini
+              <input
+                type="checkbox"
+                name={`${name}_remove`}
+                value="1"
+                onChange={(e) => onPreviewChange?.(e.target.checked ? null : preview)}
+              /> Hapus gambar saat ini
             </label>
           )}
         </div>

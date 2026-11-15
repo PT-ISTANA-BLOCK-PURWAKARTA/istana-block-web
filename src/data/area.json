@@ -17,7 +17,9 @@
   "wilayah": [
     {
       "nama": "Kabupaten Purwakarta",
-      "ringkas": "Seluruh kecamatan, termasuk Pasawahan, Purwakarta, Babakancikao, Bungursari, Campaka, Cibatu, Jatiluhur, Plered, Sukatani, Darangdan, dan Wanayasa. Area paling mudah dijadwalkan."
+      "slug": "paving-block-purwakarta",
+      "ringkas": "Seluruh kecamatan, termasuk Pasawahan, Purwakarta, Babakancikao, Bungursari, Campaka, Cibatu, Jatiluhur, Plered, Sukatani, Darangdan, dan Wanayasa. Akses langsung pabrik, opsi kirim same-day.",
+      "jarak": "0–25 km dari pabrik Pasawahan (Prioritas Pabrik)"
     },
     {
       "nama": "Karawang & Cikampek",
@@ -52,10 +54,16 @@
       "nama": "Cimahi"
     },
     {
-      "nama": "Bandung Barat"
+      "nama": "Bandung Barat",
+      "slug": "paving-block-bandung-barat-cimahi",
+      "ringkas": "Padalarang, Batujajar, Ngamprah, Cikalongwetan, Parongpong; Cimahi Selatan, Tengah, dan Utara via Tol Cipularang.",
+      "jarak": "±45–65 km via Tol Cipularang"
     },
     {
-      "nama": "Cianjur"
+      "nama": "Cianjur",
+      "slug": "paving-block-cianjur",
+      "ringkas": "Ciranjang, Cikalongkulon, Karangtengah, Sukaluyu, hingga Cianjur kota via jalur arteri Sukatani/Ciranjang.",
+      "jarak": "±38–55 km lewat Sukatani / Ciranjang"
     },
     {
       "nama": "Sumedang"

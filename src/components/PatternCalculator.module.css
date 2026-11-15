@@ -179,8 +179,59 @@
 .prevHead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; padding: 4px 6px 0; }
 .prevHead h2 { font-size: 19px; font-weight: 600; }
 .prevHead span { font-size: 13px; color: var(--redup); }
+.viewToggle {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px;
+  padding: 4px; border-radius: 999px; background: var(--latar);
+}
+.viewBtn {
+  appearance: none; border: 0; border-radius: 999px; min-height: 38px; padding: 6px 12px;
+  background: transparent; color: var(--teks); cursor: pointer;
+  font: 600 13.5px/1.2 var(--font-isi);
+  transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.viewBtn:hover { color: var(--biru-tua); }
+.viewBtn:focus-visible { outline: 3px solid var(--oranye); outline-offset: 2px; }
+.viewBtnActive { background: var(--biru); color: #fff; box-shadow: 0 2px 6px rgba(14, 42, 107, .18); }
+.viewBtnActive:hover { color: #fff; }
 .stage { position: relative; aspect-ratio: 8 / 5; border-radius: 18px; overflow: hidden; background: var(--beton); }
+.stage3d { aspect-ratio: 4 / 3; min-height: 260px; background: linear-gradient(180deg, #eaf0f8 0%, #d5deec 100%); }
 .stage svg { display: block; width: 100%; height: 100%; }
+.wrap3d { position: relative; width: 100%; height: 100%; user-select: none; }
+.canvasHost { position: absolute; inset: 0; touch-action: none; }
+.presets3d {
+  position: absolute; top: 10px; left: 10px; right: 10px; z-index: 2;
+  display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none;
+}
+.presetBtn {
+  pointer-events: auto; appearance: none; border: 1px solid rgba(14, 42, 107, .14); border-radius: 999px;
+  min-height: 32px; padding: 4px 11px; cursor: pointer;
+  background: rgba(255, 255, 255, .92); color: var(--tinta);
+  font: 600 12px/1.2 var(--font-isi);
+  box-shadow: 0 2px 6px rgba(14, 42, 107, .12);
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.presetBtn:hover { border-color: var(--biru); color: var(--biru-tua); }
+.presetBtn:focus-visible { outline: 3px solid var(--oranye); outline-offset: 2px; }
+.presetBtnActive { background: var(--biru); border-color: var(--biru); color: #fff; }
+.presetBtnActive:hover { color: #fff; }
+.hint3d {
+  position: absolute; left: 50%; bottom: 10px; z-index: 2; transform: translateX(-50%);
+  pointer-events: none; max-width: calc(100% - 20px); padding: 5px 12px; border-radius: 999px;
+  background: rgba(14, 42, 107, .82); color: #fff; font-size: 11.5px; font-weight: 600; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.loading3d {
+  display: grid; place-items: center; width: 100%; height: 100%; padding: 20px;
+  color: var(--biru-tua); font-size: 14px; font-weight: 600; text-align: center;
+}
+.fallback3d { display: grid; place-items: center; width: 100%; height: 100%; padding: 16px; }
+.fallbackBox {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 300px;
+  padding: 18px; border-radius: 16px; background: rgba(255, 255, 255, .95);
+  text-align: center; box-shadow: 0 4px 16px rgba(14, 42, 107, .1);
+}
+.fallbackBox b { font: 600 15px/1.3 var(--font-judul); color: var(--biru-tua); }
+.fallbackBox p { font-size: 13px; line-height: 1.45; color: var(--teks); }
 .dims {
   position: absolute; top: 10px; right: 10px; padding: 3px 10px; border-radius: 999px;
   background: rgba(255, 255, 255, .92); color: var(--tinta); font-size: 12px; font-weight: 700;
@@ -228,8 +279,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .optBody, .pill > span, .chip > span { transition: none; }
+  .optBody, .pill > span, .chip > span, .viewBtn, .presetBtn { transition: none; }
 }
 @media (forced-colors: active) {
-  .opt > input:checked + .optBody, .pill > input:checked + span, .chip > input:checked + span { outline: 3px solid Highlight; outline-offset: 1px; }
+  .opt > input:checked + .optBody, .pill > input:checked + span, .chip > input:checked + span, .viewBtnActive, .presetBtnActive { outline: 3px solid Highlight; outline-offset: 1px; }
 }

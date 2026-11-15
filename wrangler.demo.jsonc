@@ -22,7 +22,7 @@
 	},
 	"vars": {
 		// Canonical tetap ke situs resmi; semua halaman demo diberi noindex.
-		"SITE_URL": "https://istanablockpurwakarta.com",
+		"SITE_URL": "https://istanablock.com",
 		"DEMO_MODE": "1"
 	},
 	"d1_databases": [

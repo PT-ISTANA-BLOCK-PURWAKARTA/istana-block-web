@@ -2,6 +2,7 @@ import Link from "next/link";
 import { approveStrengthTest, deleteStrengthTest, requestStrengthRevision, signStrengthAsLeader } from "@/app/operasional/actions/qc";
 import { tglPanjang } from "@/lib/erp/util";
 import { qcCan, type StrengthTestRow } from "@/lib/ops/qc";
+import { batchAverages } from "@/lib/ops/shared/strength";
 import type { Role } from "@/lib/roles";
 import { qnum } from "./labels";
 import { QcActionButton } from "./QcActionButton";
@@ -16,14 +17,14 @@ function excelSheet(tests: StrengthTestRow[]): QcSheet {
     name: "Uji Kuat Tekan",
     columns: [
       { key: "report", header: "Tanggal laporan", width: 14 }, { key: "company", header: "Nama perusahaan", width: 24 }, { key: "grade", header: "Mutu beton", width: 10 },
-      { key: "no", header: "No", width: 5 }, { key: "sample", header: "Benda uji", width: 24 }, { key: "made", header: "Tanggal pembuatan", width: 14 },
+      { key: "no", header: "No", width: 5 }, { key: "sample", header: "Benda uji", width: 24 }, { key: "batch", header: "Batch", width: 12 }, { key: "made", header: "Tanggal pembuatan", width: 14 },
       { key: "tested", header: "Tanggal ditest", width: 14 }, { key: "age", header: "Umur (hari)", width: 10 }, { key: "weight", header: "Berat (kg)", width: 10 },
       { key: "area", header: "Luas bidang (cm²)", width: 14 }, { key: "load", header: "Tekanan maks (kN)", width: 14 }, { key: "strength", header: "Kekuatan (kg/cm²)", width: 15 },
       { key: "target", header: "Target umur (kg/cm²)", width: 16 }, { key: "result", header: "Hasil", width: 16 }, { key: "lab", header: "Diperiksa lab", width: 18 }, { key: "leader", header: "Mengetahui pimpinan", width: 18 },
     ],
     rows: tests.flatMap((t) =>
       t.samples.map((s, i) => ({
-        report: t.reportDate, company: t.companyName, grade: t.concreteGrade, no: i + 1, sample: s.sampleName, made: s.madeAt, tested: s.testedAt, age: s.ageDays,
+        report: t.reportDate, company: t.companyName, grade: t.concreteGrade, no: i + 1, sample: s.sampleName, batch: s.batchCode ?? "", made: s.madeAt, tested: s.testedAt, age: s.ageDays,
         weight: s.weightKg, area: s.areaCm2, load: s.maxLoadKn, strength: round2(s.strength), target: round2(s.target),
         result: s.passed === null ? "" : s.passed ? "Memenuhi" : "Belum memenuhi", lab: t.labSignedByName ?? "", leader: t.leaderSignedByName ?? "",
       })),
@@ -48,6 +49,7 @@ export function UjiTekanTab({ me, from, to, now, tests }: { me: { id: number; ro
         {tests.map((t) => {
           const passed = t.samples.filter((s) => s.passed === true).length;
           const failed = t.samples.filter((s) => s.passed === false).length;
+          const batches = batchAverages(t.concreteGrade, t.samples);
           const canEdit = c.input && t.reviewStatus !== "disetujui" && (c.editAny || t.createdBy === me.id);
           return (
             <article className="admin-card qc-test" key={t.id}>
@@ -68,7 +70,10 @@ export function UjiTekanTab({ me, from, to, now, tests }: { me: { id: number; ro
                   <tbody>
                     {t.samples.map((s) => (
                       <tr key={s.id}>
-                        <td>{s.sampleName}</td>
+                        <td>
+                          {s.sampleName}
+                          {s.batchCode && <span className="small muted"> · {s.batchCode}</span>}
+                        </td>
                         <td>{s.ageDays ?? "-"} hr</td>
                         <td className="num">{qnum(s.maxLoadKn) || "-"}</td>
                         <td className={`num ${s.passed === null ? "" : s.passed ? "text-sukses" : "text-bahaya"}`}><b>{qnum(s.strength) || "-"}</b></td>
@@ -78,6 +83,15 @@ export function UjiTekanTab({ me, from, to, now, tests }: { me: { id: number; ro
                   </tbody>
                 </table>
               </div>
+              {batches.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {batches.map((b, idx) => (
+                    <span key={idx} className={`badge ${b.passed === null ? "badge-info" : b.passed ? "badge-on" : "badge-danger"}`}>
+                      Rata-rata {b.batch || b.name} ({b.count}x, {b.ageDays ?? "-"} hr): {qnum(b.strength) || "-"} kg/cm²
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="small">
                 {t.reviewStatus === "disetujui" && <div className="qc-ok">✓ Diperiksa Lab: {t.labSignedByName ?? ""}</div>}
                 {t.reviewStatus === "revisi" && <div className="qc-revise"><b>Perlu revisi</b>{t.reviewNote ? `: ${t.reviewNote}` : ""}</div>}

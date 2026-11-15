@@ -59,6 +59,7 @@ export function ArticleCover({
   variant,
   title,
   category,
+  themeCategory,
   excerpt,
   coverSrc,
   topics = [],
@@ -68,6 +69,7 @@ export function ArticleCover({
   variant: "card" | "spotlight" | "hero";
   title: string;
   category: string;
+  themeCategory?: string;
   excerpt?: string;
   coverSrc?: string | null;
   topics?: string[];
@@ -75,6 +77,7 @@ export function ArticleCover({
   priority?: boolean;
 }) {
   const hasReal = isRealArticleCover(coverSrc);
+  const visualKey = themeCategory || category;
 
   if (variant === "hero") {
     if (hasReal) {
@@ -101,7 +104,7 @@ export function ArticleCover({
       );
     }
 
-    const theme = categoryCoverTheme(category);
+    const theme = categoryCoverTheme(visualKey);
     return (
       <div
         className="article-cover-hex hexlong hexpat"
@@ -113,7 +116,7 @@ export function ArticleCover({
         role="region"
         aria-label={`Ringkasan visual panduan ${title}`}
       >
-        <CategoryMotif category={category} accent={theme.accent} />
+        <CategoryMotif category={visualKey} accent={theme.accent} />
         <div className="article-cover-hex-inner">
           <div className="artikel-dyn-kicker">
             <span className="artikel-dyn-dot" aria-hidden="true" />
@@ -150,7 +153,7 @@ export function ArticleCover({
     );
   }
 
-  const theme = categoryCoverTheme(category);
+  const theme = categoryCoverTheme(visualKey);
   return (
     <div
       className={`artikel-dyn-cover is-${variant} hexpat`}
@@ -161,7 +164,7 @@ export function ArticleCover({
       }}
       aria-hidden="true"
     >
-      <CategoryMotif category={category} accent={theme.accent} />
+      <CategoryMotif category={visualKey} accent={theme.accent} />
       <div className="artikel-dyn-inner">
         <span className="artikel-dyn-badge">
           <i className="artikel-dyn-dot" />

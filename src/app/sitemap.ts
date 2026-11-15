@@ -23,11 +23,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/pola-paving`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/paket-proyek`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/area-pengiriman`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${base}/katalog`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/sampel`, changeFrequency: "monthly", priority: 0.7 },
     // Sama dengan contentUrl di JSON-LD ImageGallery halaman /galeri (semua foto, tanpa filter ?k=).
     { url: `${base}/galeri`, changeFrequency: "monthly", priority: 0.6, images: gallery.map((g) => `${base}${g.src}`) },
     ...products.map((p) => ({ url: `${base}/produk/${p.slug}`, lastModified: p.updatedAt, changeFrequency: "monthly" as const, priority: 0.8, ...photo(p.imageKey) })),
     ...articles.map((a) => ({ url: `${base}/artikel/${a.slug}`, lastModified: a.updatedAt, changeFrequency: "monthly" as const, priority: 0.6, ...photo(a.coverKey) })),
-    ...pages.map((pg) => ({ url: `${base}/${pg.slug}`, lastModified: pg.updatedAt, changeFrequency: "monthly" as const, priority: pg.kind === "area" ? 0.7 : 0.5 })),
+    ...pages.filter((pg) => pg.slug !== "sampel" && pg.slug !== "katalog").map((pg) => ({ url: `${base}/${pg.slug}`, lastModified: pg.updatedAt, changeFrequency: "monthly" as const, priority: pg.kind === "area" ? 0.7 : 0.5 })),
   ];
   // Hasil impor: semua updated_at seragam, jadi lastmod tidak memberi sinyal apa pun dan
   // Google cenderung mengabaikannya. Buang bila hanya ada satu tanggal; otomatis kembali

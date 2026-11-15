@@ -72,7 +72,7 @@ export function localBusiness(s: Settings, siteUrl: string) {
     name: s.company_name,
     legalName: s.legal_name,
     url: siteUrl,
-    logo: `${siteUrl}/brand/logo-istana-block.png`,
+    logo: `${siteUrl}/brand/logo-istana-block.webp`,
     image: `${siteUrl}/img/pabrik/pabrik-mesin-paving.webp`,
     telephone: office ?? mobile,
     ...(office && mobile && office !== mobile
@@ -80,6 +80,9 @@ export function localBusiness(s: Settings, siteUrl: string) {
       : {}),
     email: s.email,
     foundingDate: s.founded_year,
+    priceRange: "Rp80.000 - Rp1.115.000",
+    currenciesAccepted: "IDR",
+    paymentAccepted: s.payment_terms || "Transfer Bank, Tunai",
     address: {
       "@type": "PostalAddress",
       streetAddress: s.address,

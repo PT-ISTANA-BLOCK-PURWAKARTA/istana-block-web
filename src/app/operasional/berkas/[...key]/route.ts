@@ -2,9 +2,9 @@ import { getEnv } from "@/db";
 import { getCurrentAdmin } from "@/lib/auth";
 import { can, type Perm, type Role } from "@/lib/roles";
 
-// Foto & lampiran operasional (barang masuk, uji pasir, produksi, tanda tangan, kalender): hanya untuk pengguna
+// Foto & lampiran operasional (barang masuk, uji pasir, produksi, tanda tangan, kalender, armada): hanya untuk pengguna
 // yang boleh membuka operasional. Tidak lewat /media publik.
-const FOLDERS = /^(penerimaan|uji-pasir|produksi|ttd|kalender)\/[\w\-./]+$/;
+const FOLDERS = /^(penerimaan|uji-pasir|produksi|ttd|kalender|armada)\/[\w\-./]+$/;
 
 // Izin tambahan per folder (pemilik selalu boleh): tanda tangan, kalender, uji pasir, dan lain-lain tidak terbuka untuk semua akun operasional.
 const FOLDER_PERMS: Record<string, readonly Perm[]> = {
@@ -13,6 +13,7 @@ const FOLDER_PERMS: Record<string, readonly Perm[]> = {
   "uji-pasir": ["uji_pasir", "lihat_uji_pasir", "iso"],
   penerimaan: ["barang_masuk", "lihat_barang_masuk", "iso"],
   produksi: ["stok", "produksi_lapangan", "keuangan", "iso", "laporan"],
+  armada: ["keuangan", "pengiriman", "laporan", "ttd_pimpinan", "setujui_qc"],
 };
 
 function folderAllowed(roles: readonly Role[], path: string) {

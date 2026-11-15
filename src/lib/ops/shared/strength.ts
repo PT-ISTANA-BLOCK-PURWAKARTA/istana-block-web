@@ -73,3 +73,72 @@ export function evaluateSample(grade: string, sample: { madeAt?: Date | string |
   const round2 = (value: number) => Math.round(value * 100) / 100;
   return { ageDays: days, strength, target, passed: strength !== null && target !== null ? round2(strength) >= round2(target) : null };
 }
+
+export type BatchAverage = {
+  batch: string;
+  name: string;
+  testedAt: Date | string | null | undefined;
+  indexes: number[];
+  strengths: number[];
+  loads: number[];
+  ageDays: number | null;
+  target: number | null;
+  count: number;
+  strength: number | null;
+  maxLoadKn: number | null;
+  passed: boolean | null;
+};
+
+/**
+ * Rata-rata per batch & fase umur: benda uji dengan batch (atau nama bila batch kosong) dan tanggal uji sama.
+ * Hanya kelompok ≥ 2 benda uji. Hasil memenuhi bila rata-rata kekuatan ≥ target umur.
+ */
+export function batchAverages(
+  grade: string,
+  samples: { batchCode?: string | null; sampleName: string; madeAt?: Date | string | null; testedAt?: Date | string | null; maxLoadKn?: number | null; areaCm2?: number | null }[],
+): BatchAverage[] {
+  const day = (value: Date | string | null | undefined) => {
+    if (!value) return "";
+    if (typeof value === "string") return value.slice(0, 10);
+    return Number.isNaN(value.getTime()) ? "" : value.toISOString().slice(0, 10);
+  };
+  const groups = new Map<
+    string,
+    { batch: string; name: string; testedAt: Date | string | null | undefined; indexes: number[]; strengths: number[]; loads: number[]; ageDays: number | null; target: number | null }
+  >();
+  samples.forEach((sample, index) => {
+    const label = sample.batchCode?.trim() || sample.sampleName.trim();
+    if (!label) return;
+    const key = `${label.toLowerCase()}|${day(sample.testedAt)}`;
+    const result = evaluateSample(grade, sample);
+    const group = groups.get(key) ?? {
+      batch: sample.batchCode?.trim() ?? "",
+      name: sample.sampleName.trim(),
+      testedAt: sample.testedAt,
+      indexes: [],
+      strengths: [],
+      loads: [],
+      ageDays: result.ageDays,
+      target: result.target,
+    };
+    group.indexes.push(index);
+    if (result.strength !== null) group.strengths.push(result.strength);
+    if (sample.maxLoadKn) group.loads.push(sample.maxLoadKn);
+    groups.set(key, group);
+  });
+  const mean = (values: number[]) => (values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null);
+  const round2 = (value: number) => Math.round(value * 100) / 100;
+  return [...groups.values()]
+    .filter((group) => group.indexes.length >= 2)
+    .map((group) => {
+      const strength = mean(group.strengths);
+      return {
+        ...group,
+        count: group.indexes.length,
+        strength,
+        maxLoadKn: mean(group.loads),
+        passed: strength !== null && group.target !== null ? round2(strength) >= round2(group.target) : null,
+      };
+    });
+}
+

@@ -8,7 +8,7 @@ import { requireAdmin } from "@/lib/auth";
 import { imageUrl, tanggal } from "@/lib/format";
 import { deleteArticle, toggleArticlePublished } from "../../actions/articles";
 import { ArticleToggleButton } from "./ArticleToggleButton";
-import { isRealArticleCover } from "@/lib/article-cover";
+import { categoryCoverTheme, isRealArticleCover } from "@/lib/article-cover";
 
 export const metadata = { title: "Artikel" };
 
@@ -109,6 +109,7 @@ export default async function AdminArtikel({ searchParams }: { searchParams: Pro
       title: articles.title,
       category: articles.category,
       coverKey: articles.coverKey,
+      coverMeta: articles.coverMeta,
       published: articles.published,
       publishedAt: articles.publishedAt,
       updatedAt: articles.updatedAt,
@@ -200,10 +201,27 @@ export default async function AdminArtikel({ searchParams }: { searchParams: Pro
             {rows.map((a) => {
               const rawImg = imageUrl(a.coverKey);
               const img = isRealArticleCover(rawImg) ? rawImg : null;
+              const dynTheme = categoryCoverTheme(a.coverMeta?.theme ?? a.category);
+              const hasOverride = Boolean(
+                a.coverMeta &&
+                  (a.coverMeta.title || a.coverMeta.excerpt || a.coverMeta.topics?.length || a.coverMeta.theme),
+              );
               return (
                 <tr key={a.id}>
                   <td>
-                    {img ? <img src={img} alt="" className="thumb" loading="lazy" decoding="async" /> : <div className="thumb hexpat-light" />}
+                    {img ? (
+                      <img src={img} alt="" className="thumb" loading="lazy" decoding="async" />
+                    ) : (
+                      <div
+                        className="thumb hexpat studio-list-thumb"
+                        title={`Sampul dinamis · ${a.coverMeta?.theme ?? a.category}${hasOverride ? " (kustom)" : ""}`}
+                        style={{
+                          background: `linear-gradient(135deg, ${dynTheme.bgFrom}, ${dynTheme.bgTo})`,
+                        }}
+                      >
+                        <span className="studio-list-dot" style={{ background: dynTheme.accent }} />
+                      </div>
+                    )}
                   </td>
                   <td>
                     <Link href={`/situs/artikel/${a.id}`} style={{ fontWeight: 700 }}>{a.title}</Link>

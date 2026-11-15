@@ -3,7 +3,7 @@ import type { MaterialLine } from "@/db/erp";
 import { STANDARD_AREA_CM2 } from "@/lib/ops/shared/strength";
 import { numText } from "./labels";
 
-export type SampleInitial = { sampleName: string; madeAt: string; testedAt: string; weightKg: string; areaCm2: string; maxLoadKn: string };
+export type SampleInitial = { sampleName: string; batchCode: string; madeAt: string; testedAt: string; weightKg: string; areaCm2: string; maxLoadKn: string };
 export type StrengthInitial = {
   id?: string;
   reportDate: string;
@@ -21,6 +21,7 @@ export const defaultArea = () => numText(Math.round(STANDARD_AREA_CM2 * 100) / 1
 
 export const emptySample = (testedAt: string, prev?: SampleInitial): SampleInitial => ({
   sampleName: prev?.sampleName ?? "",
+  batchCode: prev?.batchCode ?? "",
   madeAt: prev?.madeAt ?? "",
   testedAt: prev?.testedAt || testedAt,
   weightKg: "",

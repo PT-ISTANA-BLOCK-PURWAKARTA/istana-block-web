@@ -10,7 +10,7 @@ export const LINE_LABEL: Record<ProductLine, string> = {
   kanstin: "Kanstin",
   uditch: "U-Ditch",
   tutup_uditch: "Tutup U-Ditch",
-  greffel: "Greffel",
+  greffel: "Gravel (Greffel)",
   grass: "Grass Block",
   lainnya: "Lainnya",
 };

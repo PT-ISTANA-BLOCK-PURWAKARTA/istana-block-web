@@ -6,6 +6,7 @@ import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/db";
 import { articleCategories } from "@/db/schema";
+import { normalizeCoverTopicsInput, sanitizeCoverMeta } from "@/lib/article-cover";
 import type { FormState } from "@/components/admin/FormMessage";
 import { requireAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/format";
@@ -19,6 +20,11 @@ const ArticleInput = z.object({
   content: z.string().max(60000),
   seoTitle: z.string().trim().max(70),
   seoDescription: z.string().trim().max(170),
+  coverMode: z.enum(["dynamic", "photo"]).optional(),
+  coverTitle: z.string().trim().max(160).optional(),
+  coverExcerpt: z.string().trim().max(300).optional(),
+  coverTopics: z.string().trim().max(260).optional(),
+  coverTheme: z.union([z.literal(""), z.enum(articleCategories)]).optional(),
 });
 
 export async function saveArticle(_prev: FormState, form: FormData): Promise<FormState> {
@@ -40,18 +46,34 @@ export async function saveArticle(_prev: FormState, form: FormData): Promise<For
 
   let coverKey = existing?.coverKey ?? null;
   try {
-    const up = await saveImage(form.get("cover"), "artikel");
-    if (up) {
-      await deleteImage(coverKey);
-      coverKey = up;
-    } else if (form.get("cover_remove")) {
+    if (d.coverMode === "dynamic") {
       await deleteImage(coverKey);
       coverKey = null;
+    } else {
+      const up = await saveImage(form.get("cover"), "artikel");
+      if (up) {
+        await deleteImage(coverKey);
+        coverKey = up;
+      } else if (form.get("cover_remove")) {
+        await deleteImage(coverKey);
+        coverKey = null;
+      }
     }
   } catch (e) {
     if (e instanceof UploadError) return { error: e.message };
     throw e;
   }
+
+  const rawTopics = d.coverTopics ? normalizeCoverTopicsInput(d.coverTopics) : undefined;
+  const coverMeta = sanitizeCoverMeta(
+    {
+      title: d.coverTitle || undefined,
+      excerpt: d.coverExcerpt || undefined,
+      topics: rawTopics && rawTopics.length > 0 ? rawTopics : undefined,
+      theme: d.coverTheme || undefined,
+    },
+    articleCategories,
+  );
 
   const published = form.get("published") === "on";
   const values = {
@@ -63,6 +85,7 @@ export async function saveArticle(_prev: FormState, form: FormData): Promise<For
     seoTitle: d.seoTitle || null,
     seoDescription: d.seoDescription || null,
     coverKey,
+    coverMeta,
     published,
     publishedAt: published ? (existing?.publishedAt ?? new Date()) : (existing?.publishedAt ?? null),
     updatedAt: new Date(),

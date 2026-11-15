@@ -348,6 +348,7 @@ async function strengthValues(form: FormData) {
     return {
       position: i + 1,
       sampleName,
+      batchCode: String(r.batchCode ?? "").trim().slice(0, 60) || null,
       madeAt: optDate(r.madeAt, `Benda uji ${i + 1}: tanggal pembuatan`),
       testedAt: optDate(r.testedAt, `Benda uji ${i + 1}: tanggal ditest`),
       weightKg: optNumber(r.weightKg, `Benda uji ${i + 1}: berat`),

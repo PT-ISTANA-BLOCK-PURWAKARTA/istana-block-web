@@ -25,7 +25,7 @@
   "/img/galeri/galeri-24-thumb.webp": { "w": 640, "v": [320] },
   "/img/pabrik/pabrik-mesin-paving.webp": { "w": 1600, "v": [400, 800, 1200] },
   "/img/produk/buis-beton.webp": { "w": 1600, "v": [320, 480, 800, 1200] },
-  "/img/produk/genteng-beton.webp": { "w": 800, "v": [320, 480] },
+  "/img/produk/genteng-beton.webp": { "w": 1600, "v": [320, 480, 800, 1200] },
   "/img/produk/greffel-beton.webp": { "w": 1600, "v": [320, 480, 800, 1200] },
   "/img/produk/jasa-pasang-paving.webp": { "w": 1600, "v": [320, 480, 800, 1200] },
   "/img/produk/kanstin.webp": { "w": 1600, "v": [320, 480, 800, 1200] },

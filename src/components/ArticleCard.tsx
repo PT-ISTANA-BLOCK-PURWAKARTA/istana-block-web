@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { ArticleCoverMeta } from "@/db/schema";
+import { resolveArticleCover } from "@/lib/article-cover";
 import { ArticleCover } from "@/components/ArticleCover";
 
 export type ArticleCardItem = {
@@ -8,6 +10,7 @@ export type ArticleCardItem = {
   category: string;
   excerpt: string;
   coverSrc: string | null;
+  coverMeta?: ArticleCoverMeta | null;
   publishedDate: string;
   publishedMs: number;
   readMinutes: number;
@@ -23,14 +26,22 @@ export function ArticleCard({
   headingLevel?: "h2" | "h3";
 }) {
   const Heading = headingLevel;
+  const cover = resolveArticleCover({
+    title: item.title,
+    category: item.category,
+    excerpt: item.excerpt,
+    coverMeta: item.coverMeta,
+  });
+
   return (
     <Link prefetch={false} href={`/artikel/${item.slug}`} className="card artikel-card">
       <div className="card-media hexlong">
         <ArticleCover
           variant="card"
-          title={item.title}
-          category={item.category}
-          excerpt={item.excerpt}
+          title={cover.title}
+          category={cover.badgeCategory}
+          themeCategory={cover.themeCategory}
+          excerpt={cover.excerpt}
           coverSrc={item.coverSrc}
           sizes="(max-width: 640px) 92vw, (max-width: 960px) 46vw, 380px"
           priority={eager}

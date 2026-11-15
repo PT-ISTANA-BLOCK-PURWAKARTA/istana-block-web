@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
 import { Calculator } from "@/components/Calculator";
+import { CatalogPreviewButton } from "@/components/CatalogModalTrigger";
 import { ClientLogos } from "@/components/ClientLogos";
 import { FaqList } from "@/components/FaqList";
 import { GALLERY, GalleryGrid } from "@/components/Gallery";
 import { FeatureReel } from "@/components/FeatureReel";
 import { Hex } from "@/components/Hex";
 import { HexDivider } from "@/components/HexDivider";
+import { HomeSearch } from "@/components/HomeSearch";
+import "@/components/home-search.css";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductCard } from "@/components/ProductCard";
 import { responsif } from "@/lib/img";
@@ -16,14 +19,25 @@ import { imageUrl, rupiah, tanggal, waLink } from "@/lib/format";
 import { webSite } from "@/lib/jsonld";
 import { listArticleSummaries, listProducts, listTestimonials } from "@/lib/queries";
 import { getSettings, parseFaq } from "@/lib/settings";
+import { clampDescription, clampTitle } from "@/lib/title";
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings();
+  const title = clampTitle(s.seo_title);
+  const description = clampDescription(s.seo_description);
   return {
-    title: { absolute: s.seo_title },
-    description: s.seo_description,
+    title: { absolute: title },
+    description,
     alternates: { canonical: "/" },
-    openGraph: { title: s.seo_title, description: s.seo_description, url: "/", images: [{ url: "/og-default.jpg", width: 1200, height: 630 }] },
+    openGraph: {
+      title,
+      description,
+      url: "/",
+      images: [
+        { url: "/og-default.webp", width: 1200, height: 630, type: "image/webp" },
+        { url: "/og-default.jpg", width: 1200, height: 630, type: "image/jpeg" },
+      ],
+    },
   };
 }
 
@@ -47,18 +61,24 @@ export default async function Home() {
       <JsonLd data={webSite(s, env.SITE_URL)} />
       <section className="wrap hero">
         <div className="hero-text">
-          <div className="pills">
+          <div className="pills" aria-label="Layanan utama">
             <span className="pill pill-orange">Penjualan produk</span>
             <span className="pill">Jasa pemasangan</span>
             <span className="pill">Supplier proyek</span>
           </div>
           <h1>{s.hero_title}</h1>
-          <p className="hero-lead">{s.hero_subtitle}</p>
+          <p className="hero-lead">Paving block, U-Ditch, buis beton, kanstin, dan genteng beton — langsung dari pabrik di Purwakarta.</p>
+          <ul className="spec-badges" aria-label="Keunggulan utama">
+            <li className="spec-badge">Mutu {s.quality_label} SNI</li>
+            <li className="spec-badge spec-badge-accent">Sertifikat TKDN</li>
+            <li className="spec-badge">Armada Sendiri</li>
+          </ul>
           <div className="actions">
             <a className="btn btn-primary" href={waLink(s.whatsapp, "Halo Istana Block, saya mau minta penawaran.")} target="_blank" rel="noopener">
               Minta penawaran via WhatsApp
             </a>
             <Link className="btn btn-ghost" href="/produk">Lihat harga</Link>
+            <CatalogPreviewButton whatsapp={s.whatsapp} label="Lihat katalog (PDF)" />
           </div>
         </div>
         <div className="hero-art">
@@ -80,6 +100,10 @@ export default async function Home() {
             </a>
           )}
         </div>
+      </section>
+
+      <section className="wrap home-search-band" aria-label="Pencarian cepat situs">
+        <HomeSearch whatsapp={s.whatsapp} />
       </section>
 
       <section className="wrap" aria-label="Keunggulan">
@@ -143,8 +167,11 @@ export default async function Home() {
         <div className="wrap">
           <div className="calc-intro">
             <h2>Hitung kebutuhan paving</h2>
-            <p>Isi ukuran area. Jumlah sudah termasuk cadangan 5% untuk potongan tepi. Hasilnya bisa langsung dikirim ke admin.</p>
-            <p>Mau atur motif dan kombinasi warna, plus hitung kanstin, abu batu, dan base course?</p>
+            <p>Isi ukuran area untuk estimasi jumlah paving siap kirim ke WhatsApp.</p>
+            <div className="spec-badges spec-badges-dark">
+              <span className="spec-badge">+5% cadangan tepi</span>
+              <span className="spec-badge">Hitung pola &amp; kanstin</span>
+            </div>
             <Link href="/pola-paving" className="btn btn-ghost" style={{ alignSelf: "flex-start", borderColor: "#fff", color: "#fff" }}>Buka kalkulator pola &amp; warna →</Link>
             <div style={{ display: "flex", gap: 10, marginTop: 12 }} aria-hidden="true">
               <Hex size={56} color="#FE5722" />
@@ -164,7 +191,7 @@ export default async function Home() {
           </figure>
           <div className="stack" style={{ flex: "1 1 280px", minWidth: 0, gap: 16, padding: "22px 22px 22px 0" }}>
             <h2>{s.project_title}</h2>
-            <p className="muted">{s.project_text}</p>
+            <p className="muted card-summary">{s.project_text}</p>
             {tkdn.length > 0 && (
               <div className="tiles">
                 {tkdn.map((p, i) => (
@@ -175,7 +202,11 @@ export default async function Home() {
                 ))}
               </div>
             )}
-            <p className="small muted">{s.tkdn_note}</p>
+            <div className="spec-badges">
+              <span className="spec-badge spec-badge-accent">SK Kemenperin RI</span>
+              <span className="spec-badge">Berlaku s.d. 2031</span>
+              <span className="spec-badge">Siap Dokumen Tender</span>
+            </div>
             <a className="btn btn-ghost" style={{ alignSelf: "flex-start" }} href={waLink(s.whatsapp, "Halo Istana Block, saya minta penawaran material proyek dan salinan sertifikat TKDN.")} target="_blank" rel="noopener">
               Minta penawaran proyek
             </a>
@@ -184,7 +215,11 @@ export default async function Home() {
         {jasa && (
           <div className="panel" style={{ flex: "1 1 380px" }}>
             <h2>{jasa.name}</h2>
-            <p className="muted small">{jasa.summary}</p>
+            <div className="spec-badges">
+              <span className="spec-badge">Min. 200 m²</span>
+              <span className="spec-badge spec-badge-accent">Garansi 1 bulan</span>
+            </div>
+            <p className="muted small card-summary">{jasa.summary}</p>
             <div className="rowlist">
               {jasa.priceRows.map((r, i) => (
                 <div className="rowitem" key={i}>
@@ -255,6 +290,7 @@ export default async function Home() {
                   category: a.category,
                   excerpt: a.excerpt,
                   coverSrc: imageUrl(a.coverKey),
+                  coverMeta: a.coverMeta,
                   publishedDate: tanggal(a.publishedAt),
                   publishedMs: a.publishedAt ? a.publishedAt.getTime() : 0,
                   readMinutes: a.readMinutes,

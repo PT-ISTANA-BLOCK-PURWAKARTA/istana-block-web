@@ -8,13 +8,21 @@ import { getSettings } from "@/lib/settings";
 
 const TITLE = "Kalkulator Pola & Warna Paving";
 const DESCRIPTION =
-  "Pilih jenis paving, motif, dan warna, lihat pratinjau berskala asli, lalu hitung pcs per warna, kanstin, abu batu, dan base course. Kirim rinciannya ke WhatsApp.";
+  "Pilih jenis paving, motif, dan warna, lihat pratinjau skala asli, lalu hitung pcs per warna, kanstin, abu batu, dan base course untuk dikirim ke WhatsApp.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/pola-paving" },
-  openGraph: { title: TITLE, description: DESCRIPTION, url: "/pola-paving", images: [{ url: "/og-default.jpg", width: 1200, height: 630 }] },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/pola-paving",
+    images: [
+      { url: "/og-default.webp", width: 1200, height: 630, type: "image/webp" },
+      { url: "/og-default.jpg", width: 1200, height: 630, type: "image/jpeg" },
+    ],
+  },
 };
 
 const FAQ = [

@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
-import type { PageKind } from "@/db/schema";
+import type { ArticleCoverMeta, PageKind } from "@/db/schema";
 import { memo } from "./memo";
 
 const { products, articles, testimonials, pages } = schema;
@@ -54,6 +54,7 @@ export type ArticleSummary = {
   category: string;
   excerpt: string;
   coverKey: string | null;
+  coverMeta: ArticleCoverMeta | null;
   publishedAt: Date | null;
   readMinutes: number;
 };
@@ -69,6 +70,7 @@ const articleSummaries = cache((limit: number) =>
         category: articles.category,
         excerpt: articles.excerpt,
         coverKey: articles.coverKey,
+        coverMeta: articles.coverMeta,
         publishedAt: articles.publishedAt,
         contentLen: sql<number>`length(${articles.content})`,
       })
@@ -83,6 +85,7 @@ const articleSummaries = cache((limit: number) =>
       category: r.category,
       excerpt: r.excerpt,
       coverKey: r.coverKey,
+      coverMeta: r.coverMeta ?? null,
       publishedAt: r.publishedAt,
       readMinutes: Math.max(1, Math.round((r.contentLen || 0) / 1200)),
     }));

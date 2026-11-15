@@ -4,10 +4,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArticleCard, type ArticleCardItem } from "@/components/ArticleCard";
 import { ArticleCover } from "@/components/ArticleCover";
-
-const PER_PAGE = 12;
+import { Select, type SelectOption } from "@/components/ui";
+import { resolveArticleCover } from "@/lib/article-cover";
 
 export type ArticleSort = "terbaru" | "terlama" | "judul";
+export type ArticlePerPage = "auto" | "12" | "24" | "48" | "semua";
+
+const SORT_OPTIONS: SelectOption[] = [
+  { value: "terbaru", label: "Urutkan: Terbaru" },
+  { value: "terlama", label: "Urutkan: Terlama" },
+  { value: "judul", label: "Urutkan: Judul A–Z" },
+];
 
 const norm = (s: string) =>
   s
@@ -15,11 +22,12 @@ const norm = (s: string) =>
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "");
 
-function buildHref(q: string, category: string, sort: ArticleSort, page: number) {
+function buildHref(q: string, category: string, sort: ArticleSort, perPage: ArticlePerPage, page: number) {
   const sp = new URLSearchParams();
   if (category) sp.set("kategori", category);
   if (q.trim()) sp.set("q", q.trim());
   if (sort !== "terbaru") sp.set("urut", sort);
+  if (perPage !== "auto") sp.set("tampil", perPage);
   if (page > 1) sp.set("hal", String(page));
   const qs = sp.toString();
   return qs ? `/artikel?${qs}` : "/artikel";
@@ -43,6 +51,7 @@ export function ArticleCatalog({
   initialQuery,
   initialCategory,
   initialSort,
+  initialPerPage = "auto",
   initialPage,
 }: {
   items: ArticleCardItem[];
@@ -50,14 +59,39 @@ export function ArticleCatalog({
   initialQuery: string;
   initialCategory: string;
   initialSort: ArticleSort;
+  initialPerPage?: ArticlePerPage;
   initialPage: number;
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
   const [sort, setSort] = useState<ArticleSort>(initialSort);
+  const [perPage, setPerPage] = useState<ArticlePerPage>(initialPerPage);
+  const [autoLimit, setAutoLimit] = useState(12); // SSR dimulai bersih di 12, lalu sinkron setelah mount.
   const [page, setPage] = useState(initialPage);
+  const [jumpInput, setJumpInput] = useState(String(initialPage));
   const listAnchor = useRef<HTMLDivElement>(null);
   const firstRender = useRef(true);
+
+  useEffect(() => {
+    const syncLimit = () => {
+      const w = window.innerWidth;
+      setAutoLimit(w < 640 ? 6 : w < 1024 ? 9 : 12);
+    };
+    syncLimit();
+    window.addEventListener("resize", syncLimit);
+    return () => window.removeEventListener("resize", syncLimit);
+  }, []);
+
+  const perPageOptions = useMemo<SelectOption[]>(
+    () => [
+      { value: "auto", label: `Tampil: Auto (${autoLimit})`, hint: "6 HP · 9 tablet · 12 desktop" },
+      { value: "12", label: "Tampil: 12" },
+      { value: "24", label: "Tampil: 24" },
+      { value: "48", label: "Tampil: 48" },
+      { value: "semua", label: "Tampil: Semua" },
+    ],
+    [autoLimit],
+  );
 
   const searchWords = useMemo(() => norm(query.trim()).split(/\s+/).filter(Boolean), [query]);
 
@@ -92,28 +126,34 @@ export function ArticleCatalog({
   }, [queryMatched, category, sort]);
 
   const hasSpotlightMode = !searchWords.length && !category && sort === "terbaru" && filtered.length > 0;
-  const showSpotlight = page === 1 && hasSpotlightMode;
-  const spotlight = showSpotlight ? filtered[0] : null;
   const pool = hasSpotlightMode ? filtered.slice(1) : filtered;
-  const totalPages = Math.max(1, Math.ceil(pool.length / PER_PAGE));
+  const perPageLimit =
+    perPage === "semua" ? Math.max(1, pool.length) : perPage === "auto" ? autoLimit : Number(perPage);
+  const totalPages = Math.max(1, Math.ceil(pool.length / perPageLimit));
   const safePage = Math.min(page, totalPages);
-  const offset = (safePage - 1) * PER_PAGE;
-  const visible = pool.slice(offset, offset + PER_PAGE);
+  const showSpotlight = safePage === 1 && hasSpotlightMode;
+  const spotlight = showSpotlight ? filtered[0] : null;
+  const offset = (safePage - 1) * perPageLimit;
+  const visible = pool.slice(offset, offset + perPageLimit);
 
   const totalDisplayed = filtered.length;
   const shownStart = totalDisplayed === 0 ? 0 : showSpotlight ? 1 : hasSpotlightMode ? offset + 2 : offset + 1;
   const shownEnd = totalDisplayed === 0 ? 0 : hasSpotlightMode ? 1 + offset + visible.length : offset + visible.length;
 
   useEffect(() => {
+    setJumpInput(String(safePage));
+  }, [safePage]);
+
+  useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
-    const next = buildHref(query, category, sort, safePage);
+    const next = buildHref(query, category, sort, perPage, safePage);
     if (window.location.pathname + window.location.search !== next) {
       window.history.replaceState(null, "", next);
     }
-  }, [query, category, sort, safePage]);
+  }, [query, category, sort, perPage, safePage]);
 
   function scrollToList() {
     const el = listAnchor.current;
@@ -137,20 +177,37 @@ export function ArticleCatalog({
     setPage(1);
   }
 
+  function applyPerPage(nextPerPage: ArticlePerPage) {
+    setPerPage(nextPerPage);
+    setPage(1);
+  }
+
   function applyPage(nextPage: number) {
     const clamped = Math.max(1, Math.min(totalPages, nextPage));
     setPage(clamped);
     scrollToList();
   }
 
+  function submitPageJump() {
+    const parsed = parseInt(jumpInput, 10);
+    if (!Number.isFinite(parsed)) {
+      setJumpInput(String(safePage));
+      return;
+    }
+    const clamped = Math.max(1, Math.min(totalPages, parsed));
+    setJumpInput(String(clamped));
+    applyPage(clamped);
+  }
+
   function resetAll() {
     setQuery("");
     setCategory("");
     setSort("terbaru");
+    setPerPage("auto");
     setPage(1);
   }
 
-  const hasFilter = Boolean(query.trim() || category || sort !== "terbaru");
+  const hasFilter = Boolean(query.trim() || category || sort !== "terbaru" || perPage !== "auto");
 
   return (
     <div id="daftar-artikel" ref={listAnchor}>
@@ -182,25 +239,39 @@ export function ArticleCatalog({
               </button>
             )}
           </div>
-          <div className="artikel-sort-wrap">
-            <label htmlFor="artikel-urut" className="sr-only">Urutkan artikel</label>
-            <select
-              id="artikel-urut"
-              name="urut"
-              className="artikel-sort"
-              value={sort}
-              onChange={(e) => applySort(e.target.value as ArticleSort)}
-            >
-              <option value="terbaru">Urutkan: Terbaru</option>
-              <option value="terlama">Urutkan: Terlama</option>
-              <option value="judul">Urutkan: Judul A–Z</option>
-            </select>
+          <div className="artikel-selects">
+            <div className="artikel-sort-wrap">
+              <label htmlFor="artikel-urut" className="sr-only">Urutkan artikel</label>
+              <Select
+                id="artikel-urut"
+                name="urut"
+                className="ui-site-ctrl artikel-select-sort"
+                aria-label="Urutkan artikel"
+                value={sort}
+                onChange={(v) => applySort(v as ArticleSort)}
+                options={SORT_OPTIONS}
+                menuWidth={220}
+              />
+            </div>
+            <div className="artikel-limit-wrap">
+              <label htmlFor="artikel-tampil" className="sr-only">Jumlah artikel per halaman</label>
+              <Select
+                id="artikel-tampil"
+                name="tampil"
+                className="ui-site-ctrl artikel-select-limit"
+                aria-label="Jumlah artikel per halaman"
+                value={perPage}
+                onChange={(v) => applyPerPage(v as ArticlePerPage)}
+                options={perPageOptions}
+                menuWidth={230}
+              />
+            </div>
           </div>
         </div>
 
         <nav className="chips artikel-chips" aria-label="Saring topik artikel">
           <a
-            href={buildHref(query, "", sort, 1)}
+            href={buildHref(query, "", sort, perPage, 1)}
             className="chip-link"
             aria-current={category === "" ? "true" : undefined}
             onClick={(e) => {
@@ -218,7 +289,7 @@ export function ArticleCatalog({
             return (
               <a
                 key={c}
-                href={buildHref(query, c, sort, 1)}
+                href={buildHref(query, c, sort, perPage, 1)}
                 className={`chip-link${count === 0 && !active ? " is-empty" : ""}`}
                 aria-current={active ? "true" : undefined}
                 onClick={(e) => {
@@ -249,34 +320,43 @@ export function ArticleCatalog({
         )}
       </div>
 
-      {spotlight && (
-        <Link prefetch={false} href={`/artikel/${spotlight.slug}`} className="card artikel-spotlight">
-          <div className="artikel-spotlight-media hexlong">
-            <ArticleCover
-              variant="spotlight"
-              title={spotlight.title}
-              category={spotlight.category}
-              excerpt={spotlight.excerpt}
-              coverSrc={spotlight.coverSrc}
-              sizes="(max-width: 900px) 92vw, 540px"
-              priority
-            />
-          </div>
-          <div className="artikel-spotlight-body">
-            <div className="artikel-card-meta">
-              <span className="artikel-badge-new">Terbaru</span>
-              <span className="artikel-cat">{spotlight.category}</span>
-              {spotlight.publishedDate && <span className="small muted">{spotlight.publishedDate}</span>}
+      {spotlight && (() => {
+        const spotCover = resolveArticleCover({
+          title: spotlight.title,
+          category: spotlight.category,
+          excerpt: spotlight.excerpt,
+          coverMeta: spotlight.coverMeta,
+        });
+        return (
+          <Link prefetch={false} href={`/artikel/${spotlight.slug}`} className="card artikel-spotlight">
+            <div className="artikel-spotlight-media hexlong">
+              <ArticleCover
+                variant="spotlight"
+                title={spotCover.title}
+                category={spotCover.badgeCategory}
+                themeCategory={spotCover.themeCategory}
+                excerpt={spotCover.excerpt}
+                coverSrc={spotlight.coverSrc}
+                sizes="(max-width: 900px) 92vw, 540px"
+                priority
+              />
             </div>
-            <h2>{spotlight.title}</h2>
-            {spotlight.excerpt && <p>{spotlight.excerpt}</p>}
-            <div className="card-foot artikel-foot">
-              <span className="small muted">{spotlight.readMinutes} menit baca</span>
-              <span className="artikel-read-more">Baca panduan <span className="card-arrow hex" aria-hidden="true">→</span></span>
+            <div className="artikel-spotlight-body">
+              <div className="artikel-card-meta">
+                <span className="artikel-badge-new">Terbaru</span>
+                <span className="artikel-cat">{spotlight.category}</span>
+                {spotlight.publishedDate && <span className="small muted">{spotlight.publishedDate}</span>}
+              </div>
+              <h2>{spotlight.title}</h2>
+              {spotlight.excerpt && <p>{spotlight.excerpt}</p>}
+              <div className="card-foot artikel-foot">
+                <span className="small muted">{spotlight.readMinutes} menit baca</span>
+                <span className="artikel-read-more">Baca panduan <span className="card-arrow hex" aria-hidden="true">→</span></span>
+              </div>
             </div>
-          </div>
-        </Link>
-      )}
+          </Link>
+        );
+      })()}
 
       {visible.length > 0 ? (
         <div className="grid-cards artikel-grid">
@@ -303,7 +383,7 @@ export function ArticleCatalog({
         <nav className="artikel-pager" aria-label="Navigasi halaman artikel">
           {safePage > 1 ? (
             <a
-              href={buildHref(query, category, sort, safePage - 1)}
+              href={buildHref(query, category, sort, perPage, safePage - 1)}
               className="btn btn-ghost btn-sm"
               onClick={(e) => {
                 if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
@@ -325,7 +405,7 @@ export function ArticleCatalog({
               ) : (
                 <a
                   key={entry}
-                  href={buildHref(query, category, sort, entry)}
+                  href={buildHref(query, category, sort, perPage, entry)}
                   className={`pager-num${entry === safePage ? " is-active" : ""}`}
                   aria-current={entry === safePage ? "page" : undefined}
                   onClick={(e) => {
@@ -343,7 +423,7 @@ export function ArticleCatalog({
 
           {safePage < totalPages ? (
             <a
-              href={buildHref(query, category, sort, safePage + 1)}
+              href={buildHref(query, category, sort, perPage, safePage + 1)}
               className="btn btn-ghost btn-sm"
               onClick={(e) => {
                 if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
@@ -357,6 +437,33 @@ export function ArticleCatalog({
           ) : (
             <span className="btn btn-ghost btn-sm is-disabled" aria-disabled="true">Berikutnya →</span>
           )}
+
+          <form
+            className="pager-jump"
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitPageJump();
+            }}
+          >
+            <label htmlFor="artikel-hal-lompat" className="pager-jump-label">
+              Ke hal.
+            </label>
+            <input
+              id="artikel-hal-lompat"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={totalPages}
+              value={jumpInput}
+              onChange={(e) => setJumpInput(e.target.value)}
+              aria-label={`Lompat ke halaman (1 sampai ${totalPages})`}
+              className="pager-jump-input"
+            />
+            <button type="submit" className="btn btn-blue btn-sm pager-jump-btn">
+              Buka
+            </button>
+          </form>
         </nav>
       )}
     </div>
