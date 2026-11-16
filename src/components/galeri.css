@@ -1,0 +1,465 @@
+/* Gaya terisolasi halaman /galeri (Pinterest Masonry + header & CTA). Memakai token dari globals.css. */
+
+/* ---------- Kepala halaman & ringkasan jumlah foto ---------- */
+.galeri-head {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+  margin-bottom: 20px;
+}
+
+.galeri-head-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 740px;
+}
+
+.galeri-head-copy h1 {
+  font-size: clamp(32px, 4vw, 50px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.galeri-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  padding: 12px 18px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--garis);
+  box-shadow: 0 2px 10px rgba(14, 42, 107, 0.04);
+}
+
+.galeri-summary-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--biru-tua);
+  font-variant-numeric: tabular-nums;
+}
+
+.galeri-summary-stats li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.galeri-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--biru-tua);
+}
+
+.galeri-dot.is-pasang {
+  background: var(--biru);
+}
+
+.galeri-dot.is-pabrik {
+  background: var(--oranye-cta);
+}
+
+.galeri-summary-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--redup);
+}
+
+/* ---------- Baris filter kategori + hitungan live ---------- */
+.galeri-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 22px;
+}
+
+.galeri-chips {
+  gap: 8px;
+}
+
+.galeri-chips .chip-link {
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1.5px solid var(--garis);
+  background: #fff;
+  color: var(--biru-tua);
+  box-shadow: 0 2px 8px rgba(14, 42, 107, 0.03);
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.galeri-chips .chip-link:hover {
+  background: var(--biru-muda);
+  border-color: var(--biru);
+  color: var(--biru-tua);
+}
+
+.galeri-chips .chip-link[aria-current="true"] {
+  background: var(--biru);
+  border-color: var(--biru);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(37, 65, 134, 0.22);
+}
+
+.galeri-chip-count {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.78;
+}
+
+.galeri-chips .chip-link[aria-current="true"] .galeri-chip-count {
+  opacity: 0.92;
+}
+
+.galeri-filter-status {
+  font-size: 13.5px;
+  color: var(--redup);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Grid Pinterest Masonry (hanya /galeri, bukan teaser beranda) ---------- */
+.galeri-masonry {
+  column-count: 3;
+  column-gap: 16px;
+}
+
+.galeri-pin {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 16px;
+  border: 1px solid rgba(14, 42, 107, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  color: var(--tinta);
+  text-align: left;
+  font: inherit;
+  cursor: zoom-in;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: 320px 240px;
+  box-shadow: 0 2px 10px rgba(14, 42, 107, 0.05);
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s ease, border-color 0.2s ease;
+}
+
+.galeri-pin:hover {
+  transform: translateY(-3px);
+  border-color: rgba(37, 65, 134, 0.24);
+  box-shadow: 0 14px 30px rgba(14, 42, 107, 0.12);
+}
+
+.galeri-pin:focus-visible {
+  outline: 3px solid var(--oranye);
+  outline-offset: 3px;
+  border-color: var(--biru);
+  box-shadow: 0 14px 30px rgba(14, 42, 107, 0.14);
+}
+
+.galeri-media {
+  display: block;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--beton);
+}
+
+.galeri-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.galeri-pin:hover .galeri-media img,
+.galeri-pin:focus-visible .galeri-media img {
+  transform: scale(1.035);
+}
+
+/* Badge kategori di kiri atas pin (solid opaque RGBA tanpa GPU blur agar scroll 60-120fps ringan) */
+.galeri-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 56px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: #fff;
+  pointer-events: none;
+}
+
+.galeri-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.galeri-badge.is-pemasangan {
+  background: rgba(14, 26, 54, 0.90);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.galeri-badge.is-pemasangan::before {
+  background: #8eb0ff;
+}
+
+.galeri-badge.is-pabrik {
+  background: rgba(164, 47, 13, 0.92);
+  border: 1px solid rgba(255, 224, 212, 0.30);
+}
+
+.galeri-badge.is-pabrik::before {
+  background: #ffb59a;
+}
+
+/* Ikon perbesar di kanan atas (muncul halus saat hover/fokus di desktop) */
+.galeri-zoom {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(14, 26, 54, 0.90);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  opacity: 0;
+  transform: scale(0.88);
+  transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  pointer-events: none;
+}
+
+.galeri-pin:hover .galeri-zoom,
+.galeri-pin:focus-visible .galeri-zoom {
+  opacity: 1;
+  transform: scale(1);
+  background: var(--oranye-cta);
+  border-color: var(--oranye-cta);
+}
+
+/* Scrim halus bawah foto saat hover di desktop */
+.galeri-scrim {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 1;
+  padding: 28px 12px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: linear-gradient(to top, rgba(14, 26, 54, 0.72) 0%, rgba(14, 26, 54, 0.26) 58%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  pointer-events: none;
+}
+
+.galeri-scrim-hint {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.galeri-pin:hover .galeri-scrim,
+.galeri-pin:focus-visible .galeri-scrim {
+  opacity: 1;
+}
+
+/* Keterangan ringkas di bawah foto agar selalu terbaca tanpa menutupi pola paving */
+.galeri-foot {
+  display: block;
+  padding: 11px 14px 13px;
+  background: #fff;
+  border-top: 1px solid var(--garis);
+}
+
+.galeri-cap-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--tinta);
+  transition: color 0.18s ease;
+}
+
+.galeri-pin:hover .galeri-cap-text,
+.galeri-pin:focus-visible .galeri-cap-text {
+  color: var(--biru-teks);
+}
+
+.galeri-empty {
+  padding: 28px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid var(--garis);
+}
+
+/* ---------- CTA bawah halaman ---------- */
+.galeri-cta {
+  margin-top: 40px;
+  max-width: 880px;
+}
+
+.galeri-cta-ghost {
+  border-color: rgba(255, 255, 255, 0.72);
+  color: #fff;
+}
+
+.galeri-cta-ghost:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #fff;
+  color: #fff;
+}
+
+.galeri-cta-sub {
+  font-size: 14px;
+  color: #d3dcef;
+  margin-top: 2px;
+}
+
+/* ---------- Responsif tablet & mobile ---------- */
+@media (hover: none) {
+  .galeri-zoom {
+    opacity: 0.88;
+    transform: none;
+    width: 28px;
+    height: 28px;
+    top: 8px;
+    right: 8px;
+  }
+
+  .galeri-scrim {
+    display: none;
+  }
+}
+
+@media (max-width: 960px) {
+  .galeri-masonry {
+    column-count: 2;
+    column-gap: 14px;
+  }
+
+  .galeri-pin {
+    margin-bottom: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .galeri-summary {
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+
+  .galeri-summary-stats {
+    gap: 6px 14px;
+    font-size: 13px;
+  }
+
+  .galeri-summary-hint {
+    font-size: 12.5px;
+  }
+
+  .galeri-chips .chip-link {
+    min-height: 38px;
+    padding: 0 13px;
+    font-size: 13px;
+  }
+
+  .galeri-masonry {
+    column-count: 2;
+    column-gap: 10px;
+  }
+
+  .galeri-pin {
+    margin-bottom: 10px;
+    border-radius: 14px;
+  }
+
+  .galeri-badge {
+    top: 8px;
+    left: 8px;
+    padding: 3px 8px;
+    font-size: 10.5px;
+    gap: 5px;
+  }
+
+  .galeri-scrim {
+    display: none;
+  }
+
+  .galeri-foot {
+    padding: 8px 10px 10px;
+  }
+
+  .galeri-cap-text {
+    font-size: 12px;
+    line-height: 1.4;
+    -webkit-line-clamp: 2;
+  }
+}
+
+@media (max-width: 340px) {
+  .galeri-masonry {
+    column-count: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .galeri-chips .chip-link,
+  .galeri-pin,
+  .galeri-media img,
+  .galeri-zoom,
+  .galeri-scrim,
+  .galeri-cap-text {
+    transition: none;
+  }
+
+  .galeri-pin:hover,
+  .galeri-pin:hover .galeri-media img,
+  .galeri-pin:focus-visible .galeri-media img {
+    transform: none;
+  }
+}

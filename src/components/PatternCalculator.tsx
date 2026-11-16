@@ -1640,9 +1640,9 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
             </ul>
           </div>
           <div className={css.quick} data-pp-noprint>
-            <div>
-              <span>{has ? `Total untuk ${fmt(r.area)} m²` : "Total"}</span>
-              <b className="tabular">{has ? `${fmt(r.total)} pcs` : "– pcs"}</b>
+            <div className={css.quickInfo}>
+              <span className={css.quickLabel}>{has ? `Total untuk ${fmt(r.area)} m²` : "Estimasi Total"}</span>
+              <b className={`tabular ${css.quickValue}`}>{has ? `${fmt(r.total)} pcs` : "– pcs"}</b>
             </div>
             <a href={has ? "#pp-hasil" : "#pp-ukuran"} className={`btn btn-sm ${css.quickBtn}`}>
               {has ? "Lihat rincian" : "Isi ukuran"}

@@ -1,0 +1,1641 @@
+/* Gaya khusus halaman /area-pengiriman (terisolasi dari globals.css agar rute lain tidak terdampak). */
+
+.area-page {
+  padding-top: 24px;
+  padding-bottom: 56px;
+}
+
+/* ---------- Hero & Strip Koridor Tol ---------- */
+.area-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 0 32px;
+  max-width: 920px;
+}
+
+.area-hero h1 {
+  font-size: clamp(34px, 4.2vw, 54px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.area-hero-pill {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 7px 15px;
+  border-radius: 999px;
+  background: var(--oranye-muda);
+  border: 1px solid var(--oranye-terang);
+  color: var(--oranye-cta-hover);
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.area-corridors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.area-corridor-chip {
+  min-width: 0;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 18px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.area-corridor-chip strong {
+  font-family: var(--font-judul);
+  font-size: 14.5px;
+  color: var(--biru-tua);
+  overflow-wrap: anywhere;
+}
+
+.area-corridor-chip span {
+  font-size: 13px;
+  color: var(--redup);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.area-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* ---------- Peta Interaktif OpenStreetMap & Inspektor ---------- */
+.area-map-section {
+  padding-bottom: 56px;
+}
+
+.area-map-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 14px 24px;
+  margin-bottom: 16px;
+}
+
+.area-map-head h2 {
+  font-size: clamp(26px, 3vw, 34px);
+  margin-bottom: 6px;
+}
+
+.area-map-head p {
+  max-width: 68ch;
+  font-size: 15.5px;
+}
+
+.area-pill-reset {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--biru);
+  background: var(--putih);
+  color: var(--biru-tua);
+  font: 600 13.5px var(--font-isi);
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.area-pill-reset:hover {
+  background: var(--biru-muda);
+}
+
+.area-pill-reset.is-selected {
+  background: var(--biru-tua);
+  border-color: var(--biru-tua);
+  color: var(--putih);
+}
+
+.area-map-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 22px;
+}
+
+.area-region-pill {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  max-width: 100%;
+  min-height: 38px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--garis);
+  background: var(--latar);
+  color: var(--tinta);
+  font: 600 13.5px/1.2 var(--font-isi);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease, color 0.16s ease, transform 0.12s ease;
+}
+
+.area-pill-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.area-region-pill:hover {
+  border-color: var(--biru);
+  background: var(--biru-muda);
+}
+
+.area-region-pill.is-selected {
+  background: var(--biru-tua);
+  border-color: var(--biru-tua);
+  color: var(--putih);
+}
+
+.area-pill-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--biru);
+}
+
+.area-region-pill.is-prioritas .area-pill-glyph,
+.area-region-pill.is-proyek .area-pill-glyph {
+  color: var(--oranye-cta);
+}
+
+.area-region-pill.is-konfirmasi .area-pill-glyph {
+  color: var(--redup);
+}
+
+.area-region-pill.is-selected .area-pill-glyph {
+  color: var(--oranye-terang);
+}
+
+.area-pill-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(14, 42, 107, 0.08);
+  color: var(--biru-tua);
+}
+
+.area-region-pill.is-proyek .area-pill-tag {
+  background: var(--oranye-muda);
+  color: var(--oranye-cta-hover);
+}
+
+.area-region-pill.is-selected .area-pill-tag {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--putih);
+}
+
+.area-map-console {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+/* Stacking context terkurung: kontrol/popup Leaflet tidak menimpa dock/drawer mobile (.tg-dock z=55). */
+.area-map-stage {
+  position: relative;
+  isolation: isolate;
+  z-index: 1;
+  min-width: 0;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 26px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 10px 28px rgba(14, 42, 107, 0.06);
+}
+
+.area-leaflet-canvas {
+  width: 100%;
+  height: 460px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #e8edf4;
+  border: 1px solid var(--garis);
+}
+
+.area-map-fallback {
+  position: absolute;
+  inset: 10px 10px 54px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #e3e9f5 0%, #f1f1ee 100%);
+  color: var(--biru-tua);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.area-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 4px 8px 6px;
+  font-size: 12.5px;
+  color: var(--teks);
+}
+
+.area-leg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+}
+
+.area-leg-hex {
+  width: 14px;
+  height: 15px;
+  background: var(--oranye);
+  clip-path: var(--hex);
+  display: inline-block;
+}
+
+.area-leg-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 2px solid var(--putih);
+  box-shadow: 0 0 0 1.5px var(--biru);
+  background: var(--biru);
+}
+
+.area-leg-dot.is-proyek {
+  border-radius: 3px;
+  transform: rotate(45deg);
+  background: var(--oranye-cta);
+  box-shadow: 0 0 0 1.5px var(--oranye-cta);
+}
+
+.area-leg-dot.is-koridor {
+  background: var(--biru-tua);
+  box-shadow: 0 0 0 1.5px var(--biru-tua);
+}
+
+.area-leg-line {
+  width: 22px;
+  height: 0;
+  border-top: 2.5px dashed var(--biru);
+  display: inline-block;
+}
+
+/* Penanda Leaflet kustom & popup */
+.area-leaflet-pin-wrap {
+  background: transparent;
+  border: 0;
+}
+
+.area-leaflet-canvas .leaflet-marker-icon:focus-visible {
+  outline: 3px solid var(--oranye);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.area-hub-pin {
+  position: relative;
+  width: 38px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+}
+
+.area-hub-tag {
+  position: absolute;
+  left: 42px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--biru-tua);
+  color: var(--putih);
+  font: 700 12px/1.1 var(--font-judul);
+  white-space: nowrap;
+  border: 2px solid var(--putih);
+  box-shadow: 0 4px 12px rgba(14, 42, 107, 0.28);
+}
+
+.area-pin {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--putih);
+  border: 2px solid var(--biru);
+  color: var(--biru-tua);
+  box-shadow: 0 3px 10px rgba(14, 42, 107, 0.24);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.area-pin-label {
+  display: none;
+}
+
+.area-pin-mark {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--biru);
+  color: var(--putih);
+}
+
+.area-pin.is-prioritas {
+  border-color: var(--oranye);
+}
+
+.area-pin.is-prioritas .area-pin-mark {
+  background: var(--oranye-cta);
+}
+
+.area-pin.is-proyek {
+  border-radius: 8px;
+  border-color: var(--oranye-cta);
+  background: #fff9f6;
+}
+
+.area-pin.is-proyek .area-pin-mark {
+  background: var(--oranye-cta);
+  border-radius: 5px;
+}
+
+.area-pin.is-koridor .area-pin-mark {
+  background: var(--biru-tua);
+}
+
+.area-pin.is-konfirmasi {
+  border-style: dashed;
+  border-color: var(--redup);
+}
+
+.area-pin.is-konfirmasi .area-pin-mark {
+  background: var(--redup);
+}
+
+.area-pin.is-active {
+  background: var(--biru-tua);
+  border-color: var(--oranye);
+  box-shadow: 0 0 0 4px rgba(254, 87, 34, 0.35), 0 8px 18px rgba(14, 42, 107, 0.3);
+  transform: scale(1.18);
+}
+
+.area-leaflet-canvas .leaflet-control-zoom a {
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  color: var(--biru-tua);
+  font-weight: 700;
+}
+
+.area-leaflet-canvas .leaflet-tooltip {
+  border-radius: 10px;
+  border: 1px solid var(--garis);
+  padding: 5px 10px;
+  font: 600 12.5px/1.3 var(--font-isi);
+  color: var(--biru-tua);
+  box-shadow: 0 6px 16px rgba(14, 42, 107, 0.16);
+}
+
+.area-leaflet-canvas .leaflet-popup-content-wrapper {
+  border-radius: 18px;
+  padding: 2px;
+  box-shadow: 0 14px 32px rgba(14, 42, 107, 0.22);
+}
+
+.area-leaflet-canvas .leaflet-popup-content {
+  margin: 12px 14px;
+  font-family: var(--font-isi);
+  color: var(--tinta);
+}
+
+.area-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.area-popup h4 {
+  font-family: var(--font-judul);
+  font-size: 16px;
+  color: var(--biru-tua);
+  margin: 0;
+}
+
+.area-popup p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--teks);
+}
+
+.area-popup-kicker {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--biru-muda);
+  color: var(--biru-tua);
+}
+
+.area-popup-kicker.is-factory,
+.area-popup-kicker.is-proyek,
+.area-popup-kicker.is-prioritas {
+  background: var(--oranye-muda);
+  color: var(--oranye-cta-hover);
+}
+
+.area-popup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.area-popup-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.area-popup-btn.is-primary {
+  background: var(--oranye-cta);
+  color: var(--putih);
+}
+
+.area-popup-btn.is-primary:hover {
+  background: var(--oranye-cta-hover);
+  color: var(--putih);
+}
+
+.area-popup-btn.is-detail {
+  background: var(--biru-muda);
+  color: var(--biru-tua);
+}
+
+.area-popup-btn.is-detail:hover {
+  background: var(--biru);
+  color: var(--putih);
+}
+
+/* Panel Inspektor Wilayah di Samping Peta */
+.area-map-inspector {
+  min-width: 0;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 26px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 28px rgba(14, 42, 107, 0.06);
+}
+
+.area-inspector-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.area-inspector-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.area-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  white-space: normal;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 700;
+  background: var(--biru-muda);
+  color: var(--biru-tua);
+}
+
+.area-tier-badge.is-factory,
+.area-tier-badge.is-proyek,
+.area-tier-badge.is-prioritas {
+  background: var(--oranye-muda);
+  color: var(--oranye-cta-hover);
+}
+
+.area-tier-badge.is-konfirmasi {
+  background: var(--abu);
+  color: var(--tinta);
+}
+
+.area-inspector-clear {
+  border: 0;
+  background: transparent;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font: 600 12.5px var(--font-isi);
+  color: var(--biru);
+  cursor: pointer;
+}
+
+.area-inspector-clear:hover {
+  background: var(--biru-muda);
+}
+
+.area-inspector-body h3 {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.area-inspector-desc {
+  font-size: 14.5px;
+  color: var(--teks);
+  line-height: 1.55;
+}
+
+.area-inspector-specs {
+  margin: 4px 0 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.area-inspector-specs div {
+  background: var(--latar);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.area-inspector-specs dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--redup);
+}
+
+.area-inspector-specs dd {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.area-inspector-actions {
+  margin-top: auto;
+  padding-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- Grid Kartu Wilayah & Callout ---------- */
+.area-regions-section {
+  padding-bottom: 56px;
+}
+
+.area-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 16px;
+}
+
+.area-region-card {
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 24px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.area-card-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.area-region-card h3 {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.area-region-card h3 svg {
+  flex: none;
+}
+
+.area-card-tag {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  white-space: normal;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  line-height: 1.3;
+  font-weight: 700;
+  background: var(--biru-muda);
+  color: var(--biru-tua);
+}
+
+.area-card-tag.is-proyek,
+.area-card-tag.is-prioritas {
+  background: var(--oranye-muda);
+  color: var(--oranye-cta-hover);
+}
+
+.area-card-tag.is-konfirmasi {
+  background: var(--abu);
+  color: var(--tinta);
+}
+
+.area-card-dist {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--biru);
+}
+
+.area-card-desc {
+  font-size: 14.5px;
+  color: var(--teks);
+  line-height: 1.55;
+}
+
+.area-card-actions {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--garis);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.area-card-link {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--biru);
+  text-decoration: none;
+}
+
+.area-card-link:hover {
+  text-decoration: underline;
+}
+
+.area-card-wa {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--oranye-cta-hover);
+  text-decoration: none;
+}
+
+.area-card-wa:hover {
+  text-decoration: underline;
+}
+
+.area-others-panel {
+  margin-top: 20px;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 22px;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.area-others-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.area-city-wa {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  max-width: 100%;
+  min-height: 38px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--latar);
+  border: 1px solid var(--garis);
+  color: var(--biru-tua);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.area-city-wa:hover {
+  background: var(--biru-muda);
+  border-color: var(--biru);
+}
+
+.area-city-wa span {
+  font-size: 12px;
+  color: var(--redup);
+  font-weight: 500;
+}
+
+/* ---------- Explorer: Formula Ongkir, Simulasi, & 5 Langkah ---------- */
+.area-explorer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  padding-bottom: 48px;
+}
+
+.area-section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.area-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px 24px;
+}
+
+.area-section-head h2 {
+  font-size: clamp(28px, 3.2vw, 38px);
+  margin-top: 6px;
+}
+
+.area-eyebrow {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--oranye-cta-hover);
+}
+
+.area-section-lead {
+  max-width: 56ch;
+  color: var(--teks);
+  font-size: 15.5px;
+}
+
+/* Formula Diagram */
+.area-formula-card {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 28px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.area-formula-eq {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 0.9fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.area-f-node {
+  min-width: 0;
+  background: var(--latar);
+  border: 1px solid var(--garis);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-wrap: break-word;
+}
+
+.area-f-node.is-result {
+  background: var(--biru-muda);
+  border-color: #c2d1ee;
+}
+
+.area-f-illus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 76px;
+  background: var(--putih);
+  border-radius: 14px;
+  padding: 6px;
+  margin-bottom: 4px;
+}
+
+.area-f-illus svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.area-f-num {
+  align-self: flex-start;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--putih);
+  color: var(--biru);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.area-f-num.is-accent {
+  background: var(--oranye-cta);
+  color: var(--putih);
+}
+
+.area-f-node h3 {
+  font-size: 17px;
+  color: var(--biru-tua);
+}
+
+.area-f-node p {
+  font-size: 13.5px;
+  color: var(--teks);
+  line-height: 1.45;
+}
+
+.area-f-op {
+  align-self: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--biru-tua);
+  color: var(--putih);
+  font: 700 20px/1 var(--font-judul);
+  display: grid;
+  place-items: center;
+}
+
+.area-f-op.is-eq {
+  background: var(--oranye-cta);
+}
+
+.area-formula-notes {
+  border-top: 1px solid var(--garis);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.area-formula-notes strong {
+  font-family: var(--font-judul);
+  font-size: 15px;
+  color: var(--biru-tua);
+}
+
+.area-formula-notes ul {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 6px 24px;
+  font-size: 14px;
+  color: var(--teks);
+}
+
+/* Simulasi Interaktif */
+.area-sim-card {
+  min-width: 0;
+  background: var(--putih);
+  border: 1.5px solid #d5dceb;
+  border-radius: 30px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-shadow: 0 12px 34px rgba(14, 42, 107, 0.06);
+}
+
+.area-sim-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--garis);
+}
+
+.area-sim-kicker {
+  display: inline-block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--biru);
+  margin-bottom: 4px;
+}
+
+.area-sim-head h3 {
+  font-size: clamp(21px, 2.4vw, 26px);
+}
+
+.area-sim-disclaimer {
+  max-width: 48ch;
+  font-size: 13.5px;
+  color: var(--redup);
+}
+
+.area-sim-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.area-sim-controls {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.area-ctrl-group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.area-ctrl-fieldset {
+  min-width: 0;
+  max-width: 100%;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.area-ctrl-label {
+  font-family: var(--font-judul);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--biru-tua);
+  padding: 0;
+}
+
+.area-select {
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1.5px solid #8a93a6;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--tinta);
+  background: var(--putih);
+  width: 100%;
+  cursor: pointer;
+}
+
+.area-select:focus-visible {
+  outline: 3px solid var(--oranye);
+  outline-offset: 1px;
+  border-color: var(--biru);
+}
+
+.area-radio-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.area-radio-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.area-radio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1.5px solid var(--garis);
+  background: var(--latar);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.area-radio-card:hover {
+  border-color: var(--biru);
+}
+
+.area-radio-card.is-checked {
+  background: var(--biru-muda);
+  border-color: var(--biru);
+}
+
+.area-radio-card input[type="radio"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--biru-tua);
+  flex: none;
+}
+
+.area-radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.area-radio-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--biru-tua);
+  line-height: 1.25;
+}
+
+.area-radio-sub {
+  font-size: 12.5px;
+  color: var(--redup);
+  line-height: 1.35;
+}
+
+.area-fill-track {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(14, 42, 107, 0.12);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.area-fill-bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--biru);
+}
+
+.area-radio-card.is-checked .area-fill-bar {
+  background: var(--oranye-cta);
+}
+
+/* Output Simulator */
+.area-sim-output {
+  min-width: 0;
+  background: var(--latar);
+  border: 1px solid #d5dceb;
+  border-radius: 24px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-wrap: break-word;
+}
+
+.area-out-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px 12px;
+}
+
+.area-out-eyebrow {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--redup);
+}
+
+.area-out-header h4 {
+  font-size: 21px;
+  color: var(--biru-tua);
+  margin-top: 2px;
+}
+
+.area-min-badge {
+  max-width: 100%;
+  white-space: normal;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.area-min-badge.is-good {
+  background: #dff3e6;
+  color: var(--sukses);
+}
+
+.area-min-badge.is-mid {
+  background: var(--biru-muda);
+  color: var(--biru-tua);
+}
+
+.area-min-badge.is-warn {
+  background: var(--oranye-muda);
+  color: var(--oranye-cta-hover);
+}
+
+.area-out-alert {
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  background: var(--putih);
+  border-left: 4px solid var(--biru);
+  color: var(--tinta);
+}
+
+.area-out-alert.is-warn {
+  background: #fff6f2;
+  border-left-color: var(--oranye-cta);
+}
+
+.area-meters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--putih);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.area-meter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.area-meter-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.area-meter-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--tinta);
+  min-width: 0;
+}
+
+.area-meter-status {
+  font-size: 12.5px;
+  font-weight: 700;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.area-meter-status.is-good {
+  color: var(--sukses);
+}
+
+.area-meter-status.is-mid {
+  color: var(--biru);
+}
+
+.area-meter-status.is-warn {
+  color: var(--oranye-cta-hover);
+}
+
+.area-meter-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--abu);
+  overflow: hidden;
+}
+
+.area-meter-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.28s ease;
+}
+
+.area-meter-fill.is-good {
+  background: var(--sukses);
+}
+
+.area-meter-fill.is-mid {
+  background: var(--biru);
+}
+
+.area-meter-fill.is-warn {
+  background: var(--oranye-cta);
+}
+
+.area-meter-note {
+  font-size: 12.5px;
+  color: var(--redup);
+  line-height: 1.4;
+}
+
+.area-fleet-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--putih);
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+
+.area-fleet-box > div:last-child {
+  flex: 1 1 160px;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.area-fleet-icon {
+  flex: none;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--latar);
+}
+
+.area-fleet-kicker {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--redup);
+}
+
+.area-fleet-box strong {
+  display: block;
+  font-family: var(--font-judul);
+  font-size: 15px;
+  color: var(--biru-tua);
+  margin: 2px 0;
+}
+
+.area-fleet-box p {
+  font-size: 13px;
+  color: var(--teks);
+  line-height: 1.45;
+}
+
+.area-checklist-box {
+  background: var(--putih);
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+
+.area-checklist-box h5 {
+  margin: 0 0 8px;
+  font-family: var(--font-judul);
+  font-size: 14px;
+  color: var(--biru-tua);
+}
+
+.area-checklist-box ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13.5px;
+  color: var(--teks);
+  line-height: 1.45;
+}
+
+.area-out-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.area-sim-wa {
+  flex: 1 1 220px;
+  max-width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+/* ---------- Flow Diagram 5 Langkah Cara Memesan ---------- */
+.area-flow-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.area-flow-step {
+  position: relative;
+  min-width: 0;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 22px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-wrap: break-word;
+}
+
+.area-flow-step:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  right: -13px;
+  top: 34px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--biru-tua);
+  color: var(--putih);
+  font-size: 13px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(14, 42, 107, 0.22);
+}
+
+.area-flow-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.area-flow-num {
+  width: 38px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: var(--biru);
+  color: var(--putih);
+  font: 700 17px var(--font-judul);
+}
+
+.area-flow-step:nth-child(4) .area-flow-num,
+.area-flow-step:nth-child(5) .area-flow-num {
+  background: var(--oranye-cta);
+}
+
+.area-flow-icon {
+  color: var(--biru);
+  display: inline-flex;
+}
+
+.area-flow-deliverable {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--biru-muda);
+  color: var(--biru-tua);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.area-flow-step:nth-child(4) .area-flow-deliverable,
+.area-flow-step:nth-child(5) .area-flow-deliverable {
+  background: var(--oranye-muda);
+  color: var(--oranye-cta-hover);
+}
+
+.area-flow-step h3 {
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.area-flow-text {
+  font-size: 13.5px;
+  color: var(--teks);
+  line-height: 1.5;
+}
+
+.area-flow-hint {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--garis);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--redup);
+}
+
+.area-milestone-strip {
+  background: var(--biru-tua);
+  color: var(--putih);
+  border-radius: 22px;
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 12px 18px;
+  align-items: center;
+}
+
+.area-ms-item {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: break-word;
+}
+
+.area-ms-tag {
+  font-size: 12px;
+  color: var(--oranye-terang);
+  font-weight: 600;
+}
+
+.area-ms-item strong {
+  font-family: var(--font-judul);
+  font-size: 15.5px;
+  color: var(--putih);
+}
+
+.area-ms-arrow {
+  color: var(--oranye-terang);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* ---------- Responsif Tablet & Ponsel ---------- */
+@media (max-width: 1080px) {
+  .area-formula-eq {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .area-f-op {
+    justify-self: center;
+  }
+
+  .area-flow-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .area-flow-step:not(:last-child)::after {
+    display: none;
+  }
+}
+
+@media (max-width: 960px) {
+  .area-map-console {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .area-sim-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .area-corridors {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .area-milestone-strip {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .area-ms-arrow {
+    transform: rotate(90deg);
+    justify-self: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .area-leaflet-canvas {
+    height: 360px;
+  }
+
+  .area-formula-card,
+  .area-sim-card {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .area-sim-output,
+  .area-map-inspector {
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .area-radio-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .area-flow-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .area-flow-step:not(:last-child)::after {
+    content: "↓";
+    display: grid;
+    right: auto;
+    left: 26px;
+    top: auto;
+    bottom: -18px;
+  }
+
+  .area-flow-list {
+    gap: 18px;
+  }
+}
+
+@media (max-width: 400px) {
+  .area-formula-card,
+  .area-sim-card,
+  .area-milestone-strip {
+    padding: 14px;
+  }
+
+  .area-sim-output {
+    padding: 12px;
+  }
+
+  .area-hero-actions .btn,
+  .area-inspector-actions .btn,
+  .area-out-cta .btn {
+    max-width: 100%;
+    padding: 10px 16px;
+    line-height: 1.25;
+    text-align: center;
+  }
+}
+
+.area-cta-ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  color: var(--putih);
+}
+
+.area-cta-ghost:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--putih);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .area-pill-reset,
+  .area-region-pill,
+  .area-pin,
+  .area-city-wa,
+  .area-radio-card,
+  .area-meter-fill {
+    transition: none;
+  }
+}

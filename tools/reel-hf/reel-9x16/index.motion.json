@@ -1,0 +1,11 @@
+{
+  "duration": 22,
+  "assertions": [
+    { "kind": "appearsBy", "selector": "#s1-h1", "bySec": 0.8 },
+    { "kind": "before", "a": "#s1-h1", "b": "#s1-lead" },
+    { "kind": "staysInFrame", "selector": "#s2-card" },
+    { "kind": "staysInFrame", "selector": "#s3-wa-card" },
+    { "kind": "staysInFrame", "selector": "#s4-card" },
+    { "kind": "staysInFrame", "selector": "#s5-panel" }
+  ]
+}

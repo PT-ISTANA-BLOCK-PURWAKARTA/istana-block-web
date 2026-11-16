@@ -1,0 +1,872 @@
+/* Gaya terisolasi khusus halaman /paket-proyek.
+   Hanya memakai token CSS dari globals.css dan tidak mengubah globals.css. */
+
+.paket-page {
+  padding-top: 24px;
+  padding-bottom: 56px;
+}
+
+.paket-section {
+  padding-top: 56px;
+}
+
+.paket-section:first-of-type {
+  padding-top: 40px;
+}
+
+.paket-anchor {
+  scroll-margin-top: 24px;
+}
+
+/* ---------- Hero / Pembuka Halaman ---------- */
+.paket-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+  gap: 28px 36px;
+  align-items: start;
+  padding: 18px 0 36px;
+  border-bottom: 1px solid var(--garis);
+}
+
+.paket-hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.paket-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--biru-muda);
+  color: var(--biru-tua);
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.paket-eyebrow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--oranye);
+  flex: none;
+}
+
+.paket-hero h1 {
+  font-size: clamp(32px, 4.1vw, 50px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.paket-hero .hero-lead {
+  font-size: 17.5px;
+  line-height: 1.62;
+  max-width: 60ch;
+}
+
+/* Panel ringkas kesiapan pengadaan di sisi kanan hero (hairline cells, bukan kartu bertumpuk) */
+.paket-kpi-panel {
+  min-width: 0;
+  background: var(--garis);
+  border: 1px solid var(--garis);
+  border-radius: 24px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.paket-kpi-head {
+  grid-column: 1 / -1;
+  padding: 14px 20px;
+  background: var(--biru-tua);
+  color: var(--putih);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.paket-kpi-head span:last-child {
+  color: var(--oranye-terang);
+  font-variant-numeric: tabular-nums;
+}
+
+.paket-kpi-cell {
+  min-width: 0;
+  background: var(--putih);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-wrap: break-word;
+}
+
+.paket-kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--redup);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.paket-kpi-val {
+  font-family: var(--font-judul);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--biru-tua);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.paket-kpi-sub {
+  font-size: 13px;
+  color: var(--teks);
+  line-height: 1.4;
+}
+
+/* ---------- Opener Seksi Konsisten ---------- */
+.paket-sec-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10px 24px;
+  margin-bottom: 22px;
+}
+
+.paket-sec-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 68ch;
+  min-width: 0;
+  width: 100%;
+}
+
+.paket-sec-kicker {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--oranye-cta-hover);
+}
+
+.paket-sec-head h2 {
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.paket-sec-head p {
+  color: var(--teks);
+  font-size: 15.5px;
+}
+
+/* ---------- Figure Container & Diagram 1 (Satu Pintu) ---------- */
+.paket-figure {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 26px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.paket-svg-desktop {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.paket-svg-mobile {
+  display: none;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.paket-svg-link-node {
+  transition: opacity 0.16s ease;
+}
+
+.paket-figure-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  min-width: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--garis);
+  font-size: 14px;
+  color: var(--teks);
+}
+
+.paket-figure-caption > span {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.paket-callout-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  min-width: 0;
+}
+
+.paket-callout-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 13.5px;
+  color: var(--teks);
+  overflow-wrap: break-word;
+}
+
+.paket-callout-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--biru);
+  color: var(--putih);
+  font-family: var(--font-judul);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.paket-callout-num.is-hub {
+  background: var(--oranye-cta);
+}
+
+.paket-callout-num.is-out {
+  background: var(--biru-tua);
+}
+
+/* ---------- Diagram 2 (Alur 5 Langkah Proses) ---------- */
+.paket-alur-region {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 26px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.paket-alur-rail {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.paket-alur-track {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, calc((100% - 96px) / 5 + 24px))) minmax(0, calc((100% - 96px) / 5));
+  align-items: stretch;
+  gap: 0;
+}
+
+.paket-alur-item {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.paket-alur-step {
+  flex: 1 1 auto;
+  background: var(--latar);
+  border: 1.5px solid var(--garis);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.paket-alur-step.is-optional {
+  background: var(--putih);
+  border-style: dashed;
+  border-color: var(--biru-garis);
+}
+
+.paket-alur-step.is-anchor {
+  background: var(--biru-muda);
+  border-color: var(--biru);
+}
+
+.paket-alur-step.is-install {
+  background: var(--putih);
+  border-style: dashed;
+  border-color: var(--oranye);
+}
+
+.paket-alur-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.paket-alur-num {
+  width: 34px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: var(--biru);
+  color: var(--putih);
+  font-family: var(--font-judul);
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  clip-path: var(--hex);
+  flex: none;
+}
+
+.paket-alur-step.is-anchor .paket-alur-num {
+  background: var(--biru-tua);
+}
+
+.paket-alur-step.is-install .paket-alur-num {
+  background: var(--oranye-cta);
+}
+
+.paket-alur-phase {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--redup);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.paket-alur-step.is-install .paket-alur-phase {
+  color: var(--oranye-cta-hover);
+}
+
+.paket-alur-step h3 {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--biru-tua);
+  overflow-wrap: break-word;
+}
+
+.paket-alur-desc {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--teks);
+  overflow-wrap: break-word;
+}
+
+.paket-alur-badges {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(20, 33, 61, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.paket-gate-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  color: var(--biru-tua);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.paket-gate-chip.is-accent {
+  background: var(--oranye-muda);
+  border-color: var(--oranye-terang);
+  color: var(--oranye-cta-hover);
+}
+
+.paket-gate-chip.is-blue {
+  background: var(--biru-tua);
+  border-color: var(--biru-tua);
+  color: var(--putih);
+}
+
+.paket-alur-arrow {
+  width: 24px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--biru-garis);
+}
+
+.paket-alur-arrow svg.arrow-down {
+  display: none;
+}
+
+/* ---------- Keunggulan 1 Pintu (Gestalt Cards + TKDN Highlight) ---------- */
+.paket-keunggulan-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.95fr);
+  gap: 28px;
+  align-items: stretch;
+}
+
+.paket-benefit-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.paket-benefit-card {
+  min-width: 0;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 22px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-wrap: break-word;
+}
+
+.paket-card-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--biru);
+}
+
+.paket-benefit-card h3 {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--biru-tua);
+}
+
+.paket-benefit-card p {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--teks);
+}
+
+.paket-card-link {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--garis);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--biru);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.paket-card-link:hover {
+  color: var(--oranye-cta);
+}
+
+/* Kartu TKDN Focal Card */
+.paket-tkdn-card {
+  min-width: 0;
+  background: var(--putih);
+  border: 1.5px solid var(--biru);
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-wrap: break-word;
+}
+
+.paket-tkdn-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.paket-tkdn-head h3 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.paket-tkdn-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--garis);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.paket-tkdn-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  min-width: 0;
+  padding: 13px 16px;
+  text-decoration: none;
+  color: var(--tinta);
+  background: var(--putih);
+  transition: background-color 0.16s ease;
+}
+
+.paket-tkdn-row > *:first-child {
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+.paket-tkdn-row + .paket-tkdn-row {
+  border-top: 1px solid var(--garis);
+}
+
+.paket-tkdn-row:hover {
+  background: var(--latar);
+}
+
+.paket-tkdn-name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.paket-tkdn-name strong {
+  font-family: var(--font-judul);
+  font-size: 15.5px;
+  color: var(--biru-tua);
+}
+
+.paket-tkdn-name span {
+  font-size: 12.5px;
+  color: var(--redup);
+}
+
+.paket-tkdn-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: var(--font-judul);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: normal;
+  text-align: center;
+  flex: 0 1 auto;
+}
+
+.paket-tkdn-badge.is-paving {
+  background: var(--oranye-muda);
+  color: var(--oranye-cta-hover);
+}
+
+.paket-tkdn-badge.is-uditch {
+  background: var(--biru-muda);
+  color: var(--biru-tua);
+}
+
+.paket-tkdn-badge.is-buis {
+  background: #e4f3ea;
+  color: var(--sukses);
+}
+
+.paket-tkdn-note {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--redup);
+}
+
+.paket-tkdn-actions {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ---------- Tabel Harga Acuan ---------- */
+.paket-price-foot {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 18px;
+}
+
+.paket-price-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ---------- Syarat & Ketentuan (Gestalt Rules + CTA) ---------- */
+.paket-syarat-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.95fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.paket-syarat-card {
+  min-width: 0;
+  background: var(--putih);
+  border: 1px solid var(--garis);
+  border-radius: 26px;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.paket-syarat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.paket-syarat-group {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 8px 20px;
+  align-items: baseline;
+  padding-top: 18px;
+  border-top: 1px solid var(--garis);
+}
+
+.paket-syarat-group:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.paket-syarat-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.paket-syarat-code {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--oranye-cta);
+  font-variant-numeric: tabular-nums;
+}
+
+.paket-syarat-meta h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--biru-tua);
+}
+
+.paket-syarat-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--teks);
+  overflow-wrap: break-word;
+}
+
+.paket-syarat-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.paket-rule-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--latar);
+  color: var(--biru-tua);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+a.paket-rule-chip:hover {
+  background: var(--biru-muda);
+}
+
+.paket-cta-box {
+  width: 100%;
+  min-width: 0;
+  position: sticky;
+  top: 24px;
+}
+
+.paket-cta-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+/* ---------- Responsif Tablet & Ponsel ---------- */
+@media (max-width: 1024px) {
+  .paket-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .paket-alur-track {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .paket-alur-item {
+    flex-direction: column;
+  }
+
+  .paket-alur-arrow {
+    width: 100%;
+    padding: 4px 0;
+  }
+
+  .paket-alur-arrow svg.arrow-right {
+    display: none;
+  }
+
+  .paket-alur-arrow svg.arrow-down {
+    display: block;
+  }
+
+  .paket-alur-rail {
+    display: none;
+  }
+
+  .paket-keunggulan-grid,
+  .paket-syarat-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .paket-cta-box {
+    position: static;
+  }
+}
+
+@media (max-width: 759px) {
+  .paket-svg-desktop {
+    display: none;
+  }
+
+  .paket-svg-mobile {
+    display: block;
+  }
+
+  .paket-figure,
+  .paket-alur-region,
+  .paket-syarat-card,
+  .paket-tkdn-card {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .paket-benefit-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .paket-syarat-group {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+}
+
+@media (max-width: 520px) {
+  .paket-kpi-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .paket-kpi-cell:nth-child(even) {
+    border-right: 0;
+  }
+
+  .paket-tkdn-actions .btn {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .paket-figure,
+  .paket-alur-region,
+  .paket-syarat-card,
+  .paket-tkdn-card {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .paket-hero .actions .btn,
+  .paket-cta-box .btn {
+    max-width: 100%;
+    padding: 10px 16px;
+    line-height: 1.25;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paket-svg-link-node,
+  .paket-tkdn-row {
+    transition: none;
+  }
+}

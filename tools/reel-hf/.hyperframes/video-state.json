@@ -1,0 +1,901 @@
+{
+  "version": 1,
+  "historyId": "78501b68-264a-448c-aca1-ad15beb9e57c",
+  "currentRevision": "d5cf632b-8de6-4fbe-b47c-217c92188ec4",
+  "pendingChanges": false,
+  "files": {
+    "assets/galeri-01.webp": {
+      "hash": "0e24eaea2f4d3b2a2d06c26d03cd5489fa119206f3513fc18c33d46d04db79cb",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\0e\\0e24eaea2f4d3b2a2d06c26d03cd5489fa119206f3513fc18c33d46d04db79cb"
+    },
+    "assets/galeri-05.webp": {
+      "hash": "acd446d05195d3f9e534daf79f0581cea8b7f18382bdcb7ca3c3e1a1f8da6a95",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\ac\\acd446d05195d3f9e534daf79f0581cea8b7f18382bdcb7ca3c3e1a1f8da6a95"
+    },
+    "assets/galeri-11.webp": {
+      "hash": "63ff5d9ed0e094ba0ca1d8615351ee9419a85c4cef1e07a4c6327b6b8f2153d1",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\63\\63ff5d9ed0e094ba0ca1d8615351ee9419a85c4cef1e07a4c6327b6b8f2153d1"
+    },
+    "assets/logo-istana-block-putih.webp": {
+      "hash": "9d208d141b7ea82a469bdbbd0b2010ed40295ee6345f09bce213828d6432f038",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\9d\\9d208d141b7ea82a469bdbbd0b2010ed40295ee6345f09bce213828d6432f038"
+    },
+    "assets/logo-istana-block.webp": {
+      "hash": "0228495f1114033e17a363cb3969c33064968224a472635f91048d8bd23eba0e",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\02\\0228495f1114033e17a363cb3969c33064968224a472635f91048d8bd23eba0e"
+    },
+    "assets/pabrik-mesin-paving.webp": {
+      "hash": "f3afb367690620ebed872cf1f90d22b6c2856b405bc1e3ba2200e2931079faf5",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\f3\\f3afb367690620ebed872cf1f90d22b6c2856b405bc1e3ba2200e2931079faf5"
+    },
+    "assets/paving-block.webp": {
+      "hash": "46f1aa59ce1857a67feb198792548f9e67cd6c6d6a97a077168df6155d0c3410",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\46\\46f1aa59ce1857a67feb198792548f9e67cd6c6d6a97a077168df6155d0c3410"
+    },
+    "assets/u-ditch.webp": {
+      "hash": "360c0687ae20479a958c73c365517902bb97ebd7ae4d0ffccace9cae2108e94e",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\36\\360c0687ae20479a958c73c365517902bb97ebd7ae4d0ffccace9cae2108e94e"
+    },
+    "index.html": {
+      "hash": "d931895ca0239ad4facd04dd53a390fd79bfcac4eb5e217ba4323a594409faa8",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\d9\\d931895ca0239ad4facd04dd53a390fd79bfcac4eb5e217ba4323a594409faa8"
+    },
+    "index.motion.json": {
+      "hash": "d3bbd53997474ccdd42b7d1e179d0486517923ff65bc52b3bcb1250a670eedb5",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\d3\\d3bbd53997474ccdd42b7d1e179d0486517923ff65bc52b3bcb1250a670eedb5"
+    },
+    "make_audio.py": {
+      "hash": "089986ca9eee4df6730fe65953df1400e621bf93227b0a8a0dcab500e1bd1c43",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\08\\089986ca9eee4df6730fe65953df1400e621bf93227b0a8a0dcab500e1bd1c43"
+    },
+    "reel-9x16/assets/galeri-01.webp": {
+      "hash": "0e24eaea2f4d3b2a2d06c26d03cd5489fa119206f3513fc18c33d46d04db79cb",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\0e\\0e24eaea2f4d3b2a2d06c26d03cd5489fa119206f3513fc18c33d46d04db79cb"
+    },
+    "reel-9x16/assets/galeri-05.webp": {
+      "hash": "acd446d05195d3f9e534daf79f0581cea8b7f18382bdcb7ca3c3e1a1f8da6a95",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\ac\\acd446d05195d3f9e534daf79f0581cea8b7f18382bdcb7ca3c3e1a1f8da6a95"
+    },
+    "reel-9x16/assets/galeri-11.webp": {
+      "hash": "63ff5d9ed0e094ba0ca1d8615351ee9419a85c4cef1e07a4c6327b6b8f2153d1",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\63\\63ff5d9ed0e094ba0ca1d8615351ee9419a85c4cef1e07a4c6327b6b8f2153d1"
+    },
+    "reel-9x16/assets/logo-istana-block-putih.webp": {
+      "hash": "9d208d141b7ea82a469bdbbd0b2010ed40295ee6345f09bce213828d6432f038",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\9d\\9d208d141b7ea82a469bdbbd0b2010ed40295ee6345f09bce213828d6432f038"
+    },
+    "reel-9x16/assets/logo-istana-block.webp": {
+      "hash": "0228495f1114033e17a363cb3969c33064968224a472635f91048d8bd23eba0e",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\02\\0228495f1114033e17a363cb3969c33064968224a472635f91048d8bd23eba0e"
+    },
+    "reel-9x16/assets/pabrik-mesin-paving.webp": {
+      "hash": "f3afb367690620ebed872cf1f90d22b6c2856b405bc1e3ba2200e2931079faf5",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\f3\\f3afb367690620ebed872cf1f90d22b6c2856b405bc1e3ba2200e2931079faf5"
+    },
+    "reel-9x16/assets/paving-block.webp": {
+      "hash": "46f1aa59ce1857a67feb198792548f9e67cd6c6d6a97a077168df6155d0c3410",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\46\\46f1aa59ce1857a67feb198792548f9e67cd6c6d6a97a077168df6155d0c3410"
+    },
+    "reel-9x16/assets/u-ditch.webp": {
+      "hash": "360c0687ae20479a958c73c365517902bb97ebd7ae4d0ffccace9cae2108e94e",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\36\\360c0687ae20479a958c73c365517902bb97ebd7ae4d0ffccace9cae2108e94e"
+    },
+    "reel-9x16/index.html": {
+      "hash": "0bd34da7cfe0532acf14551fffe56027ad33c8b8ecd18f43ad5df0a42e9c037d",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\0b\\0bd34da7cfe0532acf14551fffe56027ad33c8b8ecd18f43ad5df0a42e9c037d"
+    },
+    "reel-9x16/index.motion.json": {
+      "hash": "d3bbd53997474ccdd42b7d1e179d0486517923ff65bc52b3bcb1250a670eedb5",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\d3\\d3bbd53997474ccdd42b7d1e179d0486517923ff65bc52b3bcb1250a670eedb5"
+    },
+    "assets/audio-22s.wav": {
+      "hash": "72f79f22717cce0556b2d4983235f086bc7305a119b7f55cfd0e373bbaab7c8d",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\72\\72f79f22717cce0556b2d4983235f086bc7305a119b7f55cfd0e373bbaab7c8d"
+    },
+    "reel-9x16/assets/audio-22s.wav": {
+      "hash": "72f79f22717cce0556b2d4983235f086bc7305a119b7f55cfd0e373bbaab7c8d",
+      "content": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\72\\72f79f22717cce0556b2d4983235f086bc7305a119b7f55cfd0e373bbaab7c8d"
+    }
+  },
+  "revisions": {
+    "f521bec2-e397-45ff-a076-5af4fca596bf": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794421603951,
+      "endedAt": 1794421603998,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\16\\1635c6a5a49604755e3a0ccecef393c69cde5a60dfef065e9210161d34402557",
+          "after": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\bf\\bf1358829dd1c2b214bb2c7c4fab2a360c781c14a3b92bcefee6df9d0d16aecb"
+        },
+        "reel-9x16/index.html": {
+          "before": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\d2\\d28a9211b791ee446b0a5ce4535aee1c548007d28a77dbcde7be89bb62377ab1",
+          "after": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\e7\\e7824fba7bb65d8a0fb0d13eba6353e35f9df40c4fa3ee3339d13a4e73113f42"
+        }
+      }
+    },
+    "4bfa09fc-e914-4d44-8182-eef0a5c1019a": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794421946269,
+      "endedAt": 1794421946280,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\bf\\bf1358829dd1c2b214bb2c7c4fab2a360c781c14a3b92bcefee6df9d0d16aecb",
+          "after": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\a9\\a9340f63d8ecefb358c68bafecc62d9dcc22d98e1ad9af634a7399e8b2f25636"
+        }
+      }
+    },
+    "d5cf632b-8de6-4fbe-b47c-217c92188ec4": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794483439619,
+      "endedAt": 1794483439710,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\a9\\a9340f63d8ecefb358c68bafecc62d9dcc22d98e1ad9af634a7399e8b2f25636",
+          "after": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\d9\\d931895ca0239ad4facd04dd53a390fd79bfcac4eb5e217ba4323a594409faa8"
+        },
+        "reel-9x16/index.html": {
+          "before": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\e7\\e7824fba7bb65d8a0fb0d13eba6353e35f9df40c4fa3ee3339d13a4e73113f42",
+          "after": "C:\\Users\\Sarimusan\\.cache\\hyperframes\\history\\78501b68-264a-448c-aca1-ad15beb9e57c\\blobs\\0b\\0bd34da7cfe0532acf14551fffe56027ad33c8b8ecd18f43ad5df0a42e9c037d"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": "d5cf632b-8de6-4fbe-b47c-217c92188ec4",
+      "id": "67227a1f-38e7-4c95-beb2-b41eb515c671"
+    },
+    "revisions": {
+      "f521bec2-e397-45ff-a076-5af4fca596bf": [
+        {
+          "id": "42a57ad1-af19-442d-afaa-0963c14279b4",
+          "scope": "project",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "at": [
+                1.2,
+                6.9,
+                11.8,
+                16.2,
+                20
+              ],
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 45000,
+              "cache": false,
+              "contrast": true,
+              "craft": true,
+              "strict": false,
+              "snapshots": true,
+              "browserGpuMode": "auto",
+              "includeUnmounted": false
+            }
+          },
+          "createdAt": 1794421722718,
+          "contentHash": "ba4bce669e43e46548c09bd699e852bcb8efecd201ac0c76b24aaa2da128786b",
+          "revision": "f521bec2-e397-45ff-a076-5af4fca596bf",
+          "inputFingerprint": "42a14ebe57927758058501c970c0f864b145d6501f0b778cca0df2d4c071df30",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "1a033e65-8bc1-48b2-9a8b-6a391cea29a5"
+        }
+      ],
+      "4bfa09fc-e914-4d44-8182-eef0a5c1019a": [
+        {
+          "id": "92c8b494-6a0a-4eb7-bd25-f18efc0f2291",
+          "scope": "project",
+          "report": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\checks\\92c8b494-6a0a-4eb7-bd25-f18efc0f2291.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "at": [
+                1.2,
+                6.9
+              ],
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 45000,
+              "cache": false,
+              "contrast": true,
+              "craft": true,
+              "strict": false,
+              "snapshots": true,
+              "browserGpuMode": "auto",
+              "includeUnmounted": false
+            }
+          },
+          "createdAt": 1794422034519,
+          "contentHash": "1b9ae88e48a73a50edc74b40d27a7b1ee0a18cba7d41e539651b9ced8b7dfcee",
+          "revision": "4bfa09fc-e914-4d44-8182-eef0a5c1019a",
+          "inputFingerprint": "8628a53cefd791893b5fb77a0626e3f4191d36af7e5d0d303f58ebbc9a64b9c0",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "c1db2af8-e1e7-4a7a-8b83-b30e5f07abae",
+          "scope": "project",
+          "report": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\checks\\c1db2af8-e1e7-4a7a-8b83-b30e5f07abae.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 45000,
+              "cache": true,
+              "contrast": true,
+              "craft": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto",
+              "includeUnmounted": false
+            }
+          },
+          "createdAt": 1794423328873,
+          "contentHash": "d1f987850b21a2d4de015f7441f87282fe79dc99c8b445e0d2bc43a8429bd3b3",
+          "revision": "4bfa09fc-e914-4d44-8182-eef0a5c1019a",
+          "inputFingerprint": "8628a53cefd791893b5fb77a0626e3f4191d36af7e5d0d303f58ebbc9a64b9c0",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "d5cf632b-8de6-4fbe-b47c-217c92188ec4": [
+        {
+          "id": "67227a1f-38e7-4c95-beb2-b41eb515c671",
+          "scope": "project",
+          "report": "C:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\checks\\67227a1f-38e7-4c95-beb2-b41eb515c671.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 45000,
+              "cache": true,
+              "contrast": true,
+              "craft": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto",
+              "includeUnmounted": false
+            }
+          },
+          "createdAt": 1794483701324,
+          "contentHash": "6314863e7ffff7a74d2a34c00ecda50af39fdd04e3a3a2e8767e66d372b34fcf",
+          "revision": "d5cf632b-8de6-4fbe-b47c-217c92188ec4",
+          "inputFingerprint": "bb3db613aa08234cf53e6bcdf2aeaf1aba60b855588d50c520c47468bae2d6cf",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42",
+        "scope": "project",
+        "report": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\checks\\fe3d3327-40cb-4989-be4c-079494305e42.json",
+        "metadata": {
+          "ok": false,
+          "browserSkipped": false,
+          "options": {
+            "samples": 9,
+            "at": [
+              1.2,
+              6.9,
+              11.8,
+              16.2,
+              20
+            ],
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 45000,
+            "cache": true,
+            "contrast": true,
+            "craft": true,
+            "strict": false,
+            "snapshots": true,
+            "browserGpuMode": "auto",
+            "includeUnmounted": false
+          }
+        },
+        "createdAt": 1794421377971,
+        "contentHash": "a423fe1b57921f28d1f595a4cf8e5d2e36f9488c691d61461cc6fef609c3df9d",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "snapshots": {
+    "latest": {
+      "revision": "4bfa09fc-e914-4d44-8182-eef0a5c1019a",
+      "id": "92c8b494-6a0a-4eb7-bd25-f18efc0f2291-1"
+    },
+    "revisions": {
+      "f521bec2-e397-45ff-a076-5af4fca596bf": [
+        {
+          "id": "42a57ad1-af19-442d-afaa-0963c14279b4-0",
+          "scope": "full",
+          "time": 1.2,
+          "metadata": {
+            "checkId": "42a57ad1-af19-442d-afaa-0963c14279b4",
+            "width": 1280,
+            "height": 720
+          },
+          "createdAt": 1794421722720,
+          "contentHash": "7bdae7e9860a04b3c73268ba73c6e60cc5105a941401dc058c6b115e02fe9a90",
+          "revision": "f521bec2-e397-45ff-a076-5af4fca596bf",
+          "inputFingerprint": "42a14ebe57927758058501c970c0f864b145d6501f0b778cca0df2d4c071df30",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "1a033e65-8bc1-48b2-9a8b-6a391cea29a5"
+        },
+        {
+          "id": "42a57ad1-af19-442d-afaa-0963c14279b4-1",
+          "scope": "full",
+          "time": 6.9,
+          "metadata": {
+            "checkId": "42a57ad1-af19-442d-afaa-0963c14279b4",
+            "width": 1280,
+            "height": 720
+          },
+          "createdAt": 1794421722789,
+          "contentHash": "527d6e1d0d26e07f80bd5f180265f92e2732f0eba8ebc33c7204b61893105e7b",
+          "revision": "f521bec2-e397-45ff-a076-5af4fca596bf",
+          "inputFingerprint": "42a14ebe57927758058501c970c0f864b145d6501f0b778cca0df2d4c071df30",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "1a033e65-8bc1-48b2-9a8b-6a391cea29a5"
+        },
+        {
+          "id": "42a57ad1-af19-442d-afaa-0963c14279b4-2",
+          "scope": "full",
+          "time": 11.8,
+          "metadata": {
+            "checkId": "42a57ad1-af19-442d-afaa-0963c14279b4",
+            "width": 1280,
+            "height": 720
+          },
+          "createdAt": 1794421722799,
+          "contentHash": "1659d0123bb8c3f9308264c8b8c10615cc0d6119237b8f7b136653063a5a68e9",
+          "revision": "f521bec2-e397-45ff-a076-5af4fca596bf",
+          "inputFingerprint": "42a14ebe57927758058501c970c0f864b145d6501f0b778cca0df2d4c071df30",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "1a033e65-8bc1-48b2-9a8b-6a391cea29a5"
+        },
+        {
+          "id": "42a57ad1-af19-442d-afaa-0963c14279b4-3",
+          "scope": "full",
+          "time": 16.2,
+          "metadata": {
+            "checkId": "42a57ad1-af19-442d-afaa-0963c14279b4",
+            "width": 1280,
+            "height": 720
+          },
+          "createdAt": 1794421722816,
+          "contentHash": "b5f900565c2c980efedb5c9e12fb344897e1731f3d9d502000ff91cc37638ac1",
+          "revision": "f521bec2-e397-45ff-a076-5af4fca596bf",
+          "inputFingerprint": "42a14ebe57927758058501c970c0f864b145d6501f0b778cca0df2d4c071df30",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "1a033e65-8bc1-48b2-9a8b-6a391cea29a5"
+        },
+        {
+          "id": "42a57ad1-af19-442d-afaa-0963c14279b4-4",
+          "scope": "full",
+          "time": 20,
+          "metadata": {
+            "checkId": "42a57ad1-af19-442d-afaa-0963c14279b4",
+            "width": 1280,
+            "height": 720
+          },
+          "createdAt": 1794421722826,
+          "contentHash": "90a6e92befc66877edfd473821897d298eff4616c2341d458e2d336ffb9dde50",
+          "revision": "f521bec2-e397-45ff-a076-5af4fca596bf",
+          "inputFingerprint": "42a14ebe57927758058501c970c0f864b145d6501f0b778cca0df2d4c071df30",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "1a033e65-8bc1-48b2-9a8b-6a391cea29a5"
+        }
+      ],
+      "4bfa09fc-e914-4d44-8182-eef0a5c1019a": [
+        {
+          "id": "92c8b494-6a0a-4eb7-bd25-f18efc0f2291-0",
+          "scope": "full",
+          "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\2489fbd4-066c-447f-99da-567c6cff256c\\frame-00-at-1.2s.png",
+          "time": 1.2,
+          "metadata": {
+            "checkId": "92c8b494-6a0a-4eb7-bd25-f18efc0f2291",
+            "width": 1280,
+            "height": 720
+          },
+          "createdAt": 1794422034523,
+          "contentHash": "650c22b32f93fc33823b9686ba4ceb834765e28c3018b539768f4a20475e4c7d",
+          "revision": "4bfa09fc-e914-4d44-8182-eef0a5c1019a",
+          "inputFingerprint": "8628a53cefd791893b5fb77a0626e3f4191d36af7e5d0d303f58ebbc9a64b9c0",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "id": "92c8b494-6a0a-4eb7-bd25-f18efc0f2291-1",
+          "scope": "full",
+          "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\2489fbd4-066c-447f-99da-567c6cff256c\\frame-01-at-6.9s.png",
+          "time": 6.9,
+          "metadata": {
+            "checkId": "92c8b494-6a0a-4eb7-bd25-f18efc0f2291",
+            "width": 1280,
+            "height": 720
+          },
+          "createdAt": 1794422034558,
+          "contentHash": "3beabad90b3b41c6ed6a81f12c28bee31f41d188655fa92f622771ba542e25c6",
+          "revision": "4bfa09fc-e914-4d44-8182-eef0a5c1019a",
+          "inputFingerprint": "8628a53cefd791893b5fb77a0626e3f4191d36af7e5d0d303f58ebbc9a64b9c0",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-0",
+        "scope": "full",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\frame-00-at-1.2s.png",
+        "time": 1.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "width": 1280,
+          "height": 720
+        },
+        "createdAt": 1794421377971,
+        "contentHash": "e8df8f65d94814592443623e405a85a5fa7d50c07347f6d92e4cb82d4b191c65",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-1",
+        "scope": "full",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\frame-01-at-6.9s.png",
+        "time": 6.9,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "width": 1280,
+          "height": 720
+        },
+        "createdAt": 1794421377971,
+        "contentHash": "31988c81a7dbde8aa0df15832f54ee2c42db8b581077d1bd86cf2c5c0ed8f0a6",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-2",
+        "scope": "full",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\frame-02-at-11.8s.png",
+        "time": 11.8,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "width": 1280,
+          "height": 720
+        },
+        "createdAt": 1794421377972,
+        "contentHash": "56389ef2ebfdb2350b1aa2ef7eabddebb7b5bf6865f6b24c0da6a3291457e856",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-3",
+        "scope": "full",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\frame-03-at-16.2s.png",
+        "time": 16.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "width": 1280,
+          "height": 720
+        },
+        "createdAt": 1794421377973,
+        "contentHash": "27ed9c62cac16916c22036d862457bedbc879b7822444371fd2fafffefb554c5",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-4",
+        "scope": "full",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\frame-04-at-20.0s.png",
+        "time": 20,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "width": 1280,
+          "height": 720
+        },
+        "createdAt": 1794421377975,
+        "contentHash": "67e97965c1e35d0138abc3753154eff335f00467efcb6219b0da7d0bce8e60bc",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-0",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-00-text_occluded.png",
+        "time": 1.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-00-text_occluded.png",
+            "time": 1.2,
+            "bbox": {
+              "x": 918.79,
+              "y": 430.14,
+              "width": 117.53,
+              "height": 40.92
+            }
+          },
+          "width": 495,
+          "height": 267
+        },
+        "createdAt": 1794421377982,
+        "contentHash": "7e0b158adc1044a141403ee2ba7a1f09f0e6694e28ce70464626f93f533c4210",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-1",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-01-text_occluded.png",
+        "time": 11.8,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-01-text_occluded.png",
+            "time": 11.8,
+            "bbox": {
+              "x": 791.91,
+              "y": 313.14,
+              "width": 154.59,
+              "height": 57.9
+            }
+          },
+          "width": 609,
+          "height": 318
+        },
+        "createdAt": 1794421377991,
+        "contentHash": "c54ca7a104193df0b5db56470415ec4954f734097ee7e2b814a842d249408b98",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-2",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-02-text_occluded.png",
+        "time": 11.8,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-02-text_occluded.png",
+            "time": 11.8,
+            "bbox": {
+              "x": 1012.4,
+              "y": 323.09,
+              "width": 184.31,
+              "height": 40.18
+            }
+          },
+          "width": 699,
+          "height": 264
+        },
+        "createdAt": 1794421377994,
+        "contentHash": "47e846f2df78d499fd815c1cc664385fd733f8b97b6e8b2a1b3e8ed05d9088e8",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-3",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-03-content_overlap.png",
+        "time": 11.8,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-03-content_overlap.png",
+            "time": 11.8,
+            "bbox": {
+              "x": 791.91,
+              "y": 313.14,
+              "width": 154.59,
+              "height": 57.9
+            }
+          },
+          "width": 609,
+          "height": 318
+        },
+        "createdAt": 1794421378000,
+        "contentHash": "18d2d841302dd3db043350b59aded4614e23e1ce38e4ff91cf2bbe7349ac8fb3",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-4",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-04-text_occluded.png",
+        "time": 16.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-04-text_occluded.png",
+            "time": 16.2,
+            "bbox": {
+              "x": 635.13,
+              "y": 261.37,
+              "width": 108.95,
+              "height": 23.27
+            }
+          },
+          "width": 471,
+          "height": 216
+        },
+        "createdAt": 1794421378048,
+        "contentHash": "58116950eab4589554cc2a2891a08f75405c0a1f58abeeb787ba4347fe9e0533",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-5",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-05-text_occluded.png",
+        "time": 16.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-05-text_occluded.png",
+            "time": 16.2,
+            "bbox": {
+              "x": 858.57,
+              "y": 260.21,
+              "width": 44.24,
+              "height": 23.17
+            }
+          },
+          "width": 276,
+          "height": 213
+        },
+        "createdAt": 1794421378052,
+        "contentHash": "63424fdbbd047230ee9975748ab03fbc323466d1aea12f2cfce73d71999925d2",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-6",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-06-text_occluded.png",
+        "time": 16.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-06-text_occluded.png",
+            "time": 16.2,
+            "bbox": {
+              "x": 1085.76,
+              "y": 258.08,
+              "width": 110.84,
+              "height": 24.04
+            }
+          },
+          "width": 477,
+          "height": 216
+        },
+        "createdAt": 1794421378075,
+        "contentHash": "c0928118ad87d93ef8f52812d5e06bc5a264f61aef214ad1ea14caffa53e6be9",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-7",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-07-text_occluded.png",
+        "time": 16.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-07-text_occluded.png",
+            "time": 16.2,
+            "bbox": {
+              "x": 635.48,
+              "y": 195.61,
+              "width": 176.51,
+              "height": 25.54
+            }
+          },
+          "width": 675,
+          "height": 219
+        },
+        "createdAt": 1794421378081,
+        "contentHash": "0b94a112f178b8ff619bd8b39bff2307b35e07b5fa22dc2c7f38c7efe8a65687",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-8",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-08-text_occluded.png",
+        "time": 16.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-08-text_occluded.png",
+            "time": 16.2,
+            "bbox": {
+              "x": 858.72,
+              "y": 195.06,
+              "width": 81.03,
+              "height": 22.79
+            }
+          },
+          "width": 387,
+          "height": 213
+        },
+        "createdAt": 1794421378093,
+        "contentHash": "7ae2a80b71f1c60da54482d0d1333226a56b179b1baa36a321a42652480be23e",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-9",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-09-text_occluded.png",
+        "time": 16.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-09-text_occluded.png",
+            "time": 16.2,
+            "bbox": {
+              "x": 1090.88,
+              "y": 190.97,
+              "width": 105.54,
+              "height": 25.48
+            }
+          },
+          "width": 459,
+          "height": 219
+        },
+        "createdAt": 1794421378109,
+        "contentHash": "80d7fd16ea4130a67cd630a397c0858d6b6284b98a0f6a4ad4ff35b7bfd677ea",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-10",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-10-text_occluded.png",
+        "time": 16.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-10-text_occluded.png",
+            "time": 16.2,
+            "bbox": {
+              "x": 857.94,
+              "y": 536.76,
+              "width": 81.42,
+              "height": 23.22
+            }
+          },
+          "width": 387,
+          "height": 213
+        },
+        "createdAt": 1794421378129,
+        "contentHash": "3c93e3bae18874a5fb570dca0eed71c57cf150d021b880e72e914b26c784616c",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "fe3d3327-40cb-4989-be4c-079494305e42-crop-11",
+        "scope": "finding",
+        "image": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-11-text_occluded.png",
+        "time": 16.2,
+        "metadata": {
+          "checkId": "fe3d3327-40cb-4989-be4c-079494305e42",
+          "finding": {
+            "filename": "finding-11-text_occluded.png",
+            "time": 16.2,
+            "bbox": {
+              "x": 1091.26,
+              "y": 538.76,
+              "width": 106.08,
+              "height": 26
+            }
+          },
+          "width": 462,
+          "height": 222
+        },
+        "createdAt": 1794421378198,
+        "contentHash": "b1d5f9abf881748ecc27ac69a1bc8c61932cf6809bc144452ba8cafdfff44ee9",
+        "revision": null,
+        "inputFingerprint": "09994745da95f1ce0e15f77a8b5d20606ba66e9906d9af9d7b1832a12bba0ebc",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "renders": {
+    "latest": {
+      "id": "3a8fc172-36b7-4ead-849e-794cb72d5ceb",
+      "completedAt": 1794485373090,
+      "output": "C:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\renders\\master-16x9.mp4",
+      "status": "completed",
+      "revision": "d5cf632b-8de6-4fbe-b47c-217c92188ec4"
+    },
+    "retainedRevisions": [
+      "d5cf632b-8de6-4fbe-b47c-217c92188ec4",
+      "4bfa09fc-e914-4d44-8182-eef0a5c1019a"
+    ]
+  },
+  "pendingArtifactCleanup": []
+}

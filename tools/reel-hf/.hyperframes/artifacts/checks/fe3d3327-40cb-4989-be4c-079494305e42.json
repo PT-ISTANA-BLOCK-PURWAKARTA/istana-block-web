@@ -1,0 +1,1808 @@
+{
+  "ok": false,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 9,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "duplicate_media_discovery_risk",
+        "severity": "warning",
+        "message": "Detected 2 matching img entries with the same source/start/duration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Avoid duplicated media nodes that can be discovered twice during compilation."
+      },
+      {
+        "code": "composition_file_too_large",
+        "severity": "warning",
+        "message": "This HTML composition file has 531 lines. Smaller sub-compositions are easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Split coherent scenes or layers into separate .html files under compositions/, then mount them from the parent with data-composition-src so each file stays small enough to inspect, revise, and validate independently."
+      },
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 1 has 5 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into separate .html files under compositions/ and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-hook\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-hook",
+        "dataAttributes": {},
+        "sourceFile": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-hook\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-calc\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-calc",
+        "dataAttributes": {},
+        "sourceFile": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-calc\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-wa\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-wa",
+        "dataAttributes": {},
+        "sourceFile": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-wa\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-uditch\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-uditch",
+        "dataAttributes": {},
+        "sourceFile": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-uditch\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-outro\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-outro",
+        "dataAttributes": {},
+        "sourceFile": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-outro\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<div id=\"hud-bar\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#hud-bar",
+        "dataAttributes": {},
+        "sourceFile": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <div id=\"hud-bar\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      }
+    ],
+    "filesScanned": 1
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": false,
+    "errorCount": 15,
+    "warningCount": 0,
+    "infoCount": 2,
+    "findings": [
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 1.2,
+        "selector": "#s1-photo-main > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 918.79,
+          "top": 430.14,
+          "right": 1036.32,
+          "bottom": 471.06,
+          "width": 117.53,
+          "height": 40.92
+        },
+        "containerSelector": "#s1-photo-sub > img:nth-of-type(1)",
+        "text": "SNI · K-350–450",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 1,
+        "lifetime": {
+          "start": 0,
+          "end": 3
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 918.79,
+          "y": 430.14,
+          "width": 117.53,
+          "height": 40.92
+        },
+        "firstSeen": 1.2,
+        "lastSeen": 1.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          1.2
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 11.8,
+        "selector": "#s3-photo > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 791.91,
+          "top": 313.14,
+          "right": 946.5,
+          "bottom": 371.04,
+          "width": 154.59,
+          "height": 57.9
+        },
+        "containerSelector": "#s3-wa-card",
+        "text": "Material + Jasa Pasang",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 0.91,
+        "lifetime": {
+          "start": 9.8,
+          "end": 13.8
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 791.91,
+          "y": 313.14,
+          "width": 154.59,
+          "height": 57.9
+        },
+        "firstSeen": 11.8,
+        "lastSeen": 11.8,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          11.8
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 11.8,
+        "selector": "#s3-photo > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 1012.4,
+          "top": 323.09,
+          "right": 1196.71,
+          "bottom": 363.27,
+          "width": 184.31,
+          "height": 40.18
+        },
+        "containerSelector": "#s3-wa-card",
+        "text": "Survei gratis ≥ 200 m²",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 0.83,
+        "lifetime": {
+          "start": 9.8,
+          "end": 13.8
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1012.4,
+          "y": 323.09,
+          "width": 184.31,
+          "height": 40.18
+        },
+        "firstSeen": 11.8,
+        "lastSeen": 11.8,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          11.8
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "error",
+        "time": 11.8,
+        "selector": "#s3-photo > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 791.91,
+          "top": 313.14,
+          "right": 946.5,
+          "bottom": 371.04,
+          "width": 154.59,
+          "height": 57.9
+        },
+        "containerSelector": "div.wa-head-left > span:nth-of-type(2)",
+        "text": "Material + Jasa Pasang",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply. Decoration nobody needs to read can take data-layout-ignore.",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 791.91,
+          "y": 313.14,
+          "width": 154.59,
+          "height": 57.9
+        },
+        "firstSeen": 10.625,
+        "lastSeen": 12.875,
+        "occurrences": 14,
+        "heldMs": 2250,
+        "times": [
+          10.625,
+          11.5,
+          11.625,
+          11.75,
+          11.8,
+          11.875,
+          12,
+          12.125,
+          12.25,
+          12.375,
+          12.5,
+          12.625,
+          12.75,
+          12.875
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "div.uditch-table-head-row > span:nth-of-type(1)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 635.13,
+          "top": 261.37,
+          "right": 744.07,
+          "bottom": 284.64,
+          "width": 108.95,
+          "height": 23.27
+        },
+        "containerSelector": "#s4-rows > div:nth-of-type(2)",
+        "text": "Ukuran (mm)",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 1,
+        "lifetime": {
+          "start": 13.8,
+          "end": 18.4
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 635.13,
+          "y": 261.37,
+          "width": 108.95,
+          "height": 23.27
+        },
+        "firstSeen": 16.2,
+        "lastSeen": 16.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          16.2
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "div.uditch-table-head-row > span:nth-of-type(2)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 858.57,
+          "top": 260.21,
+          "right": 902.8,
+          "bottom": 283.39,
+          "width": 44.24,
+          "height": 23.17
+        },
+        "containerSelector": "#s4-rows > div:nth-of-type(2)",
+        "text": "Berat",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 1,
+        "lifetime": {
+          "start": 13.8,
+          "end": 18.4
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 858.57,
+          "y": 260.21,
+          "width": 44.24,
+          "height": 23.17
+        },
+        "firstSeen": 16.2,
+        "lastSeen": 16.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          16.2
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "div.uditch-table-head-row > span:nth-of-type(3)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 1085.76,
+          "top": 258.08,
+          "right": 1196.59,
+          "bottom": 282.11,
+          "width": 110.84,
+          "height": 24.04
+        },
+        "containerSelector": "#s4-rows > div:nth-of-type(2)",
+        "text": "Harga Pabrik",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 1,
+        "lifetime": {
+          "start": 13.8,
+          "end": 18.4
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1085.76,
+          "y": 258.08,
+          "width": 110.84,
+          "height": 24.04
+        },
+        "firstSeen": 16.2,
+        "lastSeen": 16.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          16.2
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "#s4-rows > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 635.48,
+          "top": 195.61,
+          "right": 811.98,
+          "bottom": 221.15,
+          "width": 176.51,
+          "height": 25.54
+        },
+        "containerSelector": "div.uditch-prod-info > img:nth-of-type(1)",
+        "text": "400 × 500 × 1200",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 1,
+        "lifetime": {
+          "start": 13.8,
+          "end": 18.4
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 635.48,
+          "y": 195.61,
+          "width": 176.51,
+          "height": 25.54
+        },
+        "firstSeen": 16.2,
+        "lastSeen": 16.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          16.2
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "#s4-rows > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 858.72,
+          "top": 195.06,
+          "right": 939.74,
+          "bottom": 217.85,
+          "width": 81.03,
+          "height": 22.79
+        },
+        "containerSelector": "div.uditch-card-head",
+        "text": "284,8 kg",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 1,
+        "lifetime": {
+          "start": 13.8,
+          "end": 18.4
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 858.72,
+          "y": 195.06,
+          "width": 81.03,
+          "height": 22.79
+        },
+        "firstSeen": 16.2,
+        "lastSeen": 16.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          16.2
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "#s4-rows > div:nth-of-type(1) > span:nth-of-type(3)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 1090.88,
+          "top": 190.97,
+          "right": 1196.42,
+          "bottom": 216.45,
+          "width": 105.54,
+          "height": 25.48
+        },
+        "containerSelector": "span.tkdn-pill",
+        "text": "Rp415.000",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 1,
+        "lifetime": {
+          "start": 13.8,
+          "end": 18.4
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1090.88,
+          "y": 190.97,
+          "width": 105.54,
+          "height": 25.48
+        },
+        "firstSeen": 16.2,
+        "lastSeen": 16.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          16.2
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "#s4-rows > div:nth-of-type(7) > span:nth-of-type(2)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 857.94,
+          "top": 536.76,
+          "right": 939.37,
+          "bottom": 559.98,
+          "width": 81.42,
+          "height": 23.22
+        },
+        "containerSelector": "#s4-hl-tag",
+        "text": "513,5 kg",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 0.48,
+        "lifetime": {
+          "start": 13.8,
+          "end": 18.4
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 857.94,
+          "y": 536.76,
+          "width": 81.42,
+          "height": 23.22
+        },
+        "firstSeen": 16.2,
+        "lastSeen": 16.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          16.2
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "#s4-rows > div:nth-of-type(7) > span:nth-of-type(3)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 1091.26,
+          "top": 538.76,
+          "right": 1197.34,
+          "bottom": 564.76,
+          "width": 106.08,
+          "height": 26
+        },
+        "containerSelector": "#s4-hl-tag",
+        "text": "Rp740.000",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 0.63,
+        "lifetime": {
+          "start": 13.8,
+          "end": 18.4
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1091.26,
+          "y": 538.76,
+          "width": 106.08,
+          "height": 26
+        },
+        "firstSeen": 16.2,
+        "lastSeen": 16.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          16.2
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "div.uditch-table-head-row > span:nth-of-type(1)",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 635.13,
+          "top": 261.37,
+          "right": 744.07,
+          "bottom": 284.64,
+          "width": 108.94,
+          "height": 23.27
+        },
+        "containerSelector": "#s4-rows > div:nth-of-type(2) > span:nth-of-type(1)",
+        "text": "Ukuran (mm)",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply. Decoration nobody needs to read can take data-layout-ignore.",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 635.13,
+          "y": 261.37,
+          "width": 108.94,
+          "height": 23.27
+        },
+        "firstSeen": 15.25,
+        "lastSeen": 18.25,
+        "occurrences": 25,
+        "heldMs": 3000,
+        "times": [
+          15.25,
+          15.5,
+          15.625,
+          15.75,
+          15.875,
+          16,
+          16.125,
+          16.2,
+          16.25,
+          16.375,
+          16.5,
+          16.625,
+          16.75,
+          16.875,
+          17,
+          17.125,
+          17.25,
+          17.375,
+          17.5,
+          17.625,
+          17.75,
+          17.875,
+          18,
+          18.125,
+          18.25
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "div.uditch-table-head-row > span:nth-of-type(2)",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 858.57,
+          "top": 260.21,
+          "right": 902.8,
+          "bottom": 283.39,
+          "width": 44.23,
+          "height": 23.18
+        },
+        "containerSelector": "#s4-rows > div:nth-of-type(2) > span:nth-of-type(2)",
+        "text": "Berat",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply. Decoration nobody needs to read can take data-layout-ignore.",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 858.57,
+          "y": 260.21,
+          "width": 44.23,
+          "height": 23.18
+        },
+        "firstSeen": 15.25,
+        "lastSeen": 18.25,
+        "occurrences": 25,
+        "heldMs": 3000,
+        "times": [
+          15.25,
+          15.5,
+          15.625,
+          15.75,
+          15.875,
+          16,
+          16.125,
+          16.2,
+          16.25,
+          16.375,
+          16.5,
+          16.625,
+          16.75,
+          16.875,
+          17,
+          17.125,
+          17.25,
+          17.375,
+          17.5,
+          17.625,
+          17.75,
+          17.875,
+          18,
+          18.125,
+          18.25
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "error",
+        "time": 16.2,
+        "selector": "div.uditch-table-head-row > span:nth-of-type(3)",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 1085.76,
+          "top": 258.08,
+          "right": 1196.59,
+          "bottom": 282.11,
+          "width": 110.83,
+          "height": 24.03
+        },
+        "containerSelector": "#s4-rows > div:nth-of-type(2) > span:nth-of-type(3)",
+        "text": "Harga Pabrik",
+        "fixHint": "Give each block its own zone, or put data-layout-allow-overlap on the text or on a container inside the scene. A marker on the scene root does not apply. Decoration nobody needs to read can take data-layout-ignore.",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1085.76,
+          "y": 258.08,
+          "width": 110.83,
+          "height": 24.03
+        },
+        "firstSeen": 15.25,
+        "lastSeen": 18.25,
+        "occurrences": 25,
+        "heldMs": 3000,
+        "times": [
+          15.25,
+          15.5,
+          15.625,
+          15.75,
+          15.875,
+          16,
+          16.125,
+          16.2,
+          16.25,
+          16.375,
+          16.5,
+          16.625,
+          16.75,
+          16.875,
+          17,
+          17.125,
+          17.25,
+          17.375,
+          17.5,
+          17.625,
+          17.75,
+          17.875,
+          18,
+          18.125,
+          18.25
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 1.2,
+        "selector": "#s1-img-press",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 610.55,
+          "top": 88.11,
+          "right": 1086.44,
+          "bottom": 508.45,
+          "width": 475.88,
+          "height": 420.34
+        },
+        "containerSelector": "#s1-photo-main",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 612.85,
+          "top": 89.82,
+          "right": 1083.98,
+          "bottom": 506.7,
+          "width": 471.13,
+          "height": 416.88
+        },
+        "overflow": {
+          "left": 2.3,
+          "right": 2.46
+        },
+        "dataAttributes": {
+          "data-hf-render-id": "s1-img-press",
+          "data-hf-authored-opacity": ""
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 610.55,
+          "y": 88.11,
+          "width": 475.88,
+          "height": 420.34
+        },
+        "firstSeen": 1.2,
+        "lastSeen": 1.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          1.2
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 16.2,
+        "selector": "#s4-rows",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 610.22,
+          "top": 174.39,
+          "right": 1222.61,
+          "bottom": 641.33,
+          "width": 612.39,
+          "height": 466.94
+        },
+        "containerSelector": "div.uditch-table-viewport",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 610.38,
+          "top": 244.64,
+          "right": 1222.52,
+          "bottom": 613.5,
+          "width": 612.15,
+          "height": 368.86
+        },
+        "overflow": {
+          "top": 70.25,
+          "bottom": 27.83
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 610.22,
+          "y": 174.39,
+          "width": 612.39,
+          "height": 466.94
+        },
+        "firstSeen": 16.2,
+        "lastSeen": 16.2,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          16.2
+        ]
+      }
+    ],
+    "duration": 22,
+    "samples": [
+      1.2,
+      6.9,
+      11.8,
+      16.2,
+      20
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 17,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "specPath": "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\index.motion.json",
+    "samples": 300
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 4,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 1:1; WCAG AA requires 3:1.",
+        "text": "Material + Jasa Pasang",
+        "fg": "rgb(255,255,255)",
+        "bg": "rgb(255,255,255)",
+        "ratio": 1,
+        "requiredRatio": 3,
+        "suggestedColor": "rgb(148,148,148)",
+        "large": true,
+        "selector": "div > section:nth-of-type(3) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > span:nth-of-type(1)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 791.9076538085938,
+          "y": 312.152099609375,
+          "width": 208.5009765625,
+          "height": 60.897186279296875
+        },
+        "time": 11.8,
+        "times": [
+          11.8
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 1.53:1; WCAG AA requires 4.5:1.",
+        "text": "Survei gratis ≥ 200 m²",
+        "fg": "rgb(255,181,154)",
+        "bg": "rgb(231,247,236)",
+        "ratio": 1.53,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(143,102,86)",
+        "large": false,
+        "selector": "div > section:nth-of-type(3) > div > div:nth-of-type(2) > div:nth-of-type(1) > div > span:nth-of-type(2)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1012.396728515625,
+          "y": 323.087890625,
+          "width": 188.5703125,
+          "height": 41.38348388671875
+        },
+        "time": 11.8,
+        "times": [
+          11.8
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 1.03:1; WCAG AA requires 4.5:1.",
+        "text": "513,5 kg",
+        "fg": "rgb(62,74,99)",
+        "bg": "rgb(51,74,130)",
+        "ratio": 1.03,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(183,188,197)",
+        "large": false,
+        "selector": "div > section:nth-of-type(4) > div > div:nth-of-type(2) > div > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(7) > span:nth-of-type(2)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 857.9417114257812,
+          "y": 536.7587890625,
+          "width": 120.04034423828125,
+          "height": 23.779541015625
+        },
+        "time": 16.2,
+        "times": [
+          16.2
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 1:1; WCAG AA requires 3:1.",
+        "text": "Rp740.000",
+        "fg": "rgb(14,42,107)",
+        "bg": "rgb(14,42,107)",
+        "ratio": 1,
+        "requiredRatio": 3,
+        "suggestedColor": "rgb(101,119,160)",
+        "large": true,
+        "selector": "div > section:nth-of-type(4) > div > div:nth-of-type(2) > div > div:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(7) > span:nth-of-type(3)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 977.9696655273438,
+          "y": 537.3009643554688,
+          "width": 219.37091064453125,
+          "height": 27.45562744140625
+        },
+        "time": 16.2,
+        "times": [
+          16.2
+        ]
+      }
+    ],
+    "enabled": true,
+    "samples": [
+      1.2,
+      6.9,
+      11.8,
+      16.2,
+      20
+    ],
+    "checked": 80,
+    "passed": 76
+  },
+  "craft": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 5,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "\"Hitung jumlah blok otomatis, cek harga per ukuran, lalu k...\" (16 words) is on screen 2.37 s (±0.01 s), under its 3.97 s floor: hold it about 0.5 s + 0.3 s a word (5.30 s here) before it leaves or changes; see references/motion.md.",
+        "text": "Hitung jumlah blok otomatis, cek harga per ukuran, lalu kirim penawaran ke admin dari satu situs.",
+        "selector": "#s1-lead",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 56,
+          "y": 413.86,
+          "width": 470.72,
+          "height": 101.15999999999997
+        },
+        "time": 0.57,
+        "words": 16,
+        "seconds": 2.367,
+        "floorSeconds": 3.975,
+        "measured": [
+          {
+            "time": 0.25,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 0.375,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 0.5,
+            "opacity": 0.14,
+            "heightPx": 101
+          },
+          {
+            "time": 0.625,
+            "opacity": 0.64,
+            "heightPx": 101
+          },
+          {
+            "time": 0.75,
+            "opacity": 0.94,
+            "heightPx": 101
+          },
+          {
+            "time": 0.875,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 1,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 2.5,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 2.625,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 2.75,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 2.875,
+            "opacity": 0.79,
+            "heightPx": 101
+          },
+          {
+            "time": 3,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 3.125,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 3.25,
+            "opacity": null,
+            "heightPx": null
+          }
+        ]
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "\"Jenis paving, luas halaman, dan jumlah blok terisi otomat...\" (16 words) is on screen 3.46 s (±0.01 s), under its 3.97 s floor: hold it about 0.5 s + 0.3 s a word (5.30 s here) before it leaves or changes; see references/motion.md.",
+        "text": "Jenis paving, luas halaman, dan jumlah blok terisi otomatis ke WhatsApp admin tanpa perlu ketik ulang.",
+        "selector": "#s3-lead",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 56,
+          "y": 377.95,
+          "width": 477.70000000000005,
+          "height": 101.15000000000003
+        },
+        "time": 10.273,
+        "words": 16,
+        "seconds": 3.461,
+        "floorSeconds": 3.975,
+        "measured": [
+          {
+            "time": 10,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 10.125,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 10.25,
+            "opacity": 0.46,
+            "heightPx": 101
+          },
+          {
+            "time": 10.375,
+            "opacity": 0.89,
+            "heightPx": 101
+          },
+          {
+            "time": 10.5,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 10.625,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 10.75,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 13.25,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 13.375,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 13.5,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 13.625,
+            "opacity": 0.97,
+            "heightPx": 101
+          },
+          {
+            "time": 13.75,
+            "opacity": 0.45,
+            "heightPx": 101
+          },
+          {
+            "time": 13.875,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 14,
+            "opacity": null,
+            "heightPx": null
+          }
+        ]
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "\"Halo Istana Block, saya mau pesan paving Hexagon 20×20 cm...\" (20 words) is on screen 3.37 s (±0.01 s), under its 4.88 s floor: hold it about 0.5 s + 0.3 s a word (6.50 s here) before it leaves or changes; see references/motion.md.",
+        "text": "Halo Istana Block, saya mau pesan paving Hexagon 20×20 cm. Luas ±96 m² (sekitar 2.722 pcs). Lokasi kirim: ...",
+        "selector": "#s3-wa-msg",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 649.64,
+          "y": 467.58,
+          "width": 428.90999999999997,
+          "height": 92.73999999999995
+        },
+        "time": 10.367,
+        "words": 20,
+        "seconds": 3.367,
+        "floorSeconds": 4.875,
+        "measured": [
+          {
+            "time": 10,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 10.125,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 10.25,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 10.375,
+            "opacity": 0.56,
+            "heightPx": 93
+          },
+          {
+            "time": 10.5,
+            "opacity": 0.99,
+            "heightPx": 96
+          },
+          {
+            "time": 10.625,
+            "opacity": 1,
+            "heightPx": 96
+          },
+          {
+            "time": 10.75,
+            "opacity": 1,
+            "heightPx": 96
+          },
+          {
+            "time": 13.25,
+            "opacity": 1,
+            "heightPx": 96
+          },
+          {
+            "time": 13.375,
+            "opacity": 1,
+            "heightPx": 96
+          },
+          {
+            "time": 13.5,
+            "opacity": 1,
+            "heightPx": 96
+          },
+          {
+            "time": 13.625,
+            "opacity": 0.97,
+            "heightPx": 96
+          },
+          {
+            "time": 13.75,
+            "opacity": 0.45,
+            "heightPx": 96
+          },
+          {
+            "time": 13.875,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 14,
+            "opacity": null,
+            "heightPx": null
+          }
+        ]
+      },
+      {
+        "code": "text_below_floor",
+        "severity": "warning",
+        "message": "Type floor is 19 px (2.6% of the 720 px short side, what a phone can read) and 41 text elements stay under it for 0.5 s or more, the smallest \"istanablockpurwakarta.com/produk/u-ditch\" at 15 px: set reading text to at least 19 px, or put data-layout-ignore on text that is texture rather than reading; see references/look.md.",
+        "text": "istanablockpurwakarta.com/produk/u-ditch",
+        "selector": "#s4-card > div:nth-of-type(1) > div:nth-of-type(2)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 704.37,
+          "y": 142.47,
+          "width": 346.75,
+          "height": 25.33
+        },
+        "time": 14.125,
+        "times": [
+          0.25,
+          0.375,
+          0.75,
+          3.25,
+          3.375,
+          3.375,
+          3.375,
+          3.375,
+          3.375,
+          3.375,
+          3.375,
+          3.75,
+          3.75,
+          10,
+          10.125,
+          10.375,
+          10.375,
+          10.375,
+          10.5,
+          10.5,
+          14,
+          14.125,
+          14.125,
+          14.125,
+          14.125,
+          14.125,
+          14.125,
+          14.125,
+          14.125,
+          14.125,
+          14.125,
+          14.125,
+          14.125,
+          14.5,
+          14.5,
+          15.25,
+          15.5,
+          16,
+          19.25,
+          19.25,
+          19.25
+        ],
+        "fontPx": 14.65,
+        "floorPx": 19,
+        "seconds": 4.25,
+        "elements": [
+          {
+            "selector": "#s4-card > div:nth-of-type(1) > div:nth-of-type(2)",
+            "text": "istanablockpurwakarta.com/produk/u-ditch",
+            "fontPx": 14.65,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "div.uditch-prod-sub",
+            "text": "Wet cast K-350 · Panjang 1,2 m",
+            "fontPx": 14.65,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "#s2-card > div:nth-of-type(1) > div:nth-of-type(2)",
+            "text": "istanablockpurwakarta.com/#kalkulator",
+            "fontPx": 14.79,
+            "time": 3.375,
+            "seconds": 6.375
+          },
+          {
+            "selector": "div.calc-thumb-pill > span:nth-of-type(1)",
+            "text": "5 Motif Pabrik",
+            "fontPx": 14.79,
+            "time": 3.375,
+            "seconds": 6.375
+          },
+          {
+            "selector": "#s2-field-type > span:nth-of-type(1)",
+            "text": "Jenis paving",
+            "fontPx": 14.79,
+            "time": 3.375,
+            "seconds": 6.375
+          },
+          {
+            "selector": "#s2-field-len > span:nth-of-type(1)",
+            "text": "Panjang (m)",
+            "fontPx": 14.79,
+            "time": 3.375,
+            "seconds": 6.375
+          },
+          {
+            "selector": "#s2-field-wid > span:nth-of-type(1)",
+            "text": "Lebar (m)",
+            "fontPx": 14.79,
+            "time": 3.375,
+            "seconds": 6.375
+          },
+          {
+            "selector": "span.wa-phone-tag",
+            "text": "Terisi otomatis",
+            "fontPx": 15.41,
+            "time": 10.375,
+            "seconds": 3.375
+          },
+          {
+            "selector": "span.tkdn-pill",
+            "text": "TKDN 78,61%",
+            "fontPx": 15.63,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "div.uditch-table-head-row > span:nth-of-type(1)",
+            "text": "Ukuran (mm)",
+            "fontPx": 15.63,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "div.uditch-table-head-row > span:nth-of-type(2)",
+            "text": "Berat",
+            "fontPx": 15.63,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "div.uditch-table-head-row > span:nth-of-type(3)",
+            "text": "Harga Pabrik",
+            "fontPx": 15.63,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "#s1-photo-main > div:nth-of-type(1) > span:nth-of-type(2)",
+            "text": "SNI · K-350–450",
+            "fontPx": 15.69,
+            "time": 0.375,
+            "seconds": 2.625
+          },
+          {
+            "selector": "#s2-formula-line",
+            "text": "50 m² × 44 pcs/m² + cadangan 5%",
+            "fontPx": 15.77,
+            "time": 3.375,
+            "seconds": 6.375
+          },
+          {
+            "selector": "#s3-photo > div:nth-of-type(1) > span:nth-of-type(2)",
+            "text": "Survei gratis ≥ 200 m²",
+            "fontPx": 15.97,
+            "time": 10.125,
+            "seconds": 3.625
+          },
+          {
+            "selector": "#s1-pill",
+            "text": "Pabrik Beton Purwakarta · Sejak 2016",
+            "fontPx": 16,
+            "time": 0.25,
+            "seconds": 2.75
+          },
+          {
+            "selector": "span.brand-mini-meta",
+            "text": "K-350 – K-450 · TKDN Kemenperin",
+            "fontPx": 16,
+            "time": 0.75,
+            "seconds": 2.25
+          },
+          {
+            "selector": "#s2-pill",
+            "text": "Kalkulator Paving",
+            "fontPx": 16,
+            "time": 3.25,
+            "seconds": 6.5
+          },
+          {
+            "selector": "#s2-specs > span:nth-of-type(1)",
+            "text": "Hexagon 27 pcs/m²",
+            "fontPx": 16,
+            "time": 3.75,
+            "seconds": 6
+          },
+          {
+            "selector": "#s2-specs > span:nth-of-type(2)",
+            "text": "TKDN 91,58%",
+            "fontPx": 16,
+            "time": 3.75,
+            "seconds": 6
+          },
+          {
+            "selector": "#s3-pill",
+            "text": "Pesan Lewat WhatsApp",
+            "fontPx": 16,
+            "time": 10,
+            "seconds": 3.75
+          },
+          {
+            "selector": "#s3-specs > span:nth-of-type(1)",
+            "text": "0813 8888 5141",
+            "fontPx": 16,
+            "time": 10.5,
+            "seconds": 3.25
+          },
+          {
+            "selector": "#s3-specs > span:nth-of-type(2)",
+            "text": "Pasawahan, Purwakarta",
+            "fontPx": 16,
+            "time": 10.5,
+            "seconds": 3.25
+          },
+          {
+            "selector": "#s4-pill",
+            "text": "Daftar Harga Terbuka",
+            "fontPx": 16,
+            "time": 14,
+            "seconds": 4.375
+          },
+          {
+            "selector": "#s4-specs > span:nth-of-type(1)",
+            "text": "30×30 – 80×80 cm",
+            "fontPx": 16,
+            "time": 14.5,
+            "seconds": 3.875
+          },
+          {
+            "selector": "#s4-specs > span:nth-of-type(2)",
+            "text": "TKDN 78,61%",
+            "fontPx": 16,
+            "time": 14.5,
+            "seconds": 3.875
+          },
+          {
+            "selector": "div.wa-bubble-foot > span:nth-of-type(1)",
+            "text": "Sumber: Kalkulator Situs",
+            "fontPx": 16.38,
+            "time": 10.375,
+            "seconds": 3.375
+          },
+          {
+            "selector": "div.wa-bubble-foot > span:nth-of-type(2)",
+            "text": "Siap dikirim ✓",
+            "fontPx": 16.38,
+            "time": 10.375,
+            "seconds": 3.375
+          },
+          {
+            "selector": "#s4-rows > div:nth-of-type(1) > span:nth-of-type(2)",
+            "text": "284,8 kg",
+            "fontPx": 16.6,
+            "time": 14.125,
+            "seconds": 1.25
+          },
+          {
+            "selector": "#s4-rows > div:nth-of-type(2) > span:nth-of-type(2)",
+            "text": "314,9 kg",
+            "fontPx": 16.6,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "#s4-rows > div:nth-of-type(3) > span:nth-of-type(2)",
+            "text": "373,8 kg",
+            "fontPx": 16.6,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "#s4-rows > div:nth-of-type(4) > span:nth-of-type(2)",
+            "text": "416 kg",
+            "fontPx": 16.6,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "#s4-rows > div:nth-of-type(5) > span:nth-of-type(2)",
+            "text": "456,8 kg",
+            "fontPx": 16.6,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "#s4-row-600 > span:nth-of-type(2)",
+            "text": "472 kg",
+            "fontPx": 16.6,
+            "time": 14.125,
+            "seconds": 4.25
+          },
+          {
+            "selector": "#s4-hl-tag",
+            "text": "600 × 600 · Rp640.000 / unit",
+            "fontPx": 16.67,
+            "time": 16,
+            "seconds": 2.375
+          },
+          {
+            "selector": "#s2-cta-btn",
+            "text": "Kirim ke admin",
+            "fontPx": 16.71,
+            "time": 3.375,
+            "seconds": 3.625
+          },
+          {
+            "selector": "#s4-rows > div:nth-of-type(7) > span:nth-of-type(2)",
+            "text": "513,5 kg",
+            "fontPx": 16.97,
+            "time": 15.25,
+            "seconds": 3.125
+          },
+          {
+            "selector": "#s4-rows > div:nth-of-type(8) > span:nth-of-type(2)",
+            "text": "653,7 kg",
+            "fontPx": 16.97,
+            "time": 15.5,
+            "seconds": 2.875
+          },
+          {
+            "selector": "#s5-chips > span:nth-of-type(1)",
+            "text": "Kalkulator Paving",
+            "fontPx": 17.87,
+            "time": 19.25,
+            "seconds": 2.75
+          },
+          {
+            "selector": "#s5-chips > span:nth-of-type(2)",
+            "text": "Daftar Harga Terbuka",
+            "fontPx": 17.87,
+            "time": 19.25,
+            "seconds": 2.75
+          },
+          {
+            "selector": "#s5-chips > span:nth-of-type(3)",
+            "text": "Armada Sendiri",
+            "fontPx": 17.87,
+            "time": 19.25,
+            "seconds": 2.75
+          }
+        ]
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "\"12 ukuran U-Ditch K-350 dan 5 cover heavy duty, lengkap d...\" (20 words) is on screen 4.06 s (±0.01 s), under its 4.88 s floor: hold it about 0.5 s + 0.3 s a word (6.50 s here) before it leaves or changes; see references/motion.md.",
+        "text": "12 ukuran U-Ditch K-350 dan 5 cover heavy duty, lengkap dengan berat unit dan dikirim armada crane sendiri.",
+        "selector": "#s4-lead",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 56,
+          "y": 378.72,
+          "width": 465.89,
+          "height": 101.15999999999997
+        },
+        "time": 14.273,
+        "words": 20,
+        "seconds": 4.063,
+        "floorSeconds": 4.875,
+        "measured": [
+          {
+            "time": 14,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 14.125,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 14.25,
+            "opacity": 0.35,
+            "heightPx": 101
+          },
+          {
+            "time": 14.375,
+            "opacity": 0.85,
+            "heightPx": 101
+          },
+          {
+            "time": 14.5,
+            "opacity": 0.99,
+            "heightPx": 101
+          },
+          {
+            "time": 14.625,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 14.75,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 17.875,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 18,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 18.125,
+            "opacity": 1,
+            "heightPx": 101
+          },
+          {
+            "time": 18.25,
+            "opacity": 0.92,
+            "heightPx": 101
+          },
+          {
+            "time": 18.375,
+            "opacity": 0.15,
+            "heightPx": 101
+          },
+          {
+            "time": 18.5,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 18.625,
+            "opacity": null,
+            "heightPx": null
+          }
+        ]
+      }
+    ],
+    "enabled": true,
+    "step": 0.125,
+    "samples": 176
+  },
+  "audio": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": true,
+    "files": [
+      ".hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\frame-00-at-1.2s.png",
+      ".hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\frame-01-at-6.9s.png",
+      ".hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\frame-02-at-11.8s.png",
+      ".hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\frame-03-at-16.2s.png",
+      ".hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\frame-04-at-20.0s.png"
+    ],
+    "times": [
+      1.2,
+      6.9,
+      11.8,
+      16.2,
+      20
+    ],
+    "findingFiles": [
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-00-text_occluded.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-01-text_occluded.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-02-text_occluded.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-03-content_overlap.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-04-text_occluded.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-05-text_occluded.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-06-text_occluded.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-07-text_occluded.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-08-text_occluded.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-09-text_occluded.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-10-text_occluded.png",
+      "c:\\Users\\Sarimusan\\Downloads\\PROJECTS\\ISTANA_BLOCK_PURWAKARTA\\istana-block-web\\tools\\reel-hf\\.hyperframes\\artifacts\\snapshots\\f5ab8a74-e16e-486c-98e7-bc471f619eb4\\finding-11-text_occluded.png"
+    ]
+  }
+}

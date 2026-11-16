@@ -1,0 +1,1383 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <title>Istana Block Purwakarta — Video Fitur 16:9</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f1f1ee;
+        font-family: "Poppins", system-ui, sans-serif;
+        color: #14213d;
+        overflow: hidden;
+      }
+
+      #root {
+        position: relative;
+        width: 1280px;
+        height: 720px;
+        overflow: hidden;
+      }
+
+      /* Full-bleed background child (never put background on #root itself) */
+      #bg-stage {
+        position: absolute;
+        inset: 0;
+        background-color: #f1f1ee;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .bg-hex-grid {
+        position: absolute;
+        inset: 0;
+        opacity: 0.22;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='110' viewBox='0 0 64 110'%3E%3Cpath d='M32 0L64 18.5V55.4L32 73.9L0 55.4V18.5Z M32 73.9V110' fill='none' stroke='%23254186' stroke-opacity='.34' stroke-width='1.5'/%3E%3C/svg%3E");
+        background-size: 64px 110px;
+      }
+
+      .bg-glow-blue {
+        position: absolute;
+        left: -140px;
+        bottom: -180px;
+        width: 680px;
+        height: 680px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(37, 65, 134, 0.22) 0%, rgba(37, 65, 134, 0) 70%);
+      }
+
+      .bg-glow-orange {
+        position: absolute;
+        right: -120px;
+        top: -160px;
+        width: 560px;
+        height: 560px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(254, 87, 34, 0.2) 0%, rgba(254, 87, 34, 0) 70%);
+      }
+
+      .bg-hex-deco-1 {
+        position: absolute;
+        left: -60px;
+        bottom: -40px;
+        width: 240px;
+        height: 270px;
+        opacity: 0.3;
+      }
+
+      .bg-hex-deco-2 {
+        position: absolute;
+        right: -40px;
+        top: -50px;
+        width: 190px;
+        height: 214px;
+        opacity: 0.28;
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        width: 1280px;
+        height: 720px;
+        overflow: hidden;
+      }
+
+      .scene-pad {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 46px 56px;
+        display: grid;
+        grid-template-columns: 492px 636px;
+        gap: 40px;
+        align-items: center;
+      }
+
+      /* Editorial Column */
+      .editorial {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .eyebrow-pill {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 20px;
+        border-radius: 999px;
+        background: #b8350e;
+        color: #ffffff;
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .eyebrow-pill.is-navy {
+        background: #0e2a6b;
+      }
+
+      .eyebrow-pill.is-green {
+        background: #1d6b3a;
+      }
+
+      .eyebrow-dot {
+        display: block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ffb59a;
+        flex: none;
+      }
+
+      .headline {
+        margin: 0;
+        font-family: "Poppins", system-ui, sans-serif;
+        font-size: 54px;
+        font-weight: 700;
+        line-height: 1.08;
+        letter-spacing: -0.025em;
+        color: #0e2a6b;
+      }
+
+      .headline-line {
+        display: block;
+      }
+
+      .accent-text {
+        color: #b8350e;
+      }
+
+      .lead-copy {
+        margin: 0;
+        font-size: 25px;
+        font-weight: 400;
+        line-height: 1.42;
+        color: #2f3b52;
+        max-width: 30ch;
+      }
+
+      .spec-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 4px;
+      }
+
+      .spec-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 16px;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 2px solid #d4dceb;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 19px;
+        font-weight: 700;
+        color: #0e2a6b;
+      }
+
+      .brand-chip-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 6px;
+      }
+
+      .brand-mini-logo {
+        display: block;
+        height: 40px;
+        width: auto;
+      }
+
+      .brand-mini-meta {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 19px;
+        font-weight: 700;
+        color: #0e2a6b;
+      }
+
+      /* Scene 1: Hook Photo + Hex Tiles */
+      .hook-visual {
+        position: relative;
+        width: 636px;
+        height: 580px;
+      }
+
+      .hook-card-main {
+        position: absolute;
+        left: 0;
+        top: 16px;
+        width: 468px;
+        height: 408px;
+        border-radius: 28px;
+        overflow: hidden;
+        background: #0e2a6b;
+        border: 3px solid #ffffff;
+        box-shadow: 0 28px 60px rgba(14, 42, 107, 0.22);
+      }
+
+      .photo-fill {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .photo-scrim-top {
+        position: absolute;
+        inset: 0 0 auto 0;
+        padding: 18px 22px 28px;
+        background: linear-gradient(180deg, rgba(14, 42, 107, 0.9) 0%, rgba(14, 42, 107, 0.55) 60%, rgba(14, 42, 107, 0) 100%);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .photo-scrim-title {
+        font-size: 19px;
+        font-weight: 700;
+        color: #ffffff;
+        white-space: nowrap;
+      }
+
+      .photo-scrim-sub {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 19px;
+        font-weight: 700;
+        color: #ffd6c6;
+        white-space: nowrap;
+        flex: none;
+      }
+
+      .hook-card-sub {
+        position: absolute;
+        right: 0;
+        bottom: 14px;
+        width: 316px;
+        height: 224px;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #ffffff;
+        border: 3px solid #ffffff;
+        box-shadow: 0 22px 48px rgba(14, 42, 107, 0.24);
+      }
+
+      .hook-hex-cluster {
+        position: absolute;
+        right: 8px;
+        top: 14px;
+        width: 214px;
+        height: 170px;
+        display: grid;
+        grid-template-columns: repeat(3, 62px);
+        gap: 8px;
+      }
+
+      .hex-tile {
+        display: block;
+        width: 62px;
+        height: 70px;
+      }
+
+      /* 3D UI Browser Frame */
+      .stage-3d-wrap {
+        position: relative;
+        width: 636px;
+        height: 590px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .ui-browser-card {
+        position: relative;
+        width: 628px;
+        border-radius: 26px;
+        background: #ffffff;
+        border: 2px solid #cbd5ea;
+        box-shadow: 0 32px 70px rgba(14, 42, 107, 0.22);
+        overflow: hidden;
+      }
+
+      .ui-chrome-bar {
+        position: relative;
+        z-index: 5;
+        height: 46px;
+        padding: 0 18px;
+        background: #0e2a6b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .chrome-dots {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .chrome-dot {
+        display: block;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+      }
+
+      .chrome-url {
+        flex: 1;
+        height: 28px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 16px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      /* Calculator UI Body */
+      .calc-ui-body {
+        padding: 22px 24px 24px;
+        background: #f6f7fa;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .calc-top-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .calc-ui-title {
+        font-size: 23px;
+        font-weight: 700;
+        color: #0e2a6b;
+      }
+
+      .calc-thumb-pill {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 12px 6px 6px;
+        border-radius: 14px;
+        background: #ffffff;
+        border: 2px solid #d5dceb;
+      }
+
+      .calc-thumb-pill img {
+        display: block;
+        width: 52px;
+        height: 36px;
+        border-radius: 9px;
+        object-fit: cover;
+      }
+
+      .calc-thumb-pill span {
+        font-size: 19px;
+        font-weight: 700;
+        color: #0e2a6b;
+      }
+
+      .calc-field {
+        background: #ffffff;
+        border: 2px solid #8e9bb6;
+        border-radius: 16px;
+        padding: 11px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .calc-field.is-active {
+        border-color: #b8350e;
+        background: #fff9f6;
+      }
+
+      .calc-label {
+        font-size: 19px;
+        font-weight: 700;
+        color: #3e4a63;
+      }
+
+      .calc-value {
+        font-family: "Poppins", system-ui, sans-serif;
+        font-size: 21px;
+        font-weight: 700;
+        color: #0e2a6b;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .calc-dims-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .calc-num-val {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 28px;
+        font-weight: 700;
+        color: #0e2a6b;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .calc-result-card {
+        position: relative;
+        background: #e3e9f5;
+        border: 3px solid #254186;
+        border-radius: 20px;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .calc-formula-line {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 19px;
+        font-weight: 700;
+        color: #0e2a6b;
+        white-space: nowrap;
+      }
+
+      .calc-pcs-total {
+        display: block;
+        margin-top: 2px;
+        font-family: "Poppins", system-ui, sans-serif;
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1.08;
+        color: #0e2a6b;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .calc-cta-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 13px 18px;
+        border-radius: 999px;
+        background: #b8350e;
+        color: #ffffff;
+        font-size: 19px;
+        font-weight: 700;
+        white-space: nowrap;
+        flex: none;
+      }
+
+      .sim-cursor {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 44px;
+        height: 44px;
+        pointer-events: none;
+        filter: drop-shadow(0 6px 12px rgba(14, 42, 107, 0.35));
+      }
+
+      .sim-ripple {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 4px solid #fe5722;
+        pointer-events: none;
+      }
+
+      /* Scene 3: WhatsApp Quote + Photo */
+      .wa-stage-col {
+        position: relative;
+        width: 636px;
+        height: 600px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .wa-photo-backdrop {
+        position: relative;
+        align-self: flex-end;
+        width: 530px;
+        height: 266px;
+        border-radius: 26px;
+        overflow: hidden;
+        border: 3px solid #ffffff;
+        box-shadow: 0 24px 54px rgba(14, 42, 107, 0.2);
+      }
+
+      .wa-quote-card {
+        position: relative;
+        align-self: flex-start;
+        width: 600px;
+        border-radius: 28px 28px 28px 10px;
+        background: #ffffff;
+        border: 2px solid #b8dfca;
+        padding: 22px 24px;
+        box-shadow: 0 30px 68px rgba(14, 42, 107, 0.24);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .wa-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .wa-head-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 20px;
+        font-weight: 700;
+        color: #1d6b3a;
+      }
+
+      .wa-badge-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #1d6b3a;
+        color: #ffffff;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+
+      .wa-phone-tag {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 19px;
+        font-weight: 700;
+        color: #1d6b3a;
+        background: #e7f7ec;
+        padding: 6px 14px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+
+      .wa-bubble-body {
+        background: #e7f7ec;
+        border-radius: 18px;
+        padding: 16px 20px;
+        font-size: 22px;
+        font-weight: 500;
+        line-height: 1.42;
+        color: #14213d;
+      }
+
+      .wa-bubble-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 19px;
+        font-weight: 700;
+        color: #1d6b3a;
+      }
+
+      /* Scene 4: U-Ditch Price Table */
+      .uditch-card-head {
+        position: relative;
+        z-index: 4;
+        padding: 14px 22px;
+        background: #ffffff;
+        border-bottom: 2px solid #e6e8ee;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .uditch-prod-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .uditch-prod-info img {
+        display: block;
+        width: 68px;
+        height: 50px;
+        border-radius: 12px;
+        object-fit: cover;
+        background: #f1f1ee;
+      }
+
+      .uditch-prod-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #0e2a6b;
+      }
+
+      .uditch-prod-sub {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 19px;
+        font-weight: 700;
+        color: #3e4a63;
+      }
+
+      .tkdn-pill {
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: #e3e9f5;
+        color: #0e2a6b;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 19px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .uditch-table-head-row {
+        position: relative;
+        z-index: 4;
+        display: grid;
+        grid-template-columns: 240px 130px 1fr;
+        padding: 12px 24px;
+        background: #eef2fa;
+        border-bottom: 2px solid #d5dceb;
+        font-size: 19px;
+        font-weight: 700;
+        color: #0e2a6b;
+      }
+
+      .uditch-table-viewport {
+        position: relative;
+        overflow: hidden;
+        background: #ffffff;
+      }
+
+      .uditch-rows-scroll {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .uditch-row {
+        display: grid;
+        grid-template-columns: 240px 130px 1fr;
+        align-items: center;
+        padding: 15px 24px;
+        border-bottom: 1px solid #e6e8ee;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 20px;
+        font-weight: 700;
+        color: #14213d;
+        background: #ffffff;
+      }
+
+      .uditch-row.is-target {
+        background: #ffe6dc;
+        color: #0e2a6b;
+      }
+
+      .uditch-row .col-wt {
+        color: #3e4a63;
+        font-size: 19px;
+      }
+
+      .uditch-row .col-price {
+        text-align: right;
+        color: #0e2a6b;
+      }
+
+      .uditch-row.is-target .col-price {
+        color: #b8350e;
+      }
+
+      .uditch-footer-bar {
+        padding: 14px 24px;
+        background: #0e2a6b;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .uditch-footer-label {
+        font-size: 19px;
+        font-weight: 600;
+        color: #d8e2f5;
+      }
+
+      .uditch-highlight-tag {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffd6c6;
+      }
+
+      /* Scene 5: Outro Brand Card */
+      .outro-wrap {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 44px 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .outro-panel {
+        width: 100%;
+        height: 100%;
+        border-radius: 34px;
+        background: #0e2a6b;
+        padding: 46px 54px;
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 36px;
+        align-items: center;
+        box-shadow: 0 36px 80px rgba(14, 42, 107, 0.28);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .outro-hex-overlay {
+        position: absolute;
+        inset: 0;
+        opacity: 0.12;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='110' viewBox='0 0 64 110'%3E%3Cpath d='M32 0L64 18.5V55.4L32 73.9L0 55.4V18.5Z M32 73.9V110' fill='none' stroke='%23FFFFFF' stroke-width='2'/%3E%3C/svg%3E");
+        background-size: 64px 110px;
+        pointer-events: none;
+      }
+
+      .outro-left {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .outro-logo {
+        display: block;
+        width: 240px;
+        height: auto;
+      }
+
+      .outro-title {
+        margin: 0;
+        font-size: 46px;
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        color: #ffffff;
+      }
+
+      .outro-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .outro-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1.5px solid rgba(255, 255, 255, 0.28);
+        color: #ffffff;
+        font-size: 19px;
+        font-weight: 600;
+      }
+
+      .outro-domain {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 26px;
+        font-weight: 700;
+        color: #ffb59a;
+      }
+
+      .outro-collage {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .outro-thumb {
+        border-radius: 20px;
+        overflow: hidden;
+        height: 196px;
+        border: 2px solid rgba(255, 255, 255, 0.28);
+        background: #254186;
+      }
+
+      .outro-thumb.is-wide {
+        grid-column: 1 / -1;
+        height: 204px;
+      }
+
+      .outro-thumb img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Progress Rail */
+      #hud-bar {
+        pointer-events: none;
+      }
+
+      .hud-progress-track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 6px;
+        background: rgba(14, 42, 107, 0.12);
+      }
+
+      .hud-progress-fill {
+        display: block;
+        width: 100%;
+        height: 6px;
+        background: #fe5722;
+        transform-origin: 0% 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="reel-16x9"
+      data-start="0"
+      data-width="1280"
+      data-height="720"
+      data-duration="22"
+      data-fps="30"
+    >
+      <!-- Full-bleed background layer -->
+      <div id="bg-stage" data-layout-ignore="true">
+        <div class="bg-hex-grid"></div>
+        <div class="bg-glow-blue" id="bg-glow-blue"></div>
+        <div class="bg-glow-orange" id="bg-glow-orange"></div>
+        <svg class="bg-hex-deco-1" id="bg-hex-1" viewBox="0 0 100 112" aria-hidden="true">
+          <polygon points="50,4 96,30 96,82 50,108 4,82 4,30" fill="#E3E9F5" stroke="#254186" stroke-width="2" />
+        </svg>
+        <svg class="bg-hex-deco-2" id="bg-hex-2" viewBox="0 0 100 112" aria-hidden="true">
+          <polygon points="50,4 96,30 96,82 50,108 4,82 4,30" fill="#FFE6DC" stroke="#D63F12" stroke-width="2" />
+        </svg>
+      </div>
+
+      <!-- SCENE 1: HOOK & REAL PLANT AUTHORITY (0.0 - 3.0s) -->
+      <section id="scene-hook" class="clip" data-start="0" data-duration="3" data-track-index="1">
+        <div class="scene-pad">
+          <div class="editorial" id="s1-copy">
+            <span class="eyebrow-pill" id="s1-pill">
+              <span class="eyebrow-dot"></span>
+              Pabrik Purwakarta · Sejak 2016
+            </span>
+            <h1 class="headline">
+              <span class="headline-line" id="s1-h1">Halaman 12 × 8 m.</span>
+              <span class="headline-line" id="s1-h2">Butuh <span class="accent-text">berapa paving?</span></span>
+            </h1>
+            <p class="lead-copy" id="s1-lead">
+              Hitung blok otomatis, cek harga, pesan langsung.
+            </p>
+            <div class="brand-chip-row" id="s1-brand">
+              <img class="brand-mini-logo" src="assets/logo-istana-block.webp" alt="Istana Block Purwakarta" />
+              <span class="brand-mini-meta">K-350–450 · TKDN Kemenperin</span>
+            </div>
+          </div>
+
+          <div class="hook-visual" id="s1-visual">
+            <div class="hook-hex-cluster" aria-hidden="true">
+              <svg class="hex-tile" id="s1-tile-1" viewBox="0 0 100 112"><polygon points="50,4 96,30 96,82 50,108 4,82 4,30" fill="#D6D6D6" /></svg>
+              <svg class="hex-tile" id="s1-tile-2" viewBox="0 0 100 112"><polygon points="50,4 96,30 96,82 50,108 4,82 4,30" fill="#254186" /></svg>
+              <svg class="hex-tile" id="s1-tile-3" viewBox="0 0 100 112"><polygon points="50,4 96,30 96,82 50,108 4,82 4,30" fill="#FE5722" /></svg>
+              <svg class="hex-tile" id="s1-tile-4" viewBox="0 0 100 112"><polygon points="50,4 96,30 96,82 50,108 4,82 4,30" fill="#B5B4AF" /></svg>
+              <svg class="hex-tile" id="s1-tile-5" viewBox="0 0 100 112"><polygon points="50,4 96,30 96,82 50,108 4,82 4,30" fill="#D6D6D6" /></svg>
+              <svg class="hex-tile" id="s1-tile-6" viewBox="0 0 100 112"><polygon points="50,4 96,30 96,82 50,108 4,82 4,30" fill="#0E2A6B" /></svg>
+            </div>
+            <div class="hook-card-main" id="s1-photo-main">
+              <img class="photo-fill" id="s1-img-press" src="assets/pabrik-mesin-paving.webp" alt="Mesin cetak paving di pabrik Istana Block Purwakarta" />
+              <div class="photo-scrim-top">
+                <span class="photo-scrim-title">Pabrik Pasawahan</span>
+                <span class="photo-scrim-sub">SNI · K-350</span>
+              </div>
+            </div>
+            <div class="hook-card-sub" id="s1-photo-sub">
+              <img class="photo-fill" src="assets/galeri-01.webp" alt="Halaman berpaving hexagon merah dan abu-abu" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 2: INTERACTIVE PAVING CALCULATOR SIMULATION (3.0 - 9.8s) -->
+      <section id="scene-calc" class="clip" data-start="3" data-duration="6.8" data-track-index="1">
+        <div class="scene-pad">
+          <div class="editorial" id="s2-copy">
+            <span class="eyebrow-pill" id="s2-pill">Kalkulator Paving</span>
+            <h2 class="headline" id="s2-h2">Butuh berapa blok? Langsung ketahuan.</h2>
+            <p class="lead-copy" id="s2-lead">
+              Pilih motif, isi panjang dan lebar. Otomatis termasuk cadangan 5%.
+            </p>
+            <div class="spec-strip" id="s2-specs">
+              <span class="spec-tag">Hexagon 27 pcs/m²</span>
+              <span class="spec-tag">TKDN 91,58%</span>
+            </div>
+          </div>
+
+          <div class="stage-3d-wrap">
+            <div class="ui-browser-card" id="s2-card">
+              <div class="ui-chrome-bar">
+                <div class="chrome-dots" aria-hidden="true">
+                  <span class="chrome-dot" style="background: #ff6058"></span>
+                  <span class="chrome-dot" style="background: #ffbd2e"></span>
+                  <span class="chrome-dot" style="background: #28ca41"></span>
+                </div>
+                <div class="chrome-url" data-layout-ignore="true">istanablock.com/#kalkulator</div>
+              </div>
+              <div class="calc-ui-body">
+                <div class="calc-top-strip">
+                  <span class="calc-ui-title">Hitung kebutuhan paving</span>
+                  <div class="calc-thumb-pill">
+                    <img src="assets/paving-block.webp" alt="Varian paving block Istana Block" />
+                    <span>5 Motif</span>
+                  </div>
+                </div>
+
+                <div class="calc-field" id="s2-field-type">
+                  <span class="calc-label">Jenis paving</span>
+                  <div class="calc-value">
+                    <span id="s2-type-text">Truepave / bata 21×10,5 cm (44 pcs/m²)</span>
+                    <span aria-hidden="true">▾</span>
+                  </div>
+                </div>
+
+                <div class="calc-dims-grid">
+                  <div class="calc-field" id="s2-field-len">
+                    <span class="calc-label">Panjang (m)</span>
+                    <span class="calc-num-val" id="s2-len-val">10</span>
+                  </div>
+                  <div class="calc-field" id="s2-field-wid">
+                    <span class="calc-label">Lebar (m)</span>
+                    <span class="calc-num-val" id="s2-wid-val">5</span>
+                  </div>
+                </div>
+
+                <div class="calc-result-card" id="s2-result-box">
+                  <div>
+                    <span class="calc-formula-line" id="s2-formula-line">50 m² × 44 pcs/m² + cadangan 5%</span>
+                    <strong class="calc-pcs-total" id="s2-pcs-total">2.310 pcs</strong>
+                  </div>
+                  <span class="calc-cta-btn" id="s2-cta-btn">Kirim ke admin</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sim-ripple" id="s2-ripple" data-layout-ignore="true" aria-hidden="true"></div>
+            <svg class="sim-cursor" id="s2-cursor" data-layout-ignore="true" viewBox="0 0 32 32" aria-hidden="true">
+              <path d="M6 3 L6 25 L11.5 19.8 L15.2 28.2 L19 26.6 L15.4 18.4 L23 18.4 Z" fill="#0E2A6B" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round" />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 3: WHATSAPP INSTANT QUOTE (9.8 - 13.8s) -->
+      <section id="scene-wa" class="clip" data-start="9.8" data-duration="4" data-track-index="1">
+        <div class="scene-pad">
+          <div class="editorial" id="s3-copy">
+            <span class="eyebrow-pill is-green" id="s3-pill">Pesan Lewat WhatsApp</span>
+            <h2 class="headline" id="s3-h2">Kirim ke admin, sekali klik.</h2>
+            <p class="lead-copy" id="s3-lead">
+              Luas dan jumlah blok terisi otomatis ke admin.
+            </p>
+            <div class="spec-strip" id="s3-specs">
+              <span class="spec-tag">0813 8888 5141</span>
+              <span class="spec-tag">Pasawahan, Purwakarta</span>
+            </div>
+          </div>
+
+          <div class="wa-stage-col">
+            <div class="wa-photo-backdrop" id="s3-photo">
+              <img class="photo-fill" src="assets/galeri-11.webp" alt="Tim pemasangan paving Istana Block di lapangan" />
+              <div class="photo-scrim-top">
+                <span class="photo-scrim-title">Material + Jasa Pasang</span>
+                <span class="photo-scrim-sub">Survei gratis</span>
+              </div>
+            </div>
+
+            <div class="wa-quote-card" id="s3-wa-card">
+              <div class="wa-head">
+                <div class="wa-head-left">
+                  <span class="wa-badge-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 12a9 9 0 0 1-13.2 7.9L3 21l1.2-4.6A9 9 0 1 1 21 12z" />
+                    </svg>
+                  </span>
+                  <span>WhatsApp · Admin</span>
+                </div>
+                <span class="wa-phone-tag">Terisi otomatis</span>
+              </div>
+              <div class="wa-bubble-body" id="s3-wa-msg">
+                Halo Istana Block, pesan Hexagon 20×20 cm: ±96 m² (2.722 pcs).
+              </div>
+              <div class="wa-bubble-foot">
+                <span>Kalkulator Situs</span>
+                <span>Siap dikirim ✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 4: U-DITCH TRANSPARENT PRICE TABLE (13.8 - 18.4s) -->
+      <section id="scene-uditch" class="clip" data-start="13.8" data-duration="4.6" data-track-index="1">
+        <div class="scene-pad">
+          <div class="editorial" id="s4-copy">
+            <span class="eyebrow-pill is-navy" id="s4-pill">Daftar Harga Terbuka</span>
+            <h2 class="headline" id="s4-h2">Harga per ukuran, terbuka.</h2>
+            <p class="lead-copy" id="s4-lead">
+              12 ukuran U-Ditch K-350 lengkap berat unit.
+            </p>
+            <div class="spec-strip" id="s4-specs">
+              <span class="spec-tag">30×30 – 80×80 cm</span>
+              <span class="spec-tag">TKDN 78,61%</span>
+            </div>
+          </div>
+
+          <div class="stage-3d-wrap">
+            <div class="ui-browser-card" id="s4-card">
+              <div class="ui-chrome-bar">
+                <div class="chrome-dots" aria-hidden="true">
+                  <span class="chrome-dot" style="background: #ff6058"></span>
+                  <span class="chrome-dot" style="background: #ffbd2e"></span>
+                  <span class="chrome-dot" style="background: #28ca41"></span>
+                </div>
+                <div class="chrome-url" data-layout-ignore="true">istanablock.com/produk/u-ditch</div>
+              </div>
+              <div class="uditch-card-head">
+                <div class="uditch-prod-info">
+                  <img src="assets/u-ditch.webp" alt="Saluran beton pracetak U-Ditch Istana Block" />
+                  <div>
+                    <div class="uditch-prod-title">Daftar Harga U-Ditch</div>
+                    <div class="uditch-prod-sub">K-350 · Panjang 1,2 m</div>
+                  </div>
+                </div>
+                <span class="tkdn-pill">TKDN 78,61%</span>
+              </div>
+              <div class="uditch-table-head-row">
+                <span>Ukuran (mm)</span>
+                <span>Berat</span>
+                <span style="text-align: right">Harga Pabrik</span>
+              </div>
+              <div class="uditch-table-viewport">
+                <div class="uditch-rows-scroll" id="s4-rows">
+                  <div class="uditch-row" id="s4-row-1"><span>400 × 600 × 1200</span><span class="col-wt">314,9 kg</span><span class="col-price">Rp440.000</span></div>
+                  <div class="uditch-row" id="s4-row-2"><span>500 × 500 × 1200</span><span class="col-wt">373,8 kg</span><span class="col-price">Rp465.000</span></div>
+                  <div class="uditch-row" id="s4-row-3"><span>500 × 600 × 1200</span><span class="col-wt">416 kg</span><span class="col-price">Rp525.000</span></div>
+                  <div class="uditch-row is-target" id="s4-row-600"><span>600 × 600 × 1200</span><span class="col-wt">472 kg</span><span class="col-price">Rp640.000</span></div>
+                  <div class="uditch-row" id="s4-row-5"><span>800 × 800 × 1200</span><span class="col-wt">653,7 kg</span><span class="col-price">Rp840.000</span></div>
+                </div>
+              </div>
+              <div class="uditch-footer-bar">
+                <span class="uditch-footer-label">Baris terpilih</span>
+                <span class="uditch-highlight-tag" id="s4-hl-tag">600 × 600 · Rp640.000 / unit</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCENE 5: OUTRO & BRAND LOCKUP (18.4 - 22.0s) -->
+      <section id="scene-outro" class="clip" data-start="18.4" data-duration="3.6" data-track-index="1">
+        <div class="outro-wrap">
+          <div class="outro-panel" id="s5-panel">
+            <div class="outro-hex-overlay" aria-hidden="true"></div>
+            <div class="outro-left">
+              <img class="outro-logo" id="s5-logo" src="assets/logo-istana-block-putih.webp" alt="Logo Istana Block Purwakarta" />
+              <h2 class="outro-title" id="s5-title">Hitung, cek harga, pesan — dari satu situs.</h2>
+              <div class="outro-chips" id="s5-chips">
+                <span class="outro-chip">Kalkulator Paving</span>
+                <span class="outro-chip">Harga Terbuka</span>
+                <span class="outro-chip">Armada Sendiri</span>
+              </div>
+              <div class="outro-domain" id="s5-domain">istanablock.com</div>
+            </div>
+            <div class="outro-collage" id="s5-collage">
+              <div class="outro-thumb"><img src="assets/pabrik-mesin-paving.webp" alt="Mesin cetak paving Istana Block" /></div>
+              <div class="outro-thumb"><img src="assets/galeri-05.webp" alt="Trotoar paving block dan kanstin proyek" /></div>
+              <div class="outro-thumb is-wide"><img src="assets/galeri-01.webp" alt="Pemasangan paving hexagon merah abu" /></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Persistent Bottom Progress Rail -->
+      <div id="hud-bar" class="clip" data-start="0" data-duration="22" data-track-index="2" data-layout-ignore="true">
+        <div class="hud-progress-track">
+          <span class="hud-progress-fill" id="hud-fill"></span>
+        </div>
+      </div>
+
+      <!-- 22.0s D-major 100 BPM Music + SFX Track -->
+      <audio id="el-bgm" src="assets/audio-22s.wav" data-start="0" data-duration="22" data-track-index="10" data-volume="0.88"></audio>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      const calcCounter = { val: 2310 };
+      const pcsEl = document.getElementById("s2-pcs-total");
+      const lenEl = document.getElementById("s2-len-val");
+      const widEl = document.getElementById("s2-wid-val");
+      const typeEl = document.getElementById("s2-type-text");
+      const formulaEl = document.getElementById("s2-formula-line");
+      const fieldType = document.getElementById("s2-field-type");
+      const fieldLen = document.getElementById("s2-field-len");
+      const fieldWid = document.getElementById("s2-field-wid");
+
+      function fmtId(n) {
+        return Math.round(n)
+          .toString()
+          .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      }
+
+      // Ambient background motion (finite repeats across 22s)
+      tl.fromTo("#bg-glow-blue", { x: 0, y: 0, scale: 1 }, { x: 50, y: -35, scale: 1.08, duration: 5.5, yoyo: true, repeat: 3, ease: "sine.inOut" }, 0);
+      tl.fromTo("#bg-glow-orange", { x: 0, y: 0, scale: 1 }, { x: -45, y: 30, scale: 1.07, duration: 5.5, yoyo: true, repeat: 3, ease: "sine.inOut" }, 0);
+      tl.fromTo("#bg-hex-1", { rotation: 0 }, { rotation: 16, duration: 11, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0);
+      tl.fromTo("#bg-hex-2", { rotation: 0 }, { rotation: -14, duration: 11, yoyo: true, repeat: 1, ease: "sine.inOut" }, 0);
+      tl.fromTo("#hud-fill", { scaleX: 0 }, { scaleX: 1, duration: 22, ease: "none" }, 0);
+
+      // ---------------- SCENE 1: HOOK (0.0 - 3.0s) ----------------
+      tl.fromTo("#s1-pill", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.36, ease: "power3.out" }, 0.1);
+      tl.fromTo("#s1-h1", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, ease: "expo.out" }, 0.18);
+      tl.fromTo("#s1-h2", { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, ease: "expo.out" }, 0.28);
+      tl.fromTo("#s1-lead", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.36, ease: "power2.out" }, 0.36);
+      tl.fromTo("#s1-brand", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.36, ease: "power2.out" }, 0.5);
+
+      tl.fromTo(
+        "#s1-photo-main",
+        { transformPerspective: 1200, rotationY: -12, rotationX: 4, x: 46, opacity: 0, scale: 0.94 },
+        { transformPerspective: 1200, rotationY: -5, rotationX: 2, x: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+        0.16,
+      );
+      tl.fromTo("#s1-img-press", { scale: 1 }, { scale: 1.06, duration: 2.6, ease: "none" }, 0.18);
+      tl.fromTo(
+        "#s1-photo-sub",
+        { transformPerspective: 1200, rotationY: 6, y: 40, opacity: 0, scale: 0.9 },
+        { transformPerspective: 1200, rotationY: 3, y: 0, opacity: 1, scale: 1, duration: 0.52, ease: "back.out(1.4)" },
+        0.38,
+      );
+
+      ["#s1-tile-1", "#s1-tile-2", "#s1-tile-3", "#s1-tile-4", "#s1-tile-5", "#s1-tile-6"].forEach((sel, idx) => {
+        tl.fromTo(sel, { scale: 0.4, opacity: 0, y: -14 }, { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "back.out(1.7)" }, 0.18 + idx * 0.06);
+      });
+
+      tl.to("#s1-copy", { y: -24, opacity: 0, duration: 0.24, ease: "power2.in" }, 2.74);
+      tl.to("#s1-visual", { x: 40, opacity: 0, duration: 0.24, ease: "power2.in" }, 2.74);
+
+      // ---------------- SCENE 2: CALCULATOR (3.0 - 9.8s) ----------------
+      tl.fromTo("#s2-pill", { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.36, ease: "power3.out" }, 3.08);
+      tl.fromTo("#s2-h2", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, ease: "expo.out" }, 3.18);
+      tl.fromTo("#s2-lead", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: "power2.out" }, 3.3);
+      tl.fromTo("#s2-specs", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.36, ease: "power2.out" }, 3.44);
+
+      tl.fromTo(
+        "#s2-card",
+        { transformPerspective: 1200, rotationY: -12, rotationX: 3, y: 42, scale: 0.94, opacity: 0 },
+        { transformPerspective: 1200, rotationY: -5, rotationX: 1, y: 0, scale: 1, opacity: 1, duration: 0.58, ease: "power3.out" },
+        3.12,
+      );
+
+      tl.fromTo("#s2-cursor", { x: 520, y: 470, opacity: 0 }, { x: 320, y: 225, opacity: 1, duration: 0.55, ease: "power2.inOut" }, 3.85);
+      tl.fromTo("#s2-cursor", { scale: 1 }, { scale: 0.84, duration: 0.1, yoyo: true, repeat: 1, ease: "power2.inOut" }, 4.4);
+      tl.fromTo("#s2-ripple", { x: 300, y: 205, scale: 0.3, opacity: 0.95 }, { x: 300, y: 205, scale: 1.5, opacity: 0, duration: 0.42, ease: "power2.out" }, 4.4);
+
+      tl.fromTo(
+        calcCounter,
+        { val: 2310 },
+        {
+          val: 1701,
+          duration: 3.15,
+          ease: "none",
+          onUpdate: function () {
+            const t = tl.time();
+            if (t < 4.42) {
+              typeEl.textContent = "Truepave / bata 21×10,5 cm (44 pcs/m²)";
+              fieldType.className = "calc-field";
+              fieldLen.className = "calc-field";
+              fieldWid.className = "calc-field";
+              lenEl.textContent = "10";
+              widEl.textContent = "5";
+              formulaEl.textContent = "50 m² × 44/m² + cadangan 5%";
+              pcsEl.textContent = "2.310 pcs";
+            } else if (t < 5.15) {
+              typeEl.textContent = "Hexagon 20×20 cm (27 pcs/m²)";
+              fieldType.className = t < 4.95 ? "calc-field is-active" : "calc-field";
+              fieldLen.className = t >= 4.95 ? "calc-field is-active" : "calc-field";
+              fieldWid.className = "calc-field";
+              lenEl.textContent = "10";
+              widEl.textContent = "5";
+              formulaEl.textContent = "50 m² × 27/m² + cadangan 5%";
+              pcsEl.textContent = "1.418 pcs";
+            } else if (t < 6.05) {
+              typeEl.textContent = "Hexagon 20×20 cm (27 pcs/m²)";
+              fieldType.className = "calc-field";
+              fieldLen.className = t < 5.85 ? "calc-field is-active" : "calc-field";
+              fieldWid.className = t >= 5.85 ? "calc-field is-active" : "calc-field";
+              lenEl.textContent = t < 5.3 ? "1" : "12";
+              widEl.textContent = "5";
+              formulaEl.textContent = t < 5.3 ? "5 m² × 27/m² + cadangan 5%" : "60 m² × 27/m² + cadangan 5%";
+              pcsEl.textContent = t < 5.3 ? "142 pcs" : "1.701 pcs";
+            } else {
+              typeEl.textContent = "Hexagon 20×20 cm (27 pcs/m²)";
+              fieldType.className = "calc-field";
+              fieldLen.className = "calc-field";
+              fieldWid.className = "calc-field is-active";
+              lenEl.textContent = "12";
+              widEl.textContent = "8";
+              formulaEl.textContent = "96 m² × 27/m² + cadangan 5%";
+              pcsEl.textContent = "1.701 pcs";
+            }
+          },
+        },
+        3.0,
+      );
+
+      tl.to("#s2-cursor", { x: 165, y: 332, duration: 0.45, ease: "power2.inOut" }, 4.55);
+      tl.fromTo("#s2-cursor", { scale: 1 }, { scale: 0.84, duration: 0.1, yoyo: true, repeat: 1, ease: "power2.inOut", immediateRender: false }, 5.0);
+      tl.fromTo("#s2-ripple", { x: 145, y: 312, scale: 0.3, opacity: 0.95 }, { x: 145, y: 312, scale: 1.5, opacity: 0, duration: 0.42, ease: "power2.out", immediateRender: false }, 5.0);
+
+      tl.to("#s2-cursor", { x: 445, y: 332, duration: 0.45, ease: "power2.inOut" }, 5.45);
+      tl.fromTo("#s2-cursor", { scale: 1 }, { scale: 0.84, duration: 0.1, yoyo: true, repeat: 1, ease: "power2.inOut", immediateRender: false }, 5.9);
+      tl.fromTo("#s2-ripple", { x: 425, y: 312, scale: 0.3, opacity: 0.95 }, { x: 425, y: 312, scale: 1.5, opacity: 0, duration: 0.42, ease: "power2.out", immediateRender: false }, 5.9);
+
+      tl.fromTo(
+        calcCounter,
+        { val: 1701 },
+        {
+          val: 2722,
+          duration: 0.75,
+          ease: "power3.out",
+          immediateRender: false,
+          onUpdate: function () {
+            typeEl.textContent = "Hexagon 20×20 cm (27 pcs/m²)";
+            fieldType.className = "calc-field";
+            fieldLen.className = "calc-field";
+            fieldWid.className = tl.time() < 6.7 ? "calc-field is-active" : "calc-field";
+            lenEl.textContent = "12";
+            widEl.textContent = "8";
+            formulaEl.textContent = "96 m² × 27/m² + cadangan 5%";
+            pcsEl.textContent = fmtId(calcCounter.val) + " pcs";
+          },
+        },
+        6.15,
+      );
+      tl.fromTo(
+        "#s2-result-box",
+        { scale: 1, borderColor: "#254186", backgroundColor: "#E3E9F5" },
+        { scale: 1.03, borderColor: "#FE5722", backgroundColor: "#FFE6DC", duration: 0.35, yoyo: true, repeat: 1, ease: "back.out(1.6)", immediateRender: false },
+        6.78,
+      );
+
+      tl.to("#s2-cursor", { x: 478, y: 455, duration: 0.6, ease: "power2.inOut" }, 8.2);
+      tl.fromTo("#s2-cta-btn", { scale: 1 }, { scale: 0.93, duration: 0.12, yoyo: true, repeat: 1, ease: "power2.inOut" }, 9.1);
+      tl.fromTo("#s2-cursor", { scale: 1 }, { scale: 0.84, duration: 0.12, yoyo: true, repeat: 1, ease: "power2.inOut", immediateRender: false }, 9.1);
+      tl.fromTo("#s2-ripple", { x: 458, y: 435, scale: 0.3, opacity: 0.95 }, { x: 458, y: 435, scale: 1.6, opacity: 0, duration: 0.4, ease: "power2.out", immediateRender: false }, 9.1);
+
+      tl.to("#s2-copy", { y: -22, opacity: 0, duration: 0.24, ease: "power2.in" }, 9.54);
+      tl.to("#s2-card", { y: 24, opacity: 0, duration: 0.24, ease: "power2.in", immediateRender: false }, 9.54);
+      tl.to("#s2-cursor", { opacity: 0, duration: 0.2 }, 9.54);
+
+      // ---------------- SCENE 3: WHATSAPP QUOTE (9.8 - 13.8s) ----------------
+      tl.fromTo("#s3-pill", { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.32, ease: "power3.out" }, 9.86);
+      tl.fromTo("#s3-h2", { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: "expo.out" }, 9.94);
+      tl.fromTo("#s3-lead", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.32, ease: "power2.out" }, 10.02);
+      tl.fromTo("#s3-specs", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.32, ease: "power2.out" }, 10.14);
+
+      tl.fromTo(
+        "#s3-photo",
+        { transformPerspective: 1200, rotationY: -8, x: 36, opacity: 0 },
+        { transformPerspective: 1200, rotationY: -3, x: 0, opacity: 1, duration: 0.48, ease: "power3.out" },
+        9.9,
+      );
+      tl.fromTo(
+        "#s3-wa-card",
+        { transformPerspective: 1200, rotationY: 6, y: 36, scale: 0.92, opacity: 0 },
+        { transformPerspective: 1200, rotationY: 2, y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.4)" },
+        9.98,
+      );
+      tl.to("#s3-wa-card", { y: -6, duration: 1.25, yoyo: true, repeat: 1, ease: "sine.inOut", immediateRender: false }, 10.65);
+
+      tl.to("#s3-copy", { y: -20, opacity: 0, duration: 0.24, ease: "power2.in" }, 13.54);
+      tl.to("#s3-photo", { x: 30, opacity: 0, duration: 0.24, ease: "power2.in", immediateRender: false }, 13.54);
+      tl.to("#s3-wa-card", { y: 20, opacity: 0, duration: 0.24, ease: "power2.in", immediateRender: false }, 13.54);
+
+      // ---------------- SCENE 4: U-DITCH TABLE (13.8 - 18.4s) ----------------
+      tl.fromTo("#s4-pill", { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.32, ease: "power3.out" }, 13.86);
+      tl.fromTo("#s4-h2", { y: 28, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: "expo.out" }, 13.94);
+      tl.fromTo("#s4-lead", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.34, ease: "power2.out" }, 14.04);
+      tl.fromTo("#s4-specs", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.32, ease: "power2.out" }, 14.16);
+
+      tl.fromTo(
+        "#s4-card",
+        { transformPerspective: 1200, rotationY: -10, rotationX: 2, y: 38, scale: 0.94, opacity: 0 },
+        { transformPerspective: 1200, rotationY: -4, rotationX: 1, y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" },
+        13.92,
+      );
+      ["#s4-row-1", "#s4-row-2", "#s4-row-3", "#s4-row-600", "#s4-row-5"].forEach((sel, idx) => {
+        tl.fromTo(sel, { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.32, ease: "power2.out" }, 14.32 + idx * 0.09);
+      });
+      tl.fromTo(
+        "#s4-row-600",
+        { scale: 1, backgroundColor: "#FFE6DC" },
+        { scale: 1.02, backgroundColor: "#FFD6C6", duration: 0.4, yoyo: true, repeat: 1, ease: "back.out(1.6)", immediateRender: false },
+        15.65,
+      );
+      tl.fromTo("#s4-hl-tag", { scale: 0.88, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" }, 15.7);
+
+      tl.to("#s4-copy", { y: -20, opacity: 0, duration: 0.24, ease: "power2.in" }, 18.14);
+      tl.to("#s4-card", { y: 24, opacity: 0, duration: 0.24, ease: "power2.in", immediateRender: false }, 18.14);
+
+      // ---------------- SCENE 5: OUTRO (18.4 - 22.0s) ----------------
+      tl.fromTo("#s5-panel", { scale: 0.94, y: 28, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 0.5, ease: "expo.out" }, 18.46);
+      tl.fromTo("#s5-logo", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 18.68);
+      tl.fromTo("#s5-title", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, ease: "power3.out" }, 18.82);
+      tl.fromTo("#s5-chips", { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: "power2.out" }, 18.98);
+      tl.fromTo("#s5-domain", { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, ease: "power2.out" }, 19.12);
+      tl.fromTo("#s5-collage", { x: 28, opacity: 0 }, { x: 0, opacity: 1, duration: 0.46, ease: "power3.out" }, 18.84);
+
+      tl.to("#s5-panel", { opacity: 0, scale: 0.98, duration: 0.35, ease: "power2.in", immediateRender: false }, 21.62);
+
+      window.__timelines["reel-16x9"] = tl;
+    </script>
+  </body>
+</html>

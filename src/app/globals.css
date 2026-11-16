@@ -868,3 +868,89 @@ html:has(.ib-lightbox[open]) { overflow: hidden; }
   .kontak-id-card { padding: 16px; border-radius: 18px; }
   .kontak-id-logo { height: 38px; }
 }
+
+/* ---------- Landing Page Khusus Google Ads (Zero-Leak) ---------- */
+.landing-header .wrap.landing-header-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.landing-cta-btn {
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.landing-footer .landing-footer-wrap {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 32px;
+}
+@media (max-width: 768px) {
+  .landing-footer .landing-footer-wrap {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+.landing-footer-bottom {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: center;
+}
+.landing-sticky-bar {
+  display: none;
+}
+@media (max-width: 768px) {
+  .landing-sticky-bar {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(14, 42, 107, 0.12);
+    padding: 10px 16px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -4px 20px rgba(14, 42, 107, 0.12);
+  }
+  .landing-sticky-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .landing-sticky-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+  }
+  .landing-sticky-label {
+    font-size: 11px;
+    color: var(--redup, #64748b);
+  }
+  .landing-sticky-price {
+    font-size: 15px;
+    color: var(--biru-tua, #0e2a6b);
+    font-weight: 700;
+  }
+  .landing-sticky-btn {
+    flex-shrink: 0;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+  /* Padding bawah di landing page agar konten paling bawah tidak tertutup sticky bar */
+  .landing-footer {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
+

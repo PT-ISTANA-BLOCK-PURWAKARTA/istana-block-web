@@ -197,124 +197,87 @@ function createTurfTexture(maxAnisotropy: number) {
   return tex;
 }
 
-function createRulerTexture(lengthCm: number): THREE.CanvasTexture {
+function createDimensionBadge(text: string): THREE.Sprite {
   const canvas = document.createElement("canvas");
-  const widthPx = Math.min(4096, Math.max(1024, Math.round(lengthCm * 8)));
-  const heightPx = 160;
-  canvas.width = widthPx;
-  canvas.height = heightPx;
-
+  canvas.width = 280;
+  canvas.height = 76;
   const ctx = canvas.getContext("2d");
   if (ctx) {
-    // Kuning meteran konstruksi (#facc15)
-    ctx.fillStyle = "#facc15";
-    ctx.fillRect(0, 0, widthPx, heightPx);
+    // Pill background bergaya arsitektur / CAD
+    ctx.fillStyle = "rgba(14, 42, 107, 0.94)";
+    if (typeof ctx.roundRect === "function") {
+      ctx.beginPath();
+      ctx.roundRect(8, 8, 264, 60, 30);
+      ctx.fill();
 
-    // Garis pembatas atas & bawah tebal gelap
-    ctx.fillStyle = "#0f172a";
-    ctx.fillRect(0, 0, widthPx, 6);
-    ctx.fillRect(0, heightPx - 6, widthPx, 6);
-
-    const pxPerCm = widthPx / lengthCm;
-
-    // Checkerband desimeter di bagian atas pita meteran (standar rambu ukur surveyor / safety tape)
-    for (let cm = 0; cm < lengthCm; cm += 10) {
-      const x1 = Math.round(cm * pxPerCm);
-      const x2 = Math.round((cm + 10) * pxPerCm);
-      if (Math.floor(cm / 10) % 2 === 1) {
-        ctx.fillStyle = "#0f172a";
-        ctx.fillRect(x1, 6, x2 - x1, 20);
-      }
+      // Border outline
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(8, 8, 264, 60, 30);
+      ctx.stroke();
+    } else {
+      ctx.fillRect(8, 8, 264, 60);
     }
 
-    // Tanda garis centimeter, 5cm, 10cm, 50cm, 100cm
-    for (let cm = 0; cm <= lengthCm; cm += 1) {
-      const x = Math.round(cm * pxPerCm);
-      const isMeter = cm % 100 === 0;
-      const isHalfMeter = cm % 50 === 0;
-      const isDecimeter = cm % 10 === 0;
-      const isFiveCm = cm % 5 === 0;
-
-      if (isMeter) {
-        ctx.fillStyle = "#dc2626"; // Aksen merah untuk tanda meter
-        ctx.fillRect(x - 3, 26, 6, 48);
-        ctx.fillStyle = "#0f172a";
-        ctx.fillRect(x - 2, 74, 4, 30);
-      } else if (isHalfMeter) {
-        ctx.fillStyle = "#0f172a";
-        ctx.fillRect(x - 2.5, 26, 5, 42);
-      } else if (isDecimeter) {
-        ctx.fillStyle = "#0f172a";
-        ctx.fillRect(x - 2, 26, 4, 32);
-      } else if (isFiveCm) {
-        ctx.fillStyle = "#334155";
-        ctx.fillRect(x - 1.5, 26, 3, 22);
-      } else if (pxPerCm >= 5) {
-        ctx.fillStyle = "#64748b";
-        ctx.fillRect(x - 1, 26, 2, 14);
-      }
-    }
-
-    // Label Angka Meter & Desimeter
-    for (let cm = 0; cm <= lengthCm; cm += 10) {
-      const x = Math.round(cm * pxPerCm);
-      const isMeter = cm % 100 === 0;
-      const isHalfMeter = cm % 50 === 0;
-
-      if (isMeter) {
-        const mVal = (cm / 100).toFixed(0);
-        // Pill gelap berlatar belakang kontras tinggi
-        ctx.fillStyle = "#0f172a";
-        const badgeW = 90;
-        const badgeH = 50;
-        const bx = Math.min(widthPx - badgeW - 6, Math.max(6, x - badgeW / 2));
-        const by = 96;
-        if (typeof ctx.roundRect === "function") {
-          ctx.beginPath();
-          ctx.roundRect(bx, by, badgeW, badgeH, 10);
-          ctx.fill();
-        } else {
-          ctx.fillRect(bx, by, badgeW, badgeH);
-        }
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "900 34px system-ui, -apple-system, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(`${mVal} m`, bx + badgeW / 2, by + badgeH / 2);
-      } else if (isHalfMeter && pxPerCm * 50 >= 90) {
-        const mVal = (cm / 100).toFixed(1);
-        ctx.fillStyle = "#ffffff";
-        const badgeW = 76;
-        const badgeH = 40;
-        const bx = Math.min(widthPx - badgeW - 6, Math.max(6, x - badgeW / 2));
-        const by = 104;
-        ctx.strokeStyle = "#0f172a";
-        ctx.lineWidth = 3;
-        if (typeof ctx.roundRect === "function") {
-          ctx.beginPath();
-          ctx.roundRect(bx, by, badgeW, badgeH, 8);
-          ctx.fill();
-          ctx.stroke();
-        } else {
-          ctx.fillRect(bx, by, badgeW, badgeH);
-          ctx.strokeRect(bx, by, badgeW, badgeH);
-        }
-
-        ctx.fillStyle = "#0f172a";
-        ctx.font = "800 24px system-ui, -apple-system, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(`${mVal}m`, bx + badgeW / 2, by + badgeH / 2);
-      }
-    }
+    // Label dimensi teks
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 26px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 140, 38);
   }
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
-  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-  return tex;
+  tex.minFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+  return new THREE.Sprite(mat);
+}
+
+function createDimensionLine(
+  start: THREE.Vector3,
+  end: THREE.Vector3,
+  tickDir: THREE.Vector3,
+  tickLen: number,
+  label: string,
+  badgeScale = { w: 18, h: 4.9 },
+): THREE.Group {
+  const group = new THREE.Group();
+
+  // Posisi garis dimensi utama + 2 garis tick di kedua ujung
+  const pos: number[] = [
+    start.x, start.y, start.z,
+    end.x, end.y, end.z,
+    // start tick
+    start.x - tickDir.x * tickLen * 0.5, start.y - tickDir.y * tickLen * 0.5, start.z - tickDir.z * tickLen * 0.5,
+    start.x + tickDir.x * tickLen * 0.5, start.y + tickDir.y * tickLen * 0.5, start.z + tickDir.z * tickLen * 0.5,
+    // end tick
+    end.x - tickDir.x * tickLen * 0.5, end.y - tickDir.y * tickLen * 0.5, end.z - tickDir.z * tickLen * 0.5,
+    end.x + tickDir.x * tickLen * 0.5, end.y + tickDir.y * tickLen * 0.5, end.z + tickDir.z * tickLen * 0.5,
+  ];
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  const mat = new THREE.LineBasicMaterial({
+    color: 0x0e2a6b,
+    transparent: true,
+    opacity: 0.85,
+  });
+  const lines = new THREE.LineSegments(geo, mat);
+  group.add(lines);
+
+  // Badge mengambang di tengah garis
+  const sprite = createDimensionBadge(label);
+  sprite.scale.set(badgeScale.w, badgeScale.h, 1);
+  sprite.position.set(
+    (start.x + end.x) * 0.5,
+    (start.y + end.y) * 0.5 + 3.0,
+    (start.z + end.z) * 0.5,
+  );
+  group.add(sprite);
+
+  return group;
 }
 
 function addRoundedRectContour(shape: THREE.Shape, bw: number, bh: number, cornerRadius: number) {
@@ -350,7 +313,7 @@ function createTileGeometry(shapeKind: "rect" | "hex" | "grass", w: number, h: n
     const geo = new THREE.ExtrudeGeometry(s, {
       depth,
       bevelEnabled: true,
-      bevelSegments: 2,
+      bevelSegments: 1,
       steps: 1,
       bevelSize: bevel,
       bevelThickness: bevel,
@@ -396,7 +359,7 @@ function createTileGeometry(shapeKind: "rect" | "hex" | "grass", w: number, h: n
     const geo = new THREE.ExtrudeGeometry(s, {
       depth,
       bevelEnabled: true,
-      bevelSegments: 2,
+      bevelSegments: 1,
       curveSegments: 2,
       steps: 1,
       bevelSize: bevel,
@@ -419,8 +382,8 @@ function createTileGeometry(shapeKind: "rect" | "hex" | "grass", w: number, h: n
   const geo = new THREE.ExtrudeGeometry(s, {
     depth,
     bevelEnabled: true,
-    bevelSegments: 2,
-    curveSegments: 3,
+    bevelSegments: 1,
+    curveSegments: 2,
     steps: 1,
     bevelSize: bevel,
     bevelThickness: bevel,
@@ -495,15 +458,22 @@ function computePresetPose(preset: PresetId, metrics: SceneMetrics, fovDeg: numb
 function disposeGroupResources(group: THREE.Group) {
   const geometries = new Set<THREE.BufferGeometry>();
   const materials = new Set<THREE.Material>();
+  const textures = new Set<THREE.Texture>();
 
   group.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
     if (mesh.geometry) geometries.add(mesh.geometry);
     if (mesh.material) {
       if (Array.isArray(mesh.material)) {
-        for (const m of mesh.material) materials.add(m);
+        for (const m of mesh.material) {
+          materials.add(m);
+          if ("map" in m && m.map instanceof THREE.Texture) textures.add(m.map);
+        }
       } else {
         materials.add(mesh.material);
+        if ("map" in mesh.material && mesh.material.map instanceof THREE.Texture) {
+          textures.add(mesh.material.map);
+        }
       }
     }
   });
@@ -511,6 +481,7 @@ function disposeGroupResources(group: THREE.Group) {
   group.clear();
   for (const g of geometries) g.dispose();
   for (const m of materials) m.dispose();
+  for (const t of textures) t.dispose();
 }
 
 export function Paving3DView({
@@ -643,7 +614,7 @@ export function Paving3DView({
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const reducedMotion = motionQuery.matches;
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.NeutralToneMapping;
     renderer.toneMappingExposure = 1.02;
@@ -788,7 +759,7 @@ export function Paving3DView({
       sceneRef.current.aspect = nextAspect;
       camera.aspect = nextAspect;
       camera.updateProjectionMatrix();
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
       renderer.setSize(w, h, false);
       if (activePresetRef.current) {
         const pose = computePresetPose(activePresetRef.current, sceneRef.current.metrics, camera.fov, nextAspect);
@@ -1103,33 +1074,32 @@ export function Paving3DView({
       patternGroup.add(lrInst);
     }
 
-    // 3D Penggaris / Meteran Skala (pada tepi depan paving)
-    // Dimiringkan -39° menghadap kamera dengan tinggi 11.5 cm agar terbaca jelas & tidak gepeng
-    const rulerLen = padW;
-    const rulerTex = createRulerTexture(rulerLen);
-    const rulerHeight = 11.5;
-    const rulerGeo = new THREE.PlaneGeometry(rulerLen, rulerHeight);
-    const rulerMat = new THREE.MeshBasicMaterial({
-      map: rulerTex,
-      side: THREE.DoubleSide,
-    });
-    const rulerMesh = new THREE.Mesh(rulerGeo, rulerMat);
-    rulerMesh.rotateX(-Math.PI * 0.22);
+    // Garis Dimensi Arsitektur 3D (CAD Style): Lebar, Panjang, dan Tebal
     const frontEdgeZ = showKanstin ? padD / 2 + NAT + KANSTIN_WIDTH : padD / 2;
-    const rulerZ = frontEdgeZ + 6.0;
-    const rulerY = 4.4;
-    rulerMesh.position.set(0, rulerY, rulerZ);
-    patternGroup.add(rulerMesh);
+    const rightEdgeX = showKanstin ? padW / 2 + NAT + KANSTIN_WIDTH : padW / 2;
+    const dimY = 0.5;
+    const offsetDist = 6.0;
 
-    // Balok penopang meteran 3D di belakang pita meteran
-    const backingGeo = new THREE.BoxGeometry(rulerLen, 2.5, 4.0);
-    const backingMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      roughness: 0.85,
-    });
-    const backingMesh = new THREE.Mesh(backingGeo, backingMat);
-    backingMesh.position.set(0, 1.25, frontEdgeZ + 3.0);
-    patternGroup.add(backingMesh);
+    // 1. Garis Dimensi Lebar (sepanjang sumbu X di tepi depan)
+    const wStart = new THREE.Vector3(-padW / 2, dimY, frontEdgeZ + offsetDist);
+    const wEnd = new THREE.Vector3(padW / 2, dimY, frontEdgeZ + offsetDist);
+    const wLabel = `Lebar ${(padW / 100).toFixed(1).replace(".", ",")} m`;
+    const wLineGroup = createDimensionLine(wStart, wEnd, new THREE.Vector3(0, 0, 1), 4.0, wLabel, { w: 18, h: 4.9 });
+    patternGroup.add(wLineGroup);
+
+    // 2. Garis Dimensi Panjang (sepanjang sumbu Z di tepi kanan)
+    const dStart = new THREE.Vector3(rightEdgeX + offsetDist, dimY, -padD / 2);
+    const dEnd = new THREE.Vector3(rightEdgeX + offsetDist, dimY, padD / 2);
+    const dLabel = `Panjang ${(padD / 100).toFixed(1).replace(".", ",")} m`;
+    const dLineGroup = createDimensionLine(dStart, dEnd, new THREE.Vector3(1, 0, 0), 4.0, dLabel, { w: 20, h: 4.9 });
+    patternGroup.add(dLineGroup);
+
+    // 3. Garis Dimensi Tebal (sepanjang sumbu Y di sudut depan kanan)
+    const tStart = new THREE.Vector3(rightEdgeX + offsetDist, 0, frontEdgeZ + offsetDist);
+    const tEnd = new THREE.Vector3(rightEdgeX + offsetDist, tebalCm, frontEdgeZ + offsetDist);
+    const tLabel = `Tebal ${tebalCm} cm`;
+    const tLineGroup = createDimensionLine(tStart, tEnd, new THREE.Vector3(1, 0, 1).normalize(), 3.0, tLabel, { w: 15, h: 4.5 });
+    patternGroup.add(tLineGroup);
 
     // Sesuaikan area bayangan & batas jarak kamera dengan ukuran potongan
     const nextMetrics: SceneMetrics = { slabW, slabD, tebalCm };
@@ -1210,61 +1180,23 @@ export function Paving3DView({
         </button>
       </div>
 
-      <div className={css.scaleHud} aria-label={`Skala: lebar ${(vw / 100).toFixed(1)} m, panjang ${(vh / 100).toFixed(1)} m`} data-pp-noprint>
-        <div className={css.scaleHeader}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M21.3 8.7 8.7 21.3c-1 1-2.5 1-3.4 0l-2.6-2.6c-1-1-1-2.5 0-3.4L15.3 2.7c1-1 2.5-1 3.4 0l2.6 2.6c1 1 1 2.5 0 3.4Z" />
-            <path d="m14.5 3.5 2 2" />
-            <path d="m11.5 6.5 2 2" />
-            <path d="m8.5 9.5 2 2" />
-            <path d="m5.5 12.5 2 2" />
-          </svg>
-          <span>PENGGARIS SKALA METER</span>
+      <div
+        className={css.scaleHud}
+        aria-label={`Dimensi area simulasi: ${(vw / 100).toFixed(1)} m × ${(vh / 100).toFixed(1)} m, tebal ${tebalCm} cm`}
+        data-pp-noprint
+      >
+        <div className={css.metricCardHeader}>
+          <span className={css.metricBadge}>Area Simulasi</span>
+          <span className={css.metricTebalBadge}>Tebal {tebalCm} cm</span>
         </div>
-        <div className={css.scaleRuler}>
-          <div className={css.scaleRulerTape}>
-            <span className={css.scaleRulerMarker}>
-              <b>0</b>
-            </span>
-            <div className={css.scaleRulerSegment}>
-              <span className={css.scaleRulerSubtick} />
-              <span className={css.scaleRulerSubtick} />
-              <span className={css.scaleRulerSubtick} />
-              <span className={css.scaleRulerSubtick} />
-            </div>
-            <span className={css.scaleRulerMarker}>
-              <b>1 m</b>
-            </span>
-            {vw >= 180 && (
-              <>
-                <div className={css.scaleRulerSegment}>
-                  <span className={css.scaleRulerSubtick} />
-                  <span className={css.scaleRulerSubtick} />
-                  <span className={css.scaleRulerSubtick} />
-                  <span className={css.scaleRulerSubtick} />
-                </div>
-                <span className={css.scaleRulerMarker}>
-                  <b>2 m</b>
-                </span>
-              </>
-            )}
-            {vw >= 280 && (
-              <>
-                <div className={css.scaleRulerSegment}>
-                  <span className={css.scaleRulerSubtick} />
-                  <span className={css.scaleRulerSubtick} />
-                  <span className={css.scaleRulerSubtick} />
-                  <span className={css.scaleRulerSubtick} />
-                </div>
-                <span className={css.scaleRulerMarker}>
-                  <b>3 m</b>
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-        <div className={css.scaleLabel}>
-          Ukuran: <strong>{(vw / 100).toFixed(1)} m × {(vh / 100).toFixed(1)} m</strong> <span className={css.scaleArea}>({((vw * vh) / 10000).toFixed(1)} m²)</span>
+        <div className={css.metricValueRow}>
+          <span className={css.metricDimensions}>
+            {(vw / 100).toFixed(1).replace(".", ",")} × {(vh / 100).toFixed(1).replace(".", ",")}
+            <small className={css.metricUnit}> m</small>
+          </span>
+          <span className={css.metricAreaChip}>
+            {((vw * vh) / 10000).toFixed(1).replace(".", ",")} m²
+          </span>
         </div>
       </div>
 
