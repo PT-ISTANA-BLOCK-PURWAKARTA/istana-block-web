@@ -1,0 +1,22 @@
+{
+  "type": "FeatureCollection",
+  "name": "Lahan Contoh Purwakarta (WGS84)",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "nama": "Lahan Parkir Pabrik Purwakarta" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [107.44300, -6.55600],
+            [107.44390, -6.55600],
+            [107.44390, -6.55510],
+            [107.44300, -6.55510],
+            [107.44300, -6.55600]
+          ]
+        ]
+      }
+    }
+  ]
+}

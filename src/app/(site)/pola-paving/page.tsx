@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
+import PavingDesigner from "@/components/paving-designer";
 import { PatternCalculator } from "@/components/PatternCalculator";
 import { getEnv } from "@/db";
 import { telLink, waLink } from "@/lib/format";
@@ -107,6 +108,26 @@ export default async function PolaPavingPage({ searchParams }: Props) {
         </header>
 
         <PatternCalculator whatsapp={s.whatsapp} initialQuery={query} />
+
+        <div style={{ marginTop: 48 }}>
+          <PavingDesigner whatsapp={s.whatsapp} />
+          <div style={{ marginTop: 16, textAlign: "center" }}>
+            <Link
+              href="/panduan-desain-paving"
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: "var(--biru)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span>📖</span>
+              <span>Butuh bantuan mengukur lahan? Baca Panduan Lengkap Desain Lahan, Peta &amp; Impor Berkas &rarr;</span>
+            </Link>
+          </div>
+        </div>
 
         <section className="duo" data-pp-noprint style={{ paddingTop: 56 }}>
           <div className="stack faq" style={{ flex: "1 1 520px", minWidth: 0, gap: 12 }}>

@@ -1,0 +1,98 @@
+/**
+ * Paving Designer Core Library — PT Istana Block Purwakarta
+ * Pure geometric layout, clipping, catalog, and material estimation.
+ */
+
+export * from "./catalog";
+export * from "./geometry/types";
+export * from "./geometry/area";
+export * from "./geometry/validate";
+export * from "./geometry/project";
+export * from "./adapters/preset";
+export * from "./adapters/geojson";
+export * from "./adapters/kml";
+export {
+  ShareStateSchema,
+  type ShareState,
+  encodeShareStateToBase64,
+  decodeShareStateFromBase64,
+  buildShareUrl,
+  createWhatsAppMessage,
+  createWhatsAppShareLink,
+  type WhatsAppMessageOptions,
+} from "./share";
+export * from "./engine";
+export {
+  COLORS,
+  COLOR_IDS,
+  DEFAULT_W,
+  ROLE_LABEL,
+  isColor,
+  JOINT,
+  GRASS,
+  mixHex,
+  TONES,
+  SHADES,
+  type Shape,
+  type Tile,
+  type Unit,
+  type Motif,
+  type Product,
+  type Placed,
+  type CalcState,
+  type Query,
+  CAD_OPTIONS,
+  URL_KEYS,
+  type Share,
+  TA,
+  Ta,
+  HD,
+  HV,
+  HR,
+  GW,
+  GH,
+  mod,
+  rng,
+  shuffledRoles,
+  spreadRoles,
+  staggerNeighbours,
+  runningBond,
+  stackBond,
+  herringbone,
+  basketweave,
+  grid,
+  hexes,
+  flower,
+  HEX_NB,
+  NOTE_45,
+  TRUEPAVE,
+  HEX_NOTE,
+  HEXAGON,
+  fullpave,
+  GRASSBLOCK,
+  PRODUCTS,
+  isProduct,
+  motifOf,
+  unitOf,
+  roleCounts,
+  tileBox,
+  toneOf,
+  r2,
+  patternTransform,
+  layoutTiles,
+  fmt,
+  fmtPct,
+  parseNum,
+  ceilSafe,
+  cleanNum,
+  decodeState,
+  urlNum,
+  encodeState,
+  effectiveColors,
+  autoShares,
+  compute,
+  type Result,
+  detailLines,
+  waMessage,
+  copyMessage,
+} from "./legacy";

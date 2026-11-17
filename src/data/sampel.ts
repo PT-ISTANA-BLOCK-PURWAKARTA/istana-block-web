@@ -1,3 +1,5 @@
+import { PAVING_CATALOG } from "@/lib/paving/catalog";
+
 export type SampelCategoryId = "paving" | "genteng" | "saluran" | "kanstin";
 
 export type SampelCategory = {
@@ -448,7 +450,7 @@ export const SAMPEL_PRODUCTS: SampelProduct[] = [
     code: "tp",
     name: "Truepave",
     size: "21 × 10,5 cm",
-    pcs: 44,
+    pcs: PAVING_CATALOG.truepave.labelPcsPerM2,
     tebal: [6, 8],
     warna: ["N", "M", "H"],
     calcJenis: "truepave",
@@ -466,7 +468,7 @@ export const SAMPEL_PRODUCTS: SampelProduct[] = [
     code: "hx",
     name: "Hexagon",
     size: "20 × 20 cm",
-    pcs: 27,
+    pcs: PAVING_CATALOG.hexagon.labelPcsPerM2,
     tebal: [6],
     warna: ["N", "M", "H"],
     calcJenis: "hexagon",
@@ -484,7 +486,7 @@ export const SAMPEL_PRODUCTS: SampelProduct[] = [
     code: "f21",
     name: "Fullpave 21",
     size: "21 × 21 cm",
-    pcs: 22,
+    pcs: PAVING_CATALOG.fp21.labelPcsPerM2,
     tebal: [6],
     warna: ["N", "M", "H"],
     calcJenis: "fp21",
@@ -502,7 +504,7 @@ export const SAMPEL_PRODUCTS: SampelProduct[] = [
     code: "f30",
     name: "Fullpave 30",
     size: "30 × 30 cm",
-    pcs: 11,
+    pcs: PAVING_CATALOG.fp30.labelPcsPerM2,
     tebal: [6],
     warna: ["N", "M", "H"],
     calcJenis: "fp30",
@@ -520,7 +522,7 @@ export const SAMPEL_PRODUCTS: SampelProduct[] = [
     code: "gb",
     name: "Grass Block",
     size: "45 × 30 cm",
-    pcs: 7.5,
+    pcs: PAVING_CATALOG.grass.labelPcsPerM2,
     tebal: [6, 8],
     warna: ["N"],
     calcJenis: "grass",

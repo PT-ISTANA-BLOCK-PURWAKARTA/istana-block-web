@@ -3,13 +3,34 @@
 import { useId, useMemo, useState } from "react";
 import { waLink } from "@/lib/format";
 import { Select } from "@/components/ui";
+import { PAVING_CATALOG } from "@/lib/paving/catalog";
 
 const TYPES = [
-  { id: "bata", label: "Truepave / bata 21×10,5 cm (44 pcs/m²)", n: 44 },
-  { id: "hex", label: "Hexagon 20×20 cm (27 pcs/m²)", n: 27 },
-  { id: "ubin21", label: "Fullpave / ubin 21×21 cm (22 pcs/m²)", n: 22 },
-  { id: "ubin30", label: "Fullpave 30×30 cm (11 pcs/m²)", n: 11 },
-  { id: "grass", label: "Grass block 45×30 cm (7,5 pcs/m²)", n: 7.5 },
+  {
+    id: "bata",
+    label: `Truepave / bata 21×10,5 cm (${PAVING_CATALOG.truepave.labelPcsPerM2} pcs/m²)`,
+    n: PAVING_CATALOG.truepave.labelPcsPerM2,
+  },
+  {
+    id: "hex",
+    label: `Hexagon 20×20 cm (${PAVING_CATALOG.hexagon.labelPcsPerM2} pcs/m²)`,
+    n: PAVING_CATALOG.hexagon.labelPcsPerM2,
+  },
+  {
+    id: "ubin21",
+    label: `Fullpave / ubin 21×21 cm (${PAVING_CATALOG.fp21.labelPcsPerM2} pcs/m²)`,
+    n: PAVING_CATALOG.fp21.labelPcsPerM2,
+  },
+  {
+    id: "ubin30",
+    label: `Fullpave 30×30 cm (${PAVING_CATALOG.fp30.labelPcsPerM2} pcs/m²)`,
+    n: PAVING_CATALOG.fp30.labelPcsPerM2,
+  },
+  {
+    id: "grass",
+    label: `Grass block 45×30 cm (${String(PAVING_CATALOG.grass.labelPcsPerM2).replace(".", ",")} pcs/m²)`,
+    n: PAVING_CATALOG.grass.labelPcsPerM2,
+  },
 ];
 
 const fmt = (n: number) => n.toString().replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".");

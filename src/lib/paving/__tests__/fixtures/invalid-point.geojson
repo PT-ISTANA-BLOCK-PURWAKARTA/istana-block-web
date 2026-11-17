@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "nama": "Titik Gerbang" },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [107.4435, -6.5555]
+      }
+    }
+  ]
+}

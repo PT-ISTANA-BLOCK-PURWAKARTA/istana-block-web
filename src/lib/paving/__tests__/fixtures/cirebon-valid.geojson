@@ -1,0 +1,22 @@
+{
+  "type": "FeatureCollection",
+  "name": "Lahan Contoh Cirebon (WGS84 UTM 49S)",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "nama": "Halaman Distribusi Cirebon" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [108.55500, -6.72000],
+            [108.55600, -6.72000],
+            [108.55600, -6.71900],
+            [108.55500, -6.71900],
+            [108.55500, -6.72000]
+          ]
+        ]
+      }
+    }
+  ]
+}
