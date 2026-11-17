@@ -83,8 +83,8 @@ export const PAVING_CATALOG: Record<ProductId, PavingProductSpec> = {
     colors: ["N", "M", "H"],
     viewCm: [240, 150],
     thumbCm: [120, 75],
-    status: "provisional",
-    notes: "Lebar modul Ta = TA/2, nat berbeda per sumbu agar bata terkunci 2:1 pas.",
+    status: "confirmed",
+    notes: "Tervalidasi sesuai spesifikasi cetakan pabrik PT Istana Block Purwakarta per 17 Nov 2026. Lebar modul Ta = TA/2, nat berbeda per sumbu agar bata terkunci 2:1 pas.",
   },
   hexagon: {
     id: "hexagon",
@@ -103,8 +103,8 @@ export const PAVING_CATALOG: Record<ProductId, PavingProductSpec> = {
     colors: ["N", "M", "H"],
     viewCm: [240, 150],
     thumbCm: [120, 75],
-    status: "provisional",
-    notes: "Nat diturunkan dari target 27 pcs/m² (HD ≈ 20,68 cm).",
+    status: "confirmed",
+    notes: "Tervalidasi per 17 Nov 2026: Nat diturunkan dari target 27 pcs/m² (HD ≈ 20,68 cm).",
   },
   fp21: {
     id: "fp21",
@@ -123,7 +123,8 @@ export const PAVING_CATALOG: Record<ProductId, PavingProductSpec> = {
     colors: ["N", "M", "H"],
     viewCm: [240, 150],
     thumbCm: [120, 75],
-    status: "provisional",
+    status: "confirmed",
+    notes: "Tervalidasi per 17 Nov 2026.",
   },
   fp30: {
     id: "fp30",
@@ -142,7 +143,8 @@ export const PAVING_CATALOG: Record<ProductId, PavingProductSpec> = {
     colors: ["N", "M", "H"],
     viewCm: [360, 225],
     thumbCm: [180, 112.5],
-    status: "provisional",
+    status: "confirmed",
+    notes: "Tervalidasi per 17 Nov 2026.",
   },
   grass: {
     id: "grass",
@@ -161,8 +163,8 @@ export const PAVING_CATALOG: Record<ProductId, PavingProductSpec> = {
     colors: ["N"],
     viewCm: [360, 225],
     thumbCm: [180, 112.5],
-    status: "provisional",
-    notes: "Geometri 7,2855 pcs/m² vs label publik 7,5 pcs/m² (selisih ~2,9%, dipertahankan).",
+    status: "confirmed",
+    notes: "Tervalidasi per 17 Nov 2026: Geometri 7,2855 pcs/m² vs label publik 7,5 pcs/m² (selisih ~2,9%, label publik 7,5 resmi dipertahankan).",
   },
 };
 
