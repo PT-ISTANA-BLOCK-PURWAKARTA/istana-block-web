@@ -29,12 +29,25 @@ const DynamicMapDrawer = dynamic(
   },
 );
 
+const DynamicPavingDesigner3D = dynamic(
+  () => import("./PavingDesigner3D").then((mod) => mod.PavingDesigner3D),
+  {
+    ssr: false,
+    loading: () => (
+      <div className={css.loadingBox}>
+        <p>Memuat visualisasi 3D Three.js...</p>
+      </div>
+    ),
+  },
+);
+
 interface Props {
   whatsapp: string;
 }
 
 export function PavingDesigner({ whatsapp }: Props) {
   const [activeMethod, setActiveMethod] = useState<InputMethod>("preset");
+  const [viewMode, setViewMode] = useState<"2d" | "3d">("2d");
 
   // Default initial geometry: 10 x 5 meter rectangle
   const [geometry, setGeometry] = useState<ProjectGeometry>(() => createRectanglePreset(10, 5));
@@ -211,7 +224,34 @@ export function PavingDesigner({ whatsapp }: Props) {
           ) : (
             layout && (
               <>
-                <Preview2D geometry={geometry} layout={layout} />
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    type="button"
+                    className={`${css.tabBtn} ${viewMode === "2d" ? css.tabActive : ""}`}
+                    onClick={() => setViewMode("2d")}
+                    style={{ flex: 1 }}
+                  >
+                    🗺️ 2D Denah Tampak Atas
+                  </button>
+                  <button
+                    type="button"
+                    className={`${css.tabBtn} ${viewMode === "3d" ? css.tabActive : ""}`}
+                    onClick={() => setViewMode("3d")}
+                    style={{ flex: 1 }}
+                  >
+                    🏢 3D Realistis (Three.js)
+                  </button>
+                </div>
+
+                {viewMode === "2d" ? (
+                  <Preview2D geometry={geometry} layout={layout} />
+                ) : (
+                  <DynamicPavingDesigner3D
+                    layout={layout}
+                    tebalCm={productSpec.tebalCm[0]}
+                    showKanstin={true}
+                  />
+                )}
                 {estimate && (
                   <EstimatePanel
                     estimate={estimate}
