@@ -1,17 +1,8 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
+import PavingDesigner from "@/components/paving-designer";
 import { PatternCalculator } from "@/components/PatternCalculator";
-
-const PavingDesigner = dynamic(() => import("@/components/paving-designer"), {
-  ssr: false,
-  loading: () => (
-    <div style={{ minHeight: "160px", display: "grid", placeItems: "center", color: "var(--redup)" }}>
-      Menyiapkan Desainer Lahan...
-    </div>
-  ),
-});
 import { getEnv } from "@/db";
 import { telLink, waLink } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
