@@ -224,20 +224,25 @@ export function PavingDesigner({ whatsapp }: Props) {
           ) : (
             layout && (
               <>
-                <div style={{ display: "flex", gap: "8px" }}>
+                <div
+                  className={css.tabs}
+                  style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}
+                  role="group"
+                  aria-label="Mode tampilan pratinjau"
+                >
                   <button
                     type="button"
                     className={`${css.tabBtn} ${viewMode === "2d" ? css.tabActive : ""}`}
+                    aria-pressed={viewMode === "2d"}
                     onClick={() => setViewMode("2d")}
-                    style={{ flex: 1 }}
                   >
                     🗺️ 2D Denah Tampak Atas
                   </button>
                   <button
                     type="button"
                     className={`${css.tabBtn} ${viewMode === "3d" ? css.tabActive : ""}`}
+                    aria-pressed={viewMode === "3d"}
                     onClick={() => setViewMode("3d")}
-                    style={{ flex: 1 }}
                   >
                     🏢 3D Realistis (Three.js)
                   </button>
@@ -248,6 +253,7 @@ export function PavingDesigner({ whatsapp }: Props) {
                 ) : (
                   <DynamicPavingDesigner3D
                     layout={layout}
+                    geometry={geometry}
                     tebalCm={productSpec.tebalCm[0]}
                     showKanstin={true}
                   />

@@ -149,7 +149,7 @@ export function GridCanvas({ onGeometryChange }: Props) {
         </div>
       </div>
 
-      <div className={css.canvasWrap} style={{ cursor: isClosed ? "default" : "crosshair" }}>
+      <div className={css.canvasWrap} style={{ cursor: isClosed ? "default" : "crosshair", aspectRatio: 1 }}>
         <svg
           ref={svgRef}
           viewBox={`0 0 ${gridExtentM} ${gridExtentM}`}
@@ -159,7 +159,7 @@ export function GridCanvas({ onGeometryChange }: Props) {
           onMouseLeave={() => setHoverPt(null)}
         >
           {/* Background Grid */}
-          <g stroke="rgba(0,0,0,0.06)" strokeWidth="0.05">
+          <g stroke="rgba(20, 33, 61, 0.06)" strokeWidth="0.05">
             {gridLines.map(({ val, isMajor }) => (
               <g key={`grid_${val}`}>
                 <line
@@ -167,7 +167,7 @@ export function GridCanvas({ onGeometryChange }: Props) {
                   y1={0}
                   x2={val}
                   y2={gridExtentM}
-                  stroke={isMajor ? "rgba(0,0,0,0.18)" : "rgba(0,0,0,0.06)"}
+                  stroke={isMajor ? "rgba(20, 33, 61, 0.18)" : "rgba(20, 33, 61, 0.07)"}
                   strokeWidth={isMajor ? 0.08 : 0.04}
                 />
                 <line
@@ -175,7 +175,7 @@ export function GridCanvas({ onGeometryChange }: Props) {
                   y1={val}
                   x2={gridExtentM}
                   y2={val}
-                  stroke={isMajor ? "rgba(0,0,0,0.18)" : "rgba(0,0,0,0.06)"}
+                  stroke={isMajor ? "rgba(20, 33, 61, 0.18)" : "rgba(20, 33, 61, 0.07)"}
                   strokeWidth={isMajor ? 0.08 : 0.04}
                 />
               </g>
@@ -186,8 +186,8 @@ export function GridCanvas({ onGeometryChange }: Props) {
           {isClosed && points.length >= 3 && (
             <polygon
               points={points.map(([x, y]) => `${x},${gridExtentM - y}`).join(" ")}
-              fill="rgba(0, 102, 204, 0.15)"
-              stroke="var(--biru, #0066cc)"
+              fill="rgba(37, 65, 134, 0.12)"
+              stroke="var(--biru, #254186)"
               strokeWidth="0.15"
             />
           )}
@@ -197,7 +197,7 @@ export function GridCanvas({ onGeometryChange }: Props) {
             <polyline
               points={points.map(([x, y]) => `${x},${gridExtentM - y}`).join(" ")}
               fill="none"
-              stroke="var(--biru, #0066cc)"
+              stroke="var(--biru, #254186)"
               strokeWidth="0.12"
               strokeLinejoin="round"
             />
@@ -210,7 +210,7 @@ export function GridCanvas({ onGeometryChange }: Props) {
               y1={gridExtentM - points[points.length - 1][1]}
               x2={hoverPt[0]}
               y2={gridExtentM - hoverPt[1]}
-              stroke="rgba(0, 102, 204, 0.6)"
+              stroke="rgba(37, 65, 134, 0.55)"
               strokeWidth="0.08"
               strokeDasharray="0.3 0.2"
             />
@@ -225,7 +225,7 @@ export function GridCanvas({ onGeometryChange }: Props) {
                 cx={x}
                 cy={gridExtentM - y}
                 r={isFirst ? 0.35 : 0.25}
-                fill={isFirst ? "#25d366" : "var(--biru, #0066cc)"}
+                fill={isFirst ? "var(--oranye, #fe5722)" : "var(--biru, #254186)"}
                 stroke="#fff"
                 strokeWidth="0.06"
               />

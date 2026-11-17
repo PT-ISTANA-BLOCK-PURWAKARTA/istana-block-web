@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import type { LayoutResult } from "@/lib/paving/engine/types";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
-import { COLORS } from "@/lib/paving/legacy/types";
 import css from "./PavingDesigner.module.css";
 
 interface Props {
@@ -11,30 +10,42 @@ interface Props {
   layout: LayoutResult;
 }
 
+/** Warna blok per peran (abu natural, merah, hitam) mengikuti palet produk. */
+const ROLE_COLORS = ["#B5B4AF", "#9C4A3A", "#2C2B29"];
+const JOINT_COLOR = "#ffffff";
+const CUT_EDGE_COLOR = "#d63f12"; // --oranye-cta
+const CUT_HIGHLIGHT_FILL = "#ffe6dc"; // --oranye-muda
+
 export function Preview2D({ geometry, layout }: Props) {
   const [showCutsOnly, setShowCutsOnly] = useState(false);
 
-  // Compute bounding box with padding
-  const { minX, minY, maxX, maxY, width, height, viewBox } = useMemo(() => {
+  // Compute bounding box with a small margin; the stage follows the site's own ratio
+  // so a wide site is not squeezed into empty space.
+  const { minX, minY, width, height, viewBox, siteW, siteH, aspect } = useMemo(() => {
     const b = geometry.metrics.bounds;
-    const pad = Math.max(0.5, Math.max(b.maxX - b.minX, b.maxY - b.minY) * 0.08);
+    const sw = b.maxX - b.minX;
+    const sh = b.maxY - b.minY;
+    const pad = Math.max(0.25, Math.max(sw, sh) * 0.05);
     const x0 = b.minX - pad;
     const y0 = b.minY - pad;
-    const w = b.maxX - b.minX + pad * 2;
-    const h = b.maxY - b.minY + pad * 2;
+    const w = sw + pad * 2;
+    const h = sh + pad * 2;
     return {
       minX: x0,
       minY: y0,
-      maxX: b.maxX + pad,
-      maxY: b.maxY + pad,
       width: w,
       height: h,
+      siteW: sw,
+      siteH: sh,
+      aspect: Math.min(Math.max(w / h, 1), 2.4),
       viewBox: `${x0} ${y0} ${w} ${h}`,
     };
   }, [geometry]);
 
-  // Color lookup for roles
-  const roleColors = ["#B5B4AF", "#9C4A3A", "#2C2B29"];
+  // Stroke widths are in meters and scale with the field so they stay ~1 px on screen.
+  const jointWidth = Math.max(0.006, width * 0.0011);
+  const cutEdgeWidth = Math.max(0.012, width * 0.0018);
+  const outlineWidth = Math.max(0.018, width * 0.0018);
 
   return (
     <div className={css.panel}>
@@ -46,11 +57,14 @@ export function Preview2D({ geometry, layout }: Props) {
             {layout.metrics.partialCount} potongan
           </span>
         </div>
-        <div style={{ display: "flex", gap: "6px" }}>
+        <div className={css.previewTools}>
+          <span className={css.scaleChip}>
+            📐 Skala otomatis · {siteW.toFixed(1)} × {siteH.toFixed(1)} m
+          </span>
           <button
             type="button"
-            className={`${css.badge} ${showCutsOnly ? css.badgeWarning : ""}`}
-            style={{ cursor: "pointer", border: 0 }}
+            className={`${css.toggleBtn} ${showCutsOnly ? css.toggleActive : ""}`}
+            aria-pressed={showCutsOnly}
             onClick={() => setShowCutsOnly((v) => !v)}
           >
             {showCutsOnly ? "Tampilkan Semua" : "Sorot Potongan Tepi"}
@@ -58,7 +72,7 @@ export function Preview2D({ geometry, layout }: Props) {
         </div>
       </div>
 
-      <div className={css.canvasWrap}>
+      <div className={css.canvasWrap} style={{ aspectRatio: aspect }}>
         <svg
           viewBox={viewBox}
           className={css.svgStage}
@@ -66,27 +80,28 @@ export function Preview2D({ geometry, layout }: Props) {
           style={{ transform: "scaleY(-1)" }} // Flip Y so +Y is up like mathematical coordinate system
         >
           {/* Site Boundary Fill (Subtle background) */}
-          {geometry.geometry.map((poly, pIdx) => {
-            const exterior = poly[0];
-            return (
-              <polygon
-                key={`site_bg_${pIdx}`}
-                points={exterior.map(([x, y]) => `${x},${y}`).join(" ")}
-                fill="#f1f3f6"
-              />
-            );
-          })}
+          {geometry.geometry.map((poly, pIdx) => (
+            <polygon
+              key={`site_bg_${pIdx}`}
+              points={poly[0].map(([x, y]) => `${x},${y}`).join(" ")}
+              fill="#ffffff"
+            />
+          ))}
 
-          {/* Paving Blocks */}
+          {/* Paving Blocks: light joints between blocks, accent edge only on cut pieces */}
           <g>
             {layout.tiles.map((tile) => {
               const isCut = tile.status === "partial";
               if (showCutsOnly && !isCut) return null;
 
-              const baseFill = roleColors[tile.role] || "#B5B4AF";
-              const fill = isCut ? (showCutsOnly ? "#ff8800" : baseFill) : baseFill;
-              const stroke = isCut ? "#d9534f" : "rgba(0,0,0,0.18)";
-              const strokeWidth = isCut ? Math.max(0.02, width * 0.003) : Math.max(0.01, width * 0.001);
+              const baseFill = ROLE_COLORS[tile.role] || ROLE_COLORS[0];
+              const fill = isCut && showCutsOnly ? CUT_HIGHLIGHT_FILL : baseFill;
+              const stroke = isCut ? CUT_EDGE_COLOR : JOINT_COLOR;
+              const strokeWidth = showCutsOnly
+                ? cutEdgeWidth * 1.4
+                : isCut
+                  ? cutEdgeWidth
+                  : jointWidth;
 
               return (
                 <polygon
@@ -101,7 +116,7 @@ export function Preview2D({ geometry, layout }: Props) {
             })}
           </g>
 
-          {/* Site Boundary Outline (Strong outer border) */}
+          {/* Site Boundary Outline */}
           {geometry.geometry.map((poly, pIdx) => {
             const exterior = poly[0];
             const holes = poly.slice(1);
@@ -110,17 +125,17 @@ export function Preview2D({ geometry, layout }: Props) {
                 <polygon
                   points={exterior.map(([x, y]) => `${x},${y}`).join(" ")}
                   fill="none"
-                  stroke="#1e2229"
-                  strokeWidth={Math.max(0.04, width * 0.005)}
+                  stroke="#14213d"
+                  strokeWidth={outlineWidth}
                   strokeLinejoin="round"
                 />
                 {holes.map((hole, hIdx) => (
                   <polygon
                     key={`hole_${pIdx}_${hIdx}`}
                     points={hole.map(([x, y]) => `${x},${y}`).join(" ")}
-                    fill="#fff"
-                    stroke="#e65100"
-                    strokeWidth={Math.max(0.04, width * 0.005)}
+                    fill="#ffffff"
+                    stroke="#14213d"
+                    strokeWidth={outlineWidth}
                     strokeLinejoin="round"
                   />
                 ))}
@@ -128,29 +143,23 @@ export function Preview2D({ geometry, layout }: Props) {
             );
           })}
         </svg>
-
-        <div className={css.scaleBadge} style={{ transform: "none" }}>
-          📐 Skala otomatis: {width.toFixed(1)} m × {height.toFixed(1)} m
-        </div>
       </div>
 
-      <div style={{ display: "flex", gap: "12px", alignItems: "center", fontSize: "12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ width: "12px", height: "12px", background: "#B5B4AF", borderRadius: "3px" }} />
-          <span>Blok Utuh ({layout.metrics.fullCount})</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+      <div className={css.legendRow}>
+        <span className={css.legendItem}>
+          <span className={css.legendSwatch} style={{ background: ROLE_COLORS[0] }} />
+          Blok Utuh ({layout.metrics.fullCount})
+        </span>
+        <span className={css.legendItem}>
           <span
+            className={css.legendSwatch}
             style={{
-              width: "12px",
-              height: "12px",
-              background: "#ff8800",
-              border: "1px solid #d9534f",
-              borderRadius: "3px",
+              background: ROLE_COLORS[0],
+              border: "1.5px solid #d63f12",
             }}
           />
-          <span>Potongan Batas ({layout.metrics.partialCount})</span>
-        </div>
+          Potongan Batas ({layout.metrics.partialCount})
+        </span>
       </div>
     </div>
   );

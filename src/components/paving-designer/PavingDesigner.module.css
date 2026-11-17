@@ -1,4 +1,5 @@
-/* Paving Designer Styles — Consistent with Istana Block Purwakarta Design System */
+/* Paving Designer — warna, radius, dan bayangan mengikuti sistem desain Istana Block:
+   biru #254186, biru tua #0e2a6b, oranye #fe5722, tinta #14213d, latar #f1f1ee. */
 
 .container {
   display: flex;
@@ -9,31 +10,33 @@
 
 .introCard {
   background: #fff;
-  border-radius: 24px;
-  padding: 22px 20px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  border-radius: 28px;
+  padding: 26px 24px;
+  border: 1.5px solid rgba(14, 42, 107, 0.08);
+  box-shadow: 0 10px 30px rgba(14, 42, 107, 0.05);
 }
 
 .introTitle {
-  font-size: 20px;
+  font-family: var(--font-judul, inherit);
+  font-size: 22px;
   font-weight: 700;
-  color: var(--tinta, #1e2229);
-  margin-bottom: 6px;
+  line-height: 1.2;
+  color: var(--biru-tua, #0e2a6b);
+  margin-bottom: 8px;
 }
 
 .introText {
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--redup, #555e6d);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--teks, #3e4a63);
 }
 
-/* ---------- Method Tabs ---------- */
+/* ---------- Tab metode input ---------- */
 .tabs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  background: var(--latar, #f1f3f6);
+  gap: 6px;
+  background: rgba(37, 65, 134, 0.06);
   padding: 6px;
   border-radius: 18px;
 }
@@ -51,28 +54,28 @@
   gap: 8px;
   padding: 12px 14px;
   min-height: 44px;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 14px;
   background: transparent;
-  color: var(--redup, #555e6d);
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--redup, #4b5568);
+  font: 600 14px/1.2 var(--font-isi, inherit);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .tabBtn:hover {
-  background: rgba(255, 255, 255, 0.6);
-  color: var(--biru-tua, #0a4d8c);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--biru-tua, #0e2a6b);
 }
 
 .tabActive {
-  background: #fff !important;
-  color: var(--biru, #0066cc) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: #fff;
+  color: var(--biru, #254186);
+  border-color: rgba(37, 65, 134, 0.14);
+  box-shadow: 0 2px 8px rgba(14, 42, 107, 0.1);
 }
 
-/* ---------- Main Workspace Grid ---------- */
+/* ---------- Area kerja ---------- */
 .workspace {
   display: flex;
   flex-direction: column;
@@ -90,30 +93,35 @@
 
 .panel {
   background: #fff;
-  border-radius: 24px;
-  padding: 22px 20px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  border-radius: 28px;
+  padding: 24px 22px;
+  border: 1.5px solid rgba(14, 42, 107, 0.08);
+  box-shadow: 0 10px 30px rgba(14, 42, 107, 0.05);
   display: flex;
   flex-direction: column;
   gap: 18px;
+  min-width: 0;
 }
 
 .panelHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 1px solid rgba(14, 42, 107, 0.08);
   padding-bottom: 12px;
 }
 
 .panelTitle {
-  font-size: 17px;
+  font-family: var(--font-judul, inherit);
+  font-size: 18px;
   font-weight: 700;
-  color: var(--tinta, #1e2229);
+  line-height: 1.25;
+  color: var(--biru-tua, #0e2a6b);
 }
 
-/* ---------- Forms & Inputs ---------- */
+/* ---------- Form & input ---------- */
 .formGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -124,62 +132,64 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--tinta, #1e2229);
+  color: var(--tinta, #14213d);
 }
 
-.input {
-  height: 44px;
-  padding: 0 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
+.input,
+.select {
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1.5px solid #8a93a6;
   background: #fff;
+  font: inherit;
   font-size: 15px;
-  color: var(--tinta, #1e2229);
+  color: var(--tinta, #14213d);
   outline: none;
-  transition: border-color 0.15s;
-}
-
-.input:focus {
-  border-color: var(--biru, #0066cc);
+  transition: border-color 0.15s ease;
 }
 
 .select {
-  height: 44px;
-  padding: 0 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  background: #fff;
   font-size: 14px;
-  color: var(--tinta, #1e2229);
   cursor: pointer;
-  outline: none;
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--biru, #254186);
+  outline: 3px solid var(--oranye, #fe5722);
+  outline-offset: 1px;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: 100px;
+  padding: 4px 11px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  background: var(--latar, #f1f3f6);
-  color: var(--redup, #555e6d);
+  background: var(--biru-muda, #e3e9f5);
+  color: var(--biru-tua, #0e2a6b);
+  border: 1px solid rgba(37, 65, 134, 0.18);
 }
 
 .badgeSuccess {
-  background: #e6f7ec;
-  color: #1b7a3e;
+  background: #e4f1e9;
+  color: var(--sukses, #1d6b3a);
+  border: 1px solid rgba(29, 107, 58, 0.2);
 }
 
 .badgeWarning {
-  background: #fff6e6;
-  color: #a86200;
+  background: var(--oranye-muda, #ffe6dc);
+  color: #9a2600;
+  border: 1px solid rgba(217, 56, 0, 0.22);
 }
 
 .button {
@@ -187,54 +197,56 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 44px;
-  padding: 10px 18px;
-  border-radius: 14px;
+  min-height: 46px;
+  padding: 10px 20px;
+  border-radius: 999px;
   border: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font: 600 14.5px/1.15 var(--font-isi, inherit);
   cursor: pointer;
-  transition: all 0.15s ease;
   text-decoration: none;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
 .buttonPrimary {
-  background: var(--biru, #0066cc);
+  background: var(--biru, #254186);
   color: #fff;
 }
 
 .buttonPrimary:hover {
-  background: var(--biru-tua, #0a4d8c);
+  background: var(--biru-tua, #0e2a6b);
+  color: #fff;
 }
 
 .buttonSecondary {
-  background: var(--latar, #f1f3f6);
-  color: var(--tinta, #1e2229);
+  background: #fff;
+  border: 1.5px solid rgba(37, 65, 134, 0.2);
+  color: var(--biru-tua, #0e2a6b);
 }
 
 .buttonSecondary:hover {
-  background: #e4e7ed;
+  background: var(--biru-muda, #e3e9f5);
 }
 
 .buttonWhatsApp {
-  background: #25d366;
+  background: var(--oranye-cta, #d63f12);
   color: #fff;
   font-weight: 700;
 }
 
 .buttonWhatsApp:hover {
-  background: #20bd5a;
+  background: var(--oranye-cta-hover, #b8350e);
+  color: #fff;
 }
 
-/* ---------- 2D Visualizer Canvas ---------- */
+/* ---------- Kanvas pratinjau ---------- */
 .canvasWrap {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  background: #f8fafc;
-  border-radius: 16px;
+  background: var(--abu, #eaeae6);
+  border-radius: 20px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(14, 42, 107, 0.1);
 }
 
 .svgStage {
@@ -243,49 +255,123 @@
   display: block;
 }
 
-.canvasToolbar {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+.canvas3D {
+  position: relative;
+  width: 100%;
+  height: 440px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--abu, #eaeae6);
+  border: 1px solid rgba(14, 42, 107, 0.1);
+  touch-action: none;
+}
+
+@media (max-width: 720px) {
+  .canvas3D {
+    height: 340px;
+  }
+}
+
+/* ---------- Header pratinjau, chip, legenda ---------- */
+.previewTools {
   display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.scaleChip {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--biru-tua, #0e2a6b);
+  background: rgba(37, 65, 134, 0.07);
+  border: 1px solid rgba(37, 65, 134, 0.15);
+  padding: 5px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.toggleBtn {
+  border: 1px solid rgba(37, 65, 134, 0.18);
+  background: #fff;
+  color: var(--redup, #4b5568);
+  font: 600 11.5px/1.2 var(--font-isi, inherit);
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 28px;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.toggleBtn:hover {
+  border-color: var(--oranye, #fe5722);
+  color: var(--oranye-cta, #d63f12);
+}
+
+.toggleActive {
+  background: var(--oranye-muda, #ffe6dc);
+  border-color: var(--oranye, #fe5722);
+  color: #9a2600;
+}
+
+.legendRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--redup, #4b5568);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  padding: 4px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.legendSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.swatchStack {
+  display: inline-flex;
+  gap: 2px;
 }
 
 .toolBtn {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  border: 0;
-  background: transparent;
+  border-radius: 10px;
+  border: 1px solid rgba(37, 65, 134, 0.16);
+  background: #fff;
   display: grid;
   place-items: center;
   cursor: pointer;
-  color: var(--tinta, #1e2229);
+  color: var(--biru-tua, #0e2a6b);
 }
 
 .toolBtn:hover {
-  background: var(--latar, #f1f3f6);
+  background: var(--biru-muda, #e3e9f5);
 }
 
 .scaleBadge {
   position: absolute;
   bottom: 10px;
   left: 10px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(8px);
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(14, 42, 107, 0.12);
   font-size: 11px;
   font-weight: 600;
-  color: var(--redup, #555e6d);
+  color: var(--redup, #4b5568);
 }
 
-/* ---------- Stat Cards in Estimate ---------- */
+/* ---------- Kartu statistik estimasi ---------- */
 .statGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -293,56 +379,59 @@
 }
 
 .statBox {
-  background: var(--latar, #f1f3f6);
+  background: var(--latar, #f1f1ee);
+  border: 1px solid var(--garis, #e6e8ee);
   padding: 12px 14px;
-  border-radius: 14px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .statVal {
+  font-family: var(--font-judul, inherit);
   font-size: 18px;
   font-weight: 700;
-  color: var(--tinta, #1e2229);
+  color: var(--biru-tua, #0e2a6b);
 }
 
 .statLabel {
   font-size: 12px;
-  color: var(--redup, #555e6d);
+  color: var(--redup, #4b5568);
 }
 
 .recBox {
-  background: #f0f7ff;
-  border: 1px solid #cce4ff;
-  border-radius: 16px;
-  padding: 16px;
+  background: var(--biru-muda, #e3e9f5);
+  border: 1px solid rgba(37, 65, 134, 0.18);
+  border-radius: 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .recVal {
-  font-size: 26px;
+  font-family: var(--font-judul, inherit);
+  font-size: 28px;
   font-weight: 800;
-  color: var(--biru, #0066cc);
+  line-height: 1.15;
+  color: var(--biru-tua, #0e2a6b);
 }
 
 .noteText {
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--redup, #555e6d);
-  background: #f8fafc;
-  padding: 10px 12px;
-  border-radius: 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--teks, #3e4a63);
+  background: var(--latar, #f1f1ee);
+  padding: 12px 14px;
+  border-radius: 14px;
 }
 
-
-/* ---------- Map & Import Styles (Phase F4) ---------- */
+/* ---------- Peta & impor berkas ---------- */
 .instruction {
   font-size: 13px;
   line-height: 1.5;
-  color: var(--redup, #555e6d);
+  color: var(--redup, #4b5568);
   margin-top: -6px;
 }
 
@@ -353,18 +442,18 @@
   justify-content: center;
   gap: 12px;
   padding: 36px 20px;
-  background: var(--latar, #f8fafc);
-  border: 2px dashed #cbd5e1;
-  border-radius: 16px;
+  background: var(--latar, #f1f1ee);
+  border: 2px dashed rgba(37, 65, 134, 0.24);
+  border-radius: 20px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .dropzone:hover,
 .dropzoneActive {
-  background: #eff6ff;
-  border-color: var(--biru, #0066cc);
+  background: var(--biru-muda, #e3e9f5);
+  border-color: var(--biru, #254186);
 }
 
 .dropzoneIcon {
@@ -373,29 +462,29 @@
 
 .dropzoneText {
   font-size: 14px;
-  color: var(--tinta, #1e2229);
+  color: var(--tinta, #14213d);
 }
 
 .dropzoneHint {
-  font-size: 11px;
-  color: var(--redup, #64748b);
+  font-size: 11.5px;
+  color: var(--redup, #4b5568);
 }
 
 .fileInputLabel {
   display: inline-flex;
   align-items: center;
-  padding: 10px 20px;
-  background: var(--biru, #0066cc);
+  padding: 10px 22px;
+  background: var(--biru, #254186);
   color: #fff;
-  border-radius: 12px;
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .fileInputLabel:hover {
-  background: var(--biru-tua, #0a4d8c);
+  background: var(--biru-tua, #0e2a6b);
 }
 
 .hiddenInput {
@@ -404,27 +493,27 @@
 
 .loadingBox {
   padding: 16px;
-  background: #f1f5f9;
-  border-radius: 12px;
+  background: var(--latar, #f1f1ee);
+  border-radius: 14px;
   text-align: center;
   font-size: 13px;
-  color: var(--redup, #475569);
+  color: var(--redup, #4b5568);
 }
 
 .errorAlert {
   padding: 14px 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 14px;
-  color: #991b1b;
+  background: #fdecea;
+  border: 1px solid rgba(180, 35, 24, 0.28);
+  border-radius: 16px;
+  color: var(--bahaya, #b42318);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .summaryCard {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  background: var(--latar, #f1f1ee);
+  border: 1px solid var(--garis, #e6e8ee);
+  border-radius: 20px;
   padding: 18px 16px;
   display: flex;
   flex-direction: column;
@@ -432,9 +521,10 @@
 }
 
 .summaryTitle {
+  font-family: var(--font-judul, inherit);
   font-size: 15px;
   font-weight: 700;
-  color: var(--tinta, #1e2229);
+  color: var(--biru-tua, #0e2a6b);
 }
 
 .metricGrid {
@@ -451,28 +541,29 @@
 
 .metricLabel {
   font-size: 11px;
-  color: var(--redup, #64748b);
+  color: var(--redup, #4b5568);
 }
 
 .metricValue {
   font-size: 14px;
   font-weight: 600;
-  color: var(--tinta, #0f172a);
+  color: var(--tinta, #14213d);
 }
 
 .warningList {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: var(--oranye-muda, #ffe6dc);
+  border: 1px solid rgba(217, 56, 0, 0.22);
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 14px;
 }
 
 .warningText {
   font-size: 12px;
-  color: #92400e;
+  line-height: 1.5;
+  color: #9a2600;
 }
 
 .buttonRow {
@@ -484,42 +575,42 @@
 .applyButton {
   flex: 1;
   padding: 12px 18px;
-  min-height: 44px;
-  background: var(--hijau, #10b981);
+  min-height: 46px;
+  background: var(--biru, #254186);
   color: #fff;
   border: 0;
-  border-radius: 12px;
+  border-radius: 999px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
 .applyButton:hover {
-  opacity: 0.92;
+  background: var(--biru-tua, #0e2a6b);
 }
 
 .applyButton:disabled {
-  background: #94a3b8;
+  background: var(--beton-tua, #b5b4af);
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 .secondaryButton {
-  padding: 10px 16px;
-  min-height: 44px;
+  padding: 10px 18px;
+  min-height: 46px;
   background: #fff;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  color: var(--tinta, #334155);
+  border: 1.5px solid rgba(37, 65, 134, 0.2);
+  border-radius: 999px;
+  color: var(--biru-tua, #0e2a6b);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
 .secondaryButton:hover:not(:disabled) {
-  background: #f1f5f9;
+  background: var(--biru-muda, #e3e9f5);
 }
 
 .secondaryButton:disabled {
@@ -531,9 +622,9 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--latar, #f8fafc);
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  background: var(--latar, #f1f1ee);
+  border: 1px solid var(--garis, #e6e8ee);
+  border-radius: 16px;
   padding: 14px 16px;
 }
 
@@ -547,7 +638,7 @@
 
 .mapInfo {
   font-size: 13px;
-  color: var(--tinta, #334155);
+  color: var(--teks, #3e4a63);
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -555,7 +646,7 @@
 }
 
 .divider {
-  color: #cbd5e1;
+  color: var(--beton-tua, #b5b4af);
 }
 
 .mapActions {
@@ -565,14 +656,14 @@
 }
 
 .calloutBox {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 12px;
+  background: var(--biru-muda, #e3e9f5);
+  border: 1px solid rgba(37, 65, 134, 0.18);
+  border-radius: 14px;
   padding: 12px 14px;
 }
 
 .calloutText {
   font-size: 12px;
   line-height: 1.5;
-  color: #1e40af;
+  color: var(--biru-tua, #0e2a6b);
 }
