@@ -10,6 +10,7 @@
 
 import type { MultiPolygon2D, Point2D, Polygon2D, ProjectGeometry, Ring2D } from "./types";
 import { multiPolygonArea, multiPolygonBounds, multiPolygonPerimeter } from "./area";
+import { validateGeometry } from "./validate";
 
 const WGS84_A = 6378137.0; // semi-major axis (m)
 const WGS84_F = 1 / 298.257223563; // flattening
@@ -144,15 +145,22 @@ export function projectWgs84MultiPolygon(
   const localMp: MultiPolygon2D = rawProjected.map((poly) =>
     poly.map((ring) =>
       ring.map(([x, y]) => [
-        Math.round((x - originX) * 1000) / 1000,
-        Math.round((y - originY) * 1000) / 1000,
+        Math.round((x - originX) * 1e6) / 1e6,
+        Math.round((y - originY) * 1e6) / 1e6,
       ]),
     ),
   );
 
+  const val = validateGeometry(localMp);
+  if (!val.valid) {
+    throw new Error(`Geometri hasil proyeksi tidak valid: ${val.errors.join("; ")}`);
+  }
+
+  const allWarnings = [...warnings, ...val.warnings];
+
   const bounds = multiPolygonBounds(localMp);
-  const areaM2 = Math.round(multiPolygonArea(localMp) * 1000) / 1000;
-  const perimeterM = Math.round(multiPolygonPerimeter(localMp) * 1000) / 1000;
+  const areaM2 = Math.round(multiPolygonArea(localMp) * 1e6) / 1e6;
+  const perimeterM = Math.round(multiPolygonPerimeter(localMp) * 1e6) / 1e6;
 
   return {
     schemaVersion: "1.0.0",
@@ -171,6 +179,6 @@ export function projectWgs84MultiPolygon(
       perimeterM,
       bounds,
     },
-    warnings,
+    warnings: allWarnings,
   };
 }

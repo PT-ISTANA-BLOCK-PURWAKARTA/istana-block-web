@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { PAVING_CATALOG, PRODUCT_LIST } from "@/lib/paving/catalog";
 import { createRectanglePreset } from "@/lib/paving/adapters/preset";
 import { calculateMaterialEstimate } from "@/lib/paving/engine/estimate";
@@ -9,11 +10,24 @@ import type { PatternConfig } from "@/lib/paving/engine/types";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
 import { PRODUCTS, type ProductId } from "@/lib/paving/legacy";
 import { EstimatePanel } from "./EstimatePanel";
+import { FileImportModal } from "./FileImportModal";
 import { GridCanvas } from "./GridCanvas";
 import { InputMethodPicker, type InputMethod } from "./InputMethodPicker";
 import css from "./PavingDesigner.module.css";
 import { PresetForm } from "./PresetForm";
 import { Preview2D } from "./Preview2D";
+
+const DynamicMapDrawer = dynamic(
+  () => import("./MapDrawer").then((mod) => mod.MapDrawer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className={css.loadingBox}>
+        <p>Memuat modul peta satelit interaktif...</p>
+      </div>
+    ),
+  },
+);
 
 interface Props {
   whatsapp: string;
@@ -103,20 +117,9 @@ export function PavingDesigner({ whatsapp }: Props) {
 
             {activeMethod === "grid" && <GridCanvas onGeometryChange={setGeometry} />}
 
-            {activeMethod === "map" && (
-              <div className={css.noteText}>
-                🛰️ <strong>Peta Satelit Interaktif (Fase F4):</strong> Fitur penarikan batas di atas citra
-                satelit resolusi tinggi sedang disiapkan. Gunakan menu <strong>Bentuk Siap Pakai</strong> atau{" "}
-                <strong>Gambar di Grid</strong> untuk perhitungan saat ini.
-              </div>
-            )}
+            {activeMethod === "map" && <DynamicMapDrawer onApplyGeometry={setGeometry} />}
 
-            {activeMethod === "import" && (
-              <div className={css.noteText}>
-                📁 <strong>Impor Berkas GeoJSON / KML / KMZ (Fase F4):</strong> Anda dapat mengunggah batas
-                dari Google Earth atau aplikasi GPS lapangan. Sedang disiapkan untuk integrasi penuh.
-              </div>
-            )}
+            {activeMethod === "import" && <FileImportModal onApplyGeometry={setGeometry} />}
           </div>
 
           {/* Pattern & Product Configuration */}

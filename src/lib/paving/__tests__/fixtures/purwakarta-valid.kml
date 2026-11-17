@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Lahan Purwakarta dengan Taman (Hole)</name>
+    <Placemark>
+      <name>Area Paving Parkir</name>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              107.44300,-6.55600,0
+              107.44400,-6.55600,0
+              107.44400,-6.55500,0
+              107.44300,-6.55500,0
+              107.44300,-6.55600,0
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+        <innerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              107.44330,-6.55570,0
+              107.44370,-6.55570,0
+              107.44370,-6.55530,0
+              107.44330,-6.55530,0
+              107.44330,-6.55570,0
+            </coordinates>
+          </LinearRing>
+        </innerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>

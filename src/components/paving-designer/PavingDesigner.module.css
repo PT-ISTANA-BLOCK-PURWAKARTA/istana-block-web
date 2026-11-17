@@ -336,3 +336,243 @@
   padding: 10px 12px;
   border-radius: 12px;
 }
+
+
+/* ---------- Map & Import Styles (Phase F4) ---------- */
+.instruction {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--redup, #555e6d);
+  margin-top: -6px;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 36px 20px;
+  background: var(--latar, #f8fafc);
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropzone:hover,
+.dropzoneActive {
+  background: #eff6ff;
+  border-color: var(--biru, #0066cc);
+}
+
+.dropzoneIcon {
+  font-size: 38px;
+}
+
+.dropzoneText {
+  font-size: 14px;
+  color: var(--tinta, #1e2229);
+}
+
+.dropzoneHint {
+  font-size: 11px;
+  color: var(--redup, #64748b);
+}
+
+.fileInputLabel {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--biru, #0066cc);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.fileInputLabel:hover {
+  background: var(--biru-tua, #0a4d8c);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.loadingBox {
+  padding: 16px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--redup, #475569);
+}
+
+.errorAlert {
+  padding: 14px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+  color: #991b1b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.summaryCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.summaryTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tinta, #1e2229);
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.metricItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metricLabel {
+  font-size: 11px;
+  color: var(--redup, #64748b);
+}
+
+.metricValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tinta, #0f172a);
+}
+
+.warningList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.warningText {
+  font-size: 12px;
+  color: #92400e;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.applyButton {
+  flex: 1;
+  padding: 12px 18px;
+  min-height: 44px;
+  background: var(--hijau, #10b981);
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.applyButton:hover {
+  opacity: 0.92;
+}
+
+.applyButton:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.secondaryButton {
+  padding: 10px 16px;
+  min-height: 44px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  color: var(--tinta, #334155);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.secondaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mapToolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--latar, #f8fafc);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+@media (min-width: 640px) {
+  .mapToolbar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.mapInfo {
+  font-size: 13px;
+  color: var(--tinta, #334155);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.divider {
+  color: #cbd5e1;
+}
+
+.mapActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.calloutBox {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.calloutText {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #1e40af;
+}

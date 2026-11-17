@@ -9,6 +9,8 @@ export * from "./geometry/area";
 export * from "./geometry/validate";
 export * from "./geometry/project";
 export * from "./adapters/preset";
+export * from "./adapters/geojson";
+export * from "./adapters/kml";
 export * from "./engine";
 export {
   COLORS,
