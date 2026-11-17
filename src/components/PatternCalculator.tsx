@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { waLink } from "@/lib/format";
+import { PAVING_CATALOG } from "@/lib/paving/catalog";
 import css from "./PatternCalculator.module.css";
 
 const Paving3DView = dynamic(() => import("./Paving3DView"), {
@@ -415,7 +416,7 @@ export const PRODUCTS: Record<ProductId, Product> = {
     id: "truepave",
     name: "Truepave / Bata",
     size: "21 × 10,5 cm",
-    pcs: 44,
+    pcs: PAVING_CATALOG.truepave.labelPcsPerM2,
     tebal: [6, 8],
     shape: "rect",
     view: [240, 150],
@@ -427,7 +428,7 @@ export const PRODUCTS: Record<ProductId, Product> = {
     id: "hexagon",
     name: "Hexagon",
     size: "20 × 20 cm",
-    pcs: 27,
+    pcs: PAVING_CATALOG.hexagon.labelPcsPerM2,
     tebal: [6, 8],
     shape: "hex",
     view: [240, 150],
@@ -440,7 +441,7 @@ export const PRODUCTS: Record<ProductId, Product> = {
     id: "fp21",
     name: "Fullpave / Ubin 21",
     size: "21 × 21 cm",
-    pcs: 22,
+    pcs: PAVING_CATALOG.fp21.labelPcsPerM2,
     tebal: [6],
     shape: "rect",
     view: [240, 150],
@@ -452,7 +453,7 @@ export const PRODUCTS: Record<ProductId, Product> = {
     id: "fp30",
     name: "Fullpave 30",
     size: "30 × 30 cm",
-    pcs: 11,
+    pcs: PAVING_CATALOG.fp30.labelPcsPerM2,
     tebal: [6],
     shape: "rect",
     view: [360, 225],
@@ -464,7 +465,7 @@ export const PRODUCTS: Record<ProductId, Product> = {
     id: "grass",
     name: "Grass Block",
     size: "45 × 30 cm",
-    pcs: 7.5,
+    pcs: PAVING_CATALOG.grass.labelPcsPerM2,
     tebal: [6, 8],
     shape: "grass",
     view: [360, 225],

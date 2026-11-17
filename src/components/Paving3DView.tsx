@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { HD_CM } from "@/lib/paving/catalog";
 import type { ColorId, Placed, ProductId, Unit } from "./PatternCalculator";
 import css from "./PatternCalculator.module.css";
 
@@ -30,9 +31,9 @@ const PRESETS: { id: PresetId; label: string }[] = [
   { id: "atas", label: "Tampak Atas" },
 ];
 
-/** Harus cocok dengan konstanta geometri pada PatternCalculator.tsx (satuan cm). */
+/** Harus cocok dengan konstanta geometri pada katalog bersama (satuan cm). */
 const NAT = 0.6;
-const HD = Math.sqrt(20000 / (27 * Math.sqrt(3)));
+const HD = HD_CM;
 
 const BEVEL_RECT = 0.35;
 const BEVEL_HEX = 0.35;

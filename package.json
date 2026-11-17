@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "cek:seo": "node tools/cek-seo.mjs",
     "gambar:varian": "node tools/gambar-varian.mjs",
     "db:generate": "drizzle-kit generate",
@@ -48,10 +49,13 @@
     "@tiptap/pm": "3.31.4",
     "@tiptap/react": "3.31.4",
     "@tiptap/starter-kit": "3.31.4",
+    "@tmcw/togeojson": "^7.1.4",
     "drizzle-orm": "^0.45.1",
+    "fflate": "^0.8.3",
     "jose": "^6.1.0",
     "leaflet": "^1.9.4",
     "next": "15.5.27",
+    "polygon-clipping": "^0.15.7",
     "react": "19.2.9",
     "react-dom": "19.2.9",
     "react-markdown": "^10.1.0",
@@ -71,6 +75,7 @@
     "drizzle-kit": "^0.31.5",
     "sharp": "^0.35.5",
     "typescript": "^5.9.3",
+    "vitest": "^5.1.0",
     "wrangler": "^4.148.0"
   }
 }
