@@ -1,7 +1,17 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { PatternCalculator } from "@/components/PatternCalculator";
+
+const PavingDesigner = dynamic(() => import("@/components/paving-designer"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ minHeight: "160px", display: "grid", placeItems: "center", color: "var(--redup)" }}>
+      Menyiapkan Desainer Lahan...
+    </div>
+  ),
+});
 import { getEnv } from "@/db";
 import { telLink, waLink } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
@@ -107,6 +117,10 @@ export default async function PolaPavingPage({ searchParams }: Props) {
         </header>
 
         <PatternCalculator whatsapp={s.whatsapp} initialQuery={query} />
+
+        <div style={{ marginTop: 48 }}>
+          <PavingDesigner whatsapp={s.whatsapp} />
+        </div>
 
         <section className="duo" data-pp-noprint style={{ paddingTop: 56 }}>
           <div className="stack faq" style={{ flex: "1 1 520px", minWidth: 0, gap: 12 }}>
