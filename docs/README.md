@@ -11,5 +11,6 @@
 | [porting/PETA-GAP-PORTING.md](porting/PETA-GAP-PORTING.md) | Peta gap porting versi 6 Nov 2026: tabel dan kolom inventori-ops yang belum ada di web, beserta irisan kerjanya. |
 | [rekonstruksi-app-live/](rekonstruksi-app-live/KEPUTUSAN.md) | Keputusan pemilik dan spesifikasi hasil rekonstruksi app live (`app.kirimistanablock.com`) untuk menu Operasional. |
 | [arsip/](arsip/migrasi-data-inventori-ops.md) | Dokumen tidak terpakai: spesifikasi migrasi data app lama (dibatalkan, fresh start). |
+| [paving-designer/](paving-designer/technical-decisions.md) | Desain teknis, keputusan dependensi, dan runbook site-specific paving designer (17 Nov 2026). |
 | [contoh-cetak/](contoh-cetak/) | Contoh PDF keluaran: faktur, surat jalan, laba rugi, neraca. |
 | [screenshots/](screenshots/) | Tangkapan layar untuk README utama. |
