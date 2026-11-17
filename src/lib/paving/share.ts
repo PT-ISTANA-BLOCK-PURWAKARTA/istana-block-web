@@ -42,22 +42,25 @@ export const ShareStateSchema = z.object({
 
 export type ShareState = z.infer<typeof ShareStateSchema>;
 
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
+
 /**
- * Encode ShareState to a base64url string
+ * Encode ShareState to a base64url string (100% universal: Browser, Node, Web Worker)
  */
 export function encodeShareStateToBase64(state: ShareState): string {
   const jsonStr = JSON.stringify(state);
-  // Base64url encoding
-  if (typeof Buffer !== "undefined") {
-    return Buffer.from(jsonStr, "utf-8").toString("base64url");
+  const bytes = textEncoder.encode(jsonStr);
+  let binary = "";
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
   }
-  // Browser fallback
-  const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
-  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 /**
- * Decode and validate base64url string to ShareState via Zod
+ * Decode and validate base64url string to ShareState via Zod (100% universal)
  */
 export function decodeShareStateFromBase64(encoded: string): ShareState {
   if (!encoded || typeof encoded !== "string") {
@@ -66,13 +69,14 @@ export function decodeShareStateFromBase64(encoded: string): ShareState {
 
   let jsonStr = "";
   try {
-    if (typeof Buffer !== "undefined") {
-      jsonStr = Buffer.from(encoded, "base64url").toString("utf-8");
-    } else {
-      let b64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
-      while (b64.length % 4) b64 += "=";
-      jsonStr = decodeURIComponent(escape(atob(b64)));
+    let b64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
     }
+    jsonStr = textDecoder.decode(bytes);
   } catch {
     throw new Error("Kode konfigurasi tidak dapat didekode (format base64 salah).");
   }

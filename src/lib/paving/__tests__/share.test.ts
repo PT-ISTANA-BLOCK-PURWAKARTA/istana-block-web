@@ -112,9 +112,8 @@ describe("F6 Share & WhatsApp Suite", () => {
     });
 
     it("rejects invalid schema version or missing fields", () => {
-      const invalid = Buffer.from(
-        JSON.stringify({ v: 2, geom: { kind: "invalid" } }),
-      ).toString("base64url");
+      const invalidJson = JSON.stringify({ v: 2, geom: { kind: "invalid" } });
+      const invalid = btoa(invalidJson).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
       expect(() => decodeShareStateFromBase64(invalid)).toThrowError(
         /Data konfigurasi gagal divalidasi/i,
