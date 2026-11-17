@@ -21,6 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/artikel`, changeFrequency: "weekly", priority: 0.6 },
     { url: `${base}/kontak`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${base}/pola-paving`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/panduan-desain-paving`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/paket-proyek`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${base}/area-pengiriman`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/katalog`, changeFrequency: "monthly", priority: 0.8 },

@@ -11,6 +11,16 @@ export * from "./geometry/project";
 export * from "./adapters/preset";
 export * from "./adapters/geojson";
 export * from "./adapters/kml";
+export {
+  ShareStateSchema,
+  type ShareState,
+  encodeShareStateToBase64,
+  decodeShareStateFromBase64,
+  buildShareUrl,
+  createWhatsAppMessage,
+  createWhatsAppShareLink,
+  type WhatsAppMessageOptions,
+} from "./share";
 export * from "./engine";
 export {
   COLORS,

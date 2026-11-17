@@ -120,6 +120,22 @@ export default async function PolaPavingPage({ searchParams }: Props) {
 
         <div style={{ marginTop: 48 }}>
           <PavingDesigner whatsapp={s.whatsapp} />
+          <div style={{ marginTop: 16, textAlign: "center" }}>
+            <Link
+              href="/panduan-desain-paving"
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: "var(--biru)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <span>📖</span>
+              <span>Butuh bantuan mengukur lahan? Baca Panduan Lengkap Desain Lahan, Peta &amp; Impor Berkas &rarr;</span>
+            </Link>
+          </div>
         </div>
 
         <section className="duo" data-pp-noprint style={{ paddingTop: 56 }}>
