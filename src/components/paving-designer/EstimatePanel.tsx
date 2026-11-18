@@ -4,13 +4,12 @@ import { useState } from "react";
 import { PAVING_CATALOG } from "@/lib/paving/catalog";
 import type { MaterialEstimate, PatternConfig } from "@/lib/paving/engine/types";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
-import { COLORS } from "@/lib/paving/legacy/types";
 import {
   buildShareUrl,
   createWhatsAppShareLink,
-  encodeShareStateToBase64,
   type ShareState,
 } from "@/lib/paving/share";
+import { IconCheck, IconCopy, IconInfo, IconLink, IconWhatsApp } from "./Icons";
 import css from "./PavingDesigner.module.css";
 
 interface Props {
@@ -27,7 +26,6 @@ export function EstimatePanel({ estimate, config, geometry, whatsapp }: Props) {
   const [copiedLink, setCopiedLink] = useState(false);
   const spec = PAVING_CATALOG[config.productId];
 
-  // Build ShareState
   const shareState: ShareState = {
     v: 1,
     engineVersion: "1.0.0",
@@ -70,7 +68,7 @@ export function EstimatePanel({ estimate, config, geometry, whatsapp }: Props) {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2500);
     } catch {
-      // Fallback
+      // Abaikan jika clipboard dibatasi browser
     }
   };
 
@@ -100,86 +98,101 @@ export function EstimatePanel({ estimate, config, geometry, whatsapp }: Props) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback
+      // Abaikan jika clipboard dibatasi browser
     }
   };
 
   return (
     <div className={css.panel}>
-      <div className={css.panelHeader}>
-        <h3 className={css.panelTitle}>Rincian Kebutuhan Material</h3>
-        <span className={css.badgeSuccess}>Estimasi Geometri Terpotong</span>
+      <div className={css.stepHead}>
+        <div className={css.stepHeadLeft}>
+          <span className={`${css.stepHex} hex`} aria-hidden="true">
+            3
+          </span>
+          <div>
+            <h3 className={css.panelTitle}>Rincian Kebutuhan Material</h3>
+            <p className={css.panelSub}>Dihitung langsung dari potongan geometri lahan</p>
+          </div>
+        </div>
+        <span className={css.badgeSuccess}>Estimasi Presisi</span>
       </div>
 
-      {/* Hero Recommendation */}
-      <div className={css.recBox}>
-        <span className={css.statLabel}>Rekomendasi Pemesanan Paving</span>
-        <div className={css.recVal}>{fmt(estimate.recommendedPurchaseUnits)} pcs</div>
-        <span className={css.statLabel} style={{ color: "var(--biru-tua)" }}>
-          Mencakup blok utuh, bahan potong, dan cadangan {estimate.reservePercent}%
+      <div className={css.totalBox}>
+        <span className={css.totalLabel}>Rekomendasi Pemesanan Paving</span>
+        <b className={css.totalVal}>{fmt(estimate.recommendedPurchaseUnits)} pcs</b>
+        <span className={css.totalSub}>
+          Sudah mencakup blok utuh, bahan potongan tepi, dan cadangan {estimate.reservePercent}%
         </span>
       </div>
 
-      {/* Breakdown Grid */}
-      <div className={css.statGrid}>
-        <div className={css.statBox}>
-          <span className={css.statVal}>{fmt(estimate.fullUnits)} pcs</span>
-          <span className={css.statLabel}>Blok Utuh Terpasang</span>
-        </div>
-        <div className={css.statBox}>
-          <span className={css.statVal}>{fmt(estimate.cutInstalledPieces)} pcs</span>
-          <span className={css.statLabel}>Potongan Tepi Batas</span>
-        </div>
-        <div className={css.statBox}>
-          <span className={css.statVal}>{estimate.extras?.stoneDustM3 || 0} m³</span>
-          <span className={css.statLabel}>Abu Batu (Alas 5 cm)</span>
-        </div>
-        <div className={css.statBox}>
-          <span className={css.statVal}>{estimate.extras?.baseCourseM3 || 0} m³</span>
-          <span className={css.statLabel}>Base Course (20 cm)</span>
+      <ul className={css.rowList}>
+        <li className={css.rowItem}>
+          <div>
+            <span className={css.rowItemLabel}>Blok utuh terpasang</span>
+            <span className={css.rowItemSub}>Keping penuh di dalam batas lahan</span>
+          </div>
+          <span className={css.rowItemVal}>{fmt(estimate.fullUnits)} pcs</span>
+        </li>
+        <li className={css.rowItem}>
+          <div>
+            <span className={css.rowItemLabel}>Potongan tepi batas</span>
+            <span className={css.rowItemSub}>
+              Kebutuhan bahan potong ±{fmt(estimate.estimatedStockUnitsForCuts)} pcs
+            </span>
+          </div>
+          <span className={css.rowItemVal}>{fmt(estimate.cutInstalledPieces)} keping</span>
+        </li>
+        <li className={css.rowItem}>
+          <div>
+            <span className={css.rowItemLabel}>Abu batu alas</span>
+            <span className={css.rowItemSub}>Tebal padat 5 cm di bawah paving</span>
+          </div>
+          <span className={css.rowItemVal}>{estimate.extras?.stoneDustM3 || 0} m³</span>
+        </li>
+        <li className={css.rowItem}>
+          <div>
+            <span className={css.rowItemLabel}>Base course (sirtu/makadam)</span>
+            <span className={css.rowItemSub}>Lapis pondasi padat 20 cm</span>
+          </div>
+          <span className={css.rowItemVal}>{estimate.extras?.baseCourseM3 || 0} m³</span>
+        </li>
+      </ul>
+
+      <div className={css.noteBox}>
+        <IconInfo size={17} />
+        <div>
+          <strong>Catatan teknis pemasangan:</strong>
+          <ul className={css.noteList}>
+            {estimate.assumptions.map((item, idx) => (
+              <li key={`asmp_${idx}`}>{item}</li>
+            ))}
+          </ul>
         </div>
       </div>
 
-      {/* Assumptions & Advice */}
-      <div className={css.noteText}>
-        💡 <strong>Catatan Teknis Pemasangan:</strong>
-        <ul style={{ margin: "6px 0 0", paddingLeft: "18px" }}>
-          {estimate.assumptions.map((item, idx) => (
-            <li key={`asmp_${idx}`} style={{ marginBottom: "3px" }}>
-              {item}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Actions */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div className={css.actionStack}>
         <a
           href={waHref}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${css.button} ${css.buttonWhatsApp}`}
+          className="btn btn-primary"
           data-cta="kalkulator"
         >
-          <span>💬</span>
+          <IconWhatsApp size={18} />
           <span>Kirim Rincian ke WhatsApp Admin</span>
         </a>
 
-        <button
-          type="button"
-          className={`${css.button} ${css.buttonSecondary}`}
-          onClick={handleCopy}
-        >
-          <span>{copied ? "✅ Rincian Teks Disalin!" : "📋 Salin Rincian Teks"}</span>
-        </button>
+        <div className={css.actionRow}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={handleCopy}>
+            {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+            <span>{copied ? "Rincian Disalin" : "Salin Rincian"}</span>
+          </button>
 
-        <button
-          type="button"
-          className={`${css.button} ${css.buttonSecondary}`}
-          onClick={handleCopyLink}
-        >
-          <span>{copiedLink ? "✅ Tautan Desain Disalin!" : "🔗 Salin Tautan Desain Ini"}</span>
-        </button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={handleCopyLink}>
+            {copiedLink ? <IconCheck size={15} /> : <IconLink size={15} />}
+            <span>{copiedLink ? "Tautan Disalin" : "Salin Tautan"}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -10,18 +10,16 @@ interface Props {
   layout: LayoutResult;
 }
 
-/** Warna blok per peran (abu natural, merah, hitam) mengikuti palet produk. */
+/** Warna blok per peran (abu natural, merah, hitam) mengikuti palet produk Istana Block. */
 const ROLE_COLORS = ["#B5B4AF", "#9C4A3A", "#2C2B29"];
 const JOINT_COLOR = "#ffffff";
-const CUT_EDGE_COLOR = "#d63f12"; // --oranye-cta
-const CUT_HIGHLIGHT_FILL = "#ffe6dc"; // --oranye-muda
+const CUT_EDGE_COLOR = "#d63f12";
+const CUT_HIGHLIGHT_FILL = "#ffe6dc";
 
 export function Preview2D({ geometry, layout }: Props) {
   const [showCutsOnly, setShowCutsOnly] = useState(false);
 
-  // Compute bounding box with a small margin; the stage follows the site's own ratio
-  // so a wide site is not squeezed into empty space.
-  const { minX, minY, width, height, viewBox, siteW, siteH, aspect } = useMemo(() => {
+  const { width, viewBox, siteW, siteH, aspect } = useMemo(() => {
     const b = geometry.metrics.bounds;
     const sw = b.maxX - b.minX;
     const sh = b.maxY - b.minY;
@@ -31,45 +29,32 @@ export function Preview2D({ geometry, layout }: Props) {
     const w = sw + pad * 2;
     const h = sh + pad * 2;
     return {
-      minX: x0,
-      minY: y0,
       width: w,
-      height: h,
       siteW: sw,
       siteH: sh,
-      aspect: Math.min(Math.max(w / h, 1), 2.4),
+      aspect: Math.min(Math.max(w / h, 1), 2.2),
       viewBox: `${x0} ${y0} ${w} ${h}`,
     };
   }, [geometry]);
 
-  // Stroke widths are in meters and scale with the field so they stay ~1 px on screen.
   const jointWidth = Math.max(0.006, width * 0.0011);
   const cutEdgeWidth = Math.max(0.012, width * 0.0018);
   const outlineWidth = Math.max(0.018, width * 0.0018);
 
   return (
-    <div className={css.panel}>
-      <div className={css.panelHeader}>
-        <div>
-          <h3 className={css.panelTitle}>Pratinjau Pola 2D Lapangan</h3>
-          <span className={css.statLabel}>
-            {geometry.metrics.areaM2.toFixed(1)} m² · {layout.metrics.fullCount} utuh ·{" "}
-            {layout.metrics.partialCount} potongan
-          </span>
-        </div>
-        <div className={css.previewTools}>
-          <span className={css.scaleChip}>
-            📐 Skala otomatis · {siteW.toFixed(1)} × {siteH.toFixed(1)} m
-          </span>
-          <button
-            type="button"
-            className={`${css.toggleBtn} ${showCutsOnly ? css.toggleActive : ""}`}
-            aria-pressed={showCutsOnly}
-            onClick={() => setShowCutsOnly((v) => !v)}
-          >
-            {showCutsOnly ? "Tampilkan Semua" : "Sorot Potongan Tepi"}
-          </button>
-        </div>
+    <div className={css.stack}>
+      <div className={css.previewTools}>
+        <span className={css.scaleChip}>
+          Skala otomatis · {siteW.toFixed(1)} × {siteH.toFixed(1)} m ({geometry.metrics.areaM2.toFixed(1)} m²)
+        </span>
+        <button
+          type="button"
+          className={`${css.toggleBtn} ${showCutsOnly ? css.toggleActive : ""}`}
+          aria-pressed={showCutsOnly}
+          onClick={() => setShowCutsOnly((v) => !v)}
+        >
+          {showCutsOnly ? "Tampilkan Semua Blok" : "Sorot Potongan Tepi"}
+        </button>
       </div>
 
       <div className={css.canvasWrap} style={{ aspectRatio: aspect }}>
@@ -77,9 +62,10 @@ export function Preview2D({ geometry, layout }: Props) {
           viewBox={viewBox}
           className={css.svgStage}
           preserveAspectRatio="xMidYMid meet"
-          style={{ transform: "scaleY(-1)" }} // Flip Y so +Y is up like mathematical coordinate system
+          style={{ transform: "scaleY(-1)" }}
+          role="img"
+          aria-label={`Denah 2D paving ukuran ${siteW.toFixed(1)} kali ${siteH.toFixed(1)} meter`}
         >
-          {/* Site Boundary Fill (Subtle background) */}
           {geometry.geometry.map((poly, pIdx) => (
             <polygon
               key={`site_bg_${pIdx}`}
@@ -88,7 +74,6 @@ export function Preview2D({ geometry, layout }: Props) {
             />
           ))}
 
-          {/* Paving Blocks: light joints between blocks, accent edge only on cut pieces */}
           <g>
             {layout.tiles.map((tile) => {
               const isCut = tile.status === "partial";
@@ -116,7 +101,6 @@ export function Preview2D({ geometry, layout }: Props) {
             })}
           </g>
 
-          {/* Site Boundary Outline */}
           {geometry.geometry.map((poly, pIdx) => {
             const exterior = poly[0];
             const holes = poly.slice(1);
@@ -147,18 +131,19 @@ export function Preview2D({ geometry, layout }: Props) {
 
       <div className={css.legendRow}>
         <span className={css.legendItem}>
-          <span className={css.legendSwatch} style={{ background: ROLE_COLORS[0] }} />
-          Blok Utuh ({layout.metrics.fullCount})
+          <span className={css.swatchStack}>
+            {ROLE_COLORS.map((color) => (
+              <span key={color} className={css.legendSwatch} style={{ background: color }} />
+            ))}
+          </span>
+          Blok utuh ({layout.metrics.fullCount.toLocaleString("id-ID")})
         </span>
         <span className={css.legendItem}>
           <span
             className={css.legendSwatch}
-            style={{
-              background: ROLE_COLORS[0],
-              border: "1.5px solid #d63f12",
-            }}
+            style={{ background: ROLE_COLORS[0], border: "1.5px solid #d63f12" }}
           />
-          Potongan Batas ({layout.metrics.partialCount})
+          Potongan tepi ({layout.metrics.partialCount.toLocaleString("id-ID")})
         </span>
       </div>
     </div>

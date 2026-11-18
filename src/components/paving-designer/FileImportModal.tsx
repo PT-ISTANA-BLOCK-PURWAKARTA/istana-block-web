@@ -4,6 +4,7 @@ import { useState } from "react";
 import { parseGeoJsonToProjectGeometry } from "@/lib/paving/adapters/geojson";
 import { parseKmlToProjectGeometry, parseKmzToProjectGeometry } from "@/lib/paving/adapters/kml";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
+import { IconAlert, IconCheck, IconUpload } from "./Icons";
 import css from "./PavingDesigner.module.css";
 
 interface Props {
@@ -73,11 +74,10 @@ export function FileImportModal({ onApplyGeometry, onCancel }: Props) {
   };
 
   return (
-    <div className={css.panel}>
-      <h3 className={css.panelTitle}>Unggah Berkas Lahan (GeoJSON / KML / KMZ)</h3>
+    <div className={css.stack}>
       <p className={css.instruction}>
-        Paving Designer memproses berkas sepenuhnya di perangkat Anda (tanpa unggah server).
-        Mendukung poligon batas tanah WGS84 dari Google Earth, QGIS, ArcGIS, atau sertifikat ukur digital.
+        Berkas diproses sepenuhnya di peramban Anda (tanpa unggah ke server). Mendukung poligon batas
+        tanah WGS84 dari Google Earth, QGIS, ArcGIS, atau peta ukur digital.
       </p>
 
       <div
@@ -89,12 +89,14 @@ export function FileImportModal({ onApplyGeometry, onCancel }: Props) {
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
       >
-        <span className={css.dropzoneIcon}>📁</span>
+        <span className={`${css.dropzoneIconWrap} hex`}>
+          <IconUpload size={22} />
+        </span>
         <p className={css.dropzoneText}>
-          Tarik & letakkan berkas <strong>.geojson</strong>, <strong>.kml</strong>, atau{" "}
-          <strong>.kmz</strong> ke sini
+          Tarik dan letakkan berkas <strong>.geojson</strong>, <strong>.kml</strong>, atau{" "}
+          <strong>.kmz</strong> di sini
         </p>
-        <label className={css.fileInputLabel}>
+        <label className="btn btn-blue btn-sm">
           <span>Pilih Berkas dari Perangkat</span>
           <input
             type="file"
@@ -103,7 +105,7 @@ export function FileImportModal({ onApplyGeometry, onCancel }: Props) {
             className={css.hiddenInput}
           />
         </label>
-        <span className={css.dropzoneHint}>Maksimal 5 MB per berkas</span>
+        <span className={css.dropzoneHint}>Maksimal 5 MB per berkas · 100% lokal di perangkat</span>
       </div>
 
       {isLoading && (
@@ -114,8 +116,10 @@ export function FileImportModal({ onApplyGeometry, onCancel }: Props) {
 
       {errorMsg && (
         <div className={css.errorAlert} role="alert">
-          <strong>Gagal Membaca Berkas:</strong>
-          <p>{errorMsg}</p>
+          <IconAlert size={18} />
+          <div>
+            <strong>Gagal membaca berkas:</strong> {errorMsg}
+          </div>
         </div>
       )}
 
@@ -125,7 +129,9 @@ export function FileImportModal({ onApplyGeometry, onCancel }: Props) {
           <div className={css.metricGrid}>
             <div className={css.metricItem}>
               <span className={css.metricLabel}>Nama Berkas</span>
-              <span className={css.metricValue}>{fileName} ({(fileSize / 1024).toFixed(1)} KB)</span>
+              <span className={css.metricValue}>
+                {fileName} ({(fileSize / 1024).toFixed(1)} KB)
+              </span>
             </div>
             <div className={css.metricItem}>
               <span className={css.metricLabel}>Luas Lahan</span>
@@ -148,36 +154,36 @@ export function FileImportModal({ onApplyGeometry, onCancel }: Props) {
               </span>
             </div>
             <div className={css.metricItem}>
-              <span className={css.metricLabel}>Dimensi Area (P x L)</span>
+              <span className={css.metricLabel}>Dimensi Area (P × L)</span>
               <span className={css.metricValue}>
-                {(parsedGeom.metrics.bounds.maxX - parsedGeom.metrics.bounds.minX).toFixed(1)} m x{" "}
+                {(parsedGeom.metrics.bounds.maxX - parsedGeom.metrics.bounds.minX).toFixed(1)} m ×{" "}
                 {(parsedGeom.metrics.bounds.maxY - parsedGeom.metrics.bounds.minY).toFixed(1)} m
               </span>
             </div>
           </div>
 
           {parsedGeom.warnings && parsedGeom.warnings.length > 0 && (
-            <div className={css.warningList}>
-              {parsedGeom.warnings.map((w, idx) => (
-                <p key={idx} className={css.warningText}>⚠️ {w.message}</p>
-              ))}
+            <div className={css.warningBox}>
+              <IconAlert size={17} />
+              <div>
+                {parsedGeom.warnings.map((w, idx) => (
+                  <p key={idx}>{w.message}</p>
+                ))}
+              </div>
             </div>
           )}
 
-          <div className={css.buttonRow}>
+          <div className={css.mapActions}>
             <button
               type="button"
-              className={css.applyButton}
+              className="btn btn-blue btn-sm"
               onClick={() => onApplyGeometry(parsedGeom)}
             >
-              Terapkan Bentuk Lahan Ini
+              <IconCheck size={15} />
+              <span>Terapkan Bentuk Lahan Ini</span>
             </button>
             {onCancel && (
-              <button
-                type="button"
-                className={css.secondaryButton}
-                onClick={onCancel}
-              >
+              <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel}>
                 Batal
               </button>
             )}

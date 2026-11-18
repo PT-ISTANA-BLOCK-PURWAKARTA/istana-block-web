@@ -111,20 +111,13 @@ export default async function PolaPavingPage({ searchParams }: Props) {
 
         <div style={{ marginTop: 48 }}>
           <PavingDesigner whatsapp={s.whatsapp} />
-          <div style={{ marginTop: 16, textAlign: "center" }}>
-            <Link
-              href="/panduan-desain-paving"
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: "var(--biru)",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-              }}
-            >
-              <span>📖</span>
-              <span>Butuh bantuan mengukur lahan? Baca Panduan Lengkap Desain Lahan, Peta &amp; Impor Berkas &rarr;</span>
+          <div className="callout" data-pp-noprint style={{ maxWidth: "none", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px 20px" }}>
+            <div style={{ flex: "1 1 320px" }}>
+              <strong>Butuh panduan mengukur lahan atau impor KML/GeoJSON?</strong>
+              <p>Pelajari cara menggambar bidang tanah di grid, peta satelit, dan membaca rincian potongan tepi.</p>
+            </div>
+            <Link href="/panduan-desain-paving" className="btn btn-ghost btn-sm">
+              Baca Panduan Desain Lahan →
             </Link>
           </div>
         </div>

@@ -8,12 +8,56 @@ import {
   createUShapePreset,
 } from "@/lib/paving/adapters/preset";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
+import { IconAlert } from "./Icons";
 import css from "./PavingDesigner.module.css";
 
 type PresetType = "rect" | "l-shape" | "u-shape" | "trapezoid";
 
 interface Props {
   onGeometryChange: (geom: ProjectGeometry) => void;
+}
+
+const PRESET_OPTIONS: Array<{ id: PresetType; label: string }> = [
+  { id: "rect", label: "Persegi Panjang" },
+  { id: "l-shape", label: "Bentuk L" },
+  { id: "u-shape", label: "Bentuk U" },
+  { id: "trapezoid", label: "Trapesium" },
+];
+
+function MeterInput({
+  id,
+  label,
+  value,
+  min,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number;
+  min?: number;
+  onChange: (val: number) => void;
+}) {
+  return (
+    <div className={css.field}>
+      <label className={css.label} htmlFor={id}>
+        {label}
+      </label>
+      <div className={css.inputWrap}>
+        <input
+          id={id}
+          type="number"
+          step="0.1"
+          min={min}
+          className={`${css.input} ${css.inputWithUnit}`}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+        />
+        <span className={css.unit} aria-hidden="true">
+          m
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export function PresetForm({ onGeometryChange }: Props) {
@@ -84,256 +128,76 @@ export function PresetForm({ onGeometryChange }: Props) {
   ]);
 
   return (
-    <div className={css.field}>
+    <div className={css.stack}>
       <div className={css.field}>
-        <label className={css.label} htmlFor="preset-type-select">
-          Pilih Bentuk Lahan
-        </label>
-        <select
-          id="preset-type-select"
-          className={css.select}
-          value={type}
-          onChange={(e) => setType(e.target.value as PresetType)}
-        >
-          <option value="rect">Persegi Panjang / Bujur Sangkar</option>
-          <option value="l-shape">Bentuk L (Halaman Menyudut)</option>
-          <option value="u-shape">Bentuk U (Halaman Mengelilingi Bangunan)</option>
-          <option value="trapezoid">Trapesium (Lahan Menyempit)</option>
-        </select>
+        <span className={css.label}>Bentuk Dasar Lahan</span>
+        <div className={css.segGroup} role="radiogroup" aria-label="Bentuk dasar lahan">
+          {PRESET_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              role="radio"
+              aria-checked={type === opt.id}
+              className={`${css.segPill} ${type === opt.id ? css.segPillActive : ""}`}
+              onClick={() => setType(opt.id)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {type === "rect" && (
         <div className={css.formGrid}>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="rect-len">
-              Panjang (meter)
-            </label>
-            <input
-              id="rect-len"
-              type="number"
-              step="0.1"
-              min="1"
-              className={css.input}
-              value={rectLen}
-              onChange={(e) => setRectLen(Math.max(0.1, Number(e.target.value)))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="rect-wid">
-              Lebar (meter)
-            </label>
-            <input
-              id="rect-wid"
-              type="number"
-              step="0.1"
-              min="1"
-              className={css.input}
-              value={rectWid}
-              onChange={(e) => setRectWid(Math.max(0.1, Number(e.target.value)))}
-            />
-          </div>
+          <MeterInput
+            id="rect-len"
+            label="Panjang"
+            min={0.5}
+            value={rectLen}
+            onChange={(v) => setRectLen(Math.max(0.1, v))}
+          />
+          <MeterInput
+            id="rect-wid"
+            label="Lebar"
+            min={0.5}
+            value={rectWid}
+            onChange={(v) => setRectWid(Math.max(0.1, v))}
+          />
         </div>
       )}
 
       {type === "l-shape" && (
         <div className={css.formGrid}>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="l-total-w">
-              Lebar Total Sisi Bawah (m)
-            </label>
-            <input
-              id="l-total-w"
-              type="number"
-              step="0.1"
-              min="1"
-              className={css.input}
-              value={lTotalW}
-              onChange={(e) => setLTotalW(Number(e.target.value))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="l-total-h">
-              Panjang Total Sisi Kiri (m)
-            </label>
-            <input
-              id="l-total-h"
-              type="number"
-              step="0.1"
-              min="1"
-              className={css.input}
-              value={lTotalH}
-              onChange={(e) => setLTotalH(Number(e.target.value))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="l-leg-w">
-              Lebar Sayap Kiri (m)
-            </label>
-            <input
-              id="l-leg-w"
-              type="number"
-              step="0.1"
-              min="0.5"
-              className={css.input}
-              value={lLegW}
-              onChange={(e) => setLLegW(Number(e.target.value))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="l-leg-h">
-              Panjang Sayap Bawah (m)
-            </label>
-            <input
-              id="l-leg-h"
-              type="number"
-              step="0.1"
-              min="0.5"
-              className={css.input}
-              value={lLegH}
-              onChange={(e) => setLLegH(Number(e.target.value))}
-            />
-          </div>
+          <MeterInput id="l-total-w" label="Lebar Sisi Bawah" min={1} value={lTotalW} onChange={setLTotalW} />
+          <MeterInput id="l-total-h" label="Panjang Sisi Kiri" min={1} value={lTotalH} onChange={setLTotalH} />
+          <MeterInput id="l-leg-w" label="Lebar Sayap Kiri" min={0.5} value={lLegW} onChange={setLLegW} />
+          <MeterInput id="l-leg-h" label="Panjang Sayap Bawah" min={0.5} value={lLegH} onChange={setLLegH} />
         </div>
       )}
 
       {type === "u-shape" && (
         <div className={css.formGrid}>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="u-total-w">
-              Lebar Total Luar (m)
-            </label>
-            <input
-              id="u-total-w"
-              type="number"
-              step="0.1"
-              min="2"
-              className={css.input}
-              value={uTotalW}
-              onChange={(e) => setUTotalW(Number(e.target.value))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="u-total-h">
-              Panjang Total Luar (m)
-            </label>
-            <input
-              id="u-total-h"
-              type="number"
-              step="0.1"
-              min="2"
-              className={css.input}
-              value={uTotalH}
-              onChange={(e) => setUTotalH(Number(e.target.value))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="u-left-w">
-              Lebar Tiang Kiri (m)
-            </label>
-            <input
-              id="u-left-w"
-              type="number"
-              step="0.1"
-              min="0.5"
-              className={css.input}
-              value={uLeftLegW}
-              onChange={(e) => setULeftLegW(Number(e.target.value))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="u-right-w">
-              Lebar Tiang Kanan (m)
-            </label>
-            <input
-              id="u-right-w"
-              type="number"
-              step="0.1"
-              min="0.5"
-              className={css.input}
-              value={uRightLegW}
-              onChange={(e) => setURightLegW(Number(e.target.value))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="u-base-h">
-              Tebal Lantai Bawah U (m)
-            </label>
-            <input
-              id="u-base-h"
-              type="number"
-              step="0.1"
-              min="0.5"
-              className={css.input}
-              value={uBaseH}
-              onChange={(e) => setUBaseH(Number(e.target.value))}
-            />
-          </div>
+          <MeterInput id="u-total-w" label="Lebar Luar Total" min={2} value={uTotalW} onChange={setUTotalW} />
+          <MeterInput id="u-total-h" label="Panjang Luar Total" min={2} value={uTotalH} onChange={setUTotalH} />
+          <MeterInput id="u-left-w" label="Lebar Tiang Kiri" min={0.5} value={uLeftLegW} onChange={setULeftLegW} />
+          <MeterInput id="u-right-w" label="Lebar Tiang Kanan" min={0.5} value={uRightLegW} onChange={setURightLegW} />
+          <MeterInput id="u-base-h" label="Tebal Dasar U" min={0.5} value={uBaseH} onChange={setUBaseH} />
         </div>
       )}
 
       {type === "trapezoid" && (
         <div className={css.formGrid}>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="trap-bot">
-              Lebar Alas Bawah (m)
-            </label>
-            <input
-              id="trap-bot"
-              type="number"
-              step="0.1"
-              min="1"
-              className={css.input}
-              value={trapBottomW}
-              onChange={(e) => setTrapBottomW(Number(e.target.value))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="trap-top">
-              Lebar Sisi Atas (m)
-            </label>
-            <input
-              id="trap-top"
-              type="number"
-              step="0.1"
-              min="1"
-              className={css.input}
-              value={trapTopW}
-              onChange={(e) => setTrapTopW(Number(e.target.value))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="trap-h">
-              Panjang / Tinggi Tegak (m)
-            </label>
-            <input
-              id="trap-h"
-              type="number"
-              step="0.1"
-              min="1"
-              className={css.input}
-              value={trapH}
-              onChange={(e) => setTrapH(Number(e.target.value))}
-            />
-          </div>
-          <div className={css.field}>
-            <label className={css.label} htmlFor="trap-off">
-              Pergeseran Sisi Atas (m)
-            </label>
-            <input
-              id="trap-off"
-              type="number"
-              step="0.1"
-              className={css.input}
-              value={trapOffset}
-              onChange={(e) => setTrapOffset(Number(e.target.value))}
-            />
-          </div>
+          <MeterInput id="trap-bot" label="Lebar Alas Bawah" min={1} value={trapBottomW} onChange={setTrapBottomW} />
+          <MeterInput id="trap-top" label="Lebar Sisi Atas" min={1} value={trapTopW} onChange={setTrapTopW} />
+          <MeterInput id="trap-h" label="Panjang Tegak" min={1} value={trapH} onChange={setTrapH} />
+          <MeterInput id="trap-off" label="Pergeseran Sisi Atas" value={trapOffset} onChange={setTrapOffset} />
         </div>
       )}
 
       {error && (
-        <div className={css.badgeWarning} style={{ padding: "8px 12px", borderRadius: "10px" }}>
-          ⚠️ {error}
+        <div className={css.warningBox} role="alert">
+          <IconAlert size={17} />
+          <span>{error}</span>
         </div>
       )}
     </div>

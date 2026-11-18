@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { LayoutResult, LayoutTile } from "@/lib/paving/engine/types";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
+import { IconAlert, IconCollapse, IconExpand } from "./Icons";
 import css from "./PavingDesigner.module.css";
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
   geometry?: ProjectGeometry;
   tebalCm?: number;
   showKanstin?: boolean;
+  onSwitchTo2D?: () => void;
 }
 
 type CameraPreset = "iso" | "jalan" | "atas";
@@ -36,7 +38,7 @@ const CAMERA_PRESETS: Array<{ id: CameraPreset; label: string }> = [
   { id: "atas", label: "Tampak Atas" },
 ];
 
-/* Palet blok mengikuti palet produk pratinjau 2D: abu natural, merah, hitam. */
+/* Palet blok mengikuti palet produk pratinjau 2D Istana Block: abu natural, merah, hitam. */
 const ROLE_COLORS = ["#b5b4af", "#9c4a3a", "#2c2b29"];
 const CUT_COLOR = "#c6c3ba";
 const KANSTIN_COLOR = "#cdcac2";
@@ -48,12 +50,16 @@ function isWebGLAvailable(): boolean {
   if (typeof window === "undefined") return false;
   try {
     const canvas = document.createElement("canvas");
-    return Boolean(
+    const gl =
       window.WebGLRenderingContext &&
-        (canvas.getContext("webgl2") ||
-          canvas.getContext("webgl") ||
-          canvas.getContext("experimental-webgl")),
-    );
+      (canvas.getContext("webgl2") ||
+        canvas.getContext("webgl") ||
+        canvas.getContext("experimental-webgl"));
+    if (!gl) return false;
+    // Lepas konteks uji segera agar tidak menghabiskan kuota konteks GPU browser
+    const ext = (gl as WebGLRenderingContext).getExtension?.("WEBGL_lose_context");
+    ext?.loseContext();
+    return true;
   } catch {
     return false;
   }
@@ -147,16 +153,25 @@ function extrudeUp(shape: THREE.Shape, heightM: number): THREE.ExtrudeGeometry {
     steps: 1,
     curveSegments: 1,
   });
-  // Ekstrusi berjalan di +Z; putar agar berdiri di +Y dan duduk di lantai y = 0.
   geo.rotateX(-Math.PI / 2);
   return geo;
 }
 
-export function PavingDesigner3D({ layout, geometry, tebalCm = 6, showKanstin = true }: Props) {
+export function PavingDesigner3D({
+  layout,
+  geometry,
+  tebalCm = 6,
+  showKanstin = true,
+  onSwitchTo2D,
+}: Props) {
+  const wrapRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hasWebGL, setHasWebGL] = useState<boolean>(true);
+  const [renderError, setRenderError] = useState<string | null>(null);
+  const [contextLost, setContextLost] = useState<boolean>(false);
   const [activePreset, setActivePreset] = useState<CameraPreset>("iso");
   const [isSampleMode, setIsSampleMode] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   const presetRef = useRef<CameraPreset>("iso");
   const applyPresetRef = useRef<((preset: CameraPreset) => void) | null>(null);
@@ -165,19 +180,58 @@ export function PavingDesigner3D({ layout, geometry, tebalCm = 6, showKanstin = 
     if (!isWebGLAvailable()) setHasWebGL(false);
   }, []);
 
-  // Tombol kamera hanya menggeser kamera; scene tidak dibangun ulang.
   useEffect(() => {
     presetRef.current = activePreset;
     applyPresetRef.current?.(activePreset);
   }, [activePreset]);
 
   useEffect(() => {
+    const onFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    const el = wrapRef.current;
+    if (!el) return;
+    try {
+      if (!document.fullscreenElement && el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if (document.fullscreenElement && document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else {
+        setIsFullscreen((v) => !v);
+      }
+    } catch {
+      setIsFullscreen((v) => !v);
+    }
+  };
+
+  useEffect(() => {
     if (!hasWebGL || !containerRef.current) return;
+
+    setRenderError(null);
+    setContextLost(false);
 
     const container = containerRef.current;
     const width = container.clientWidth || 600;
-    const height = container.clientHeight || 440;
+    const height = container.clientHeight || 400;
     const tebalM = Math.max(0.02, (tebalCm || 6) / 100);
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: "high-performance",
+      });
+    } catch (err: any) {
+      setRenderError(
+        err?.message || "Konteks WebGL 3D tidak dapat diinisialisasi pada peramban ini.",
+      );
+      return;
+    }
 
     // 1. Batas lahan
     let minX = Infinity;
@@ -207,8 +261,6 @@ export function PavingDesigner3D({ layout, geometry, tebalCm = 6, showKanstin = 
     const spanX = Math.max(1, maxX - minX);
     const spanZ = Math.max(1, maxY - minY);
     const maxSpan = Math.max(spanX, spanZ);
-
-    // Bidang acuan (pasir/pemukaan) dibuat persegi dan selalu memuat lahan.
     const bedSize = maxSpan + Math.max(6, maxSpan * 0.6);
 
     // 2. Scene & kamera
@@ -223,11 +275,7 @@ export function PavingDesigner3D({ layout, geometry, tebalCm = 6, showKanstin = 
     camera.far = fitDist * 8;
     camera.updateProjectionMatrix();
 
-    // 3. Renderer
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      powerPreference: "high-performance",
-    });
+    // 3. Renderer setup
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.shadowMap.enabled = true;
@@ -241,7 +289,7 @@ export function PavingDesigner3D({ layout, geometry, tebalCm = 6, showKanstin = 
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.maxPolarAngle = Math.PI / 2 - 0.02;
-    controls.minDistance = fitRadius * 0.6;
+    controls.minDistance = fitRadius * 0.55;
     controls.maxDistance = fitDist * 2.6;
     controls.target.set(0, tebalM / 2, 0);
 
@@ -261,7 +309,7 @@ export function PavingDesigner3D({ layout, geometry, tebalCm = 6, showKanstin = 
     applyPreset(presetRef.current);
     applyPresetRef.current = applyPreset;
 
-    // 5. Pencahayaan netral, hangat, tanpa warna biru bawaan
+    // 5. Pencahayaan netral hangat
     scene.add(new THREE.HemisphereLight(0xffffff, 0xcfc8ba, 0.85));
 
     const sun = new THREE.DirectionalLight(0xffffff, 1.25);
@@ -305,184 +353,207 @@ export function PavingDesigner3D({ layout, geometry, tebalCm = 6, showKanstin = 
     setIsSampleMode(needsSampling);
     const fullToRender = needsSampling ? fullTiles.slice(0, MAX_3D_BLOCKS) : fullTiles;
 
-    // 7a. Blok utuh — satu InstancedMesh per bentuk keping.
-    // Satu motif bisa memuat lebih dari satu ukuran keping (mis. anyaman dan
-    // tulang ikan), jadi blok dikelompokkan per bentuk agar tidak saling menimpa.
-    if (fullToRender.length > 0) {
-      const groups = new Map<string, { representative: PlanPoint[]; tiles: LayoutTile[] }>();
+    try {
+      // 7a. Blok utuh — dikelompokkan per bentuk agar motif hexagon/diagonal akurat
+      if (fullToRender.length > 0) {
+        const groups = new Map<string, { representative: PlanPoint[]; tiles: LayoutTile[] }>();
 
-      for (const tile of fullToRender) {
-        const ring = normalizeRing(tile.polygon);
-        const b = bboxOf(ring);
-        const cx = (b.minX + b.maxX) / 2;
-        const cy = (b.minY + b.maxY) / 2;
-        // Kunci diurutkan supaya keping yang identik tetap satu kelompok
-        // walaupun titik awalnya berbeda; urutan asli tetap dipakai untuk bentuk.
-        const key = ring
-          .map((p) => `${Math.round((p.x - cx) * 1000)}:${Math.round((p.y - cy) * 1000)}`)
-          .sort()
-          .join("|");
-        const group = groups.get(key);
-        if (group) group.tiles.push(tile);
-        else groups.set(key, { representative: ring, tiles: [tile] });
-      }
+        for (const tile of fullToRender) {
+          const ring = normalizeRing(tile.polygon);
+          if (ring.length < 3 || Math.abs(signedArea(ring)) < 1e-6) continue;
 
-      for (const { representative, tiles } of groups.values()) {
-        const repBox = bboxOf(representative);
-        const repCx = (repBox.minX + repBox.maxX) / 2;
-        const repCy = (repBox.minY + repBox.maxY) / 2;
-        const rect = axisAlignedRect(representative);
-
-        let geometry3d: THREE.BufferGeometry;
-        let yBase: number;
-
-        if (rect) {
-          geometry3d = new THREE.BoxGeometry(
-            Math.max(0.02, rect.w - JOINT_GAP_M),
-            tebalM,
-            Math.max(0.02, rect.l - JOINT_GAP_M),
-          );
-          yBase = tebalM / 2;
-        } else {
-          geometry3d = extrudeUp(toPlanShape(representative, repCx, repCy), tebalM);
-          yBase = 0;
+          const b = bboxOf(ring);
+          const cx = (b.minX + b.maxX) / 2;
+          const cy = (b.minY + b.maxY) / 2;
+          const key = ring
+            .map((p) => `${Math.round((p.x - cx) * 1000)}:${Math.round((p.y - cy) * 1000)}`)
+            .sort()
+            .join("|");
+          const group = groups.get(key);
+          if (group) group.tiles.push(tile);
+          else groups.set(key, { representative: ring, tiles: [tile] });
         }
 
-        const material = new THREE.MeshStandardMaterial({
-          color: 0xffffff,
-          roughness: 0.86,
+        for (const { representative, tiles } of groups.values()) {
+          const repBox = bboxOf(representative);
+          const repCx = (repBox.minX + repBox.maxX) / 2;
+          const repCy = (repBox.minY + repBox.maxY) / 2;
+          const rect = axisAlignedRect(representative);
+
+          let geometry3d: THREE.BufferGeometry;
+          let yBase: number;
+
+          if (rect) {
+            geometry3d = new THREE.BoxGeometry(
+              Math.max(0.02, rect.w - JOINT_GAP_M),
+              tebalM,
+              Math.max(0.02, rect.l - JOINT_GAP_M),
+            );
+            yBase = tebalM / 2;
+          } else {
+            geometry3d = extrudeUp(toPlanShape(representative, repCx, repCy), tebalM);
+            yBase = 0;
+          }
+
+          const material = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            roughness: 0.86,
+            metalness: 0,
+          });
+
+          const instanced = new THREE.InstancedMesh(geometry3d, material, tiles.length);
+          instanced.castShadow = true;
+          instanced.receiveShadow = true;
+
+          const dummy = new THREE.Object3D();
+          const color = new THREE.Color();
+
+          tiles.forEach((tile, i) => {
+            const b = bboxOf(tile.polygon);
+            dummy.position.set(
+              (b.minX + b.maxX) / 2 - centerX,
+              yBase,
+              (b.minY + b.maxY) / 2 - centerZ,
+            );
+            dummy.rotation.set(0, 0, 0);
+            dummy.scale.set(1, 1, 1);
+            dummy.updateMatrix();
+            instanced.setMatrixAt(i, dummy.matrix);
+            color.set(ROLE_COLORS[tile.role] ?? ROLE_COLORS[0]);
+            instanced.setColorAt(i, color);
+          });
+
+          instanced.instanceMatrix.needsUpdate = true;
+          if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true;
+          pavingGroup.add(instanced);
+        }
+      }
+
+      // 7b. Potongan tepi — bentuk persis hasil clipping
+      if (!needsSampling && cutTiles.length > 0) {
+        const cutMaterial = new THREE.MeshStandardMaterial({
+          color: CUT_COLOR,
+          roughness: 0.9,
           metalness: 0,
         });
 
-        const instanced = new THREE.InstancedMesh(geometry3d, material, tiles.length);
-        instanced.castShadow = true;
-        instanced.receiveShadow = true;
-
-        const dummy = new THREE.Object3D();
-        const color = new THREE.Color();
-
-        tiles.forEach((tile, i) => {
-          const b = bboxOf(tile.polygon);
-          dummy.position.set(
-            (b.minX + b.maxX) / 2 - centerX,
-            yBase,
-            (b.minY + b.maxY) / 2 - centerZ,
-          );
-          dummy.rotation.set(0, 0, 0);
-          dummy.scale.set(1, 1, 1);
-          dummy.updateMatrix();
-          instanced.setMatrixAt(i, dummy.matrix);
-          color.set(ROLE_COLORS[tile.role] ?? ROLE_COLORS[0]);
-          instanced.setColorAt(i, color);
-        });
-
-        instanced.instanceMatrix.needsUpdate = true;
-        if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true;
-        pavingGroup.add(instanced);
-      }
-    }
-
-    // 7b. Potongan tepi — bentuk persis hasil clipping, posisi sama dengan blok utuh
-    if (!needsSampling && cutTiles.length > 0) {
-      const cutMaterial = new THREE.MeshStandardMaterial({
-        color: CUT_COLOR,
-        roughness: 0.9,
-        metalness: 0,
-      });
-
-      for (const cut of cutTiles) {
-        const geometry3d = extrudeUp(toPlanShape(normalizeRing(cut.polygon), 0, 0), tebalM);
-        const mesh = new THREE.Mesh(geometry3d, cutMaterial);
-        mesh.position.set(-centerX, 0, -centerZ);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        pavingGroup.add(mesh);
-      }
-    }
-
-    // 7c. Kanstin mengikuti garis batas lahan (bukan kotak pembungkus),
-    // supaya lahan bentuk L/U tidak tertutup kanstin di area kosong.
-    if (showKanstin) {
-      const curbWidth = 0.12;
-      const curbHeight = tebalM + 0.06;
-      const curbY = curbHeight / 2 - 0.01;
-      const curbMaterial = new THREE.MeshStandardMaterial({
-        color: KANSTIN_COLOR,
-        roughness: 0.9,
-        metalness: 0,
-      });
-
-      const rings: Array<{ points: PlanPoint[]; isExterior: boolean }> = [];
-
-      if (geometry?.geometry?.length) {
-        for (const polygon of geometry.geometry) {
-          polygon.forEach((ring, index) => {
-            if (ring.length < 3) return;
-            rings.push({
-              points: ring.map(([x, y]) => ({ x, y })),
-              isExterior: index === 0,
-            });
-          });
-        }
-      }
-
-      if (rings.length === 0) {
-        rings.push({
-          points: [
-            { x: minX, y: minY },
-            { x: maxX, y: minY },
-            { x: maxX, y: maxY },
-            { x: minX, y: maxY },
-          ],
-          isExterior: true,
-        });
-      }
-
-      for (const { points, isExterior } of rings) {
-        const ccw = signedArea(points) > 0;
-        const flipNormal = isExterior ? !ccw : ccw;
-
-        for (let i = 0; i < points.length; i++) {
-          const a = points[i];
-          const b = points[(i + 1) % points.length];
-          const dx = b.x - a.x;
-          const dy = b.y - a.y;
-          const len = Math.hypot(dx, dy);
-          if (len < 1e-4) continue;
-
-          // Normal luar untuk ring CCW adalah (dy, -dx); ring lubang dibalik.
-          const nx = (flipNormal ? -dy : dy) / len;
-          const ny = (flipNormal ? dx : -dx) / len;
-
-          const mesh = new THREE.Mesh(
-            new THREE.BoxGeometry(len + curbWidth, curbHeight, curbWidth),
-            curbMaterial,
-          );
-          mesh.position.set(
-            (a.x + b.x) / 2 + (nx * curbWidth) / 2 - centerX,
-            curbY,
-            (a.y + b.y) / 2 + (ny * curbWidth) / 2 - centerZ,
-          );
-          mesh.rotation.y = -Math.atan2(dy, dx);
+        for (const cut of cutTiles) {
+          const ring = normalizeRing(cut.polygon);
+          if (ring.length < 3 || Math.abs(signedArea(ring)) < 1e-6) continue;
+          const geometry3d = extrudeUp(toPlanShape(ring, 0, 0), tebalM);
+          const mesh = new THREE.Mesh(geometry3d, cutMaterial);
+          mesh.position.set(-centerX, 0, -centerZ);
           mesh.castShadow = true;
           mesh.receiveShadow = true;
           pavingGroup.add(mesh);
         }
       }
+
+      // 7c. Kanstin mengikuti batas poligon lahan
+      if (showKanstin) {
+        const curbWidth = 0.12;
+        const curbHeight = tebalM + 0.06;
+        const curbY = curbHeight / 2 - 0.01;
+        const curbMaterial = new THREE.MeshStandardMaterial({
+          color: KANSTIN_COLOR,
+          roughness: 0.9,
+          metalness: 0,
+        });
+
+        const rings: Array<{ points: PlanPoint[]; isExterior: boolean }> = [];
+
+        if (geometry?.geometry?.length) {
+          for (const polygon of geometry.geometry) {
+            polygon.forEach((ring, index) => {
+              if (ring.length < 3) return;
+              rings.push({
+                points: ring.map(([x, y]) => ({ x, y })),
+                isExterior: index === 0,
+              });
+            });
+          }
+        }
+
+        if (rings.length === 0) {
+          rings.push({
+            points: [
+              { x: minX, y: minY },
+              { x: maxX, y: minY },
+              { x: maxX, y: maxY },
+              { x: minX, y: maxY },
+            ],
+            isExterior: true,
+          });
+        }
+
+        for (const { points, isExterior } of rings) {
+          const clean = normalizeRing(points);
+          if (clean.length < 3) continue;
+          const ccw = signedArea(clean) > 0;
+          const flipNormal = isExterior ? !ccw : ccw;
+
+          for (let i = 0; i < clean.length; i++) {
+            const a = clean[i];
+            const b = clean[(i + 1) % clean.length];
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const len = Math.hypot(dx, dy);
+            if (len < 1e-4) continue;
+
+            const nx = (flipNormal ? -dy : dy) / len;
+            const ny = (flipNormal ? dx : -dx) / len;
+
+            const mesh = new THREE.Mesh(
+              new THREE.BoxGeometry(len + curbWidth, curbHeight, curbWidth),
+              curbMaterial,
+            );
+            mesh.position.set(
+              (a.x + b.x) / 2 + (nx * curbWidth) / 2 - centerX,
+              curbY,
+              (a.y + b.y) / 2 + (ny * curbWidth) / 2 - centerZ,
+            );
+            mesh.rotation.y = -Math.atan2(dy, dx);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            pavingGroup.add(mesh);
+          }
+        }
+      }
+    } catch (err: any) {
+      setRenderError(err?.message || "Gagal menyusun geometri 3D untuk bentuk lahan ini.");
     }
 
-    // 8. Render loop
+    // 8. Penanganan kehilangan konteks WebGL (mis. GPU reset / tab latar belakang)
     let isDisposed = false;
+    let isContextLost = false;
     let frameId = 0;
+
+    const onContextLost = (e: Event) => {
+      e.preventDefault();
+      isContextLost = true;
+      setContextLost(true);
+      cancelAnimationFrame(frameId);
+    };
+
+    const onContextRestored = () => {
+      isContextLost = false;
+      setContextLost(false);
+      if (!isDisposed) animate();
+    };
+
+    renderer.domElement.addEventListener("webglcontextlost", onContextLost, false);
+    renderer.domElement.addEventListener("webglcontextrestored", onContextRestored, false);
+
+    // 9. Render loop
     const animate = () => {
-      if (isDisposed) return;
+      if (isDisposed || isContextLost) return;
       frameId = requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     };
     animate();
 
-    // 9. Ukuran mengikuti panel, bukan hanya jendela
+    // 10. Ukuran mengikuti kontainer
     const resize = () => {
       if (isDisposed || !containerRef.current) return;
       const w = containerRef.current.clientWidth || width;
@@ -498,20 +569,28 @@ export function PavingDesigner3D({ layout, geometry, tebalCm = 6, showKanstin = 
     observer?.observe(container);
     window.addEventListener("resize", resize);
 
-    // 10. Cleanup
+    // 11. Cleanup bersih tanpa bocor memori
     return () => {
       isDisposed = true;
       applyPresetRef.current = null;
       observer?.disconnect();
       window.removeEventListener("resize", resize);
+      renderer.domElement.removeEventListener("webglcontextlost", onContextLost);
+      renderer.domElement.removeEventListener("webglcontextrestored", onContextRestored);
       cancelAnimationFrame(frameId);
       controls.dispose();
 
+      const disposedMaterials = new Set<THREE.Material>();
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
           obj.geometry?.dispose();
           const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
-          materials.forEach((material) => material?.dispose());
+          for (const mat of materials) {
+            if (mat && !disposedMaterials.has(mat)) {
+              disposedMaterials.add(mat);
+              mat.dispose();
+            }
+          }
         }
       });
 
@@ -522,53 +601,86 @@ export function PavingDesigner3D({ layout, geometry, tebalCm = 6, showKanstin = 
     };
   }, [layout, geometry, tebalCm, showKanstin, hasWebGL]);
 
-  if (!hasWebGL) {
+  if (!hasWebGL || renderError) {
     return (
-      <div className={css.panel}>
-        <div className={css.panelHeader}>
-          <h3 className={css.panelTitle}>Visualisasi 3D Lahan</h3>
+      <div className={css.errorCard} role="alert">
+        <div className={css.errorCardHead}>
+          <span className={css.errorIconWrap}>
+            <IconAlert size={20} />
+          </span>
+          <div>
+            <strong className={css.errorCardTitle}>Pratinjau 3D tidak tersedia</strong>
+            <p className={css.errorCardDesc}>
+              {renderError ||
+                "Peramban atau perangkat ini tidak mengaktifkan akselerasi WebGL 3D. Anda tetap bisa melihat denah akurat dan estimasi penuh pada tampilan 2D."}
+            </p>
+          </div>
         </div>
-        <div className={css.errorAlert}>
-          <strong>WebGL tidak aktif.</strong> Peramban atau perangkat ini tidak mendukung
-          akselerasi grafis 3D. Silakan gunakan tab <strong>2D Denah Tampak Atas</strong> — jumlah
-          blok, potongan, dan estimasi material tetap sama.
-        </div>
+        {onSwitchTo2D && (
+          <div className={css.errorCardActions}>
+            <button type="button" className="btn btn-blue btn-sm" onClick={onSwitchTo2D}>
+              Buka Denah 2D
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className={css.panel}>
-      <div className={css.panelHeader}>
-        <div>
-          <h3 className={css.panelTitle}>Visualisasi 3D Lahan</h3>
-          <span className={css.statLabel}>Seret untuk memutar · gulir untuk zoom</span>
+    <div className={css.stack}>
+      {isSampleMode && (
+        <div className={css.warningBox}>
+          <IconAlert size={17} />
+          <span>
+            <strong>Mode sampel 3D:</strong> lahan melebihi 10.000 keping sehingga tampilan 3D
+            menampilkan sebagian zona demi kelancaran perangkat. Estimasi material tetap penuh untuk
+            seluruh lahan.
+          </span>
         </div>
-        <div className={css.previewTools} role="group" aria-label="Sudut kamera 3D">
+      )}
+
+      {contextLost && (
+        <div className={css.warningBox} role="status">
+          <IconAlert size={17} />
+          <span>
+            Konteks grafis 3D sempat dijeda oleh peramban. Coba kembali ke tampilan 2D atau muat
+            ulang bila layar tidak pulih.
+          </span>
+        </div>
+      )}
+
+      <div
+        ref={wrapRef}
+        className={`${css.stage3dWrap} ${isFullscreen ? css.stage3dFullscreen : ""}`}
+      >
+        <div className={css.overlayTop3D} role="group" aria-label="Kontrol kamera 3D">
           {CAMERA_PRESETS.map((preset) => (
             <button
               key={preset.id}
               type="button"
-              className={`${css.toggleBtn} ${activePreset === preset.id ? css.toggleActive : ""}`}
+              className={`${css.presetBtn3D} ${activePreset === preset.id ? css.presetBtn3DActive : ""}`}
               aria-pressed={activePreset === preset.id}
               onClick={() => setActivePreset(preset.id)}
             >
               {preset.label}
             </button>
           ))}
+          <button
+            type="button"
+            className={css.fullscreenBtn3D}
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? "Keluar layar penuh" : "Buka layar penuh"}
+          >
+            {isFullscreen ? <IconCollapse size={14} /> : <IconExpand size={14} />}
+            <span>{isFullscreen ? "Tutup" : "Penuh"}</span>
+          </button>
         </div>
+
+        <div ref={containerRef} className={css.canvas3D} aria-label="Pratinjau paving tiga dimensi" />
+
+        <div className={css.hint3D}>Seret untuk putar · gulir/cubit untuk zoom</div>
       </div>
-
-      {isSampleMode && (
-        <div className={css.warningList}>
-          <p className={css.warningText}>
-            ⚡ <strong>Mode sampel 3D:</strong> lahan melebihi 10.000 keping, jadi yang digambar
-            hanya sebagian zona. Perhitungan material di panel bawah tetap penuh untuk seluruh lahan.
-          </p>
-        </div>
-      )}
-
-      <div ref={containerRef} className={css.canvas3D} aria-label="Pratinjau paving tiga dimensi" />
 
       <div className={css.legendRow}>
         <span className={css.legendItem}>
