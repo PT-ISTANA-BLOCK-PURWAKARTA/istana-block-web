@@ -13,6 +13,7 @@ interface Props {
   geometry?: ProjectGeometry;
   tebalCm?: number;
   showKanstin?: boolean;
+  roleColors?: string[];
   onSwitchTo2D?: () => void;
 }
 
@@ -38,8 +39,8 @@ const CAMERA_PRESETS: Array<{ id: CameraPreset; label: string }> = [
   { id: "atas", label: "Tampak Atas" },
 ];
 
-/* Palet blok mengikuti palet produk pratinjau 2D Istana Block: abu natural, merah, hitam. */
-const ROLE_COLORS = ["#b5b4af", "#9c4a3a", "#2c2b29"];
+/* Palet blok default mengikuti palet produk pratinjau 2D Istana Block: abu natural, merah, hitam. */
+const DEFAULT_ROLE_COLORS = ["#b5b4af", "#9c4a3a", "#2c2b29"];
 const CUT_COLOR = "#c6c3ba";
 const KANSTIN_COLOR = "#cdcac2";
 const BED_COLOR = "#d8d2c6";
@@ -162,8 +163,12 @@ export function PavingDesigner3D({
   geometry,
   tebalCm = 6,
   showKanstin = true,
+  roleColors,
   onSwitchTo2D,
 }: Props) {
+  const palette = roleColors && roleColors.length > 0 ? roleColors : DEFAULT_ROLE_COLORS;
+  const paletteKey = palette.join(",");
+  const uniquePalette = Array.from(new Set(palette));
   const wrapRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hasWebGL, setHasWebGL] = useState<boolean>(true);
@@ -419,7 +424,7 @@ export function PavingDesigner3D({
             dummy.scale.set(1, 1, 1);
             dummy.updateMatrix();
             instanced.setMatrixAt(i, dummy.matrix);
-            color.set(ROLE_COLORS[tile.role] ?? ROLE_COLORS[0]);
+            color.set(palette[tile.role] ?? palette[0]);
             instanced.setColorAt(i, color);
           });
 
@@ -599,7 +604,7 @@ export function PavingDesigner3D({
         container.removeChild(renderer.domElement);
       }
     };
-  }, [layout, geometry, tebalCm, showKanstin, hasWebGL]);
+  }, [layout, geometry, tebalCm, showKanstin, hasWebGL, paletteKey]);
 
   if (!hasWebGL || renderError) {
     return (
@@ -685,7 +690,7 @@ export function PavingDesigner3D({
       <div className={css.legendRow}>
         <span className={css.legendItem}>
           <span className={css.swatchStack}>
-            {ROLE_COLORS.map((color) => (
+            {uniquePalette.map((color) => (
               <span key={color} className={css.legendSwatch} style={{ background: color }} />
             ))}
           </span>

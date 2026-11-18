@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
-import PavingDesigner from "@/components/paving-designer";
 import { PatternCalculator } from "@/components/PatternCalculator";
 import { getEnv } from "@/db";
 import { telLink, waLink } from "@/lib/format";
@@ -108,19 +107,6 @@ export default async function PolaPavingPage({ searchParams }: Props) {
         </header>
 
         <PatternCalculator whatsapp={s.whatsapp} initialQuery={query} />
-
-        <div style={{ marginTop: 48 }}>
-          <PavingDesigner whatsapp={s.whatsapp} />
-          <div className="callout" data-pp-noprint style={{ maxWidth: "none", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px 20px" }}>
-            <div style={{ flex: "1 1 320px" }}>
-              <strong>Butuh panduan mengukur lahan atau impor KML/GeoJSON?</strong>
-              <p>Pelajari cara menggambar bidang tanah di grid, peta satelit, dan membaca rincian potongan tepi.</p>
-            </div>
-            <Link href="/panduan-desain-paving" className="btn btn-ghost btn-sm">
-              Baca Panduan Desain Lahan →
-            </Link>
-          </div>
-        </div>
 
         <section className="duo" data-pp-noprint style={{ paddingTop: 56 }}>
           <div className="stack faq" style={{ flex: "1 1 520px", minWidth: 0, gap: 12 }}>

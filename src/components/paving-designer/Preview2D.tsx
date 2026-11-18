@@ -8,16 +8,19 @@ import css from "./PavingDesigner.module.css";
 interface Props {
   geometry: ProjectGeometry;
   layout: LayoutResult;
+  roleColors?: string[];
 }
 
 /** Warna blok per peran (abu natural, merah, hitam) mengikuti palet produk Istana Block. */
-const ROLE_COLORS = ["#B5B4AF", "#9C4A3A", "#2C2B29"];
+const DEFAULT_ROLE_COLORS = ["#B5B4AF", "#9C4A3A", "#2C2B29"];
 const JOINT_COLOR = "#ffffff";
 const CUT_EDGE_COLOR = "#d63f12";
 const CUT_HIGHLIGHT_FILL = "#ffe6dc";
 
-export function Preview2D({ geometry, layout }: Props) {
+export function Preview2D({ geometry, layout, roleColors }: Props) {
   const [showCutsOnly, setShowCutsOnly] = useState(false);
+  const palette = roleColors && roleColors.length > 0 ? roleColors : DEFAULT_ROLE_COLORS;
+  const uniquePalette = Array.from(new Set(palette));
 
   const { width, viewBox, siteW, siteH, aspect } = useMemo(() => {
     const b = geometry.metrics.bounds;
@@ -79,7 +82,7 @@ export function Preview2D({ geometry, layout }: Props) {
               const isCut = tile.status === "partial";
               if (showCutsOnly && !isCut) return null;
 
-              const baseFill = ROLE_COLORS[tile.role] || ROLE_COLORS[0];
+              const baseFill = palette[tile.role] || palette[0];
               const fill = isCut && showCutsOnly ? CUT_HIGHLIGHT_FILL : baseFill;
               const stroke = isCut ? CUT_EDGE_COLOR : JOINT_COLOR;
               const strokeWidth = showCutsOnly
@@ -132,7 +135,7 @@ export function Preview2D({ geometry, layout }: Props) {
       <div className={css.legendRow}>
         <span className={css.legendItem}>
           <span className={css.swatchStack}>
-            {ROLE_COLORS.map((color) => (
+            {uniquePalette.map((color) => (
               <span key={color} className={css.legendSwatch} style={{ background: color }} />
             ))}
           </span>
@@ -141,7 +144,7 @@ export function Preview2D({ geometry, layout }: Props) {
         <span className={css.legendItem}>
           <span
             className={css.legendSwatch}
-            style={{ background: ROLE_COLORS[0], border: "1.5px solid #d63f12" }}
+            style={{ background: palette[0], border: "1.5px solid #d63f12" }}
           />
           Potongan tepi ({layout.metrics.partialCount.toLocaleString("id-ID")})
         </span>

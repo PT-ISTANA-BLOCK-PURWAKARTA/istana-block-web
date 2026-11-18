@@ -5,6 +5,9 @@ import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "
 import type { ReactNode } from "react";
 import { waLink } from "@/lib/format";
 import { PAVING_CATALOG } from "@/lib/paving/catalog";
+import type { LayoutResult, MaterialEstimate, PatternConfig } from "@/lib/paving/engine/types";
+import type { ProjectGeometry } from "@/lib/paving/geometry/types";
+import { DesignerErrorBoundary, retryImport } from "./paving-designer/DesignerErrorBoundary";
 import css from "./PatternCalculator.module.css";
 
 const Paving3DView = dynamic(() => import("./Paving3DView"), {
@@ -15,6 +18,30 @@ const Paving3DView = dynamic(() => import("./Paving3DView"), {
     </div>
   ),
 });
+
+const DynamicSiteInput = dynamic(
+  () => retryImport(() => import("./paving-designer/DynamicSiteInput").then((mod) => mod.DynamicSiteInput)),
+  {
+    ssr: false,
+    loading: () => (
+      <div className={css.loading3d} role="status">
+        Menyiapkan masukan lahan dinamis...
+      </div>
+    ),
+  },
+);
+
+const DynamicSitePreview = dynamic(
+  () => retryImport(() => import("./paving-designer/DynamicSitePreview").then((mod) => mod.DynamicSitePreview)),
+  {
+    ssr: false,
+    loading: () => (
+      <div className={css.loading3d} role="status">
+        Menyiapkan pratinjau lahan dinamis...
+      </div>
+    ),
+  },
+);
 
 /* =====================================================================
    Data: warna, produk, motif
@@ -1075,6 +1102,12 @@ function Swatch({ c }: { c: ColorId }) {
 }
 
 export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string; initialQuery?: Query }) {
+  const initialDynCode = typeof initialQuery?.d === "string" ? initialQuery.d : "";
+  const [calcMode, setCalcMode] = useState<"tetap" | "dinamis">(initialDynCode ? "dinamis" : "tetap");
+  const [dynBridge, setDynBridge] = useState<typeof import("@/lib/paving/dynamic-bridge") | null>(null);
+  const [dynGeom, setDynGeom] = useState<ProjectGeometry | null>(null);
+  const [dynRot, setDynRot] = useState<number>(0);
+
   const [st, setSt] = useState<CalcState>(() => decodeState(initialQuery ?? {}));
   const [shareUrl, setShareUrl] = useState("");
   const [status, setStatus] = useState("");
@@ -1085,12 +1118,73 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   // Tanpa initialQuery dari server: pulihkan pilihan dari URL setelah dimuat.
   useEffect(() => {
     if (initialQuery) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("d")) setCalcMode("dinamis");
     const q: Query = {};
-    new URLSearchParams(window.location.search).forEach((v, k) => {
+    params.forEach((v, k) => {
       q[k] = v;
     });
     if (URL_KEYS.some((k) => k in q)) setSt(decodeState(q));
   }, [initialQuery]);
+
+  // Muat modul engine lahan dinamis hanya saat pengguna membuka tab Lahan Dinamis.
+  useEffect(() => {
+    if (calcMode !== "dinamis" || dynBridge) return;
+    let active = true;
+    retryImport(() => import("@/lib/paving/dynamic-bridge"))
+      .then((mod) => {
+        if (!active) return;
+        setDynBridge(mod);
+        setDynGeom((prev) => {
+          if (prev) return prev;
+          const code =
+            initialDynCode ||
+            (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("d") ?? "" : "");
+          if (code) {
+            try {
+              const decoded = mod.decodeShareStateFromBase64(code);
+              setSt((s) => ({
+                ...s,
+                jenis: decoded.cfg.productId,
+                motif: decoded.cfg.motifId,
+                cad: CAD_OPTIONS.includes(decoded.cfg.reservePercent as (typeof CAD_OPTIONS)[number])
+                  ? decoded.cfg.reservePercent
+                  : s.cad,
+              }));
+              setDynRot(decoded.cfg.rotationDeg ?? 0);
+              if (decoded.geom.kind === "preset") {
+                const p = decoded.geom.params;
+                if (decoded.geom.preset === "l-shape") {
+                  return mod.createLShapePreset(p.totalW ?? 10, p.totalH ?? 8, p.legW ?? 4, p.legH ?? 4);
+                }
+                if (decoded.geom.preset === "u-shape") {
+                  return mod.createUShapePreset(
+                    p.totalW ?? 12,
+                    p.totalH ?? 8,
+                    p.leftLegW ?? 3,
+                    p.rightLegW ?? 3,
+                    p.baseH ?? 3,
+                  );
+                }
+                if (decoded.geom.preset === "trapezoid") {
+                  return mod.createTrapezoidPreset(p.bottomW ?? 10, p.topW ?? 6, p.height ?? 5, p.offset ?? 2);
+                }
+                return mod.createRectanglePreset(p.lengthM ?? 10, p.widthM ?? 5);
+              }
+            } catch {
+              /* kode tidak valid: jatuh ke lahan persegi default */
+            }
+          }
+          return mod.createRectanglePreset(10, 5);
+        });
+      })
+      .catch(() => {
+        /* ditangani jika user mencoba ulang */
+      });
+    return () => {
+      active = false;
+    };
+  }, [calcMode, dynBridge, initialDynCode]);
 
   // Simpan pilihan ke query URL (tautan bisa dibagikan). Ditunda sedikit karena Safari membatasi replaceState.
   useEffect(() => {
@@ -1159,21 +1253,132 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const colors = effectiveColors(st);
   const colorKey = colors.join("");
   const colors3D = useMemo(() => colorKey.split("").filter(isColor), [colorKey]);
+  const roleColorsHex = useMemo(() => colors.map((c) => COLORS[c].hex), [colors]);
   const motif3D = useMemo(() => ({ id: m.id, name: m.name, rot: m.rot }), [m.id, m.name, m.rot]);
   const unit3D = useMemo(() => unitOf(st.jenis, m.id), [st.jenis, m.id]);
   const thumbKey = st.warna.map((c) => (P.colors.includes(c) ? c : P.colors[0])).join("");
   const r = useMemo(() => compute(st), [st]);
   const lines = useMemo(() => detailLines(st, r), [st, r]);
   const has = r.area > 0;
-  const waHref = waLink(whatsapp, waMessage(lines, shareUrl));
   const dupColors = new Set(colors).size < colors.length;
   const [vw, vh] = P.view;
   const tiles3D = useMemo(
-    () => (view3d ? layoutTiles(unit3D, P.shape, vw, vh, m.rot ?? 0) : []),
-    [view3d, unit3D, P.shape, vw, vh, m.rot],
+    () => (calcMode === "tetap" && view3d ? layoutTiles(unit3D, P.shape, vw, vh, m.rot ?? 0) : []),
+    [calcMode, view3d, unit3D, P.shape, vw, vh, m.rot],
   );
   const shareText = r.auto.map((x) => `${COLORS[x.c].name} ${fmtPct(x.share)}`).join(", ");
   const previewLabel = `Pratinjau tampak atas motif ${m.name}, paving ${P.name} ${P.size}, ${shareText}. Potongan area ${fmt(vw / 100)} × ${fmt(vh / 100)} meter dengan skala sebenarnya.`;
+
+  // Perhitungan mode Lahan Dinamis (memakai jenis, tebal, motif, warna, cadangan & pelengkap yang sama)
+  const dynConfig: PatternConfig = useMemo(
+    () => ({
+      productId: st.jenis,
+      motifId: m.id,
+      thicknessM: st.tebal / 100,
+      reservePercent: st.cad,
+      rotationDeg: dynRot,
+      originM: { x: 0, y: 0 },
+    }),
+    [st.jenis, m.id, st.tebal, st.cad, dynRot],
+  );
+
+  const dynResult: { layout: LayoutResult | null; estimate: MaterialEstimate | null; error: string | null } = useMemo(() => {
+    if (calcMode !== "dinamis" || !dynBridge || !dynGeom) {
+      return { layout: null, estimate: null, error: null };
+    }
+    try {
+      const lay = dynBridge.generateLayout(dynGeom, dynConfig);
+      const est = dynBridge.calculateMaterialEstimate(lay, dynConfig, {
+        perimeterM: dynGeom.metrics.perimeterM,
+        includeAbuBatu: st.abu,
+        includeBaseCourse: st.bc,
+      });
+      return { layout: lay, estimate: est, error: null };
+    } catch (err: any) {
+      return { layout: null, estimate: null, error: err?.message || "Gagal memproses layout lahan." };
+    }
+  }, [calcMode, dynBridge, dynGeom, dynConfig, st.abu, st.bc]);
+
+  const dynArea = dynGeom?.metrics.areaM2 ?? 0;
+  const dynPerim = dynGeom?.metrics.perimeterM ?? 0;
+  const dynEstimate = dynResult.estimate;
+  const dynTotal = dynEstimate?.recommendedPurchaseUnits ?? 0;
+  const dynHas = Boolean(dynGeom && dynEstimate);
+
+  const dynKanstin = useMemo(() => {
+    const manualKp = parseNum(st.kp);
+    const auto = !(manualKp > 0);
+    const len = auto ? dynPerim : manualKp;
+    const pcs = len > 0 ? Math.ceil(len / (st.ks / 100)) : 0;
+    return { len, pcs, auto };
+  }, [st.kp, st.ks, dynPerim]);
+
+  const dynPerColor = useMemo(() => {
+    if (!dynTotal) return r.shares.map((x) => ({ c: x.c, share: x.share, pcs: 0 }));
+    return r.shares.map((x) => ({ c: x.c, share: x.share, pcs: Math.ceil(dynTotal * x.share) }));
+  }, [r.shares, dynTotal]);
+
+  const dynShareUrl = useMemo(() => {
+    if (calcMode !== "dinamis" || !dynBridge || !dynGeom) return shareUrl;
+    const base =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${window.location.pathname}`
+        : "https://istanablock.com/pola-paving";
+    return dynBridge.buildShareUrl(base, {
+      v: 1,
+      engineVersion: "1.0.0",
+      geom: {
+        kind: "preset",
+        preset: "rectangle",
+        params: {
+          lengthM: Math.max(0.5, Math.round((dynGeom.metrics.bounds.maxX - dynGeom.metrics.bounds.minX) * 10) / 10),
+          widthM: Math.max(0.5, Math.round((dynGeom.metrics.bounds.maxY - dynGeom.metrics.bounds.minY) * 10) / 10),
+        },
+      },
+      cfg: {
+        productId: st.jenis,
+        motifId: m.id,
+        reservePercent: st.cad,
+        rotationDeg: dynRot,
+      },
+    });
+  }, [calcMode, dynBridge, dynGeom, shareUrl, st.jenis, m.id, st.cad, dynRot]);
+
+  const dynLines = useMemo(() => {
+    if (!dynGeom || !dynEstimate) return [];
+    const out: string[] = [
+      `Mode: Lahan Dinamis (${dynGeom.source.toUpperCase()})`,
+      `Produk: ${P.name} ${P.size}, tebal ${st.tebal} cm`,
+      `Motif: ${m.name} (rotasi ${dynRot}°)` ,
+      `Luas lahan: ${fmt(dynArea)} m² · keliling ${fmt(dynPerim)} m`,
+      `Blok utuh: ${fmt(dynEstimate.fullUnits)} pcs`,
+      `Potongan tepi: ${fmt(dynEstimate.cutInstalledPieces)} keping (bahan potong ±${fmt(dynEstimate.estimatedStockUnitsForCuts)} pcs)`,
+      `Cadangan: ${st.cad}% (${fmt(dynEstimate.reserveUnits)} pcs)`,
+      `Rekomendasi total: ${fmt(dynTotal)} pcs`,
+    ];
+    if (dynPerColor.length > 1) {
+      out.push(`Komposisi warna: ${dynPerColor.map((x) => `${COLORS[x.c].name} ${fmt(x.pcs)} pcs (${fmtPct(x.share)})`).join(", ")}`);
+    } else if (dynPerColor[0]) {
+      out.push(`Warna: ${COLORS[dynPerColor[0].c].name}`);
+    }
+    if (st.k && dynKanstin.len > 0) {
+      out.push(`Kanstin ${st.ks} cm: ${fmt(dynKanstin.pcs)} pcs (${fmt(dynKanstin.len)} m)`);
+    }
+    if (st.abu && dynEstimate.extras?.stoneDustM3) {
+      out.push(`Abu batu alas (5 cm): ${fmt(dynEstimate.extras.stoneDustM3)} m³`);
+    }
+    if (st.bc && dynEstimate.extras?.baseCourseM3) {
+      out.push(`Base course (20 cm): ${fmt(dynEstimate.extras.baseCourseM3)} m³`);
+    }
+    return out;
+  }, [dynGeom, dynEstimate, P, st.tebal, m.name, dynRot, dynArea, dynPerim, st.cad, dynTotal, dynPerColor, st.k, st.ks, dynKanstin, st.abu, st.bc]);
+
+  const activeLines = calcMode === "dinamis" && dynHas ? dynLines : lines;
+  const activeShareUrl = calcMode === "dinamis" ? dynShareUrl : shareUrl;
+  const activeArea = calcMode === "dinamis" ? dynArea : r.area;
+  const activeTotal = calcMode === "dinamis" ? dynTotal : r.total;
+  const activeHas = calcMode === "dinamis" ? dynHas : has;
+  const waHref = waLink(whatsapp, waMessage(activeLines, activeShareUrl));
 
   const enableManual = (on: boolean) =>
     update((s) => {
@@ -1184,22 +1389,55 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
     });
 
   const onCopy = async () => {
-    const text = copyMessage(lines, shareUrl);
+    const text = copyMessage(activeLines, activeShareUrl);
     const ok = await copyText(text);
     setFallback(ok ? "" : text);
     setStatus(ok ? "Rincian disalin. Tempel di catatan atau pesan Anda." : "Gagal menyalin otomatis. Salin teks di bawah secara manual.");
+  };
+
+  const onCopyLink = async () => {
+    const ok = await copyText(activeShareUrl);
+    setStatus(ok ? "Tautan desain disalin. Bagikan ke rekan atau admin proyek." : "Gagal menyalin tautan secara otomatis.");
   };
 
   const steps = [
     { id: "pp-jenis", label: "Jenis", value: P.name, done: true },
     { id: "pp-pola", label: "Pola", value: m.name, done: true },
     { id: "pp-warna", label: "Warna", value: r.auto.map((x) => COLORS[x.c].name).join(" + "), done: true },
-    { id: "pp-ukuran", label: "Ukuran", value: has ? `${fmt(r.area)} m²` : "belum diisi", done: has },
-    { id: "pp-hasil", label: "Hasil", value: has ? `${fmt(r.total)} pcs` : "–", done: has },
+    {
+      id: "pp-ukuran",
+      label: calcMode === "dinamis" ? "Lahan" : "Ukuran",
+      value: activeHas ? `${fmt(activeArea)} m²` : calcMode === "dinamis" ? "memuat..." : "belum diisi",
+      done: activeHas,
+    },
+    { id: "pp-hasil", label: "Hasil", value: activeHas ? `${fmt(activeTotal)} pcs` : "–", done: activeHas },
   ];
 
   return (
     <div className={css.wrap}>
+      <div className={css.modeTabs} role="tablist" aria-label="Pilih mode kalkulator paving" data-pp-noprint>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={calcMode === "tetap"}
+          className={`${css.modeTab} ${calcMode === "tetap" ? css.modeTabActive : ""}`}
+          onClick={() => setCalcMode("tetap")}
+        >
+          <span className={css.modeTabTitle}>Kalkulator Lahan Tetap</span>
+          <span className={css.modeTabSub}>Hitung cepat dari panjang × lebar atau luas m²</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={calcMode === "dinamis"}
+          className={`${css.modeTab} ${calcMode === "dinamis" ? css.modeTabActive : ""}`}
+          onClick={() => setCalcMode("dinamis")}
+        >
+          <span className={css.modeTabTitle}>Kalkulator Lahan Dinamis</span>
+          <span className={css.modeTabSub}>Preset L/U, gambar grid, peta satelit &amp; impor KML/GeoJSON</span>
+        </button>
+      </div>
+
       <nav aria-label="Langkah kalkulator" className={css.stepper} data-pp-noprint>
         <ol>
           {steps.map((x, i) => (
@@ -1382,28 +1620,62 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
             </div>
           </section>
 
-          {/* 4. Ukuran */}
+          {/* 4. Ukuran / Bentuk Lahan */}
           <section id="pp-ukuran" className={`${css.card} ${css.oUkuran}`} aria-labelledby="pp-ukuran-h" data-pp-noprint>
-            <StepHead n={4} id="pp-ukuran-h" title="Ukuran area" sub="Gunakan koma atau titik untuk desimal." />
+            <StepHead
+              n={4}
+              id="pp-ukuran-h"
+              title={calcMode === "dinamis" ? "Bentuk & ukuran lahan" : "Ukuran area"}
+              sub={
+                calcMode === "dinamis"
+                  ? "Pilih preset L/U/trapesium, gambar di grid, peta satelit, atau impor GeoJSON/KML."
+                  : "Gunakan koma atau titik untuk desimal."
+              }
+            />
             <div className={css.stack}>
-              <Seg
-                name="pp-mode"
-                legend="Cara isi ukuran"
-                value={st.mode}
-                options={[
-                  { v: "pl" as const, label: "Panjang × lebar" },
-                  { v: "luas" as const, label: "Luas langsung" },
-                ]}
-                onChange={(v) => patch({ mode: v })}
-              />
-              {st.mode === "pl" ? (
-                <div className={css.two}>
-                  <NumField id="pp-p" label="Panjang" unit="m" value={st.p} placeholder="mis. 10" onChange={(v) => patch({ p: v })} />
-                  <NumField id="pp-l" label="Lebar" unit="m" value={st.l} placeholder="mis. 5" onChange={(v) => patch({ l: v })} />
-                </div>
+              {calcMode === "tetap" ? (
+                <>
+                  <Seg
+                    name="pp-mode"
+                    legend="Cara isi ukuran"
+                    value={st.mode}
+                    options={[
+                      { v: "pl" as const, label: "Panjang × lebar" },
+                      { v: "luas" as const, label: "Luas langsung" },
+                    ]}
+                    onChange={(v) => patch({ mode: v })}
+                  />
+                  {st.mode === "pl" ? (
+                    <div className={css.two}>
+                      <NumField id="pp-p" label="Panjang" unit="m" value={st.p} placeholder="mis. 10" onChange={(v) => patch({ p: v })} />
+                      <NumField id="pp-l" label="Lebar" unit="m" value={st.l} placeholder="mis. 5" onChange={(v) => patch({ l: v })} />
+                    </div>
+                  ) : (
+                    <NumField id="pp-luas" label="Luas area" unit="m²" value={st.luas} placeholder="mis. 50" onChange={(v) => patch({ luas: v })} />
+                  )}
+                  <div className={css.modeHintBar}>
+                    <span>Lahan berbentuk L, U, trapesium, atau punya batas peta sendiri?</span>
+                    <button type="button" className={css.modeSwitchLink} onClick={() => setCalcMode("dinamis")}>
+                      Buka Lahan Dinamis →
+                    </button>
+                  </div>
+                </>
               ) : (
-                <NumField id="pp-luas" label="Luas area" unit="m²" value={st.luas} placeholder="mis. 50" onChange={(v) => patch({ luas: v })} />
+                <DesignerErrorBoundary
+                  title="Modul lahan dinamis tidak dapat dimuat"
+                  fallbackHint="Koneksi sempat terputus saat memuat komponen gambar lahan. Anda dapat memuat ulang atau kembali ke Lahan Tetap."
+                  onFallbackAction={() => setCalcMode("tetap")}
+                  fallbackActionLabel="Kembali ke Lahan Tetap"
+                >
+                  <DynamicSiteInput
+                    geometry={dynGeom}
+                    onGeometryChange={setDynGeom}
+                    rotationDeg={dynRot}
+                    onRotationChange={setDynRot}
+                  />
+                </DesignerErrorBoundary>
               )}
+
               <Seg
                 name="pp-cad"
                 legend="Cadangan potong & pecah"
@@ -1437,14 +1709,26 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                           label="Panjang kanstin"
                           unit="m"
                           value={st.kp}
-                          placeholder={r.keliling > 0 ? `otomatis ${fmt(r.keliling)}` : "mis. 30"}
+                          placeholder={
+                            calcMode === "dinamis"
+                              ? dynPerim > 0
+                                ? `otomatis ${fmt(dynPerim)}`
+                                : "mis. 30"
+                              : r.keliling > 0
+                                ? `otomatis ${fmt(r.keliling)}`
+                                : "mis. 30"
+                          }
                           onChange={(v) => patch({ kp: v })}
                           help={
-                            r.keliling > 0
-                              ? `Kosongkan untuk memakai keliling 2 × (P + L) = ${fmt(r.keliling)} m.`
-                              : st.mode === "luas"
-                                ? "Isi panjang tepi yang dipasang kanstin."
-                                : "Otomatis keliling 2 × (P + L) setelah ukuran diisi."
+                            calcMode === "dinamis"
+                              ? dynPerim > 0
+                                ? `Kosongkan untuk memakai keliling batas poligon = ${fmt(dynPerim)} m.`
+                                : "Otomatis mengikuti keliling poligon lahan."
+                              : r.keliling > 0
+                                ? `Kosongkan untuk memakai keliling 2 × (P + L) = ${fmt(r.keliling)} m.`
+                                : st.mode === "luas"
+                                  ? "Isi panjang tepi yang dipasang kanstin."
+                                  : "Otomatis keliling 2 × (P + L) setelah ukuran diisi."
                           }
                         />
                       </div>
@@ -1467,11 +1751,35 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
             </div>
           </section>
 
-          {/* 5. Hasil */}
+          {/* 5. Hasil (Gabungan Tetap & Dinamis + Satu Card Hubungi WhatsApp) */}
           <section id="pp-hasil" className={`${css.card} ${css.oHasil}`} aria-labelledby="pp-hasil-h">
-            <StepHead n={5} id="pp-hasil-h" title="Hasil perhitungan" />
+            <StepHead
+              n={5}
+              id="pp-hasil-h"
+              title="Hasil perhitungan"
+              sub={calcMode === "dinamis" ? "Dihitung langsung dari pemotongan geometri bentuk lahan." : undefined}
+            />
             <div className={css.total} aria-live="polite" aria-atomic="true">
-              {has ? (
+              {calcMode === "dinamis" ? (
+                dynHas && dynEstimate ? (
+                  <>
+                    <span className={css.totalLabel}>
+                      Rekomendasi {P.name} {P.size} · lahan {fmt(dynArea)} m²
+                    </span>
+                    <b className="tabular">{fmt(dynTotal)} pcs</b>
+                    <span className={css.formula}>
+                      {fmt(dynEstimate.fullUnits)} blok utuh + {fmt(dynEstimate.cutInstalledPieces)} potongan tepi (bahan ±
+                      {fmt(dynEstimate.estimatedStockUnitsForCuts)} pcs) + cadangan {st.cad}%
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className={css.totalLabel}>Menyiapkan perhitungan lahan dinamis</span>
+                    <b>– pcs</b>
+                    <span className={css.formula}>Tentukan bentuk lahan di langkah 4 untuk menghitung potongan tepi dan rekomendasi material.</span>
+                  </>
+                )
+              ) : has ? (
                 <>
                   <span className={css.totalLabel}>
                     Total {P.name} {P.size}
@@ -1495,7 +1803,25 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
             </div>
 
             <ul className={`rowlist ${css.rows}`}>
-              {r.per.map((x) => (
+              {calcMode === "dinamis" && dynEstimate && (
+                <>
+                  <li className="rowitem">
+                    <span>
+                      Blok utuh terpasang
+                      <small className={css.rowSub}>Keping penuh di dalam batas lahan</small>
+                    </span>
+                    <b className="tabular">{fmt(dynEstimate.fullUnits)} pcs</b>
+                  </li>
+                  <li className="rowitem">
+                    <span>
+                      Potongan tepi batas
+                      <small className={css.rowSub}>Kebutuhan bahan potong ±{fmt(dynEstimate.estimatedStockUnitsForCuts)} pcs</small>
+                    </span>
+                    <b className="tabular">{fmt(dynEstimate.cutInstalledPieces)} keping</b>
+                  </li>
+                </>
+              )}
+              {(calcMode === "dinamis" ? dynPerColor : r.per).map((x) => (
                 <li key={x.c} className="rowitem">
                   <span className={css.rowName}>
                     <Swatch c={x.c} />
@@ -1506,7 +1832,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                       </small>
                     </span>
                   </span>
-                  <b className="tabular">{has ? `${fmt(x.pcs)} pcs` : "–"}</b>
+                  <b className="tabular">{activeHas ? `${fmt(x.pcs)} pcs` : "–"}</b>
                 </li>
               ))}
               {st.k && (
@@ -1514,10 +1840,16 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                   <span>
                     Kanstin {st.ks} cm
                     <small className={css.rowSub}>
-                      {r.kanstin.len > 0 ? `${r.kanstin.auto ? "keliling" : "panjang"} ${fmt(r.kanstin.len)} m ÷ ${fmt(st.ks / 100)} m` : "isi panjang kanstin"}
+                      {(calcMode === "dinamis" ? dynKanstin : r.kanstin).len > 0
+                        ? `${(calcMode === "dinamis" ? dynKanstin : r.kanstin).auto ? "keliling" : "panjang"} ${fmt((calcMode === "dinamis" ? dynKanstin : r.kanstin).len)} m ÷ ${fmt(st.ks / 100)} m`
+                        : "isi panjang kanstin"}
                     </small>
                   </span>
-                  <b className="tabular">{r.kanstin.len > 0 ? `${fmt(r.kanstin.pcs)} pcs` : "–"}</b>
+                  <b className="tabular">
+                    {(calcMode === "dinamis" ? dynKanstin : r.kanstin).len > 0
+                      ? `${fmt((calcMode === "dinamis" ? dynKanstin : r.kanstin).pcs)} pcs`
+                      : "–"}
+                  </b>
                 </li>
               )}
               {st.abu && (
@@ -1526,7 +1858,15 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                     Abu batu alas
                     <small className={css.rowSub}>luas × 0,05 m</small>
                   </span>
-                  <b className="tabular">{has ? `${fmt(r.abuM3)} m³` : "–"}</b>
+                  <b className="tabular">
+                    {calcMode === "dinamis"
+                      ? dynHas && dynEstimate?.extras?.stoneDustM3
+                        ? `${fmt(dynEstimate.extras.stoneDustM3)} m³`
+                        : "–"
+                      : has
+                        ? `${fmt(r.abuM3)} m³`
+                        : "–"}
+                  </b>
                 </li>
               )}
               {st.bc && (
@@ -1535,11 +1875,19 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                     Base course
                     <small className={css.rowSub}>luas × 0,20 m</small>
                   </span>
-                  <b className="tabular">{has ? `${fmt(r.bcM3)} m³` : "–"}</b>
+                  <b className="tabular">
+                    {calcMode === "dinamis"
+                      ? dynHas && dynEstimate?.extras?.baseCourseM3
+                        ? `${fmt(dynEstimate.extras.baseCourseM3)} m³`
+                        : "–"
+                      : has
+                        ? `${fmt(r.bcM3)} m³`
+                        : "–"}
+                  </b>
                 </li>
               )}
             </ul>
-            {has && r.per.length > 1 && r.sumPer > r.total && (
+            {calcMode === "tetap" && has && r.per.length > 1 && r.sumPer > r.total && (
               <p className={css.help}>
                 Jumlah per warna dibulatkan ke atas masing-masing, jadi totalnya {fmt(r.sumPer)} pcs ({fmt(r.sumPer - r.total)} pcs lebih banyak dari total).
               </p>
@@ -1554,6 +1902,11 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
               <button type="button" className="btn btn-ghost" onClick={onCopy}>
                 Salin rincian
               </button>
+              {calcMode === "dinamis" && (
+                <button type="button" className="btn btn-ghost" onClick={onCopyLink}>
+                  Salin tautan desain
+                </button>
+              )}
               <button type="button" className="btn btn-ghost" onClick={() => window.print()}>
                 Cetak / simpan PDF
               </button>
@@ -1573,12 +1926,20 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
           </section>
         </div>
 
-        {/* Pratinjau */}
+        {/* Pratinjau Terpadu */}
         <aside className={css.aside} aria-labelledby="pp-prev-h">
           <div className={css.previewCard}>
             <div className={css.prevHead}>
-              <h2 id="pp-prev-h">Pratinjau motif</h2>
-              <span>{view3d ? `3D interaktif · tebal ${st.tebal} cm` : "Tampak atas · skala asli"}</span>
+              <h2 id="pp-prev-h">{calcMode === "dinamis" ? "Pratinjau lahan" : "Pratinjau motif"}</h2>
+              <span>
+                {calcMode === "dinamis"
+                  ? view3d
+                    ? `3D bentuk lahan · tebal ${st.tebal} cm`
+                    : `Denah 2D · ${fmt(dynArea)} m²`
+                  : view3d
+                    ? `3D interaktif · tebal ${st.tebal} cm`
+                    : "Tampak atas · skala asli"}
+              </span>
             </div>
             <div className={css.viewToggle} role="group" aria-label="Mode pratinjau" data-pp-noprint>
               <button
@@ -1598,36 +1959,49 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                 3D Interaktif
               </button>
             </div>
-            <div className={`${css.stage} ${view3d ? css.stage3d : ""}`}>
-              {view3d ? (
-                <Paving3DView
-                  jenis={st.jenis}
-                  shape={P.shape}
-                  motif={motif3D}
-                  u={unit3D}
-                  colors={colors3D}
-                  shades={SHADES}
-                  tiles={tiles3D}
-                  vw={vw}
-                  vh={vh}
-                  tebalCm={st.tebal}
-                  showKanstin={st.k}
-                  kanstinCm={st.ks}
-                  onFallback2D={() => setView3d(false)}
-                />
-              ) : (
-                <>
-                  <PatternArt jenis={st.jenis} motif={m.id} colorKey={colorKey} w={vw} h={vh} label={previewLabel} rich />
-                  <span className={css.dims} aria-hidden="true">
-                    {fmt(vw / 100)} × {fmt(vh / 100)} m
-                  </span>
-                  <span className={css.scale} style={{ width: `${10000 / vw}%` }} aria-hidden="true">
-                    <span>1 m</span>
-                    <i />
-                  </span>
-                </>
-              )}
-            </div>
+            {calcMode === "dinamis" ? (
+              <DynamicSitePreview
+                geometry={dynGeom}
+                layout={dynResult.layout}
+                error={dynResult.error}
+                view3d={view3d}
+                onSwitchTo2D={() => setView3d(false)}
+                tebalCm={st.tebal}
+                showKanstin={st.k}
+                roleColors={roleColorsHex}
+              />
+            ) : (
+              <div className={`${css.stage} ${view3d ? css.stage3d : ""}`}>
+                {view3d ? (
+                  <Paving3DView
+                    jenis={st.jenis}
+                    shape={P.shape}
+                    motif={motif3D}
+                    u={unit3D}
+                    colors={colors3D}
+                    shades={SHADES}
+                    tiles={tiles3D}
+                    vw={vw}
+                    vh={vh}
+                    tebalCm={st.tebal}
+                    showKanstin={st.k}
+                    kanstinCm={st.ks}
+                    onFallback2D={() => setView3d(false)}
+                  />
+                ) : (
+                  <>
+                    <PatternArt jenis={st.jenis} motif={m.id} colorKey={colorKey} w={vw} h={vh} label={previewLabel} rich />
+                    <span className={css.dims} aria-hidden="true">
+                      {fmt(vw / 100)} × {fmt(vh / 100)} m
+                    </span>
+                    <span className={css.scale} style={{ width: `${10000 / vw}%` }} aria-hidden="true">
+                      <span>1 m</span>
+                      <i />
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
             <p className={css.prevTitle}>
               <b>{m.name}</b> · {P.name} {P.size} · tebal {st.tebal} cm
             </p>
@@ -1642,11 +2016,11 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
           </div>
           <div className={css.quick} data-pp-noprint>
             <div className={css.quickInfo}>
-              <span className={css.quickLabel}>{has ? `Total untuk ${fmt(r.area)} m²` : "Estimasi Total"}</span>
-              <b className={`tabular ${css.quickValue}`}>{has ? `${fmt(r.total)} pcs` : "– pcs"}</b>
+              <span className={css.quickLabel}>{activeHas ? `Total untuk ${fmt(activeArea)} m²` : "Estimasi Total"}</span>
+              <b className={`tabular ${css.quickValue}`}>{activeHas ? `${fmt(activeTotal)} pcs` : "– pcs"}</b>
             </div>
-            <a href={has ? "#pp-hasil" : "#pp-ukuran"} className={`btn btn-sm ${css.quickBtn}`}>
-              {has ? "Lihat rincian" : "Isi ukuran"}
+            <a href={activeHas ? "#pp-hasil" : "#pp-ukuran"} className={`btn btn-sm ${css.quickBtn}`}>
+              {activeHas ? "Lihat rincian" : "Isi ukuran"}
             </a>
           </div>
         </aside>

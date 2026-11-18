@@ -2,6 +2,104 @@
 
 .wrap { display: flex; flex-direction: column; gap: 16px; }
 
+/* ---------- Pemilih mode kalkulator: Lahan Tetap vs Lahan Dinamis (2 tab kanan-kiri) ---------- */
+.modeTabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1.5px solid rgba(14, 42, 107, 0.08);
+}
+.modeTab {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  min-height: 58px;
+  padding: 12px 18px;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--tinta);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease;
+}
+.modeTab:hover {
+  background: var(--latar);
+  color: var(--biru-tua);
+}
+.modeTab:focus-visible {
+  outline: 3px solid var(--oranye);
+  outline-offset: 2px;
+}
+.modeTabActive {
+  background: var(--biru);
+  border-color: var(--biru);
+  color: #fff;
+}
+.modeTabActive:hover {
+  background: var(--biru-tua);
+  border-color: var(--biru-tua);
+  color: #fff;
+}
+.modeTabTitle {
+  font: 700 15.5px/1.2 var(--font-judul);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.modeTabSub {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--redup);
+}
+.modeTabActive .modeTabSub {
+  color: #d3dcef;
+}
+@media (max-width: 600px) {
+  .modeTab {
+    padding: 10px 12px;
+    min-height: 52px;
+  }
+  .modeTabTitle {
+    font-size: 14px;
+  }
+  .modeTabSub {
+    font-size: 11.5px;
+  }
+}
+
+.modeHintBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--latar);
+  font-size: 13.5px;
+  color: var(--teks);
+}
+.modeSwitchLink {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: 700 13.5px var(--font-isi);
+  color: var(--biru);
+  cursor: pointer;
+}
+.modeSwitchLink:hover {
+  color: var(--biru-tua);
+  text-decoration: underline;
+}
+
 /* ---------- Penanda langkah ---------- */
 .stepper ol {
   list-style: none; margin: 0; padding: 6px;
