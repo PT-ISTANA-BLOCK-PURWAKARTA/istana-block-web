@@ -7,7 +7,7 @@ import { multiPolygonArea, multiPolygonBounds, multiPolygonPerimeter } from "../
 import type { MultiPolygon2D, Point2D, ProjectGeometry, Ring2D } from "../geometry/types";
 import { validateGeometry } from "../geometry/validate";
 
-function buildProjectGeometry(
+export function buildProjectGeometry(
   mp: MultiPolygon2D,
   presetName: string,
 ): ProjectGeometry {

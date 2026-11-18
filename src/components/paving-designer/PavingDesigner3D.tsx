@@ -538,25 +538,32 @@ export function PavingDesigner3D({
       isContextLost = true;
       setContextLost(true);
       cancelAnimationFrame(frameId);
+      frameId = 0;
     };
 
     const onContextRestored = () => {
       isContextLost = false;
       setContextLost(false);
-      if (!isDisposed) animate();
+      requestRender();
     };
 
     renderer.domElement.addEventListener("webglcontextlost", onContextLost, false);
     renderer.domElement.addEventListener("webglcontextrestored", onContextRestored, false);
 
-    // 9. Render loop
-    const animate = () => {
+    // 9. Render sesuai kebutuhan (bukan loop terus-menerus): hanya saat kamera/kontrol,
+    //    ukuran, atau data berubah. Damping memicu event "change" sampai gerakan berhenti.
+    const tick = () => {
+      frameId = 0;
       if (isDisposed || isContextLost) return;
-      frameId = requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     };
-    animate();
+    function requestRender() {
+      if (isDisposed || isContextLost || frameId !== 0) return;
+      frameId = requestAnimationFrame(tick);
+    }
+    controls.addEventListener("change", requestRender);
+    requestRender();
 
     // 10. Ukuran mengikuti kontainer
     const resize = () => {
@@ -567,6 +574,7 @@ export function PavingDesigner3D({
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      requestRender();
     };
 
     const observer =
@@ -583,6 +591,7 @@ export function PavingDesigner3D({
       renderer.domElement.removeEventListener("webglcontextlost", onContextLost);
       renderer.domElement.removeEventListener("webglcontextrestored", onContextRestored);
       cancelAnimationFrame(frameId);
+      controls.removeEventListener("change", requestRender);
       controls.dispose();
 
       const disposedMaterials = new Set<THREE.Material>();
