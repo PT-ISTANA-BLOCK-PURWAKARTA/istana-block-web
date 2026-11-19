@@ -7,3 +7,4 @@ export * from "./clipping";
 export * from "./lattice";
 export * from "./layout";
 export * from "./estimate";
+export * from "./color-split";
