@@ -7,6 +7,7 @@ import { z } from "zod";
 import { waLink } from "../format";
 import type { MaterialEstimate, PatternConfig } from "./engine/types";
 import type { ProjectGeometry } from "./geometry/types";
+import { barisLokasiWa, type LokasiProyek } from "./lokasi";
 import type { ProductId } from "./legacy/types";
 
 export const SCHEMA_VERSION = 1;
@@ -16,6 +17,13 @@ export const ENGINE_VERSION = "1.0.0";
 export const SHARE_PARAM = "d";
 /** Nama lama yang pernah dipakai pembuat tautan; tetap diterima saat membaca. */
 export const LEGACY_SHARE_PARAM = "pd_share";
+
+/** Lokasi proyek (hasil cari lokasi / titik tengah poligon). Opsional di ShareState: tautan lama tetap valid. */
+export const LokasiSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  asal: z.enum(["cari", "poligon"]).optional(),
+});
 
 /**
  * Zod schema for validated ShareState.
@@ -50,6 +58,7 @@ export const ShareStateSchema = z.object({
     reservePercent: z.number().min(0).max(25),
     rotationDeg: z.number().optional(),
   }),
+  lok: LokasiSchema.optional(),
 });
 
 export type ShareState = z.infer<typeof ShareStateSchema>;
@@ -133,13 +142,15 @@ export interface WhatsAppMessageOptions {
   geometry: ProjectGeometry;
   estimate: MaterialEstimate;
   config: PatternConfig;
+  /** Lokasi proyek (opsional); tanpa ini pesan sama seperti sebelumnya. */
+  lokasi?: LokasiProyek | null;
 }
 
 /**
  * Generate a comprehensive, professional WhatsApp message for Istana Block sales & customer
  */
 export function createWhatsAppMessage(options: WhatsAppMessageOptions): string {
-  const { shareUrl, productName, motifName, geometry, estimate, config } = options;
+  const { shareUrl, productName, motifName, geometry, estimate, config, lokasi } = options;
 
   const lines: string[] = [
     "Halo Admin PT Istana Block Purwakarta,",
@@ -166,6 +177,9 @@ export function createWhatsAppMessage(options: WhatsAppMessageOptions): string {
   if (estimate.extras?.kerbPcs) {
     lines.push(`• Estimasi Kanstin Pembatas: ±${estimate.extras.kerbPcs} batang`);
   }
+
+  const barisLokasi = barisLokasiWa(lokasi);
+  if (barisLokasi) lines.push("", barisLokasi);
 
   lines.push("");
   lines.push("🔗 *Tautan Tata Letak Interaktif (Desain Saya):*");
