@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
+import type { ProductId } from "@/lib/paving/legacy/types";
+import { MAX_3D_BLOCKS } from "@/lib/paving/render/lattice-texture";
 import { unpackLayout, type PackedLayoutResult } from "@/lib/paving/render/packed-tiles";
 import { DesignerErrorBoundary, retryImport } from "./DesignerErrorBoundary";
 import { IconAlert } from "./Icons";
@@ -30,6 +32,9 @@ export interface DynamicSitePreviewProps {
   tebalCm: number;
   showKanstin: boolean;
   roleColors: string[];
+  productId: ProductId;
+  motifId: string;
+  rotationDeg: number;
 }
 
 export function DynamicSitePreview({
@@ -41,9 +46,16 @@ export function DynamicSitePreview({
   tebalCm,
   showKanstin,
   roleColors,
+  productId,
+  motifId,
+  rotationDeg,
 }: DynamicSitePreviewProps) {
-  // Pratinjau 3D butuh objek keping; dibuat hanya saat 3D dipilih (2D menggambar langsung dari typed array).
-  const layout3d = useMemo(() => (view3d && layout ? unpackLayout(layout) : null), [view3d, layout]);
+  // Pratinjau 3D per keping butuh objek keping; dibuat hanya saat 3D dipilih dan lahan <= MAX_3D_BLOCKS.
+  // Lahan lebih besar tidak pernah dibuka bungkusnya: 3D memakai poligon lahan + tekstur pola.
+  const layout3d = useMemo(
+    () => (view3d && layout && layout.packed.count <= MAX_3D_BLOCKS ? unpackLayout(layout) : null),
+    [view3d, layout],
+  );
 
   if (error) {
     return (
@@ -77,7 +89,11 @@ export function DynamicSitePreview({
       fallbackActionLabel="Kembali ke 2D Tampak Atas"
     >
       <DynamicPavingDesigner3D
-        layout={layout3d ?? unpackLayout(layout)}
+        layout={layout3d}
+        metrics={layout.metrics}
+        productId={productId}
+        motifId={motifId}
+        rotationDeg={rotationDeg}
         geometry={geometry}
         tebalCm={tebalCm}
         showKanstin={showKanstin}

@@ -4,12 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { LayoutResult, LayoutTile } from "@/lib/paving/engine/types";
+import type { ProductId } from "@/lib/paving/legacy/types";
+import { drawLatticeCell, latticeCell, latticeUv } from "@/lib/paving/render/lattice-texture";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
 import { IconAlert, IconCollapse, IconExpand } from "./Icons";
 import css from "./PavingDesigner.module.css";
 
 interface Props {
-  layout: LayoutResult;
+  /** Keping per objek; null untuk lahan besar (> MAX_3D_BLOCKS), yang digambar sebagai tekstur pola. */
+  layout: LayoutResult | null;
+  metrics: LayoutResult["metrics"];
+  productId?: ProductId;
+  motifId?: string;
+  rotationDeg?: number;
   geometry?: ProjectGeometry;
   tebalCm?: number;
   showKanstin?: boolean;
@@ -31,7 +38,7 @@ interface Box2D {
   maxY: number;
 }
 
-const MAX_3D_BLOCKS = 10000;
+const TEXTURE_MAX_PX = 1024;
 
 const CAMERA_PRESETS: Array<{ id: CameraPreset; label: string }> = [
   { id: "iso", label: "Isometrik" },
@@ -160,6 +167,10 @@ function extrudeUp(shape: THREE.Shape, heightM: number): THREE.ExtrudeGeometry {
 
 export function PavingDesigner3D({
   layout,
+  metrics,
+  productId,
+  motifId,
+  rotationDeg = 0,
   geometry,
   tebalCm = 6,
   showKanstin = true,
@@ -244,7 +255,7 @@ export function PavingDesigner3D({
     let minY = Infinity;
     let maxY = -Infinity;
 
-    for (const tile of layout.tiles) {
+    for (const tile of layout?.tiles ?? []) {
       for (const p of tile.polygon) {
         if (p.x < minX) minX = p.x;
         if (p.x > maxX) maxX = p.x;
@@ -276,7 +287,8 @@ export function PavingDesigner3D({
     const fitRadius = Math.max(1.5, Math.hypot(spanX, spanZ) / 2);
     const fitDist =
       (fitRadius * 1.18) / Math.sin(THREE.MathUtils.degToRad(camera.fov) * 0.5);
-    camera.near = Math.max(0.05, fitDist * 0.01);
+    // Lahan besar (tekstur): boleh mendekat sampai pola keping terbaca.
+    camera.near = layout === null ? 0.1 : Math.max(0.05, fitDist * 0.01);
     camera.far = fitDist * 8;
     camera.updateProjectionMatrix();
 
@@ -294,7 +306,7 @@ export function PavingDesigner3D({
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.maxPolarAngle = Math.PI / 2 - 0.02;
-    controls.minDistance = fitRadius * 0.55;
+    controls.minDistance = layout === null ? 1.5 : fitRadius * 0.55;
     controls.maxDistance = fitDist * 2.6;
     controls.target.set(0, tebalM / 2, 0);
 
@@ -349,16 +361,68 @@ export function PavingDesigner3D({
 
     const fullTiles: LayoutTile[] = [];
     const cutTiles: LayoutTile[] = [];
-    for (const tile of layout.tiles) {
+    for (const tile of layout?.tiles ?? []) {
       if (tile.status === "full") fullTiles.push(tile);
       else cutTiles.push(tile);
     }
 
-    const needsSampling = layout.tiles.length > MAX_3D_BLOCKS;
+    // Lahan besar: tanpa objek keping sama sekali; lantai utuh bertekstur dari poligon lahan.
+    const needsSampling = layout === null;
     setIsSampleMode(needsSampling);
-    const fullToRender = needsSampling ? fullTiles.slice(0, MAX_3D_BLOCKS) : fullTiles;
+    const fullToRender = fullTiles;
 
     try {
+      // 7-besar. Lantai utuh bertekstur pola mengikuti bentuk lahan (L/U/poligon, lubang)
+      if (needsSampling && geometry?.geometry?.length && productId && motifId) {
+        const cell = latticeCell(productId, motifId);
+        const ppmCm = TEXTURE_MAX_PX / Math.max(cell.wCm, cell.hCm);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(8, Math.round(cell.wCm * ppmCm));
+        canvas.height = Math.max(8, Math.round(cell.hCm * ppmCm));
+        const ctx2d = canvas.getContext("2d");
+        if (!ctx2d) throw new Error("Kanvas 2D untuk tekstur pola tidak tersedia.");
+        drawLatticeCell(ctx2d, cell, palette, canvas.width / cell.wCm);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+        const topMaterial = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.86, metalness: 0 });
+        const sideMaterial = new THREE.MeshStandardMaterial({ color: CUT_COLOR, roughness: 0.9, metalness: 0 });
+
+        for (const polygon of geometry.geometry) {
+          const outer = normalizeRing(polygon[0].map(([x, y]) => ({ x, y })));
+          if (outer.length < 3) continue;
+          const shape = toPlanShape(outer, centerX, centerZ);
+          for (const holeRing of polygon.slice(1)) {
+            const hole = normalizeRing(holeRing.map(([x, y]) => ({ x, y })));
+            if (hole.length < 3) continue;
+            const path = new THREE.Path();
+            hole.forEach((p, i) => {
+              const x = p.x - centerX;
+              const y = -(p.y - centerZ);
+              if (i === 0) path.moveTo(x, y);
+              else path.lineTo(x, y);
+            });
+            path.closePath();
+            shape.holes.push(path);
+          }
+          const floorGeo = extrudeUp(shape, tebalM);
+          const pos = floorGeo.attributes.position;
+          const uv = new Float32Array(pos.count * 2);
+          for (let i = 0; i < pos.count; i++) {
+            // dunia (x, z) = plan (x, y) dikurangi pusat; UV dalam satuan sel dari koordinat meter plan.
+            const [u, v] = latticeUv(pos.getX(i) + centerX, pos.getZ(i) + centerZ, rotationDeg, cell.wCm, cell.hCm);
+            uv[2 * i] = u;
+            uv[2 * i + 1] = v;
+          }
+          floorGeo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+          const floor = new THREE.Mesh(floorGeo, [topMaterial, sideMaterial]);
+          floor.receiveShadow = true;
+          pavingGroup.add(floor);
+        }
+      }
+
       // 7a. Blok utuh — dikelompokkan per bentuk agar motif hexagon/diagonal akurat
       if (fullToRender.length > 0) {
         const groups = new Map<string, { representative: PlanPoint[]; tiles: LayoutTile[] }>();
@@ -602,6 +666,7 @@ export function PavingDesigner3D({
           for (const mat of materials) {
             if (mat && !disposedMaterials.has(mat)) {
               disposedMaterials.add(mat);
+              (mat as THREE.MeshStandardMaterial).map?.dispose();
               mat.dispose();
             }
           }
@@ -613,7 +678,7 @@ export function PavingDesigner3D({
         container.removeChild(renderer.domElement);
       }
     };
-  }, [layout, geometry, tebalCm, showKanstin, hasWebGL, paletteKey]);
+  }, [layout, geometry, tebalCm, showKanstin, hasWebGL, paletteKey, productId, motifId, rotationDeg]);
 
   if (!hasWebGL || renderError) {
     return (
@@ -647,9 +712,8 @@ export function PavingDesigner3D({
         <div className={css.warningBox}>
           <IconAlert size={17} />
           <span>
-            <strong>Mode sampel 3D:</strong> lahan melebihi 10.000 keping sehingga tampilan 3D
-            menampilkan sebagian zona demi kelancaran perangkat. Estimasi material tetap penuh untuk
-            seluruh lahan.
+            <strong>Lahan besar:</strong> 3D menampilkan pola sebagai tekstur agar perangkat tetap
+            lancar. Hitungan tetap per keping untuk seluruh lahan.
           </span>
         </div>
       )}
@@ -704,11 +768,11 @@ export function PavingDesigner3D({
               <span key={color} className={css.legendSwatch} style={{ background: color }} />
             ))}
           </span>
-          Blok utuh ({layout.metrics.fullCount.toLocaleString("id-ID")})
+          Blok utuh ({metrics.fullCount.toLocaleString("id-ID")})
         </span>
         <span className={css.legendItem}>
           <span className={css.legendSwatch} style={{ background: CUT_COLOR }} />
-          Potongan tepi ({layout.metrics.partialCount.toLocaleString("id-ID")})
+          Potongan tepi ({metrics.partialCount.toLocaleString("id-ID")})
         </span>
         {showKanstin && (
           <span className={css.legendItem}>
