@@ -150,6 +150,13 @@ export const TARIF_PASANG_PER_M2: Record<KelasBeban, KonstantaSementara<number>>
   "truk-berat": s(75_000, "Upah tukang umum; belum ada tarif resmi"),
 };
 
+/**
+ * Biaya (ongkir, jasa pasang, perkiraan total) disembunyikan dari UI dan pesan WhatsApp karena tarifnya
+ * karangan. Fungsi hitungnya (biaya.ts) tetap ada.
+ */
+// aktifkan setelah tarif resmi dari pemilik
+export const TAMPILKAN_BIAYA = false;
+
 /** Daftar datar untuk tabel PR / label UI. */
 export const DAFTAR_KONSTANTA_SEMENTARA: ReadonlyArray<{ nama: string; nilai: string; sumber: string }> = [
   { nama: "TEBAL_MIN_CM", nilai: "6 / 6 / 8 / 10 / 10", sumber: TEBAL_MIN_CM.pejalan.sumber },

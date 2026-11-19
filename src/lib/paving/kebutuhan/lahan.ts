@@ -16,6 +16,8 @@ export interface AreaInput {
   kelilingM?: number;
   /** Jumlah pcs hasil layout engine; bila ada, dipakai sebagai dasar menggantikan luas x pcs/m². */
   pcsLayout?: number;
+  /** Timpa sisa potong (%). Isi 0 bila pcsLayout sudah memuat cadangan (total dari hitungan utama). */
+  sisaPersen?: number;
 }
 
 export interface HasilArea {
@@ -60,7 +62,7 @@ export function hitungArea(a: AreaInput): HasilArea {
     a.pcsLayout !== undefined
       ? ceilAman(cekNonNegatif("pcsLayout", a.pcsLayout))
       : ceilAman(bersih * spec.labelPcsPerM2);
-  const sisaPersen = sisaPotongPersen(a.bentuk);
+  const sisaPersen = a.sisaPersen ?? sisaPotongPersen(a.bentuk);
   return {
     id: a.id,
     label: a.label ?? a.id,

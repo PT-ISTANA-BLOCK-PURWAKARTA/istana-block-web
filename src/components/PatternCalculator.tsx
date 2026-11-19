@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { flushSync } from "react-dom";
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { waLink } from "@/lib/format";
@@ -8,7 +9,7 @@ import { PAVING_CATALOG } from "@/lib/paving/catalog";
 import type { MaterialEstimate, PatternConfig } from "@/lib/paving/engine/types";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
 import type { PackedLayoutResult } from "@/lib/paving/render/packed-tiles";
-import { daftarBelanjaLines, hitungProyek, rekomendasiBeban, type BentukLahan, type KelasBeban } from "@/lib/paving/kebutuhan";
+import { TAMPILKAN_BIAYA, daftarBelanjaLines, hitungProyek, rekomendasiBeban, type KelasBeban } from "@/lib/paving/kebutuhan";
 import { KebutuhanLapangan } from "./KebutuhanLapangan";
 import { DesignerErrorBoundary, retryImport } from "./paving-designer/DesignerErrorBoundary";
 import type { SiteInputStatus } from "./paving-designer/site-status";
@@ -1458,18 +1459,8 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const kbRek = useMemo(() => (kbKelas ? rekomendasiBeban(kbKelas) : null), [kbKelas]);
   const kbLuas = calcMode === "dinamis" ? (dynHas ? dynArea : 0) : r.area;
   const kbMenunggu = !(kbLuas > 0) || (calcMode === "dinamis" && dynStale);
-  const kbBentuk: BentukLahan = useMemo(() => {
-    if (calcMode !== "dinamis" || !dynBridge || !dynGeom) return "sederhana";
-    const g = dynBridge.geometryToShareGeom(dynGeom).geom;
-    return g.kind === "preset" && g.preset === "rectangle" ? "sederhana" : "tak-simetris";
-  }, [calcMode, dynBridge, dynGeom]);
-  const kbKeliling = calcMode === "dinamis" ? dynKanstin.len : r.kanstin.len;
-  const kbPcsLayout =
-    calcMode === "dinamis"
-      ? dynEstimate
-        ? dynEstimate.fullUnits + dynEstimate.cutInstalledPieces
-        : 0
-      : ceilSafe(r.area * P.pcs);
+  // Satu sumber jumlah paving: total hitungan utama (sudah memuat cadangan pilihan pengguna).
+  const kbPcsLayout = calcMode === "dinamis" ? dynTotal : r.total;
   const kbHasil = useMemo(() => {
     if (!kbKelas || kbMenunggu) return null;
     try {
@@ -1482,26 +1473,58 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
             luasKotorM2: kbLuas,
             tebalCm: st.tebal,
             kelas: kbKelas,
-            bentuk: kbBentuk,
-            kelilingM: kbKeliling,
             pcsLayout: kbPcsLayout,
+            sisaPersen: 0,
           },
         ],
-        { jarakKm: kbJarak.trim() !== "" && kbJarakNum >= 0 ? kbJarakNum : undefined, sertakanKanstin: st.k },
+        { jarakKm: TAMPILKAN_BIAYA && kbJarak.trim() !== "" && kbJarakNum >= 0 ? kbJarakNum : undefined },
       );
     } catch {
       return null;
     }
-  }, [kbKelas, kbMenunggu, st.jenis, st.tebal, st.k, kbLuas, kbBentuk, kbKeliling, kbPcsLayout, kbJarak, kbJarakNum]);
+  }, [kbKelas, kbMenunggu, st.jenis, st.tebal, kbLuas, kbPcsLayout, kbJarak, kbJarakNum]);
   const kbLines = useMemo(
-    () => (kbHasil ? ["", "*Kebutuhan lapangan (perkiraan):*", ...daftarBelanjaLines(kbHasil)] : []),
-    [kbHasil],
+    () => (kbHasil ? ["", "*Kebutuhan lapangan (perkiraan):*", ...daftarBelanjaLines(kbHasil, { tanpaSirtu: st.bc })] : []),
+    [kbHasil, st.bc],
   );
   const activeLines = useMemo(
     () => (activeHas && !(calcMode === "dinamis" && dynStale) ? [...baseLines, ...kbLines] : baseLines),
     [baseLines, kbLines, activeHas, calcMode, dynStale],
   );
   const waHref = waLink(whatsapp, waMessage(activeLines, activeShareUrl));
+  // Cetak selalu memakai gambar 2D: kanvas WebGL tidak ikut tercetak dengan benar. Bila 3D sedang aktif,
+  // sebelum dialog cetak (tombol atau Ctrl+P) pratinjau dialihkan ke 2D, lalu dikembalikan sesudahnya.
+  const view3dRef = useRef(view3d);
+  view3dRef.current = view3d;
+  const kembali3dRef = useRef(false);
+  useEffect(() => {
+    const sebelum = () => {
+      if (!view3dRef.current) return;
+      kembali3dRef.current = true;
+      flushSync(() => setView3d(false));
+    };
+    const sesudah = () => {
+      if (!kembali3dRef.current) return;
+      kembali3dRef.current = false;
+      setView3d(true);
+    };
+    window.addEventListener("beforeprint", sebelum);
+    window.addEventListener("afterprint", sesudah);
+    return () => {
+      window.removeEventListener("beforeprint", sebelum);
+      window.removeEventListener("afterprint", sesudah);
+    };
+  }, []);
+  const onCetak = () => {
+    if (!view3d) {
+      window.print();
+      return;
+    }
+    // Beri waktu satu-dua bingkai agar denah 2D tergambar sebelum dialog cetak terbuka.
+    kembali3dRef.current = true;
+    setView3d(false);
+    window.setTimeout(() => window.print(), 350);
+  };
   const actionsBlocked = calcMode === "dinamis" && dynStale;
   const blockedLabel = dynInvalid ? "Lengkapi bentuk lahan" : "Menghitung…";
 
@@ -2047,6 +2070,8 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
               rek={kbRek}
               hasil={kbHasil}
               menunggu={kbMenunggu}
+              sirtuSudahAda={st.bc}
+              totalPcs={kbPcsLayout}
             />
 
             <div className={css.actions} data-pp-noprint>
@@ -2072,7 +2097,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                   {dynComputing ? "Menghitung…" : "Salin tautan desain"}
                 </button>
               )}
-              <button type="button" className="btn btn-ghost" onClick={() => window.print()} disabled={actionsBlocked}>
+              <button type="button" className="btn btn-ghost" onClick={onCetak} disabled={actionsBlocked}>
                 Cetak / simpan PDF
               </button>
             </div>
@@ -2151,7 +2176,8 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                 roleColors={roleColorsHex}
               />
             ) : (
-              <div className={`${css.stage} ${view3d ? css.stage3d : ""}`}>
+              <>
+              <div className={`${css.stage} ${view3d ? css.stage3d : ""}`} {...(view3d ? { "data-pp-noprint": "" } : {})}>
                 {view3d ? (
                   <Paving3DView
                     jenis={st.jenis}
@@ -2181,6 +2207,12 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                   </>
                 )}
               </div>
+              {view3d && (
+                <div className={css.printStage} style={{ aspectRatio: `${vw} / ${vh}` }} aria-hidden="true">
+                  <PatternArt jenis={st.jenis} motif={m.id} colorKey={colorKey} w={vw} h={vh} label={previewLabel} rich />
+                </div>
+              )}
+              </>
             )}
             </div>
             <p className={css.prevTitle}>

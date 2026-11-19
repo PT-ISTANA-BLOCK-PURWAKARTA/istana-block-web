@@ -1,4 +1,5 @@
 import { ONGKIR_ZONA, TARIF_PASANG_PER_M2, LABEL_BEBAN, type KelasBeban } from "./konstanta-sementara";
+import { fmt } from "../legacy/calculator";
 import { cekNonNegatif } from "./util";
 
 export interface BarisBiaya {
@@ -52,7 +53,7 @@ export function hitungBiaya(input: InputBiaya): HasilBiaya {
   if (input.trip > 0) {
     const tarif = ongkirPerTrip(input.jarakKm);
     baris.push({
-      kode: "ongkir", label: `Ongkir (${input.jarakKm} km)`, qty: input.trip, satuan: "trip",
+      kode: "ongkir", label: `Ongkir (${fmt(input.jarakKm)} km)`, qty: input.trip, satuan: "trip",
       hargaSatuan: tarif, subtotal: tarif * input.trip, sementara: true,
     });
   }
