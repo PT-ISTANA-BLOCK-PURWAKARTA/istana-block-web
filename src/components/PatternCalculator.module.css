@@ -294,7 +294,7 @@
   padding: 3px; border-radius: 10px; background: #f1f5f9; border: 1px solid #e2e8f0;
 }
 .viewBtn {
-  appearance: none; border: 1px solid transparent; border-radius: 8px; min-height: 36px; padding: 6px 12px;
+  appearance: none; border: 1px solid transparent; border-radius: 8px; min-height: 44px; padding: 6px 12px;
   background: transparent; color: #64748b; cursor: pointer;
   font: 600 13px/1.2 var(--font-isi);
   transition: all .15s ease;
@@ -320,7 +320,7 @@
 }
 .presetBtn {
   pointer-events: auto; appearance: none; border: 1px solid #e2e8f0; border-radius: 8px;
-  min-height: 32px; padding: 4px 10px; cursor: pointer;
+  min-height: 44px; min-width: 44px; padding: 4px 12px; cursor: pointer;
   background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(6px); color: #475569;
   font: 600 12px/1.2 var(--font-isi);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
@@ -336,7 +336,7 @@
 
 .fullscreenBtn {
   pointer-events: auto; appearance: none; border: 1px solid #e2e8f0; border-radius: 8px;
-  min-height: 32px; padding: 4px 10px; cursor: pointer;
+  min-height: 44px; min-width: 44px; padding: 4px 12px; cursor: pointer;
   background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(6px); color: #0f172a;
   font: 600 12px/1.2 var(--font-isi);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
@@ -499,7 +499,7 @@
 }
 .quick .quickBtn {
   flex: none; background: #0e2a6b; color: #ffffff;
-  border-radius: 8px; padding: 8px 18px; font-weight: 600; font-size: 13.5px;
+  border-radius: 8px; padding: 8px 18px; min-height: 44px; font-weight: 600; font-size: 13.5px;
   transition: all .15s ease;
   border: 1px solid transparent;
 }
@@ -533,4 +533,63 @@
 }
 @media (forced-colors: active) {
   .opt > input:checked + .optBody, .pill > input:checked + span, .chip > input:checked + span, .viewBtnActive, .presetBtnActive { outline: 3px solid Highlight; outline-offset: 1px; }
+}
+
+/* =====================================================================
+   T2: responsif. Pratinjau ringkas lengket di HP/tablet, target sentuh 44 px.
+   ===================================================================== */
+.previewToggle { display: none; }
+.prevBody { display: contents; }
+.modeSwitchLink { min-height: 44px; display: inline-flex; align-items: center; }
+.pendingNote { margin: -6px 2px 0; font-size: 13.5px; font-weight: 600; color: var(--oranye-cta-hover); }
+.totalStale > b, .totalStale > .formula { opacity: .45; }
+.quickStale { opacity: .45; }
+.actions .actionBlocked { opacity: .6; pointer-events: none; cursor: progress; }
+.actions .btn:disabled { opacity: .6; cursor: progress; }
+
+@media (max-width: 639px) {
+  /* Subjudul tab memakan 60 px layar pertama; judulnya sudah cukup. */
+  .modeTabSub { display: none; }
+  .modeTab { min-height: 52px; padding: 10px 12px; }
+  .modeTabTitle { font-size: 14.5px; }
+  .card { gap: 14px; padding: 18px 14px 20px; }
+}
+
+@media (max-width: 999px) {
+  /* Tautan langkah / anchor mendarat di bawah pratinjau lengket, bukan di belakangnya. */
+  .card { scroll-margin-top: 288px; }
+  /* Pratinjau + total tetap tampak saat mengisi ukuran. Ringkas bawaan, bisa dibesarkan. */
+  .aside {
+    position: sticky; top: 0; z-index: 30; gap: 6px; padding: 8px 0 6px;
+    background: var(--latar); box-shadow: 0 8px 12px -10px rgba(14, 42, 107, .28);
+  }
+  .previewCard { position: relative; padding: 8px 10px; gap: 6px; }
+  .previewToggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    position: absolute; top: 4px; right: 6px; z-index: 3;
+    min-height: 44px; min-width: 88px; padding: 0 14px; border-radius: 10px;
+    border: 1.5px solid var(--biru); background: #fff; color: var(--biru);
+    font: 700 13.5px/1 var(--font-isi); cursor: pointer;
+  }
+  .previewToggle:focus-visible { outline: 3px solid var(--oranye); outline-offset: 2px; }
+  .prevHead { padding-right: 100px; min-height: 44px; align-content: center; }
+  .prevHead h2 { font-size: 16px; }
+  .quick { padding: 8px 12px; gap: 10px; }
+  .quickValue { font-size: 20px; }
+
+  .aside:not(.asideOpen) .viewToggle,
+  .aside:not(.asideOpen) .prevTitle,
+  .aside:not(.asideOpen) .legendList,
+  .aside:not(.asideOpen) [data-pp-compact-hide] { display: none; }
+  .aside:not(.asideOpen) .stage,
+  .aside:not(.asideOpen) [data-pp-stage] {
+    aspect-ratio: auto !important; height: clamp(88px, 14vh, 124px); min-height: 0;
+  }
+  .aside:not(.asideOpen) .dims,
+  .aside:not(.asideOpen) .scale { display: none; }
+
+  .asideOpen { max-height: calc(100dvh - 84px); overflow-y: auto; overscroll-behavior: contain; }
+}
+@media (min-width: 1000px) {
+  .previewToggle { display: none; }
 }

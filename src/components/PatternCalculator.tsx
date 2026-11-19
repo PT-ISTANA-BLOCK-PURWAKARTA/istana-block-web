@@ -5,9 +5,11 @@ import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "
 import type { ReactNode } from "react";
 import { waLink } from "@/lib/format";
 import { PAVING_CATALOG } from "@/lib/paving/catalog";
-import type { LayoutResult, MaterialEstimate, PatternConfig } from "@/lib/paving/engine/types";
+import type { MaterialEstimate, PatternConfig } from "@/lib/paving/engine/types";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
+import type { PackedLayoutResult } from "@/lib/paving/render/packed-tiles";
 import { DesignerErrorBoundary, retryImport } from "./paving-designer/DesignerErrorBoundary";
+import type { SiteInputStatus } from "./paving-designer/site-status";
 import css from "./PatternCalculator.module.css";
 
 const Paving3DView = dynamic(() => import("./Paving3DView"), {
@@ -1101,12 +1103,25 @@ function Swatch({ c }: { c: ColorId }) {
   return <i className={`${css.sw} hex`} style={{ background: COLORS[c].hex }} aria-hidden="true" />;
 }
 
+/** Tebal netral untuk config tata letak (engine layout tidak memakai tebal; hanya label hash). */
+const LAYOUT_NEUTRAL_THICKNESS_M = 0.08;
+
 export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string; initialQuery?: Query }) {
   const initialDynCode = typeof initialQuery?.d === "string" ? initialQuery.d : "";
   const [calcMode, setCalcMode] = useState<"tetap" | "dinamis">(initialDynCode ? "dinamis" : "tetap");
   const [dynBridge, setDynBridge] = useState<typeof import("@/lib/paving/dynamic-bridge") | null>(null);
   const [dynGeomInput, setDynGeom] = useState<ProjectGeometry | null>(null);
   const [dynRot, setDynRot] = useState<number>(0);
+  // Panel masukan Lahan Dinamis dipasang sekali (saat tab pertama kali dibuka) dan hanya
+  // disembunyikan saat pindah ke Lahan Tetap, sehingga bentuk yang sudah dibuat tidak hilang.
+  const [dynVisited, setDynVisited] = useState(calcMode === "dinamis");
+  const [dynInput, setDynInput] = useState<SiteInputStatus>("ok");
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const handleDynGeometry = useCallback((geom: ProjectGeometry) => {
+    setDynGeom(geom);
+    setDynInput("ok");
+  }, []);
 
   const [st, setSt] = useState<CalcState>(() => decodeState(initialQuery ?? {}));
   const [shareUrl, setShareUrl] = useState("");
@@ -1126,6 +1141,10 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
     });
     if (URL_KEYS.some((k) => k in q)) setSt(decodeState(q));
   }, [initialQuery]);
+
+  useEffect(() => {
+    if (calcMode === "dinamis") setDynVisited(true);
+  }, [calcMode]);
 
   // Muat modul engine lahan dinamis hanya saat pengguna membuka tab Lahan Dinamis.
   useEffect(() => {
@@ -1269,62 +1288,107 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const shareText = r.auto.map((x) => `${COLORS[x.c].name} ${fmtPct(x.share)}`).join(", ");
   const previewLabel = `Pratinjau tampak atas motif ${m.name}, paving ${P.name} ${P.size}, ${shareText}. Potongan area ${fmt(vw / 100)} × ${fmt(vh / 100)} meter dengan skala sebenarnya.`;
 
-  // Perhitungan mode Lahan Dinamis (memakai jenis, tebal, motif, warna, cadangan & pelengkap yang sama)
-  const dynConfig: PatternConfig = useMemo(
+  // Perhitungan mode Lahan Dinamis, dua tahap:
+  // (1) TATA LETAK (berat, di Web Worker) hanya bergantung pada bentuk lahan, produk, motif & kemiringan;
+  // (2) ESTIMASI MATERIAL (ringan, sinkron) bergantung pula pada cadangan, tebal, abu batu & base course,
+  //     sehingga mengubah itu semua TIDAK memicu hitung ulang tata letak.
+  const layoutConfig: PatternConfig = useMemo(
     () => ({
       productId: st.jenis,
       motifId: m.id,
-      thicknessM: st.tebal / 100,
-      reservePercent: st.cad,
+      // Tata letak tidak memakai tebal & cadangan; nilai netral menjaga identitas config tetap stabil.
+      thicknessM: LAYOUT_NEUTRAL_THICKNESS_M,
+      reservePercent: 0,
       rotationDeg: dynRot,
       originM: { x: 0, y: 0 },
     }),
-    [st.jenis, m.id, st.tebal, st.cad, dynRot],
+    [st.jenis, m.id, dynRot],
+  );
+  const layoutKey = `${st.jenis}|${m.id}|${dynRot}`;
+  const estimateConfig: PatternConfig = useMemo(
+    () => ({ ...layoutConfig, thicknessM: st.tebal / 100, reservePercent: st.cad }),
+    [layoutConfig, st.tebal, st.cad],
   );
 
   // Layout dihitung di Web Worker (fallback main thread bila Worker tidak ada). Hasil basi dibuang.
+  // `key` mencatat jenis|motif|rotasi yang menghasilkan layout ini, untuk mendeteksi hasil basi.
   const [dynState, setDynState] = useState<{
     geom: ProjectGeometry | null;
-    layout: LayoutResult | null;
-    estimate: MaterialEstimate | null;
+    layout: PackedLayoutResult | null;
+    key: string;
     error: string | null;
-  }>({ geom: null, layout: null, estimate: null, error: null });
+  }>({ geom: null, layout: null, key: "", error: null });
+  const dynStateRef = useRef(dynState);
+  dynStateRef.current = dynState;
+  const dynBridgeRef = useRef(dynBridge);
+  dynBridgeRef.current = dynBridge;
 
   useEffect(() => {
-    if (calcMode !== "dinamis" || !dynBridge || !dynGeomInput) {
-      setDynState((prev) => (prev.geom || prev.layout || prev.error ? { geom: null, layout: null, estimate: null, error: null } : prev));
+    if (calcMode !== "dinamis") {
+      dynBridge?.cancelPendingLayout();
       return;
     }
+    if (!dynBridge || !dynGeomInput) return;
+    // Hasil yang tersimpan (mis. setelah pindah tab) sudah segar untuk masukan ini: tidak perlu hitung ulang.
+    const cur = dynStateRef.current;
+    if (cur.geom === dynGeomInput && cur.key === layoutKey && (cur.layout || cur.error)) return;
+
     let stale = false;
     dynBridge
-      .executeLayoutAsync(dynGeomInput, dynConfig)
+      .executeLayoutAsync(dynGeomInput, layoutConfig)
       .then((lay) => {
         if (stale) return;
-        const est = dynBridge.calculateMaterialEstimate(lay, dynConfig, {
-          perimeterM: dynGeomInput.metrics.perimeterM,
-          includeAbuBatu: st.abu,
-          includeBaseCourse: st.bc,
-        });
-        setDynState({ geom: dynGeomInput, layout: lay, estimate: est, error: null });
+        setDynState({ geom: dynGeomInput, layout: lay, key: layoutKey, error: null });
       })
       .catch((err: any) => {
         if (stale || err instanceof dynBridge.StaleLayoutError) return;
-        setDynState({ geom: dynGeomInput, layout: null, estimate: null, error: err?.message || "Gagal memproses layout lahan." });
+        setDynState({
+          geom: dynGeomInput,
+          layout: null,
+          key: layoutKey,
+          error: err?.message || "Gagal memproses layout lahan.",
+        });
       });
     return () => {
+      // Hanya tandai basi; worker dipakai ulang oleh permintaan berikutnya (lihat worker/client).
       stale = true;
-      dynBridge.cancelPendingLayout();
     };
-  }, [calcMode, dynBridge, dynGeomInput, dynConfig, st.abu, st.bc]);
+  }, [calcMode, dynBridge, dynGeomInput, layoutConfig, layoutKey]);
 
-  const dynGeom = dynState.geom;
+  // Lepas worker saat komponen dilepas (idle maupun sedang menghitung).
+  useEffect(
+    () => () => {
+      dynBridgeRef.current?.disposeLayoutWorker();
+    },
+    [],
+  );
+
   const dynResult = dynState;
+  const dynGeom = dynState.geom;
 
   const dynArea = dynGeom?.metrics.areaM2 ?? 0;
   const dynPerim = dynGeom?.metrics.perimeterM ?? 0;
-  const dynEstimate = dynResult.estimate;
+  const dynEstimate = useMemo<MaterialEstimate | null>(() => {
+    if (!dynBridge || !dynState.layout || !dynGeom) return null;
+    return dynBridge.calculateMaterialEstimate(dynState.layout, estimateConfig, {
+      perimeterM: dynGeom.metrics.perimeterM,
+      includeAbuBatu: st.abu,
+      includeBaseCourse: st.bc,
+    });
+  }, [dynBridge, dynState.layout, dynGeom, estimateConfig, st.abu, st.bc]);
   const dynTotal = dynEstimate?.recommendedPurchaseUnits ?? 0;
   const dynHas = Boolean(dynGeom && dynEstimate);
+
+  // Hasil di layar "basi" selama bentuk/produk/motif/kemiringan berubah dan layout barunya belum jadi,
+  // atau bentuk yang diisi belum valid. Selama itu tombol kirim/salin/cetak dinonaktifkan agar pesan WA
+  // dan tautan selalu memuat angka, geometri, dan label dari hitungan yang sama.
+  const dynInvalid = calcMode === "dinamis" && dynInput === "invalid";
+  const dynComputing =
+    calcMode === "dinamis" &&
+    !dynInvalid &&
+    (dynInput === "editing" ||
+      (Boolean(dynGeomInput) && !dynState.error && (dynState.geom !== dynGeomInput || dynState.key !== layoutKey)));
+  const dynStale = dynComputing || dynInvalid;
 
   const dynKanstin = useMemo(() => {
     const manualKp = parseNum(st.kp);
@@ -1400,6 +1464,8 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const activeTotal = calcMode === "dinamis" ? dynTotal : r.total;
   const activeHas = calcMode === "dinamis" ? dynHas : has;
   const waHref = waLink(whatsapp, waMessage(activeLines, activeShareUrl));
+  const actionsBlocked = calcMode === "dinamis" && dynStale;
+  const blockedLabel = dynInvalid ? "Lengkapi bentuk lahan" : "Menghitung…";
 
   const enableManual = (on: boolean) =>
     update((s) => {
@@ -1654,7 +1720,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
               }
             />
             <div className={css.stack}>
-              {calcMode === "tetap" ? (
+              {calcMode === "tetap" && (
                 <>
                   <Seg
                     name="pp-mode"
@@ -1681,20 +1747,24 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                     </button>
                   </div>
                 </>
-              ) : (
-                <DesignerErrorBoundary
-                  title="Modul lahan dinamis tidak dapat dimuat"
-                  fallbackHint="Koneksi sempat terputus saat memuat komponen gambar lahan. Anda dapat memuat ulang atau kembali ke Lahan Tetap."
-                  onFallbackAction={() => setCalcMode("tetap")}
-                  fallbackActionLabel="Kembali ke Lahan Tetap"
-                >
-                  <DynamicSiteInput
-                    geometry={dynGeomInput}
-                    onGeometryChange={setDynGeom}
-                    rotationDeg={dynRot}
-                    onRotationChange={setDynRot}
-                  />
-                </DesignerErrorBoundary>
+              )}
+              {dynVisited && (
+                <div hidden={calcMode !== "dinamis"}>
+                  <DesignerErrorBoundary
+                    title="Modul lahan dinamis tidak dapat dimuat"
+                    fallbackHint="Koneksi sempat terputus saat memuat komponen gambar lahan. Anda dapat memuat ulang atau kembali ke Lahan Tetap."
+                    onFallbackAction={() => setCalcMode("tetap")}
+                    fallbackActionLabel="Kembali ke Lahan Tetap"
+                  >
+                    <DynamicSiteInput
+                      geometry={dynGeomInput}
+                      onGeometryChange={handleDynGeometry}
+                      onStatusChange={setDynInput}
+                      rotationDeg={dynRot}
+                      onRotationChange={setDynRot}
+                    />
+                  </DesignerErrorBoundary>
+                </div>
               )}
 
               <Seg
@@ -1780,7 +1850,12 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
               title="Hasil perhitungan"
               sub={calcMode === "dinamis" ? "Dihitung langsung dari pemotongan geometri bentuk lahan." : undefined}
             />
-            <div className={css.total} aria-live="polite" aria-atomic="true">
+            <div
+              className={`${css.total} ${dynStale ? css.totalStale : ""}`}
+              aria-live="polite"
+              aria-atomic="true"
+              aria-busy={dynStale}
+            >
               {calcMode === "dinamis" ? (
                 dynHas && dynEstimate ? (
                   <>
@@ -1822,6 +1897,14 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                 </>
               )}
             </div>
+
+            {dynStale && (
+              <p className={css.pendingNote} role="status" data-pp-noprint>
+                {dynInvalid
+                  ? "Bentuk lahan belum valid atau belum selesai. Angka di atas masih milik bentuk sebelumnya."
+                  : "Menghitung ulang tata letak lahan…"}
+              </p>
+            )}
 
             <ul className={`rowlist ${css.rows}`}>
               {calcMode === "dinamis" && dynEstimate && (
@@ -1916,19 +1999,28 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
 
             <div className={css.actions} data-pp-noprint>
               {/* data-cta dibaca pemicu GTM untuk menghitung lead kalkulator terpisah dari klik WhatsApp biasa. */}
-              <a className="btn btn-primary" href={waHref} target="_blank" rel="noopener" data-cta="kalkulator">
+              <a
+                className={`btn btn-primary ${actionsBlocked ? css.actionBlocked : ""}`}
+                href={actionsBlocked ? undefined : waHref}
+                target="_blank"
+                rel="noopener"
+                data-cta="kalkulator"
+                role={actionsBlocked ? "link" : undefined}
+                aria-disabled={actionsBlocked || undefined}
+                tabIndex={actionsBlocked ? -1 : undefined}
+              >
                 <WaIcon />
-                Kirim ke WhatsApp
+                {actionsBlocked ? blockedLabel : "Kirim ke WhatsApp"}
               </a>
-              <button type="button" className="btn btn-ghost" onClick={onCopy}>
+              <button type="button" className="btn btn-ghost" onClick={onCopy} disabled={actionsBlocked}>
                 Salin rincian
               </button>
               {calcMode === "dinamis" && (
-                <button type="button" className="btn btn-ghost" onClick={onCopyLink}>
-                  Salin tautan desain
+                <button type="button" className="btn btn-ghost" onClick={onCopyLink} disabled={actionsBlocked}>
+                  {dynComputing ? "Menghitung…" : "Salin tautan desain"}
                 </button>
               )}
-              <button type="button" className="btn btn-ghost" onClick={() => window.print()}>
+              <button type="button" className="btn btn-ghost" onClick={() => window.print()} disabled={actionsBlocked}>
                 Cetak / simpan PDF
               </button>
             </div>
@@ -1948,7 +2040,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
         </div>
 
         {/* Pratinjau Terpadu */}
-        <aside className={css.aside} aria-labelledby="pp-prev-h">
+        <aside className={`${css.aside} ${previewOpen ? css.asideOpen : ""}`} aria-labelledby="pp-prev-h">
           <div className={css.previewCard}>
             <div className={css.prevHead}>
               <h2 id="pp-prev-h">{calcMode === "dinamis" ? "Pratinjau lahan" : "Pratinjau motif"}</h2>
@@ -1956,12 +2048,26 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                 {calcMode === "dinamis"
                   ? view3d
                     ? `3D bentuk lahan · tebal ${st.tebal} cm`
-                    : `Denah 2D · ${fmt(dynArea)} m²`
+                    : `Denah 2D · ${fmt(dynArea)} m²${dynStale ? " · menghitung…" : ""}`
                   : view3d
                     ? `3D interaktif · tebal ${st.tebal} cm`
                     : "Tampak atas · skala asli"}
               </span>
             </div>
+            <button
+              type="button"
+              className={css.previewToggle}
+              aria-expanded={previewOpen}
+              aria-controls="pp-prev-body"
+              onClick={() => {
+                // 3D hanya nyaman pada pratinjau yang dibesarkan: menciutkan kembali ke 2D ringkas.
+                if (previewOpen) setView3d(false);
+                setPreviewOpen((v) => !v);
+              }}
+              data-pp-noprint
+            >
+              {previewOpen ? "Ciutkan" : "Perbesar"}
+            </button>
             <div className={css.viewToggle} role="group" aria-label="Mode pratinjau" data-pp-noprint>
               <button
                 type="button"
@@ -1980,6 +2086,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                 3D Interaktif
               </button>
             </div>
+            <div id="pp-prev-body" className={css.prevBody}>
             {calcMode === "dinamis" ? (
               <DynamicSitePreview
                 geometry={dynGeom}
@@ -2023,6 +2130,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                 )}
               </div>
             )}
+            </div>
             <p className={css.prevTitle}>
               <b>{m.name}</b> · {P.name} {P.size} · tebal {st.tebal} cm
             </p>
@@ -2037,8 +2145,12 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
           </div>
           <div className={css.quick} data-pp-noprint>
             <div className={css.quickInfo}>
-              <span className={css.quickLabel}>{activeHas ? `Total untuk ${fmt(activeArea)} m²` : "Estimasi Total"}</span>
-              <b className={`tabular ${css.quickValue}`}>{activeHas ? `${fmt(activeTotal)} pcs` : "– pcs"}</b>
+              <span className={css.quickLabel}>
+                {actionsBlocked ? "Menghitung ulang…" : activeHas ? `Total untuk ${fmt(activeArea)} m²` : "Estimasi Total"}
+              </span>
+              <b className={`tabular ${css.quickValue} ${actionsBlocked ? css.quickStale : ""}`}>
+                {activeHas ? `${fmt(activeTotal)} pcs` : "– pcs"}
+              </b>
             </div>
             <a href={activeHas ? "#pp-hasil" : "#pp-ukuran"} className={`btn btn-sm ${css.quickBtn}`}>
               {activeHas ? "Lihat rincian" : "Isi ukuran"}

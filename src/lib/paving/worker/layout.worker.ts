@@ -5,6 +5,7 @@
 
 import { calculateMaterialEstimate } from "../engine/estimate";
 import { generateLayout } from "../engine/layout";
+import { packLayout, packedTransferables } from "../render/packed-tiles";
 import type {
   CalculateEstimatePayload,
   GenerateLayoutPayload,
@@ -22,14 +23,16 @@ ctx.onmessage = (event: MessageEvent<WorkerRequest>) => {
   try {
     if (req.operation === "generateLayout") {
       const payload = req.payload as GenerateLayoutPayload;
-      const result = generateLayout(payload.geometry, payload.config);
+      // Kemas keping ke typed array lalu PINDAHKAN (transfer): main thread tidak perlu
+      // mendeserialisasi ratusan ribu objek (lihat render/packed-tiles).
+      const result = packLayout(generateLayout(payload.geometry, payload.config));
       const response: WorkerResponse = {
         requestId: req.requestId,
         status: "success",
         operation: "generateLayout",
         result,
       };
-      ctx.postMessage(response);
+      ctx.postMessage(response, packedTransferables(result.packed));
     } else if (req.operation === "calculateEstimate") {
       const payload = req.payload as CalculateEstimatePayload;
       const result = calculateMaterialEstimate(payload.layout, payload.config);

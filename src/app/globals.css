@@ -313,11 +313,13 @@ td.variant { white-space: nowrap; }
 .step-n { width: 48px; height: 55px; display: flex; align-items: center; justify-content: center; background: var(--biru); color: #fff; font: 700 22px var(--font-judul); }
 .faq details { background: #fff; border-radius: 20px; padding: 18px 22px; }
 .faq summary { font-weight: 700; font-size: 17px; cursor: pointer; min-height: 28px; color: var(--biru-tua); }
+.faq-touch summary { display: flex; align-items: center; min-height: 44px; }
 .faq details p { margin-top: 10px; color: var(--teks); }
 .cta-aside { background-color: var(--biru-tua); color: #fff; border-radius: 32px 32px 32px 8px; padding: 34px; display: flex; flex-direction: column; gap: 14px; align-self: flex-start; }
 .cta-aside h2 { color: #fff; font-size: 28px; }
 .cta-aside p { color: #d3dcef; }
 .cta-aside a:not(.btn) { color: var(--oranye-terang); font-weight: 600; }
+.cta-aside-touch a:not(.btn) { display: inline-flex; align-items: center; min-height: 44px; }
 
 /* Artikel */
 .prose { max-width: 720px; font-size: 18px; line-height: 1.75; color: var(--tinta); }

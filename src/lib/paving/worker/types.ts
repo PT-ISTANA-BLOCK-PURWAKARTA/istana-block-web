@@ -6,6 +6,7 @@
 import type { MaterialEstimate, PatternConfig } from "../engine/types";
 import type { LayoutResult } from "../engine/types";
 import type { ProjectGeometry } from "../geometry/types";
+import type { PackedLayoutResult } from "../render/packed-tiles";
 
 export type WorkerOperation = "generateLayout" | "calculateEstimate";
 
@@ -29,7 +30,8 @@ export interface WorkerSuccessResponse {
   requestId: string;
   status: "success";
   operation: WorkerOperation;
-  result: LayoutResult | MaterialEstimate;
+  /** generateLayout membalas hasil terkemas (typed array, dipindahkan tanpa salinan). */
+  result: PackedLayoutResult | MaterialEstimate;
 }
 
 export interface WorkerErrorResponse {
