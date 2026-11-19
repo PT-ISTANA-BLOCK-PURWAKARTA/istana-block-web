@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
+import type { LokasiProyek } from "@/lib/paving/lokasi";
 import { DesignerErrorBoundary, retryImport } from "./DesignerErrorBoundary";
 import { FileImportModal } from "./FileImportModal";
 import { GridCanvas } from "./GridCanvas";
@@ -39,6 +40,9 @@ export interface DynamicSiteInputProps {
   onRotationChange: (deg: number) => void;
   /** Bentuk awal dipulihkan dari tautan bagi; formulir bentuk siap pakai tidak boleh menimpanya. */
   holdInitial?: boolean;
+  /** Lokasi proyek (dipulihkan dari tautan bagi) dan pemberitahuan saat berubah. */
+  lokasi?: LokasiProyek | null;
+  onLokasiChange?: (lokasi: LokasiProyek | null) => void;
 }
 
 export function DynamicSiteInput({
@@ -48,6 +52,8 @@ export function DynamicSiteInput({
   rotationDeg,
   onRotationChange,
   holdInitial,
+  lokasi,
+  onLokasiChange,
 }: DynamicSiteInputProps) {
   const [activeMethod, setActiveMethod] = useState<InputMethod>("preset");
   // Cara input yang pernah dibuka tetap terpasang (disembunyikan) supaya isiannya tidak hilang.
@@ -105,7 +111,7 @@ export function DynamicSiteInput({
             onFallbackAction={() => selectMethod("preset")}
             fallbackActionLabel="Gunakan Bentuk Siap Pakai"
           >
-            <DynamicMapDrawer onApplyGeometry={emit.map} />
+            <DynamicMapDrawer onApplyGeometry={emit.map} lokasi={lokasi} onLokasiChange={onLokasiChange} />
           </DesignerErrorBoundary>
         </div>
       )}

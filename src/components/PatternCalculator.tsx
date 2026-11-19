@@ -8,6 +8,7 @@ import { waLink } from "@/lib/format";
 import { PAVING_CATALOG } from "@/lib/paving/catalog";
 import type { MaterialEstimate, PatternConfig } from "@/lib/paving/engine/types";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
+import { barisLokasiWa, type LokasiProyek } from "@/lib/paving/lokasi";
 import type { PackedLayoutResult } from "@/lib/paving/render/packed-tiles";
 import { TAMPILKAN_BIAYA, daftarBelanjaLines, hitungProyek, rekomendasiBeban, type KelasBeban } from "@/lib/paving/kebutuhan";
 import { KebutuhanLapangan } from "./KebutuhanLapangan";
@@ -1117,6 +1118,8 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const [dynBridge, setDynBridge] = useState<typeof import("@/lib/paving/dynamic-bridge") | null>(null);
   const [dynGeomInput, setDynGeom] = useState<ProjectGeometry | null>(null);
   const [dynRot, setDynRot] = useState<number>(0);
+  // Lokasi proyek (hasil cari lokasi, atau titik tengah poligon): ikut ke pesan WA dan tautan bagi.
+  const [dynLokasi, setDynLokasi] = useState<LokasiProyek | null>(null);
   // Panel masukan Lahan Dinamis dipasang sekali (saat tab pertama kali dibuka) dan hanya
   // disembunyikan saat pindah ke Lahan Tetap, sehingga bentuk yang sudah dibuat tidak hilang.
   const [dynVisited, setDynVisited] = useState(calcMode === "dinamis");
@@ -1180,6 +1183,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                 : s.cad,
             }));
             setDynRot(decoded.cfg.rotationDeg ?? 0);
+            if (decoded.lok) setDynLokasi(decoded.lok);
           } catch {
             /* kode tidak valid: jatuh ke lahan persegi default */
           }
@@ -1412,8 +1416,9 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
         reservePercent: st.cad,
         rotationDeg: dynRot,
       },
+      ...(dynLokasi ? { lok: dynLokasi } : {}),
     });
-  }, [calcMode, dynBridge, dynGeom, shareUrl, st.jenis, m.id, st.cad, dynRot]);
+  }, [calcMode, dynBridge, dynGeom, shareUrl, st.jenis, m.id, st.cad, dynRot, dynLokasi]);
 
   const dynLines = useMemo(() => {
     if (!dynGeom || !dynEstimate) return [];
@@ -1441,8 +1446,10 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
     if (st.bc && dynEstimate.extras?.baseCourseM3) {
       out.push(`Base course (20 cm): ${fmt(dynEstimate.extras.baseCourseM3)} m³`);
     }
+    const barisLokasi = barisLokasiWa(dynLokasi);
+    if (barisLokasi) out.push(barisLokasi);
     return out;
-  }, [dynGeom, dynEstimate, P, st.tebal, m.name, dynRot, dynArea, dynPerim, st.cad, dynTotal, dynPerColor, st.k, st.ks, dynKanstin, st.abu, st.bc]);
+  }, [dynGeom, dynEstimate, P, st.tebal, m.name, dynRot, dynArea, dynPerim, st.cad, dynTotal, dynPerColor, st.k, st.ks, dynKanstin, st.abu, st.bc, dynLokasi]);
 
   const baseLines = calcMode === "dinamis" && dynHas ? dynLines : lines;
   const activeShareUrl = calcMode === "dinamis" ? dynShareUrl : shareUrl;
@@ -1824,6 +1831,8 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                       rotationDeg={dynRot}
                       onRotationChange={setDynRot}
                       holdInitial={dynHold}
+                      lokasi={dynLokasi}
+                      onLokasiChange={setDynLokasi}
                     />
                   </DesignerErrorBoundary>
                 </div>

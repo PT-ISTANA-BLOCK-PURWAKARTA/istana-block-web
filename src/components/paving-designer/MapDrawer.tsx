@@ -2,16 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import { projectWgs84MultiPolygon } from "@/lib/paving/geometry/project";
+import { titikTengahPoligon, type LokasiProyek, type TitikLokasi } from "@/lib/paving/lokasi";
 import type { MultiPolygon2D, Point2D, ProjectGeometry, Ring2D } from "@/lib/paving/geometry/types";
 import { IconAlert, IconCheck, IconInfo, IconTrash, IconUndo } from "./Icons";
+import { LokasiSearch } from "./LokasiSearch";
 import css from "./PavingDesigner.module.css";
 
 interface Props {
   onApplyGeometry: (geom: ProjectGeometry) => void;
   onCancel?: () => void;
+  /** Lokasi proyek awal (dipulihkan dari tautan bagi). */
+  lokasi?: LokasiProyek | null;
+  onLokasiChange?: (lokasi: LokasiProyek | null) => void;
 }
 
-export function MapDrawer({ onApplyGeometry }: Props) {
+const ZOOM_LOKASI = 18;
+
+export function MapDrawer({ onApplyGeometry, lokasi: lokasiAwal, onLokasiChange }: Props) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const polygonLayerRef = useRef<any>(null);
@@ -23,6 +30,19 @@ export function MapDrawer({ onApplyGeometry }: Props) {
   const [tempGeom, setTempGeom] = useState<ProjectGeometry | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+
+  // Langkah "Cari lokasi proyek": tampil di atas dan boleh dilewati. Peta baru tampil setelah dicari atau dilewati.
+  const [lokasi, setLokasi] = useState<LokasiProyek | null>(lokasiAwal ?? null);
+  const [labelLokasi, setLabelLokasi] = useState<string>(lokasiAwal ? "Dari tautan bagi" : "");
+  const [cariTerbuka, setCariTerbuka] = useState(!lokasiAwal);
+  const [petaTampil, setPetaTampil] = useState(Boolean(lokasiAwal));
+  const [mapSiap, setMapSiap] = useState(false);
+  const lokasiMarkerRef = useRef<any>(null);
+  const terbangRef = useRef<"fly" | "set" | null>(lokasiAwal ? "set" : null);
+  /** true bila lokasi berasal dari pencarian (bukan titik tengah poligon), supaya tidak ditimpa saat menerapkan. */
+  const dariCariRef = useRef(lokasiAwal?.asal === "cari");
+  const onLokasiChangeRef = useRef(onLokasiChange);
+  onLokasiChangeRef.current = onLokasiChange;
 
   const pointsRef = useRef<Point2D[]>([]);
   pointsRef.current = points;
@@ -90,6 +110,7 @@ export function MapDrawer({ onApplyGeometry }: Props) {
           const lat = e.latlng.lat;
           setPoints([...pointsRef.current, [lon, lat]]);
         });
+        setMapSiap(true);
       } catch (err: any) {
         if (isMounted) {
           setMapError(err?.message || "Gagal memuat peta satelit. Periksa koneksi internet Anda.");
@@ -155,6 +176,52 @@ export function MapDrawer({ onApplyGeometry }: Props) {
     }
   }, [points]);
 
+  // Penanda "Lokasi proyek" + terbang ke lokasi. Tidak menangkap klik supaya titik sudut tetap bisa digambar di atasnya.
+  useEffect(() => {
+    const L = leafletRef.current;
+    const map = mapInstanceRef.current;
+    if (!L || !map || !mapSiap) return;
+    lokasiMarkerRef.current?.remove();
+    lokasiMarkerRef.current = null;
+    if (!lokasi) return;
+    const ll: [number, number] = [lokasi.lat, lokasi.lng];
+    const marker = L.marker(ll, { interactive: false, keyboard: false, title: "Lokasi proyek" });
+    marker.bindTooltip(lokasi.asal === "poligon" ? "Lokasi proyek (perkiraan)" : "Lokasi proyek", {
+      permanent: true,
+      direction: "top",
+      offset: [0, -34],
+    });
+    marker.addTo(map);
+    lokasiMarkerRef.current = marker;
+    const mode = terbangRef.current;
+    if (mode && petaTampil) {
+      terbangRef.current = null;
+      map.invalidateSize();
+      if (mode === "fly") map.flyTo(ll, ZOOM_LOKASI, { duration: 1.2 });
+      else map.setView(ll, ZOOM_LOKASI, { animate: false });
+    }
+  }, [lokasi, mapSiap, petaTampil]);
+
+  useEffect(() => {
+    if (petaTampil && mapInstanceRef.current) mapInstanceRef.current.invalidateSize();
+  }, [petaTampil, mapSiap]);
+
+  const pilihLokasi = (titik: TitikLokasi, label: string) => {
+    const baru: LokasiProyek = { lat: titik.lat, lng: titik.lng, asal: "cari" };
+    dariCariRef.current = true;
+    terbangRef.current = "fly";
+    setLokasi(baru);
+    setLabelLokasi(label);
+    setCariTerbuka(false);
+    setPetaTampil(true);
+    onLokasiChangeRef.current?.(baru);
+  };
+
+  const lewatiCari = () => {
+    setCariTerbuka(false);
+    setPetaTampil(true);
+  };
+
   const handleUndo = () => {
     if (points.length > 0) setPoints(points.slice(0, -1));
   };
@@ -166,11 +233,47 @@ export function MapDrawer({ onApplyGeometry }: Props) {
   };
 
   const handleApply = () => {
-    if (tempGeom) onApplyGeometry(tempGeom);
+    if (!tempGeom) return;
+    // Tanpa pencarian lokasi: pakai titik tengah poligon sebagai lokasi proyek (ditandai "perkiraan" di pesan WA).
+    if (!dariCariRef.current) {
+      const c = titikTengahPoligon(points);
+      if (c) {
+        const perkiraan: LokasiProyek = { ...c, asal: "poligon" };
+        setLokasi(perkiraan);
+        setLabelLokasi("");
+        onLokasiChangeRef.current?.(perkiraan);
+      }
+    }
+    onApplyGeometry(tempGeom);
   };
 
   return (
     <div className={css.stack}>
+      {cariTerbuka ? (
+        <LokasiSearch onPilih={pilihLokasi} onLewati={lewatiCari} petaSudahTampil={petaTampil} />
+      ) : (
+        <div className={css.lokasiRingkas}>
+          <div className={css.lokasiRingkasTeks}>
+            {lokasi ? (
+              <>
+                <strong>{lokasi.asal === "poligon" ? "Lokasi proyek (perkiraan)" : "Lokasi proyek"}</strong>
+                <span>
+                  {labelLokasi ? `${labelLokasi} · ` : ""}
+                  {lokasi.lat}, {lokasi.lng}
+                </span>
+              </>
+            ) : (
+              <span>Lokasi proyek belum dipilih.</span>
+            )}
+          </div>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCariTerbuka(true)}>
+            <span>{lokasi ? "Ubah lokasi" : "Cari lokasi"}</span>
+          </button>
+        </div>
+      )}
+
+      <div hidden={!petaTampil}>
+      <div className={css.stack}>
       <p className={css.instruction}>
         Klik sudut-sudut batas tanah langsung di peta satelit (Esri World Imagery). Titik pertama akan
         tersambung otomatis membentuk poligon tertutup.
@@ -256,6 +359,8 @@ export function MapDrawer({ onApplyGeometry }: Props) {
           <strong>Catatan akurasi:</strong> Citra satelit membantu visualisasi awal dan estimasi kasar.
           Lakukan pengukuran fisik di lapangan sebelum pemesanan final material.
         </div>
+      </div>
+      </div>
       </div>
     </div>
   );
