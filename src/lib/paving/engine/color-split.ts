@@ -28,18 +28,43 @@ export function splitColorsByLayoutRoles(
   colors: ReadonlyArray<ColorId>,
   totalUnits: number,
 ): ColorSplit[] {
-  if (tiles.length === 0 || colors.length === 0) return [];
+  const perRole: number[] = [];
+  for (const t of tiles) perRole[t.role] = (perRole[t.role] ?? 0) + 1;
+  return splitColorsByRoleCounts(perRole, colors, totalUnits);
+}
 
-  const perRole = new Map<number, number>();
-  for (const t of tiles) perRole.set(t.role, (perRole.get(t.role) ?? 0) + 1);
+/**
+ * Varian untuk hasil layout terkemas (`PackedTiles.role`): menghitung per peran langsung dari
+ * Uint8Array tanpa membuat objek keping, jadi aman di main thread pada lahan ribuan m2.
+ */
+export function splitColorsByPackedRoles(
+  roles: ArrayLike<number>,
+  colors: ReadonlyArray<ColorId>,
+  totalUnits: number,
+): ColorSplit[] {
+  const perRole: number[] = [];
+  for (let i = 0; i < roles.length; i++) perRole[roles[i]] = (perRole[roles[i]] ?? 0) + 1;
+  return splitColorsByRoleCounts(perRole, colors, totalUnits);
+}
+
+/** Inti pembagian: `perRole[role]` = jumlah keping peran itu (indeks kosong dianggap nol). */
+export function splitColorsByRoleCounts(
+  perRole: ReadonlyArray<number | undefined>,
+  colors: ReadonlyArray<ColorId>,
+  totalUnits: number,
+): ColorSplit[] {
+  let n = 0;
+  for (const c of perRole) n += c ?? 0;
+  if (n === 0 || colors.length === 0) return [];
 
   const perColor = new Map<ColorId, number>();
-  for (const role of [...perRole.keys()].sort((a, b) => a - b)) {
+  for (let role = 0; role < perRole.length; role++) {
+    const count = perRole[role] ?? 0;
+    if (count === 0) continue;
     const c = colors[role] ?? colors[0];
-    perColor.set(c, (perColor.get(c) ?? 0) + (perRole.get(role) ?? 0));
+    perColor.set(c, (perColor.get(c) ?? 0) + count);
   }
 
-  const n = tiles.length;
   const total = Math.max(0, Math.round(totalUnits));
   return [...perColor.entries()].map(([c, count]) => ({
     c,

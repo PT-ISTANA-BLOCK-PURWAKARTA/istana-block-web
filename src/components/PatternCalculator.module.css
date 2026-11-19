@@ -593,3 +593,12 @@
 @media (min-width: 1000px) {
   .previewToggle { display: none; }
 }
+
+/* ---------- Kebutuhan lapangan (T4) ---------- */
+.kebutuhan { border-radius: 18px; background: var(--latar); padding: 0 14px; }
+.kebutuhanSummary {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px;
+  min-height: 44px; padding: 10px 0; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--tinta);
+}
+.kebutuhanSummary small { font-size: 13px; font-weight: 500; color: var(--redup); }
+.perkiraan { display: block; font-size: 11.5px; font-style: italic; color: var(--redup); }

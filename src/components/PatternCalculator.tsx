@@ -8,6 +8,8 @@ import { PAVING_CATALOG } from "@/lib/paving/catalog";
 import type { MaterialEstimate, PatternConfig } from "@/lib/paving/engine/types";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
 import type { PackedLayoutResult } from "@/lib/paving/render/packed-tiles";
+import { daftarBelanjaLines, hitungProyek, rekomendasiBeban, type BentukLahan, type KelasBeban } from "@/lib/paving/kebutuhan";
+import { KebutuhanLapangan } from "./KebutuhanLapangan";
 import { DesignerErrorBoundary, retryImport } from "./paving-designer/DesignerErrorBoundary";
 import type { SiteInputStatus } from "./paving-designer/site-status";
 import css from "./PatternCalculator.module.css";
@@ -1107,7 +1109,9 @@ function Swatch({ c }: { c: ColorId }) {
 const LAYOUT_NEUTRAL_THICKNESS_M = 0.08;
 
 export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string; initialQuery?: Query }) {
-  const initialDynCode = typeof initialQuery?.d === "string" ? initialQuery.d : "";
+  // Tautan lama memakai ?pd_share=; tautan baru ?d= (lihat readShareCode).
+  const queryCode = (k: string) => (typeof initialQuery?.[k] === "string" ? (initialQuery[k] as string) : "");
+  const initialDynCode = queryCode("d") || queryCode("pd_share");
   const [calcMode, setCalcMode] = useState<"tetap" | "dinamis">(initialDynCode ? "dinamis" : "tetap");
   const [dynBridge, setDynBridge] = useState<typeof import("@/lib/paving/dynamic-bridge") | null>(null);
   const [dynGeomInput, setDynGeom] = useState<ProjectGeometry | null>(null);
@@ -1115,6 +1119,8 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   // Panel masukan Lahan Dinamis dipasang sekali (saat tab pertama kali dibuka) dan hanya
   // disembunyikan saat pindah ke Lahan Tetap, sehingga bentuk yang sudah dibuat tidak hilang.
   const [dynVisited, setDynVisited] = useState(calcMode === "dinamis");
+  // Bentuk lahan datang dari tautan bagi: formulir bentuk siap pakai tidak boleh menimpanya dengan persegi bawaan.
+  const [dynHold, setDynHold] = useState(Boolean(initialDynCode));
   const [dynInput, setDynInput] = useState<SiteInputStatus>("ok");
   const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -1134,7 +1140,10 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   useEffect(() => {
     if (initialQuery) return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get("d")) setCalcMode("dinamis");
+    if (params.get("d") || params.get("pd_share")) {
+      setCalcMode("dinamis");
+      setDynHold(true);
+    }
     const q: Query = {};
     params.forEach((v, k) => {
       q[k] = v;
@@ -1154,48 +1163,27 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
       .then((mod) => {
         if (!active) return;
         setDynBridge(mod);
-        setDynGeom((prev) => {
-          if (prev) return prev;
-          const code =
-            initialDynCode ||
-            (typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("d") ?? "" : "");
-          if (code) {
-            try {
-              const decoded = mod.decodeShareStateFromBase64(code);
-              setSt((s) => ({
-                ...s,
-                jenis: decoded.cfg.productId,
-                motif: decoded.cfg.motifId,
-                cad: CAD_OPTIONS.includes(decoded.cfg.reservePercent as (typeof CAD_OPTIONS)[number])
-                  ? decoded.cfg.reservePercent
-                  : s.cad,
-              }));
-              setDynRot(decoded.cfg.rotationDeg ?? 0);
-              if (decoded.geom.kind === "preset") {
-                const p = decoded.geom.params;
-                if (decoded.geom.preset === "l-shape") {
-                  return mod.createLShapePreset(p.totalW ?? 10, p.totalH ?? 8, p.legW ?? 4, p.legH ?? 4);
-                }
-                if (decoded.geom.preset === "u-shape") {
-                  return mod.createUShapePreset(
-                    p.totalW ?? 12,
-                    p.totalH ?? 8,
-                    p.leftLegW ?? 3,
-                    p.rightLegW ?? 3,
-                    p.baseH ?? 3,
-                  );
-                }
-                if (decoded.geom.preset === "trapezoid") {
-                  return mod.createTrapezoidPreset(p.bottomW ?? 10, p.topW ?? 6, p.height ?? 5, p.offset ?? 2);
-                }
-                return mod.createRectanglePreset(p.lengthM ?? 10, p.widthM ?? 5);
-              }
-            } catch {
-              /* kode tidak valid: jatuh ke lahan persegi default */
-            }
+        const code =
+          initialDynCode || (typeof window !== "undefined" ? mod.readShareCode(window.location.search) : "");
+        let restored: ProjectGeometry | null = null;
+        if (code) {
+          try {
+            const decoded = mod.decodeShareStateFromBase64(code);
+            restored = mod.shareGeomToGeometry(decoded.geom);
+            setSt((s) => ({
+              ...s,
+              jenis: decoded.cfg.productId,
+              motif: decoded.cfg.motifId,
+              cad: CAD_OPTIONS.includes(decoded.cfg.reservePercent as (typeof CAD_OPTIONS)[number])
+                ? decoded.cfg.reservePercent
+                : s.cad,
+            }));
+            setDynRot(decoded.cfg.rotationDeg ?? 0);
+          } catch {
+            /* kode tidak valid: jatuh ke lahan persegi default */
           }
-          return mod.createRectanglePreset(10, 5);
-        });
+        }
+        setDynGeom((prev) => prev ?? restored ?? mod.createRectanglePreset(10, 5));
       })
       .catch(() => {
         /* ditangani jika user mencoba ulang */
@@ -1398,10 +1386,14 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
     return { len, pcs, auto };
   }, [st.kp, st.ks, dynPerim]);
 
+  // Pembagian warna lahan dinamis diambil dari peran keping hasil layout (bukan persen pola Fixed).
   const dynPerColor = useMemo(() => {
-    if (!dynTotal) return r.shares.map((x) => ({ c: x.c, share: x.share, pcs: 0 }));
-    return r.shares.map((x) => ({ c: x.c, share: x.share, pcs: Math.ceil(dynTotal * x.share) }));
-  }, [r.shares, dynTotal]);
+    const fallback = (pcs: (share: number) => number) => r.shares.map((x) => ({ c: x.c, share: x.share, pcs: pcs(x.share) }));
+    if (!dynTotal) return fallback(() => 0);
+    if (!dynBridge || !dynState.layout) return fallback((share) => Math.ceil(dynTotal * share));
+    const split = dynBridge.splitColorsByPackedRoles(dynState.layout.packed.role, colors3D, dynTotal);
+    return split.length ? split : fallback((share) => Math.ceil(dynTotal * share));
+  }, [r.shares, dynTotal, dynBridge, dynState.layout, colors3D]);
 
   const dynShareUrl = useMemo(() => {
     if (calcMode !== "dinamis" || !dynBridge || !dynGeom) return shareUrl;
@@ -1412,14 +1404,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
     return dynBridge.buildShareUrl(base, {
       v: 1,
       engineVersion: "1.0.0",
-      geom: {
-        kind: "preset",
-        preset: "rectangle",
-        params: {
-          lengthM: Math.max(0.5, Math.round((dynGeom.metrics.bounds.maxX - dynGeom.metrics.bounds.minX) * 10) / 10),
-          widthM: Math.max(0.5, Math.round((dynGeom.metrics.bounds.maxY - dynGeom.metrics.bounds.minY) * 10) / 10),
-        },
-      },
+      geom: dynBridge.geometryToShareGeom(dynGeom).geom,
       cfg: {
         productId: st.jenis,
         motifId: m.id,
@@ -1458,11 +1443,64 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
     return out;
   }, [dynGeom, dynEstimate, P, st.tebal, m.name, dynRot, dynArea, dynPerim, st.cad, dynTotal, dynPerColor, st.k, st.ks, dynKanstin, st.abu, st.bc]);
 
-  const activeLines = calcMode === "dinamis" && dynHas ? dynLines : lines;
+  const baseLines = calcMode === "dinamis" && dynHas ? dynLines : lines;
   const activeShareUrl = calcMode === "dinamis" ? dynShareUrl : shareUrl;
   const activeArea = calcMode === "dinamis" ? dynArea : r.area;
   const activeTotal = calcMode === "dinamis" ? dynTotal : r.total;
   const activeHas = calcMode === "dinamis" ? dynHas : has;
+
+  // Kebutuhan lapangan (T4): bagian lipat opsional. Tanpa kelas beban terpilih, tidak ada yang dihitung
+  // dan pesan WhatsApp tetap seperti sebelumnya.
+  const [kbKelas, setKbKelas] = useState<KelasBeban | "">("");
+  const [kbJarak, setKbJarak] = useState("");
+  const kbJarakNum = parseNum(kbJarak);
+  const kbJarakBad = kbJarak.trim() !== "" && !(kbJarakNum >= 0);
+  const kbRek = useMemo(() => (kbKelas ? rekomendasiBeban(kbKelas) : null), [kbKelas]);
+  const kbLuas = calcMode === "dinamis" ? (dynHas ? dynArea : 0) : r.area;
+  const kbMenunggu = !(kbLuas > 0) || (calcMode === "dinamis" && dynStale);
+  const kbBentuk: BentukLahan = useMemo(() => {
+    if (calcMode !== "dinamis" || !dynBridge || !dynGeom) return "sederhana";
+    const g = dynBridge.geometryToShareGeom(dynGeom).geom;
+    return g.kind === "preset" && g.preset === "rectangle" ? "sederhana" : "tak-simetris";
+  }, [calcMode, dynBridge, dynGeom]);
+  const kbKeliling = calcMode === "dinamis" ? dynKanstin.len : r.kanstin.len;
+  const kbPcsLayout =
+    calcMode === "dinamis"
+      ? dynEstimate
+        ? dynEstimate.fullUnits + dynEstimate.cutInstalledPieces
+        : 0
+      : ceilSafe(r.area * P.pcs);
+  const kbHasil = useMemo(() => {
+    if (!kbKelas || kbMenunggu) return null;
+    try {
+      return hitungProyek(
+        [
+          {
+            id: "area",
+            label: "Lahan",
+            produkId: st.jenis,
+            luasKotorM2: kbLuas,
+            tebalCm: st.tebal,
+            kelas: kbKelas,
+            bentuk: kbBentuk,
+            kelilingM: kbKeliling,
+            pcsLayout: kbPcsLayout,
+          },
+        ],
+        { jarakKm: kbJarak.trim() !== "" && kbJarakNum >= 0 ? kbJarakNum : undefined, sertakanKanstin: st.k },
+      );
+    } catch {
+      return null;
+    }
+  }, [kbKelas, kbMenunggu, st.jenis, st.tebal, st.k, kbLuas, kbBentuk, kbKeliling, kbPcsLayout, kbJarak, kbJarakNum]);
+  const kbLines = useMemo(
+    () => (kbHasil ? ["", "*Kebutuhan lapangan (perkiraan):*", ...daftarBelanjaLines(kbHasil)] : []),
+    [kbHasil],
+  );
+  const activeLines = useMemo(
+    () => (activeHas && !(calcMode === "dinamis" && dynStale) ? [...baseLines, ...kbLines] : baseLines),
+    [baseLines, kbLines, activeHas, calcMode, dynStale],
+  );
   const waHref = waLink(whatsapp, waMessage(activeLines, activeShareUrl));
   const actionsBlocked = calcMode === "dinamis" && dynStale;
   const blockedLabel = dynInvalid ? "Lengkapi bentuk lahan" : "Menghitung…";
@@ -1762,6 +1800,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                       onStatusChange={setDynInput}
                       rotationDeg={dynRot}
                       onRotationChange={setDynRot}
+                      holdInitial={dynHold}
                     />
                   </DesignerErrorBoundary>
                 </div>
@@ -1932,7 +1971,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                     <span>
                       {COLORS[x.c].name}
                       <small className={css.rowSub}>
-                        {fmtPct(x.share)} {st.manual && !r.manualErr ? "(manual)" : "dari motif"}
+                        {fmtPct(x.share)} {calcMode === "dinamis" ? "dari tata letak" : st.manual && !r.manualErr ? "(manual)" : "dari motif"}
                       </small>
                     </span>
                   </span>
@@ -1996,6 +2035,19 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                 Jumlah per warna dibulatkan ke atas masing-masing, jadi totalnya {fmt(r.sumPer)} pcs ({fmt(r.sumPer - r.total)} pcs lebih banyak dari total).
               </p>
             )}
+
+            <KebutuhanLapangan
+              kelas={kbKelas}
+              onKelas={setKbKelas}
+              jarak={kbJarak}
+              onJarak={setKbJarak}
+              jarakBad={kbJarakBad}
+              produkId={st.jenis}
+              tebalCm={st.tebal}
+              rek={kbRek}
+              hasil={kbHasil}
+              menunggu={kbMenunggu}
+            />
 
             <div className={css.actions} data-pp-noprint>
               {/* data-cta dibaca pemicu GTM untuk menghitung lead kalkulator terpisah dari klik WhatsApp biasa. */}

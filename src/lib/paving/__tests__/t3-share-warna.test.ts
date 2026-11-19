@@ -7,7 +7,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { addHoleToGeometry, buildProjectGeometry, createLShapePreset, createRectanglePreset, createUShapePreset } from "../adapters/preset";
 import { parseGeoJsonToProjectGeometry } from "../adapters/geojson";
-import { splitColorsByLayoutRoles } from "../engine/color-split";
+import { splitColorsByLayoutRoles, splitColorsByPackedRoles } from "../engine/color-split";
+import { packLayout } from "../render/packed-tiles";
 import { generateLayout } from "../engine/layout";
 import { calculateMaterialEstimate } from "../engine/estimate";
 import type { PatternConfig } from "../engine/types";
@@ -170,7 +171,26 @@ describe("T3 pembagian warna dari peran layout", () => {
 
   it("layout kosong menghasilkan daftar kosong", () => {
     expect(splitColorsByLayoutRoles([], ["N"], 10)).toEqual([]);
+    expect(splitColorsByPackedRoles(new Uint8Array(0), ["N"], 10)).toEqual([]);
   });
+
+  it("varian terkemas (Uint8Array) memberi hasil sama dengan varian objek", () => {
+    const roles = [2, 1, 0, 0, 0, 1, 2, 2, 0];
+    const colors = ["N", "H", "M"] as const;
+    expect(splitColorsByPackedRoles(Uint8Array.from(roles), colors, 37)).toEqual(
+      splitColorsByLayoutRoles(tiles(roles), colors, 37),
+    );
+  });
+
+  it("layout nyata terkemas: sama dengan varian objek tanpa membuka keping", () => {
+    const geom = createLShapePreset(10, 8, 4, 3);
+    const config: PatternConfig = { productId: "truepave", motifId: "bata-list", thicknessM: 0.06, reservePercent: 5, rotationDeg: 0 };
+    const layout = generateLayout(geom, config);
+    const packed = packLayout(layout);
+    expect(splitColorsByPackedRoles(packed.packed.role, ["N", "M"], 500)).toEqual(
+      splitColorsByLayoutRoles(layout.tiles, ["N", "M"], 500),
+    );
+  }, 60000);
 
   it("memakai layout nyata: porsi mengikuti peran keping lahan L", () => {
     const geom = createLShapePreset(10, 8, 4, 3);

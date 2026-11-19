@@ -21,6 +21,11 @@ interface Props {
   onGeometryChange: (geom: ProjectGeometry) => void;
   /** "editing" selama jeda ketik; "invalid" bila ukuran tidak membentuk lahan yang sah. */
   onStatusChange?: (status: SiteInputStatus) => void;
+  /**
+   * Geometri awal sedang dipulihkan dari tautan bagi: jangan menimpanya dengan nilai bawaan formulir
+   * sebelum pengguna mengubah isian.
+   */
+  holdInitial?: boolean;
 }
 
 const PRESET_OPTIONS: Array<{ id: PresetType; label: string }> = [
@@ -67,7 +72,7 @@ function MeterInput({
   );
 }
 
-export function PresetForm({ onGeometryChange, onStatusChange }: Props) {
+export function PresetForm({ onGeometryChange, onStatusChange, holdInitial = false }: Props) {
   const [type, setType] = useState<PresetType>("rect");
   const statusCbRef = useRef(onStatusChange);
   statusCbRef.current = onStatusChange;
@@ -97,7 +102,20 @@ export function PresetForm({ onGeometryChange, onStatusChange }: Props) {
 
   const [error, setError] = useState<string | null>(null);
 
+  const signature = JSON.stringify([
+    type, rectLen, rectWid, lTotalW, lTotalH, lLegW, lLegH, uTotalW, uTotalH, uLeftLegW, uRightLegW,
+    uBaseH, trapBottomW, trapTopW, trapH, trapOffset,
+  ]);
+  const initialSignature = useRef(signature);
+  const released = useRef(false);
+
   useEffect(() => {
+    if (signature !== initialSignature.current) released.current = true;
+    if (holdInitial && !released.current) {
+      // Isian belum disentuh: geometri dari tautan tetap berlaku.
+      statusCbRef.current?.("ok");
+      return;
+    }
     // Debounce: jangan memicu layout per ketukan; kirim setelah pengguna berhenti mengetik.
     // Selama jeda, hasil di layar milik ukuran sebelumnya: beri tahu induk ("menghitung...").
     statusCbRef.current?.("editing");
@@ -141,6 +159,8 @@ export function PresetForm({ onGeometryChange, onStatusChange }: Props) {
     trapH,
     trapOffset,
     onGeometryChange,
+    signature,
+    holdInitial,
   ]);
 
   return (

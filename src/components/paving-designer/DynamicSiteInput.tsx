@@ -37,6 +37,8 @@ export interface DynamicSiteInputProps {
   onStatusChange?: (status: SiteInputStatus) => void;
   rotationDeg: number;
   onRotationChange: (deg: number) => void;
+  /** Bentuk awal dipulihkan dari tautan bagi; formulir bentuk siap pakai tidak boleh menimpanya. */
+  holdInitial?: boolean;
 }
 
 export function DynamicSiteInput({
@@ -45,6 +47,7 @@ export function DynamicSiteInput({
   onStatusChange,
   rotationDeg,
   onRotationChange,
+  holdInitial,
 }: DynamicSiteInputProps) {
   const [activeMethod, setActiveMethod] = useState<InputMethod>("preset");
   // Cara input yang pernah dibuka tetap terpasang (disembunyikan) supaya isiannya tidak hilang.
@@ -83,7 +86,7 @@ export function DynamicSiteInput({
 
       {visited.has("preset") && (
         <div hidden={activeMethod !== "preset"}>
-          <PresetForm onGeometryChange={emit.preset} onStatusChange={onStatusChange} />
+          <PresetForm onGeometryChange={emit.preset} onStatusChange={onStatusChange} holdInitial={holdInitial} />
         </div>
       )}
 

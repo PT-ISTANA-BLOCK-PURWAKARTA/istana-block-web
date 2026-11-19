@@ -11,8 +11,11 @@ export {
   buildShareUrl,
   createWhatsAppShareLink,
   decodeShareStateFromBase64,
+  readShareCode,
   type ShareState,
 } from "./share";
+export { geometryToShareGeom, shareGeomToGeometry } from "./share-geometry";
+export { splitColorsByPackedRoles } from "./engine/color-split";
 export {
   cancelPendingLayout,
   disposeLayoutWorker,
