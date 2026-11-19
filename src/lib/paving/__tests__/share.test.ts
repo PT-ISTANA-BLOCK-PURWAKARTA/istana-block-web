@@ -137,10 +137,10 @@ describe("F6 Share & WhatsApp Suite", () => {
       };
 
       const url = buildShareUrl("https://istanablock.com/pola-paving", state);
-      expect(url).toContain("https://istanablock.com/pola-paving?pd_share=");
+      expect(url).toContain("https://istanablock.com/pola-paving?d=");
 
       const parsedUrl = new URL(url);
-      const code = parsedUrl.searchParams.get("pd_share");
+      const code = parsedUrl.searchParams.get("d");
       expect(code).toBeTruthy();
       const decoded = decodeShareStateFromBase64(code!);
       expect(decoded.cfg.productId).toBe("truepave");

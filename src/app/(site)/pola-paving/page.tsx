@@ -109,7 +109,7 @@ export default async function PolaPavingPage({ searchParams }: Props) {
         <PatternCalculator whatsapp={s.whatsapp} initialQuery={query} />
 
         <section className="duo" data-pp-noprint style={{ paddingTop: 56 }}>
-          <div className="stack faq" style={{ flex: "1 1 520px", minWidth: 0, gap: 12 }}>
+          <div className="stack faq faq-touch" style={{ flex: "1 1 520px", minWidth: 0, gap: 12 }}>
             <h2 style={{ fontSize: 34, marginBottom: 8 }}>Pertanyaan umum</h2>
             {FAQ.map((f) => (
               <details key={f.q}>
@@ -118,7 +118,7 @@ export default async function PolaPavingPage({ searchParams }: Props) {
               </details>
             ))}
           </div>
-          <aside className="cta-aside hexpat" style={{ flex: "1 1 320px", minWidth: 0 }}>
+          <aside className="cta-aside cta-aside-touch hexpat" style={{ flex: "1 1 320px", minWidth: 0 }}>
             <h2>Bingung memilih pola?</h2>
             <p>Ceritakan fungsi area dan ukurannya. Admin membantu memilih pola, tebal, dan warna yang cocok, lalu mengirim penawaran tertulis.</p>
             <a className="btn btn-primary" href={waLink(s.whatsapp, consult)} target="_blank" rel="noopener">

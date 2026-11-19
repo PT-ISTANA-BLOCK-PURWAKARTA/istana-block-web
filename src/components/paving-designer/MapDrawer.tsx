@@ -17,6 +17,7 @@ export function MapDrawer({ onApplyGeometry }: Props) {
   const polygonLayerRef = useRef<any>(null);
   const markersLayerRef = useRef<any>(null);
   const leafletRef = useRef<any>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const [points, setPoints] = useState<Point2D[]>([]);
   const [tempGeom, setTempGeom] = useState<ProjectGeometry | null>(null);
@@ -75,6 +76,15 @@ export function MapDrawer({ onApplyGeometry }: Props) {
         markersLayerRef.current = markersGroup;
         mapInstanceRef.current = map;
 
+        // Panel peta bisa disembunyikan lalu ditampilkan lagi (pindah tab/cara input): ukur ulang.
+        if (typeof ResizeObserver !== "undefined") {
+          const ro = new ResizeObserver(() => {
+            if (mapContainerRef.current && mapContainerRef.current.clientWidth > 0) map.invalidateSize();
+          });
+          ro.observe(mapContainerRef.current);
+          resizeObserverRef.current = ro;
+        }
+
         map.on("click", (e: any) => {
           const lon = e.latlng.lng;
           const lat = e.latlng.lat;
@@ -91,6 +101,8 @@ export function MapDrawer({ onApplyGeometry }: Props) {
 
     return () => {
       isMounted = false;
+      resizeObserverRef.current?.disconnect();
+      resizeObserverRef.current = null;
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;

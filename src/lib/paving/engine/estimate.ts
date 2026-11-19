@@ -19,7 +19,8 @@ export interface EstimateOptions {
 }
 
 export function calculateMaterialEstimate(
-  layout: LayoutResult,
+  // Hanya metrics & warnings yang dibaca (hasil layout terkemas pun boleh).
+  layout: Pick<LayoutResult, "metrics" | "warnings">,
   config: PatternConfig,
   options: EstimateOptions = {},
 ): MaterialEstimate {

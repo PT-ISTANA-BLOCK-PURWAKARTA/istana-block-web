@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   createLShapePreset,
   createRectanglePreset,
@@ -10,6 +10,7 @@ import {
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
 import { IconAlert } from "./Icons";
 import css from "./PavingDesigner.module.css";
+import type { SiteInputStatus } from "./site-status";
 
 /** Jeda setelah ketukan terakhir sebelum geometri dikirim (dan layout dihitung ulang). */
 export const GEOMETRY_DEBOUNCE_MS = 250;
@@ -18,6 +19,13 @@ type PresetType = "rect" | "l-shape" | "u-shape" | "trapezoid";
 
 interface Props {
   onGeometryChange: (geom: ProjectGeometry) => void;
+  /** "editing" selama jeda ketik; "invalid" bila ukuran tidak membentuk lahan yang sah. */
+  onStatusChange?: (status: SiteInputStatus) => void;
+  /**
+   * Geometri awal sedang dipulihkan dari tautan bagi: jangan menimpanya dengan nilai bawaan formulir
+   * sebelum pengguna mengubah isian.
+   */
+  holdInitial?: boolean;
 }
 
 const PRESET_OPTIONS: Array<{ id: PresetType; label: string }> = [
@@ -49,6 +57,7 @@ function MeterInput({
         <input
           id={id}
           type="number"
+          inputMode="decimal"
           step="0.1"
           min={min}
           className={`${css.input} ${css.inputWithUnit}`}
@@ -63,8 +72,10 @@ function MeterInput({
   );
 }
 
-export function PresetForm({ onGeometryChange }: Props) {
+export function PresetForm({ onGeometryChange, onStatusChange, holdInitial = false }: Props) {
   const [type, setType] = useState<PresetType>("rect");
+  const statusCbRef = useRef(onStatusChange);
+  statusCbRef.current = onStatusChange;
 
   // Rectangle state
   const [rectLen, setRectLen] = useState(10);
@@ -91,8 +102,23 @@ export function PresetForm({ onGeometryChange }: Props) {
 
   const [error, setError] = useState<string | null>(null);
 
+  const signature = JSON.stringify([
+    type, rectLen, rectWid, lTotalW, lTotalH, lLegW, lLegH, uTotalW, uTotalH, uLeftLegW, uRightLegW,
+    uBaseH, trapBottomW, trapTopW, trapH, trapOffset,
+  ]);
+  const initialSignature = useRef(signature);
+  const released = useRef(false);
+
   useEffect(() => {
+    if (signature !== initialSignature.current) released.current = true;
+    if (holdInitial && !released.current) {
+      // Isian belum disentuh: geometri dari tautan tetap berlaku.
+      statusCbRef.current?.("ok");
+      return;
+    }
     // Debounce: jangan memicu layout per ketukan; kirim setelah pengguna berhenti mengetik.
+    // Selama jeda, hasil di layar milik ukuran sebelumnya: beri tahu induk ("menghitung...").
+    statusCbRef.current?.("editing");
     const timer = window.setTimeout(() => {
       try {
         setError(null);
@@ -111,6 +137,7 @@ export function PresetForm({ onGeometryChange }: Props) {
         onGeometryChange(geom);
       } catch (err: any) {
         setError(err?.message || "Ukuran dimensi tidak valid.");
+        statusCbRef.current?.("invalid");
       }
     }, GEOMETRY_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
@@ -132,6 +159,8 @@ export function PresetForm({ onGeometryChange }: Props) {
     trapH,
     trapOffset,
     onGeometryChange,
+    signature,
+    holdInitial,
   ]);
 
   return (

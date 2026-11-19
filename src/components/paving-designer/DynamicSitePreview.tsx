@@ -1,8 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { LayoutResult } from "@/lib/paving/engine/types";
+import { useMemo } from "react";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
+import { unpackLayout, type PackedLayoutResult } from "@/lib/paving/render/packed-tiles";
 import { DesignerErrorBoundary, retryImport } from "./DesignerErrorBoundary";
 import { IconAlert } from "./Icons";
 import css from "./PavingDesigner.module.css";
@@ -22,7 +23,7 @@ const DynamicPavingDesigner3D = dynamic(
 
 export interface DynamicSitePreviewProps {
   geometry: ProjectGeometry | null;
-  layout: LayoutResult | null;
+  layout: PackedLayoutResult | null;
   error: string | null;
   view3d: boolean;
   onSwitchTo2D: () => void;
@@ -41,6 +42,9 @@ export function DynamicSitePreview({
   showKanstin,
   roleColors,
 }: DynamicSitePreviewProps) {
+  // Pratinjau 3D butuh objek keping; dibuat hanya saat 3D dipilih (2D menggambar langsung dari typed array).
+  const layout3d = useMemo(() => (view3d && layout ? unpackLayout(layout) : null), [view3d, layout]);
+
   if (error) {
     return (
       <div className={css.errorAlert} role="alert">
@@ -73,7 +77,7 @@ export function DynamicSitePreview({
       fallbackActionLabel="Kembali ke 2D Tampak Atas"
     >
       <DynamicPavingDesigner3D
-        layout={layout}
+        layout={layout3d ?? unpackLayout(layout)}
         geometry={geometry}
         tebalCm={tebalCm}
         showKanstin={showKanstin}
