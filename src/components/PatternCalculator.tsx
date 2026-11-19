@@ -1105,14 +1105,14 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const initialDynCode = typeof initialQuery?.d === "string" ? initialQuery.d : "";
   const [calcMode, setCalcMode] = useState<"tetap" | "dinamis">(initialDynCode ? "dinamis" : "tetap");
   const [dynBridge, setDynBridge] = useState<typeof import("@/lib/paving/dynamic-bridge") | null>(null);
-  const [dynGeom, setDynGeom] = useState<ProjectGeometry | null>(null);
+  const [dynGeomInput, setDynGeom] = useState<ProjectGeometry | null>(null);
   const [dynRot, setDynRot] = useState<number>(0);
 
   const [st, setSt] = useState<CalcState>(() => decodeState(initialQuery ?? {}));
   const [shareUrl, setShareUrl] = useState("");
   const [status, setStatus] = useState("");
   const [fallback, setFallback] = useState("");
-  const [view3d, setView3d] = useState(true);
+  const [view3d, setView3d] = useState(false);
   const touched = useRef(false);
 
   // Tanpa initialQuery dari server: pulihkan pilihan dari URL setelah dimuat.
@@ -1282,22 +1282,43 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
     [st.jenis, m.id, st.tebal, st.cad, dynRot],
   );
 
-  const dynResult: { layout: LayoutResult | null; estimate: MaterialEstimate | null; error: string | null } = useMemo(() => {
-    if (calcMode !== "dinamis" || !dynBridge || !dynGeom) {
-      return { layout: null, estimate: null, error: null };
+  // Layout dihitung di Web Worker (fallback main thread bila Worker tidak ada). Hasil basi dibuang.
+  const [dynState, setDynState] = useState<{
+    geom: ProjectGeometry | null;
+    layout: LayoutResult | null;
+    estimate: MaterialEstimate | null;
+    error: string | null;
+  }>({ geom: null, layout: null, estimate: null, error: null });
+
+  useEffect(() => {
+    if (calcMode !== "dinamis" || !dynBridge || !dynGeomInput) {
+      setDynState((prev) => (prev.geom || prev.layout || prev.error ? { geom: null, layout: null, estimate: null, error: null } : prev));
+      return;
     }
-    try {
-      const lay = dynBridge.generateLayout(dynGeom, dynConfig);
-      const est = dynBridge.calculateMaterialEstimate(lay, dynConfig, {
-        perimeterM: dynGeom.metrics.perimeterM,
-        includeAbuBatu: st.abu,
-        includeBaseCourse: st.bc,
+    let stale = false;
+    dynBridge
+      .executeLayoutAsync(dynGeomInput, dynConfig)
+      .then((lay) => {
+        if (stale) return;
+        const est = dynBridge.calculateMaterialEstimate(lay, dynConfig, {
+          perimeterM: dynGeomInput.metrics.perimeterM,
+          includeAbuBatu: st.abu,
+          includeBaseCourse: st.bc,
+        });
+        setDynState({ geom: dynGeomInput, layout: lay, estimate: est, error: null });
+      })
+      .catch((err: any) => {
+        if (stale || err instanceof dynBridge.StaleLayoutError) return;
+        setDynState({ geom: dynGeomInput, layout: null, estimate: null, error: err?.message || "Gagal memproses layout lahan." });
       });
-      return { layout: lay, estimate: est, error: null };
-    } catch (err: any) {
-      return { layout: null, estimate: null, error: err?.message || "Gagal memproses layout lahan." };
-    }
-  }, [calcMode, dynBridge, dynGeom, dynConfig, st.abu, st.bc]);
+    return () => {
+      stale = true;
+      dynBridge.cancelPendingLayout();
+    };
+  }, [calcMode, dynBridge, dynGeomInput, dynConfig, st.abu, st.bc]);
+
+  const dynGeom = dynState.geom;
+  const dynResult = dynState;
 
   const dynArea = dynGeom?.metrics.areaM2 ?? 0;
   const dynPerim = dynGeom?.metrics.perimeterM ?? 0;
@@ -1668,7 +1689,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                   fallbackActionLabel="Kembali ke Lahan Tetap"
                 >
                   <DynamicSiteInput
-                    geometry={dynGeom}
+                    geometry={dynGeomInput}
                     onGeometryChange={setDynGeom}
                     rotationDeg={dynRot}
                     onRotationChange={setDynRot}

@@ -9,6 +9,7 @@ import { multiPolygonArea } from "../geometry/area";
 import type { MultiPolygon2D, ProjectGeometry, Ring2D } from "../geometry/types";
 import { validateGeometry } from "../geometry/validate";
 import { clipIntersection } from "./clipping";
+import { buildSiteIndex, isTileStrictlyInside } from "./fastpath";
 import { generateCandidateLattice } from "./lattice";
 import type { LayoutResult, LayoutTile, LayoutWarning, PatternConfig } from "./types";
 
@@ -40,9 +41,15 @@ export function computeInputHash(geom: ProjectGeometry, cfg: PatternConfig): str
   return (h >>> 0).toString(16).padStart(8, "0");
 }
 
+export interface GenerateLayoutOptions {
+  /** Lewati clipping untuk keping yang pasti utuh di dalam lahan. Bawaan: true. */
+  fastPath?: boolean;
+}
+
 export function generateLayout(
   projectGeom: ProjectGeometry,
   config: PatternConfig,
+  options: GenerateLayoutOptions = {},
 ): LayoutResult {
   const validation = validateGeometry(projectGeom.geometry);
   if (!validation.valid) {
@@ -64,9 +71,25 @@ export function generateLayout(
   const tiles: LayoutTile[] = [];
   const sourceTilesTouchedSet = new Set<string>();
   let sliverCount = 0;
+  const site = options.fastPath === false ? null : buildSiteIndex(projectGeom.geometry);
 
   for (let i = 0; i < candidates.length; i++) {
     const cand = candidates[i];
+
+    // Jalur cepat: keping yang pasti utuh di dalam lahan tidak perlu di-clip.
+    if (site && isTileStrictlyInside(cand.polygon, site)) {
+      sourceTilesTouchedSet.add(cand.sourceTileId);
+      tiles.push({
+        id: `tile_${tiles.length}`,
+        sourceTileId: cand.sourceTileId,
+        status: "full",
+        role: cand.role,
+        polygon: cand.polygon.map(([x, y]) => ({ x, y })),
+        areaM2: cand.areaM2,
+      });
+      continue;
+    }
+
     const candMultiPoly: MultiPolygon2D = [[[...cand.polygon]]];
 
     // Clip candidate against site boundary

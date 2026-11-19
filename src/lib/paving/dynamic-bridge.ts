@@ -13,3 +13,4 @@ export {
   decodeShareStateFromBase64,
   type ShareState,
 } from "./share";
+export { cancelPendingLayout, executeLayoutAsync, StaleLayoutError } from "./worker/client";

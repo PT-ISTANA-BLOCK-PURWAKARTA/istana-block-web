@@ -11,6 +11,9 @@ import type { ProjectGeometry } from "@/lib/paving/geometry/types";
 import { IconAlert } from "./Icons";
 import css from "./PavingDesigner.module.css";
 
+/** Jeda setelah ketukan terakhir sebelum geometri dikirim (dan layout dihitung ulang). */
+export const GEOMETRY_DEBOUNCE_MS = 250;
+
 type PresetType = "rect" | "l-shape" | "u-shape" | "trapezoid";
 
 interface Props {
@@ -89,24 +92,28 @@ export function PresetForm({ onGeometryChange }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      setError(null);
-      let geom: ProjectGeometry;
+    // Debounce: jangan memicu layout per ketukan; kirim setelah pengguna berhenti mengetik.
+    const timer = window.setTimeout(() => {
+      try {
+        setError(null);
+        let geom: ProjectGeometry;
 
-      if (type === "rect") {
-        geom = createRectanglePreset(rectLen, rectWid);
-      } else if (type === "l-shape") {
-        geom = createLShapePreset(lTotalW, lTotalH, lLegW, lLegH);
-      } else if (type === "u-shape") {
-        geom = createUShapePreset(uTotalW, uTotalH, uLeftLegW, uRightLegW, uBaseH);
-      } else {
-        geom = createTrapezoidPreset(trapBottomW, trapTopW, trapH, trapOffset);
+        if (type === "rect") {
+          geom = createRectanglePreset(rectLen, rectWid);
+        } else if (type === "l-shape") {
+          geom = createLShapePreset(lTotalW, lTotalH, lLegW, lLegH);
+        } else if (type === "u-shape") {
+          geom = createUShapePreset(uTotalW, uTotalH, uLeftLegW, uRightLegW, uBaseH);
+        } else {
+          geom = createTrapezoidPreset(trapBottomW, trapTopW, trapH, trapOffset);
+        }
+
+        onGeometryChange(geom);
+      } catch (err: any) {
+        setError(err?.message || "Ukuran dimensi tidak valid.");
       }
-
-      onGeometryChange(geom);
-    } catch (err: any) {
-      setError(err?.message || "Ukuran dimensi tidak valid.");
-    }
+    }, GEOMETRY_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
   }, [
     type,
     rectLen,

@@ -9,14 +9,42 @@ import type { LayoutResult, MaterialEstimate, PatternConfig } from "../engine/ty
 import type { ProjectGeometry } from "../geometry/types";
 import type { WorkerRequest, WorkerResponse } from "./types";
 
+/** Permintaan digantikan permintaan yang lebih baru (hasilnya basi, dibuang). */
+export class StaleLayoutError extends Error {
+  constructor() {
+    super("Perhitungan layout digantikan permintaan yang lebih baru.");
+    this.name = "StaleLayoutError";
+  }
+}
+
+/** Worker gagal dimuat/mati (bukan galat perhitungan); pemanggil boleh jatuh ke main thread. */
+class WorkerCrashError extends Error {
+  constructor(cause: unknown) {
+    super("Web Worker layout gagal berjalan.");
+    this.name = "WorkerCrashError";
+    (this as { cause?: unknown }).cause = cause;
+  }
+}
+
 let sharedWorker: Worker | null = null;
 const pendingRequests = new Map<
   string,
   {
+    kind: "layout" | "estimate";
     resolve: (val: any) => void;
     reject: (err: any) => void;
   }
 >();
+
+/** Hentikan worker; semua permintaan tertunda ditolak dengan `err`. */
+function resetWorker(err: Error) {
+  for (const [id, handler] of pendingRequests.entries()) {
+    handler.reject(err);
+    pendingRequests.delete(id);
+  }
+  sharedWorker?.terminate();
+  sharedWorker = null;
+}
 
 function getWorker(): Worker | null {
   if (typeof globalThis === "undefined" || typeof Worker === "undefined") {
@@ -43,13 +71,7 @@ function getWorker(): Worker | null {
       };
 
       sharedWorker.onerror = (err) => {
-        // Reject all pending and reset
-        for (const [id, handler] of pendingRequests.entries()) {
-          handler.reject(err);
-          pendingRequests.delete(id);
-        }
-        sharedWorker?.terminate();
-        sharedWorker = null;
+        resetWorker(new WorkerCrashError(err));
       };
     } catch {
       sharedWorker = null;
@@ -59,13 +81,25 @@ function getWorker(): Worker | null {
   return sharedWorker;
 }
 
+/** Batalkan perhitungan layout yang sedang berjalan (mis. komponen dilepas). */
+export function cancelPendingLayout() {
+  if ([...pendingRequests.values()].some((h) => h.kind === "layout")) {
+    resetWorker(new StaleLayoutError());
+  }
+}
+
 /**
- * Execute layout generation asynchronously via Worker (or main thread fallback)
+ * Execute layout generation asynchronously via Worker (or main thread fallback).
+ * Permintaan layout yang masih berjalan dibatalkan (worker dihentikan) dan ditolak dengan
+ * StaleLayoutError saat permintaan baru datang, sehingga hasil basi tidak menghalangi yang terbaru.
  */
 export async function executeLayoutAsync(
   geometry: ProjectGeometry,
   config: PatternConfig,
 ): Promise<LayoutResult> {
+  const hasPendingLayout = [...pendingRequests.values()].some((h) => h.kind === "layout");
+  if (hasPendingLayout) resetWorker(new StaleLayoutError());
+
   const worker = getWorker();
   if (!worker) {
     // Synchronous fallback
@@ -74,15 +108,20 @@ export async function executeLayoutAsync(
 
   const requestId = `layout_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-  return new Promise<LayoutResult>((resolve, reject) => {
-    pendingRequests.set(requestId, { resolve, reject });
-    const req: WorkerRequest = {
-      requestId,
-      operation: "generateLayout",
-      payload: { geometry, config },
-    };
-    worker.postMessage(req);
-  });
+  try {
+    return await new Promise<LayoutResult>((resolve, reject) => {
+      pendingRequests.set(requestId, { kind: "layout", resolve, reject });
+      const req: WorkerRequest = {
+        requestId,
+        operation: "generateLayout",
+        payload: { geometry, config },
+      };
+      worker.postMessage(req);
+    });
+  } catch (err) {
+    if (err instanceof WorkerCrashError) return generateLayout(geometry, config);
+    throw err;
+  }
 }
 
 /**
@@ -100,7 +139,7 @@ export async function executeEstimateAsync(
   const requestId = `est_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
   return new Promise<MaterialEstimate>((resolve, reject) => {
-    pendingRequests.set(requestId, { resolve, reject });
+    pendingRequests.set(requestId, { kind: "estimate", resolve, reject });
     const req: WorkerRequest = {
       requestId,
       operation: "calculateEstimate",
