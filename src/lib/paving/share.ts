@@ -12,6 +12,11 @@ import type { ProductId } from "./legacy/types";
 export const SCHEMA_VERSION = 1;
 export const ENGINE_VERSION = "1.0.0";
 
+/** Nama parameter query tautan bagi. Pembaca di halaman (PatternCalculator) memakai "d". */
+export const SHARE_PARAM = "d";
+/** Nama lama yang pernah dipakai pembuat tautan; tetap diterima saat membaca. */
+export const LEGACY_SHARE_PARAM = "pd_share";
+
 /**
  * Zod schema for validated ShareState.
  * Protects against maliciously crafted, oversized, or corrupted URL parameters.
@@ -30,6 +35,13 @@ export const ShareStateSchema = z.object({
       // Quantized coordinates in centimeters [[x_cm, y_cm], ...]
       points: z.array(z.tuple([z.number(), z.number()])).min(3).max(500),
       source: z.enum(["grid", "map", "geojson", "kml"]).optional(),
+      // Lubang pada poligon pertama (cm). Opsional agar tautan lama tetap valid.
+      holes: z.array(z.array(z.tuple([z.number(), z.number()])).min(3).max(500)).max(50).optional(),
+      // Poligon tambahan (multi-poligon): tiap elemen = [ring luar, ...lubang] dalam cm.
+      parts: z
+        .array(z.array(z.array(z.tuple([z.number(), z.number()])).min(3).max(500)).min(1).max(51))
+        .max(20)
+        .optional(),
     }),
   ]),
   cfg: z.object({
@@ -103,8 +115,14 @@ export function decodeShareStateFromBase64(encoded: string): ShareState {
 export function buildShareUrl(baseUrl: string, state: ShareState): string {
   const code = encodeShareStateToBase64(state);
   const url = new URL(baseUrl);
-  url.searchParams.set("pd_share", code);
+  url.searchParams.set(SHARE_PARAM, code);
   return url.toString();
+}
+
+/** Ambil kode bagi dari query string ("?d=..." atau nama lama "?pd_share=..."); string kosong bila tidak ada. */
+export function readShareCode(search: string | URLSearchParams): string {
+  const params = typeof search === "string" ? new URLSearchParams(search) : search;
+  return params.get(SHARE_PARAM) ?? params.get(LEGACY_SHARE_PARAM) ?? "";
 }
 
 export interface WhatsAppMessageOptions {

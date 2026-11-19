@@ -92,14 +92,3 @@ export function multiPolygonBounds(mp: MultiPolygon2D): BBox2D {
 
   return { minX, minY, maxX, maxY };
 }
-
-/**
- * Ensures ring has the desired winding (CCW for exterior, CW for holes).
- */
-export function ensureWinding(ring: Ring2D, expectCCW: boolean): Ring2D {
-  const isCCW = ringSignedArea(ring) > 0;
-  if (isCCW !== expectCCW) {
-    return [...ring].reverse();
-  }
-  return ring;
-}

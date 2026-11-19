@@ -17,10 +17,13 @@ export {
   encodeShareStateToBase64,
   decodeShareStateFromBase64,
   buildShareUrl,
+  readShareCode,
+  SHARE_PARAM,
   createWhatsAppMessage,
   createWhatsAppShareLink,
   type WhatsAppMessageOptions,
 } from "./share";
+export * from "./share-geometry";
 export * from "./engine";
 export {
   COLORS,
