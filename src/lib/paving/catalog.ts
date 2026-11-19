@@ -169,9 +169,3 @@ export const PAVING_CATALOG: Record<ProductId, PavingProductSpec> = {
 };
 
 export const PRODUCT_LIST = Object.values(PAVING_CATALOG);
-
-export function getProductSpec(id: ProductId): PavingProductSpec {
-  const spec = PAVING_CATALOG[id];
-  if (!spec) throw new Error(`Produk paving '${id}' tidak ditemukan dalam katalog.`);
-  return spec;
-}
