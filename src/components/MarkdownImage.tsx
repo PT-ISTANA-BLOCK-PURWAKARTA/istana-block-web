@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { ImageLightbox } from "@/components/ImageLightbox";
 
 /** Gambar di dalam konten Markdown yang bisa diklik untuk diperbesar dalam modal backdrop. */
@@ -35,11 +36,18 @@ export function MarkdownImage({
           {...props}
         />
       </button>
-      <ImageLightbox
-        items={[{ src: resolvedSrc, alt: safeAlt, caption: alt.trim() || undefined }]}
-        index={open ? 0 : null}
-        onClose={() => setOpen(false)}
-      />
+      {/* <dialog> dilarang di dalam <p> (react-markdown membungkus gambar inline dengan <p>): parser HTML menutup <p>
+          sebelum <dialog>, sehingga HTML server beda dari pohon klien dan React melempar error #418. Dialog hanya
+          dirender setelah diklik, lewat portal ke body, jadi tidak ada di HTML server. */}
+      {open &&
+        createPortal(
+          <ImageLightbox
+            items={[{ src: resolvedSrc, alt: safeAlt, caption: alt.trim() || undefined }]}
+            index={0}
+            onClose={() => setOpen(false)}
+          />,
+          document.body,
+        )}
     </>
   );
 }
