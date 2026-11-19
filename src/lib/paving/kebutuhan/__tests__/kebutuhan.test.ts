@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DAFTAR_KONSTANTA_SEMENTARA,
+  TAMPILKAN_BIAYA,
   PASIR_ALAS_CM,
   TEBAL_MIN_CM,
   beratPcsKg,
@@ -205,17 +206,32 @@ describe("hitungProyek + daftar belanja", () => {
   it("lubang > luas menggagalkan proyek", () => {
     expect(() => hitungProyek([{ id: "a", produkId: "fp21", luasKotorM2: 5, lubangM2: [6] }])).toThrow(RangeError);
   });
-  it("baris WA berformat bullet dan mencatat sementara", () => {
+  it("baris WA hanya menambah: tanpa paving, kanstin, abu batu, dan biaya", () => {
     const lines = daftarBelanjaLines(h);
     expect(lines.every((l) => typeof l === "string")).toBe(true);
-    expect(lines[0]).toBe("• Total luas bersih: 38 m²");
+    expect(lines[0]).toMatch(/^• Beban mobil \/ carport: tebal minimal 8 cm/);
     expect(lines.some((l) => l.startsWith("• Pasir alas*"))).toBe(true);
-    expect(lines.some((l) => l.startsWith("• Kanstin*: 40 pcs"))).toBe(true);
-    expect(lines.some((l) => l.startsWith("• Perkiraan total*"))).toBe(true);
+    expect(lines.some((l) => l.startsWith("• Sirtu / base course*"))).toBe(true);
+    expect(lines.some((l) => l.startsWith("• Pengiriman*"))).toBe(true);
+    expect(lines.join("\n")).not.toMatch(/Total paving|Total luas|Kanstin|Abu batu|Ongkir|Jasa pasang|Perkiraan total|Rp/);
     expect(lines[lines.length - 1]).toMatch(/^\* Perkiraan sementara/);
   });
-  it("proyek kosong -> satu baris", () => {
-    expect(daftarBelanjaLines(hitungProyek([]))).toEqual(["• Area: belum diisi"]);
+  it("tanpaSirtu membuang baris sirtu", () => {
+    expect(daftarBelanjaLines(h, { tanpaSirtu: true }).some((l) => l.includes("Sirtu"))).toBe(false);
+  });
+  it("TAMPILKAN_BIAYA mati secara bawaan", () => {
+    expect(TAMPILKAN_BIAYA).toBe(false);
+  });
+  it("pcsLayout + sisaPersen 0: pcs total dipakai apa adanya untuk palet dan trip", () => {
+    const x = hitungProyek([{ id: "a", produkId: "truepave", luasKotorM2: 10, kelas: "mobil", pcsLayout: 353, sisaPersen: 0 }]);
+    expect(x.totalPcsBeli).toBe(353);
+    expect(x.logistik.paletTotal).toBe(2);
+  });
+  it("jarak di label ongkir memakai koma desimal", () => {
+    expect(hitungBiaya({ trip: 1, jarakKm: 12.5, pasang: [] }).baris[0].label).toBe("Ongkir (12,5 km)");
+  });
+  it("proyek kosong -> tanpa baris", () => {
+    expect(daftarBelanjaLines(hitungProyek([]))).toEqual([]);
   });
   it("daftarBelanjaWA memakai salam waMessage", () => {
     const t = daftarBelanjaWA(h, "https://x.test/p");

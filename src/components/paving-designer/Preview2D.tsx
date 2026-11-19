@@ -196,6 +196,7 @@ export function Preview2D({ geometry, layout, roleColors }: Props) {
         </span>
         <button
           type="button"
+          data-pp-noprint
           className={`${css.toggleBtn} ${showCutsOnly ? css.toggleActive : ""}`}
           aria-pressed={showCutsOnly}
           onClick={() => setShowCutsOnly((v) => !v)}

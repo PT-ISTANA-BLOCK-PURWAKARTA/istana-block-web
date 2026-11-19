@@ -510,24 +510,12 @@
 
 /* ---------- Cetak: hanya ringkasan + pratinjau ---------- */
 .printOnly { display: none; }
+.kebutuhanPrint { display: none; }
 .printOnly b { display: block; font: 700 18px var(--font-judul); color: var(--biru-tua); }
 .printOnly span { display: block; font-size: 12px; color: var(--redup); }
 .printLink { word-break: break-all; }
-@page { margin: 12mm; }
-@media print {
-  :global(html):has(.wrap), :global(body):has(.wrap) { background: #fff !important; }
-  :global(body):has(.wrap) > :global(*:not(main)) { display: none !important; }
-  :global(body):has(.wrap) :global([data-pp-noprint]) { display: none !important; }
-  .wrap { gap: 10px; }
-  .wrap * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .printOnly { display: block; }
-  .root { display: flex; flex-direction: column; gap: 10px; }
-  .flow { display: contents; }
-  .aside { position: static; max-height: none; overflow: visible; }
-  .card, .previewCard { break-inside: avoid; border: 1px solid var(--beton); padding: 16px; }
-  .stage { max-width: 150mm; }
-}
-
+@page { size: A4 portrait; margin: 12mm; }
+.printStage { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .optBody, .pill > span, .chip > span, .viewBtn, .presetBtn { transition: none; }
 }
@@ -602,3 +590,43 @@
 }
 .kebutuhanSummary small { font-size: 13px; font-weight: 500; color: var(--redup); }
 .perkiraan { display: block; font-size: 11.5px; font-style: italic; color: var(--redup); }
+
+/* =====================================================================
+   Cetak (A4 portrait). Sengaja di akhir berkas agar menang atas aturan responsif (pratinjau lengket/ringkas)
+   yang aktif pada lebar kertas. Urutan: judul, gambar selebar kertas, lalu rincian. Kontrol interaktif
+   bertanda data-pp-noprint disembunyikan; gambar selalu 2D (kanvas WebGL tidak ikut tercetak).
+   ===================================================================== */
+@media print {
+  :global(html):has(.wrap), :global(body):has(.wrap) { background: #fff !important; }
+  :global(body):has(.wrap) > :global(*:not(main)) { display: none !important; }
+  :global(body):has(.wrap) :global([data-pp-noprint]) { display: none !important; }
+  .wrap { gap: 10px; }
+  .wrap * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .printOnly { display: block; }
+  .root { display: flex; flex-direction: column; gap: 10px; }
+  .flow { display: contents; }
+  /* Gambar di atas, rincian langsung sesudahnya. */
+  .aside, .aside:not(.asideOpen) {
+    position: static; order: -1; max-height: none; overflow: visible; padding: 0; gap: 8px;
+    background: none; box-shadow: none;
+  }
+  .card, .previewCard { break-inside: avoid; border: 1px solid #999; box-shadow: none; padding: 12px; background: #fff; }
+  .oHasil { break-inside: auto; }
+  .previewCard { gap: 8px; }
+  .prevHead { padding-right: 0; min-height: 0; }
+  .prevHead span { display: none; }
+  .aside:not(.asideOpen) .prevTitle { display: block; }
+  .aside:not(.asideOpen) .legendList, .aside:not(.asideOpen) [data-pp-compact-hide] { display: flex; }
+  .aside:not(.asideOpen) .dims { display: block; }
+  .aside:not(.asideOpen) .scale { display: flex; }
+  .stage, .aside:not(.asideOpen) .stage { width: 100%; max-width: none; aspect-ratio: 8 / 5 !important; height: auto; border-color: #bbb; }
+  .aside:not(.asideOpen) [data-pp-stage] { aspect-ratio: var(--ar) !important; height: auto !important; }
+  .printStage { display: block; width: 100%; border: 1px solid #bbb; border-radius: 14px; overflow: hidden; }
+  .printStage svg { display: block; width: 100%; height: 100%; }
+  .kebutuhanPrint { display: block; break-inside: avoid; margin-top: 8px; padding-top: 8px; border-top: 1px solid #999; }
+  .kebutuhanPrint h3 { margin: 0 0 4px; font-size: 14px; }
+  .kebutuhanPrint p { margin: 0 0 4px; font-size: 12px; }
+  .rows li, .legendList li, .rows :global(.rowitem) { break-inside: avoid; }
+  .root, .printOnly b, .printOnly span { color: #000 !important; }
+  .root :is(h2, h3, p, span:not(.no), small, b, li, a, strong, label) { color: #000 !important; }
+}

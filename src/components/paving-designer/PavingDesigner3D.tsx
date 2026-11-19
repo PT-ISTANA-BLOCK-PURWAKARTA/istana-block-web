@@ -667,6 +667,7 @@ export function PavingDesigner3D({
       <div
         ref={wrapRef}
         className={`${css.stage3dWrap} ${isFullscreen ? css.stage3dFullscreen : ""}`}
+        data-pp-noprint
       >
         <div className={css.overlayTop3D} role="group" aria-label="Kontrol kamera 3D">
           {CAMERA_PRESETS.map((preset) => (

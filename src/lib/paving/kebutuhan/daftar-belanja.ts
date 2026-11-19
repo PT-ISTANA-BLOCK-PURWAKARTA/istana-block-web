@@ -1,39 +1,39 @@
-import { PAVING_CATALOG } from "../catalog";
 import { fmt, waMessage } from "../legacy/calculator";
-import { LABEL_BEBAN } from "./konstanta-sementara";
+import { rekomendasiBeban } from "./beban";
+import { LABEL_BEBAN, TAMPILKAN_BIAYA } from "./konstanta-sementara";
 import type { HasilProyek } from "./proyek";
 
 const rp = (n: number) => `Rp${fmt(n, 0)}`;
 
-/**
- * Baris teks daftar belanja untuk pesan WhatsApp (gaya detailLines: bullet "•" dan sub-baris "–").
- * Angka bertanda "*" memakai konstanta sementara dan diberi catatan di akhir.
- */
-export function daftarBelanjaLines(h: HasilProyek): string[] {
-  const lines: string[] = [];
-  if (h.areas.length === 0 || h.totalLuasBersihM2 <= 0) return ["• Area: belum diisi"];
+export interface OpsiDaftarBelanja {
+  /** Sirtu sudah dihitung oleh hitungan utama (base course); jangan ulangi. */
+  tanpaSirtu?: boolean;
+}
 
-  lines.push(`• Total luas bersih: ${fmt(h.totalLuasBersihM2)} m²`);
+/**
+ * Baris tambahan "Kebutuhan lapangan" untuk pesan WhatsApp (gaya detailLines: bullet "•").
+ * Hanya memuat yang belum ada di hitungan utama: rekomendasi tebal/produk, pasir alas, sirtu, palet, trip,
+ * berat. Jumlah paving, kanstin, dan abu batu TIDAK diulang. Angka bertanda "*" memakai konstanta sementara.
+ */
+export function daftarBelanjaLines(h: HasilProyek, opsi: OpsiDaftarBelanja = {}): string[] {
+  const lines: string[] = [];
+  if (h.areas.length === 0 || h.totalLuasBersihM2 <= 0) return lines;
+
   for (const a of h.areas) {
-    lines.push(
-      `• ${a.label}: ${PAVING_CATALOG[a.produkId].name}, tebal ${a.tebalCm} cm, ${LABEL_BEBAN[a.kelas].toLowerCase()}`,
-      `   – ${fmt(a.luasBersihM2)} m² → ${fmt(a.pcsBeli)} pcs (termasuk sisa potong ${fmt(a.sisaPersen)}%)`,
-    );
+    const rek = rekomendasiBeban(a.kelas);
+    const cocok = rek.produk.length > 0 ? `, produk cocok: ${rek.produk.map((p) => p.name).join(", ")}` : "";
+    lines.push(`• Beban ${LABEL_BEBAN[a.kelas].toLowerCase()}: tebal minimal ${rek.tebalMinCm} cm${cocok}*`);
+    for (const w of rek.peringatan) lines.push(`   – ${w}`);
   }
-  lines.push(`• Total paving: ${fmt(h.totalPcsBeli)} pcs`);
 
   const m = h.material;
-  lines.push(
-    `• Pasir alas*: ${fmt(m.pasirAlasM3)} m³`,
-    `• Sirtu / base course*: ${fmt(m.sirtuM3)} m³`,
-    `• Abu batu pengisi nat*: ${fmt(m.abuNatM3)} m³`,
-  );
-  if (m.kanstinPcs > 0) lines.push(`• Kanstin*: ${fmt(m.kanstinPcs)} pcs`);
+  lines.push(`• Pasir alas*: ${fmt(m.pasirAlasM3)} m³`);
+  if (!opsi.tanpaSirtu) lines.push(`• Sirtu / base course*: ${fmt(m.sirtuM3)} m³`);
 
   const lg = h.logistik;
   lines.push(`• Pengiriman*: ${fmt(lg.paletTotal)} palet, ±${fmt(lg.beratTotalKg, 0)} kg, ${fmt(lg.trip)} trip truk ${lg.jenisTruk}`);
 
-  if (h.biaya) {
+  if (TAMPILKAN_BIAYA && h.biaya) {
     for (const b of h.biaya.baris) {
       lines.push(`• ${b.label}${b.sementara ? "*" : ""}: ${fmt(b.qty)} ${b.satuan} × ${rp(b.hargaSatuan)} = ${rp(b.subtotal)}`);
     }
@@ -45,6 +45,6 @@ export function daftarBelanjaLines(h: HasilProyek): string[] {
 }
 
 /** Pesan WA lengkap dengan salam standar dari waMessage yang sudah ada. */
-export function daftarBelanjaWA(h: HasilProyek, link = ""): string {
-  return waMessage(daftarBelanjaLines(h), link);
+export function daftarBelanjaWA(h: HasilProyek, link = "", opsi: OpsiDaftarBelanja = {}): string {
+  return waMessage(daftarBelanjaLines(h, opsi), link);
 }
