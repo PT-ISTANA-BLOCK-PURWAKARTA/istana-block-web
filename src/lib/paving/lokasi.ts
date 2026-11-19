@@ -30,12 +30,22 @@ const NUM = String.raw`[-+]?\d+(?:\.\d+)?`;
 const NUM_KOMA = String.raw`[-+]?\d+,\d+`;
 const RE_PASANGAN = new RegExp(`^(${NUM})\\s*[,;]\\s*(${NUM})$|^(${NUM})\\s+(${NUM})$`);
 // Gaya Indonesia: "-6,5569 107,4433" atau "-6,5569; 107,4433" (koma sebagai desimal).
-const RE_PASANGAN_KOMA = new RegExp(`^(${NUM_KOMA})\\s*[;\\s]\\s*(${NUM_KOMA})$`);
+const RE_PASANGAN_KOMA = new RegExp(`^(${NUM_KOMA})(?:\\s*;\\s*|,\\s+|\\s+)(${NUM_KOMA})$`);
+// Hanya angka dan pemisah, ada dua kelompok angka: tampak seperti koordinat (walau formatnya tidak jelas).
+const RE_HANYA_ANGKA = /^[-+\d.,;\s]+$/;
+const RE_DUA_KELOMPOK = /\d[\s,;]+[-+]?\d/;
 const RE_MIRIP_KOORDINAT = /^[-+]?\d+(?:[.,]\d+)?\s*[,;\s]\s*[-+]?\d+(?:[.,]\d+)?$/;
 
 /** Teks tampak seperti dua angka (belum tentu valid). */
 export function miripKoordinat(teks: string): boolean {
   return RE_MIRIP_KOORDINAT.test(teks.trim());
+}
+
+/** Lokasi ber-asal "poligon" (titik tengah gambar) hanya berlaku bila bentuk lahan aktif berasal dari Peta. */
+export function lokasiEfektif(lok: LokasiProyek | null | undefined, sumberGeometri: string | null | undefined): LokasiProyek | null {
+  if (!lok) return null;
+  if (lok.asal === "poligon" && sumberGeometri !== "map") return null;
+  return lok;
 }
 
 /** Periksa rentang; beri pesan ramah bila urutannya tampak terbalik. */
@@ -216,9 +226,16 @@ export function tafsirMasukan(masukan: string): Tafsir {
   const t = masukan.trim();
   if (!t) return { jenis: "kosong" };
 
-  if (miripKoordinat(t)) {
+  if (miripKoordinat(t) || (RE_HANYA_ANGKA.test(t) && RE_DUA_KELOMPOK.test(t))) {
     const hasil = parseKoordinat(t);
     if (hasil) return { jenis: "koordinat", hasil };
+    return {
+      jenis: "koordinat",
+      hasil: {
+        ok: false,
+        pesan: "Format koordinat belum jelas. Tulis dengan titik sebagai desimal dan pisahkan dengan koma, contoh: -6.5569, 107.4433.",
+      },
+    };
   }
 
   const u = urlDariTeks(t);

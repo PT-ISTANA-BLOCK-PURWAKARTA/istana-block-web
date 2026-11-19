@@ -4,6 +4,7 @@ import {
   barisLokasiWa,
   hostDiizinkan,
   koordinatDariHtmlGoogle,
+  lokasiEfektif,
   koordinatDariUrlGoogle,
   linkGoogleMaps,
   parseHasilNominatim,
@@ -326,5 +327,46 @@ describe("pesan WhatsApp dengan lokasi", () => {
   it("tanpa lokasi pesan tidak berubah", () => {
     expect(createWhatsAppMessage(dasar)).not.toContain("Lokasi proyek");
     expect(createWhatsAppMessage({ ...dasar, lokasi: null })).toBe(createWhatsAppMessage(dasar));
+  });
+});
+
+describe("koma desimal gaya Indonesia", () => {
+  const harap = { ok: true, lat: -6.5569, lng: 107.4433 };
+  it("terbaca sebagai koordinat, bukan nama (tidak dikirim ke Nominatim)", () => {
+    for (const t of ["-6,5569, 107,4433", "-6,5569 107,4433", "-6,5569; 107,4433", "-6,5569 ; 107,4433", "-6,5569,  107,4433"]) {
+      expect(tafsirMasukan(t), t).toEqual({ jenis: "koordinat", hasil: harap });
+    }
+  });
+  it("campuran titik dan koma tetap dipahami", () => {
+    expect(tafsirMasukan("-6.5569, 107.4433").jenis).toBe("koordinat");
+    expect(tafsirMasukan("-6,5, 107,4")).toEqual({ jenis: "koordinat", hasil: { ok: true, lat: -6.5, lng: 107.4 } });
+  });
+  it("kasus ambigu memberi pesan format, bukan dikirim ke Nominatim", () => {
+    for (const t of ["-6,5569,107,4433", "-6,5569, 107", "1,2,3,4", "-6,5569 107"]) {
+      const r = tafsirMasukan(t);
+      expect(r.jenis, t).toBe("koordinat");
+      expect(r.jenis === "koordinat" && !r.hasil.ok, t).toBe(true);
+    }
+  });
+  it("angka tunggal atau nomor jalan tetap dianggap nama", () => {
+    expect(tafsirMasukan("12345").jenis).toBe("nama");
+    expect(tafsirMasukan("Jl. Veteran 12").jenis).toBe("nama");
+  });
+});
+
+describe("lokasiEfektif", () => {
+  const poligon = { lat: -6.5, lng: 107.4, asal: "poligon" as const };
+  const cari = { lat: -6.5, lng: 107.4, asal: "cari" as const };
+  it("lokasi poligon hanya berlaku untuk bentuk dari Peta", () => {
+    expect(lokasiEfektif(poligon, "map")).toEqual(poligon);
+    for (const s of ["preset", "grid", "geojson", "kml", undefined]) expect(lokasiEfektif(poligon, s)).toBeNull();
+  });
+  it("lokasi hasil cari/GPS tetap berlaku untuk semua sumber", () => {
+    for (const s of ["preset", "grid", "map", "geojson", "kml", undefined]) expect(lokasiEfektif(cari, s)).toEqual(cari);
+    expect(lokasiEfektif({ lat: 1, lng: 2 }, "preset")).toEqual({ lat: 1, lng: 2 });
+  });
+  it("tanpa lokasi: null; pesan WA tidak memuat baris lokasi lahan preset", () => {
+    expect(lokasiEfektif(null, "map")).toBeNull();
+    expect(barisLokasiWa(lokasiEfektif(poligon, "preset"))).toBeNull();
   });
 });

@@ -40,7 +40,7 @@ describe("POST /api/lokasi/expand", () => {
     expect(res.status).toBe(422);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const body = await res.json();
-    expect(Object.keys(body)).toEqual(["error"]);
+    expect(Object.keys(body as object)).toEqual(["error"]);
   });
 
   it("membatasi jumlah redirect (maks 5 hop setelah permintaan awal)", async () => {

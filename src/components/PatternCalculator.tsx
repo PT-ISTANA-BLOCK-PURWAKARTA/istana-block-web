@@ -8,7 +8,7 @@ import { waLink } from "@/lib/format";
 import { PAVING_CATALOG } from "@/lib/paving/catalog";
 import type { MaterialEstimate, PatternConfig } from "@/lib/paving/engine/types";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
-import { barisLokasiWa, type LokasiProyek } from "@/lib/paving/lokasi";
+import { barisLokasiWa, lokasiEfektif, type LokasiProyek } from "@/lib/paving/lokasi";
 import type { PackedLayoutResult } from "@/lib/paving/render/packed-tiles";
 import { TAMPILKAN_BIAYA, daftarBelanjaLines, hitungProyek, rekomendasiBeban, type KelasBeban } from "@/lib/paving/kebutuhan";
 import { KebutuhanLapangan } from "./KebutuhanLapangan";
@@ -1119,7 +1119,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
   const [dynGeomInput, setDynGeom] = useState<ProjectGeometry | null>(null);
   const [dynRot, setDynRot] = useState<number>(0);
   // Lokasi proyek (hasil cari lokasi, atau titik tengah poligon): ikut ke pesan WA dan tautan bagi.
-  const [dynLokasi, setDynLokasi] = useState<LokasiProyek | null>(null);
+  const [dynLokasiRaw, setDynLokasi] = useState<LokasiProyek | null>(null);
   // Panel masukan Lahan Dinamis dipasang sekali (saat tab pertama kali dibuka) dan hanya
   // disembunyikan saat pindah ke Lahan Tetap, sehingga bentuk yang sudah dibuat tidak hilang.
   const [dynVisited, setDynVisited] = useState(calcMode === "dinamis");
@@ -1358,6 +1358,8 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
 
   const dynResult = dynState;
   const dynGeom = dynState.geom;
+  // Titik tengah poligon hanya berlaku saat bentuk lahan aktif berasal dari Peta; lokasi hasil cari/GPS selalu berlaku.
+  const dynLokasi = lokasiEfektif(dynLokasiRaw, dynGeom?.source);
 
   const dynArea = dynGeom?.metrics.areaM2 ?? 0;
   const dynPerim = dynGeom?.metrics.perimeterM ?? 0;
@@ -1831,7 +1833,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                       rotationDeg={dynRot}
                       onRotationChange={setDynRot}
                       holdInitial={dynHold}
-                      lokasi={dynLokasi}
+                      lokasi={dynLokasiRaw}
                       onLokasiChange={setDynLokasi}
                     />
                   </DesignerErrorBoundary>

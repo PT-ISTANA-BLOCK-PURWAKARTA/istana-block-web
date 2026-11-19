@@ -105,7 +105,7 @@ export function LokasiSearch({ onPilih, onLewati, petaSudahTampil }: Props) {
       return;
     }
     if (t.jenis === "koordinat") {
-      terapkan(t.hasil, `${t.hasil.ok ? `${t.hasil.lat}, ${t.hasil.lng}` : ""}`);
+      terapkan(t.hasil, "");
       return;
     }
     if (t.jenis === "link-panjang") {
