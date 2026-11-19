@@ -8,7 +8,12 @@ const rp = (n: number) => `Rp${fmt(n, 0)}`;
 export interface OpsiDaftarBelanja {
   /** Sirtu sudah dihitung oleh hitungan utama (base course); jangan ulangi. */
   tanpaSirtu?: boolean;
+  /** Hitungan utama sudah memuat abu batu alas (lapisan alas 5 cm); pasir alas tidak ditambah lagi. */
+  tanpaPasir?: boolean;
 }
+
+/** Tebal lapisan alas (cm) pada hitungan utama ("Abu batu alas 5 cm"). */
+export const ALAS_UTAMA_CM = 5;
 
 /**
  * Baris tambahan "Kebutuhan lapangan" untuk pesan WhatsApp (gaya detailLines: bullet "•").
@@ -27,7 +32,12 @@ export function daftarBelanjaLines(h: HasilProyek, opsi: OpsiDaftarBelanja = {})
   }
 
   const m = h.material;
-  lines.push(`• Pasir alas*: ${fmt(m.pasirAlasM3)} m³`);
+  if (!opsi.tanpaPasir) {
+    lines.push(`• Pasir alas*: ${fmt(m.pasirAlasM3)} m³`);
+  } else {
+    const tebal = h.areas[0].material.pasirAlas.tebalCm;
+    if (tebal !== ALAS_UTAMA_CM) lines.push(`• Tebal alas disarankan ${fmt(tebal)} cm*`);
+  }
   if (!opsi.tanpaSirtu) lines.push(`• Sirtu / base course*: ${fmt(m.sirtuM3)} m³`);
 
   const lg = h.logistik;

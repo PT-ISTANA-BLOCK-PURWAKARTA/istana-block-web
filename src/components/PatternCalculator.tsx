@@ -1484,8 +1484,8 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
     }
   }, [kbKelas, kbMenunggu, st.jenis, st.tebal, kbLuas, kbPcsLayout, kbJarak, kbJarakNum]);
   const kbLines = useMemo(
-    () => (kbHasil ? ["", "*Kebutuhan lapangan (perkiraan):*", ...daftarBelanjaLines(kbHasil, { tanpaSirtu: st.bc })] : []),
-    [kbHasil, st.bc],
+    () => (kbHasil ? ["", "*Kebutuhan lapangan (perkiraan):*", ...daftarBelanjaLines(kbHasil, { tanpaSirtu: st.bc, tanpaPasir: st.abu })] : []),
+    [kbHasil, st.bc, st.abu],
   );
   const activeLines = useMemo(
     () => (activeHas && !(calcMode === "dinamis" && dynStale) ? [...baseLines, ...kbLines] : baseLines),
@@ -2071,6 +2071,7 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
               hasil={kbHasil}
               menunggu={kbMenunggu}
               sirtuSudahAda={st.bc}
+              abuSudahAda={st.abu}
               totalPcs={kbPcsLayout}
             />
 
@@ -2174,6 +2175,9 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
                 tebalCm={st.tebal}
                 showKanstin={st.k}
                 roleColors={roleColorsHex}
+                productId={st.jenis}
+                motifId={m.id}
+                rotationDeg={dynRot}
               />
             ) : (
               <>

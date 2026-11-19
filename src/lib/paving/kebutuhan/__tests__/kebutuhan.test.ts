@@ -219,6 +219,14 @@ describe("hitungProyek + daftar belanja", () => {
   it("tanpaSirtu membuang baris sirtu", () => {
     expect(daftarBelanjaLines(h, { tanpaSirtu: true }).some((l) => l.includes("Sirtu"))).toBe(false);
   });
+  it("tanpaPasir membuang pasir alas; catatan tebal hanya bila beda dari 5 cm", () => {
+    const sama = daftarBelanjaLines(h, { tanpaPasir: true });
+    expect(sama.some((l) => l.includes("Pasir alas"))).toBe(false);
+    expect(sama.some((l) => l.includes("Tebal alas disarankan"))).toBe(false); // mobil: 5 cm
+    const beda = hitungProyek([{ id: "p", produkId: "truepave", luasKotorM2: 10, kelas: "pejalan" }]);
+    expect(daftarBelanjaLines(beda, { tanpaPasir: true }).some((l) => l.startsWith("• Tebal alas disarankan 3 cm"))).toBe(true);
+    expect(daftarBelanjaLines(h).some((l) => l.startsWith("• Pasir alas*"))).toBe(true);
+  });
   it("TAMPILKAN_BIAYA mati secara bawaan", () => {
     expect(TAMPILKAN_BIAYA).toBe(false);
   });
