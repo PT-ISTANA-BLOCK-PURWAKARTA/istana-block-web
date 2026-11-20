@@ -1,7 +1,7 @@
 {
   "intro": "Semua pesanan dikirim langsung dari pabrik di Pasawahan, Purwakarta, dengan truk crane dan truk flatbed milik sendiri. Pabrik punya akses ke Tol Cipularang, Tol Jakarta–Cikampek, dan Tol Cipali. Lama pengiriman bergantung pada stok, volume, dan jarak; admin mencantumkan perkiraan jadwal kirim di penawaran.",
   "ongkir": [
-    "Ongkir tidak termasuk dalam harga produk dan ditulis terpisah di penawaran.",
+    "Ongkir tidak termasuk dalam harga produk dan ditulis terpisah di penawaran, kecuali promo gratis ongkir untuk muatan penuh di sekitar Pasawahan (syarat berlaku — tanyakan admin).",
     "Jarak: dihitung dari pabrik di Pasawahan ke titik bongkar.",
     "Volume: makin penuh muatan satu truk, makin rendah ongkir per unit.",
     "Akses di titik bongkar: apakah truk bisa masuk dan ada ruang untuk menurunkan barang.",
@@ -57,13 +57,13 @@
       "nama": "Bandung Barat",
       "slug": "paving-block-bandung-barat-cimahi",
       "ringkas": "Padalarang, Batujajar, Ngamprah, Cikalongwetan, Parongpong; Cimahi Selatan, Tengah, dan Utara via Tol Cipularang.",
-      "jarak": "±45–65 km via Tol Cipularang"
+      "jarak": "±30–70 km via Tol Cipularang"
     },
     {
       "nama": "Cianjur",
       "slug": "paving-block-cianjur",
       "ringkas": "Ciranjang, Cikalongkulon, Karangtengah, Sukaluyu, hingga Cianjur kota via jalur arteri Sukatani/Ciranjang.",
-      "jarak": "±38–55 km lewat Sukatani / Ciranjang"
+      "jarak": "±55–95 km lewat Sukatani / Ciranjang"
     },
     {
       "nama": "Sumedang"

@@ -64,7 +64,7 @@ describe("rekomendasiBeban", () => {
     expect(tebalBawaan("truepave", "pejalan")).toBe(6);
     expect(tebalBawaan("truepave", "mobil")).toBe(6);
     expect(tebalBawaan("truepave", "truk-berat")).toBe(8);
-    expect(tebalBawaan("fp21", "truk-berat")).toBe(6); // tak ada yang cukup -> terbesar
+    expect(tebalBawaan("fp21", "truk-berat")).toBe(8); // Fullpave kini tersedia 6 & 8 cm
   });
 });
 
