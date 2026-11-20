@@ -6,6 +6,8 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { LayoutResult, LayoutTile } from "@/lib/paving/engine/types";
 import type { ProductId } from "@/lib/paving/legacy/types";
 import { drawLatticeCell, latticeCell, latticeUv } from "@/lib/paving/render/lattice-texture";
+import { grassHolePlacements } from "@/lib/paving/render/grass-holes";
+import { GRASS } from "@/lib/paving/legacy/types";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
 import { IconAlert, IconCollapse, IconExpand } from "./Icons";
 import css from "./PavingDesigner.module.css";
@@ -495,6 +497,33 @@ export function PavingDesigner3D({
           instanced.instanceMatrix.needsUpdate = true;
           if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true;
           pavingGroup.add(instanced);
+        }
+      }
+
+      // 7a-2. Grass Block: lubang rumput 3 x 2 per keping utuh (satu InstancedMesh untuk semua lubang),
+      // mengikuti letak & rotasi keping hasil layout motif, sama dengan gambar 2D.
+      if (productId === "grass" && fullToRender.length > 0) {
+        const holes: ReturnType<typeof grassHolePlacements> = [];
+        for (const tile of fullToRender) holes.push(...grassHolePlacements(normalizeRing(tile.polygon), JOINT_GAP_M));
+        if (holes.length > 0) {
+          const holeGeo = new THREE.PlaneGeometry(1, 1);
+          holeGeo.rotateX(-Math.PI / 2);
+          const holeMesh = new THREE.InstancedMesh(
+            holeGeo,
+            new THREE.MeshStandardMaterial({ color: GRASS, roughness: 1, metalness: 0 }),
+            holes.length,
+          );
+          holeMesh.receiveShadow = true;
+          const dummy = new THREE.Object3D();
+          holes.forEach((h, i) => {
+            dummy.position.set(h.cx - centerX, tebalM + 0.002, h.cy - centerZ);
+            dummy.rotation.set(0, -h.angle, 0);
+            dummy.scale.set(h.w, 1, h.h);
+            dummy.updateMatrix();
+            holeMesh.setMatrixAt(i, dummy.matrix);
+          });
+          holeMesh.instanceMatrix.needsUpdate = true;
+          pavingGroup.add(holeMesh);
         }
       }
 

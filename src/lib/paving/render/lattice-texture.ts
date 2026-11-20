@@ -4,9 +4,10 @@
  * motif yang sama dengan mesin layout (unitOf), lalu UV dihitung dalam satuan sel dari koordinat meter.
  */
 import { HR_CM, PAVING_CATALOG } from "../catalog";
-import { TONES, mixHex, JOINT } from "../legacy/types";
+import { TONES, mixHex, JOINT, GRASS } from "../legacy/types";
 import type { ProductId } from "../legacy/types";
 import { unitOf } from "../legacy/patterns";
+import { grassHoleRects } from "./grass-holes";
 
 /** Batas keping untuk menggambar per keping (InstancedMesh); di atasnya dipakai tekstur. */
 export const MAX_3D_BLOCKS = 10000;
@@ -29,6 +30,8 @@ export interface LatticeCell {
   wCm: number;
   hCm: number;
   tiles: LatticeTileDraw[];
+  /** Grass Block: tiap keping digambar dengan 3 x 2 lubang rumput. */
+  grass: boolean;
 }
 
 /** Sel pengulangan (satuan pola) untuk produk + motif, sama dengan yang dipakai mesin layout. */
@@ -38,6 +41,7 @@ export function latticeCell(productId: ProductId, motifId: string): LatticeCell 
   return {
     wCm: unit.w,
     hCm: unit.h,
+    grass: productId === "grass",
     tiles: unit.tiles.map((t, k) => ({
       shape: hex ? "hex" : "rect",
       x: t.x,
@@ -79,7 +83,8 @@ export function drawLatticeCell(
   for (const t of cell.tiles) {
     const base = palette[t.role] ?? palette[0] ?? "#b5b4af";
     const tone = TONES[t.tone];
-    ctx.fillStyle = tone < 0 ? mixHex(base, 0, -tone) : mixHex(base, 255, tone * 1.4);
+    const fill = tone < 0 ? mixHex(base, 0, -tone) : mixHex(base, 255, tone * 1.4);
+    ctx.fillStyle = fill;
     // Salin di 9 sel tetangga agar keping yang melewati tepi sel tetap menyambung saat diulang.
     for (let dj = -1; dj <= 1; dj++) {
       for (let di = -1; di <= 1; di++) {
@@ -104,6 +109,16 @@ export function drawLatticeCell(
           ctx.rect(x0, yTop, (t.w - 2 * inset) * ppmCm, (t.h - 2 * inset) * ppmCm);
         }
         ctx.fill();
+        if (cell.grass && t.shape === "rect") {
+          const tw = t.w - 2 * inset;
+          const th = t.h - 2 * inset;
+          const x0 = t.x + ox + inset;
+          const y0 = t.y + oy + inset;
+          ctx.fillStyle = GRASS;
+          for (const hole of grassHoleRects(tw, th))
+            ctx.fillRect((x0 + hole.x) * ppmCm, H - (y0 + hole.y + hole.h) * ppmCm, hole.w * ppmCm, hole.h * ppmCm);
+          ctx.fillStyle = fill;
+        }
       }
     }
   }
