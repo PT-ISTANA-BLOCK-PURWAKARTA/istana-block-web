@@ -77,7 +77,16 @@ export function DynamicSitePreview({
   }
 
   if (!view3d) {
-    return <Preview2D geometry={geometry} layout={layout} roleColors={roleColors} />;
+    return (
+      <Preview2D
+        geometry={geometry}
+        layout={layout}
+        roleColors={roleColors}
+        productId={productId}
+        motifId={motifId}
+        rotationDeg={rotationDeg}
+      />
+    );
   }
 
   return (
