@@ -7,6 +7,7 @@ import { PAVING_CATALOG } from "@/lib/paving/catalog";
 import {
   KELAS_BEBAN,
   LABEL_BEBAN,
+  SIRTU_CM,
   ALAS_UTAMA_CM,
   TAMPILKAN_BIAYA,
   type AreaProyek,
@@ -23,7 +24,7 @@ function Perkiraan() {
   return <small className={css.perkiraan}>perkiraan, konfirmasi ke admin</small>;
 }
 
-function BarisKebutuhan({ hasil, area, sirtuSudahAda, abuSudahAda, totalPcs }: { hasil: HasilProyek; area: AreaProyek; sirtuSudahAda: boolean; abuSudahAda: boolean; totalPcs: number }) {
+function BarisKebutuhan({ hasil, area, sirtuSudahAda, abuSudahAda }: { hasil: HasilProyek; area: AreaProyek; sirtuSudahAda: boolean; abuSudahAda: boolean }) {
   return (
       <ul className={`rowlist ${css.rows}`}>
         {!abuSudahAda ? (
@@ -31,7 +32,6 @@ function BarisKebutuhan({ hasil, area, sirtuSudahAda, abuSudahAda, totalPcs }: {
             <span>
               Pasir alas
               <small className={css.rowSub}>tebal {area.material.pasirAlas.tebalCm} cm, sudah dikali faktor padat</small>
-              <Perkiraan />
             </span>
             <b className="tabular">{fmt(hasil.material.pasirAlasM3)} m³</b>
           </li>
@@ -41,7 +41,6 @@ function BarisKebutuhan({ hasil, area, sirtuSudahAda, abuSudahAda, totalPcs }: {
               <span>
                 Tebal alas disarankan {fmt(area.material.pasirAlas.tebalCm)} cm
                 <small className={css.rowSub}>lapisan alas sudah dihitung sebagai abu batu alas di atas</small>
-                <Perkiraan />
               </span>
             </li>
           )
@@ -50,8 +49,10 @@ function BarisKebutuhan({ hasil, area, sirtuSudahAda, abuSudahAda, totalPcs }: {
           <li className="rowitem">
             <span>
               Sirtu / base course
-              <small className={css.rowSub}>tebal {area.material.sirtu.tebalCm} cm</small>
-              <Perkiraan />
+              <small className={css.rowSub}>
+                tebal {area.material.sirtu.tebalCm} cm
+                {SIRTU_CM[area.kelas].catatan ? ` (${SIRTU_CM[area.kelas].catatan})` : ""}
+              </small>
             </span>
             <b className="tabular">{fmt(hasil.material.sirtuM3)} m³</b>
           </li>
@@ -59,14 +60,10 @@ function BarisKebutuhan({ hasil, area, sirtuSudahAda, abuSudahAda, totalPcs }: {
         <li className="rowitem">
           <span>
             Pengiriman
-            <small className={css.rowSub}>
-              {fmt(hasil.logistik.paletTotal)} palet · ±{fmt(hasil.logistik.beratTotalKg, 0)} kg · dari {fmt(totalPcs)} pcs
-            </small>
+            <small className={css.rowSub}>dari luas paving {fmt(hasil.totalLuasBersihM2)} m²</small>
             <Perkiraan />
           </span>
-          <b className="tabular">
-            {fmt(hasil.logistik.trip)} trip {hasil.logistik.jenisTruk}
-          </b>
+          <b className="tabular">{hasil.armada.label}</b>
         </li>
         {TAMPILKAN_BIAYA && hasil.biaya?.baris.map((b) => (
           <li key={b.kode} className="rowitem">
@@ -109,15 +106,13 @@ interface Props {
   sirtuSudahAda: boolean;
   /** Abu batu alas sudah dihitung hitungan utama; pasir alas tidak ditambah lagi. */
   abuSudahAda: boolean;
-  /** Total pcs dari hitungan utama, dasar palet/trip/berat. */
-  totalPcs: number;
 }
 
 /**
  * Bagian lipat "Kebutuhan lapangan (perkiraan)". Seluruh nilainya dihitung di induk; komponen ini hanya
  * menampilkan. Tidak memilih kelas beban = bagian ini tidak ikut ke pesan WhatsApp.
  */
-export function KebutuhanLapangan({ kelas, onKelas, jarak, onJarak, jarakBad, produkId, tebalCm, rek, hasil, menunggu, sirtuSudahAda, abuSudahAda, totalPcs }: Props) {
+export function KebutuhanLapangan({ kelas, onKelas, jarak, onJarak, jarakBad, produkId, tebalCm, rek, hasil, menunggu, sirtuSudahAda, abuSudahAda }: Props) {
   const uid = useId();
   const produkCocok = rek ? rek.produk.some((p) => p.id === produkId) : true;
   const area = hasil?.areas[0];
@@ -145,19 +140,21 @@ export function KebutuhanLapangan({ kelas, onKelas, jarak, onJarak, jarakBad, pr
 
         {!kelas && (
           <p className={css.help}>
-            Pilih kelas beban untuk melihat tebal yang disarankan, pasir alas (bila belum ada abu batu alas), sirtu, palet, dan trip
-            truk. Tanpa pilihan ini kalkulator bekerja seperti biasa.
+            Pilih kelas beban untuk melihat tebal dan mutu yang disarankan, pasir alas (bila belum ada abu batu alas), sirtu, dan armada
+            pengiriman. Tanpa pilihan ini kalkulator bekerja seperti biasa.
           </p>
         )}
 
         {kelas && rek && (
           <>
             <div className={css.note}>
-              <b>Tebal minimal {rek.tebalMinCm} cm.</b>{" "}
+              <b>
+                Tebal minimal {rek.tebalMinCm} cm{rek.mutu ? `, mutu ${rek.mutu}` : ""}.
+              </b>{" "}
               {rek.produk.length > 0
                 ? `Produk yang cocok: ${rek.produk.map((p) => `${p.name} (${p.tebalCm.join("/")} cm)`).join(", ")}.`
                 : "Belum ada produk katalog yang memenuhi tebal itu."}
-              <Perkiraan />
+              {rek.catatan && <small className={css.rowSub}>Catatan: {rek.catatan}.</small>}
             </div>
             {rek.peringatan.map((w) => (
               <p key={w} className={css.err} role="alert">
@@ -174,11 +171,6 @@ export function KebutuhanLapangan({ kelas, onKelas, jarak, onJarak, jarakBad, pr
                 {w}
               </p>
             ))}
-            {rek.produk.length === 0 && rek.produkAlternatif.length > 0 && (
-              <p className={css.help}>
-                Tebal terbesar yang ada di katalog: {rek.produkAlternatif.map((p) => `${p.name} ${p.tebalMaksCm} cm`).join(", ")}.
-              </p>
-            )}
 
             {TAMPILKAN_BIAYA && (
               <div className="field">
@@ -207,7 +199,7 @@ export function KebutuhanLapangan({ kelas, onKelas, jarak, onJarak, jarakBad, pr
             {menunggu || !hasil || !area ? (
               <p className={css.help}>Rincian muncul setelah ukuran lahan terisi dan tata letaknya selesai dihitung.</p>
             ) : (
-              <BarisKebutuhan hasil={hasil} area={area} sirtuSudahAda={sirtuSudahAda} abuSudahAda={abuSudahAda} totalPcs={totalPcs} />
+              <BarisKebutuhan hasil={hasil} area={area} sirtuSudahAda={sirtuSudahAda} abuSudahAda={abuSudahAda} />
             )}
             <p className={css.help}>Tebal paving dibaca dari pilihan di atas ({tebalCm} cm). Rincian ini ikut di pesan WhatsApp; jumlah paving, kanstin, dan abu batu mengikuti hitungan di atas.</p>
           </>
@@ -219,15 +211,18 @@ export function KebutuhanLapangan({ kelas, onKelas, jarak, onJarak, jarakBad, pr
       <section className={css.kebutuhanPrint} aria-label="Kebutuhan lapangan (perkiraan)">
         <h3>Kebutuhan lapangan (perkiraan)</h3>
         <p>
-          <b>Beban {LABEL_BEBAN[kelas].toLowerCase()}: tebal minimal {rek.tebalMinCm} cm.</b>{" "}
+          <b>
+            Beban {LABEL_BEBAN[kelas].toLowerCase()}: tebal minimal {rek.tebalMinCm} cm{rek.mutu ? `, mutu ${rek.mutu}` : ""}.
+          </b>{" "}
           {rek.produk.length > 0
             ? `Produk yang cocok: ${rek.produk.map((p) => p.name).join(", ")}.`
             : "Belum ada produk katalog yang memenuhi tebal itu."}
+          {rek.catatan ? ` Catatan: ${rek.catatan}.` : ""}
         </p>
         {[...rek.peringatan, ...hasil.peringatan].map((w) => (
           <p key={w}>{w}</p>
         ))}
-        <BarisKebutuhan hasil={hasil} area={area} sirtuSudahAda={sirtuSudahAda} abuSudahAda={abuSudahAda} totalPcs={totalPcs} />
+        <BarisKebutuhan hasil={hasil} area={area} sirtuSudahAda={sirtuSudahAda} abuSudahAda={abuSudahAda} />
       </section>
     )}
     </>

@@ -2083,7 +2083,6 @@ export function PatternCalculator({ whatsapp, initialQuery }: { whatsapp: string
               menunggu={kbMenunggu}
               sirtuSudahAda={st.bc}
               abuSudahAda={st.abu}
-              totalPcs={kbPcsLayout}
             />
 
             <div className={css.actions} data-pp-noprint>
