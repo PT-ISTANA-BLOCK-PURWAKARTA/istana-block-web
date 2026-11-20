@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState } from "react";
 import { waLink } from "@/lib/format";
+import { hitungArmada } from "@/lib/paving/kebutuhan/armada";
 
 type ProductOption = {
   id: string;
@@ -41,14 +42,14 @@ export function LocalEstimator({ areaName, districts = [], whatsapp }: Props) {
   );
 
   const truckInfo = useMemo(() => {
-    if (areaM2 <= 55) {
+    const armada = hitungArmada(areaM2);
+    if (armada.jenis === "colt-diesel") {
       return { type: "1 Rit Truk Colt Diesel", desc: "Akses fleksibel ke jalan pemukiman & gang lebar." };
     }
-    if (areaM2 <= 110) {
+    if (armada.rit === 1) {
       return { type: "1 Rit Truk Fuso Crane", desc: "Bongkar muat hidrolik mandiri, palet utuh tanpa kuli." };
     }
-    const rit = Math.ceil(areaM2 / 100);
-    return { type: `${rit} Rit Armada Truk Crane`, desc: "Pengiriman terjadwal bertahap sesuai progres di proyek." };
+    return { type: `${armada.rit} Rit Armada Truk Crane`, desc: "Pengiriman terjadwal bertahap sesuai progres di proyek." };
   }, [areaM2]);
 
   const waText = useMemo(() => {

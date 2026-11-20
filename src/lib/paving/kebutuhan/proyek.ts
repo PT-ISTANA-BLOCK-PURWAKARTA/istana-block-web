@@ -1,15 +1,14 @@
 import { rekomendasiBeban, tebalBawaan } from "./beban";
 import { hitungBiaya, type HasilBiaya } from "./biaya";
 import { hitungMultiArea, type AreaInput, type HasilArea } from "./lahan";
-import { hitungLogistik, type HasilLogistik } from "./logistik";
+import { hitungArmada, type HasilArmada } from "./armada";
 import { hitungMaterialPendukung, type MaterialPendukung } from "./material";
-import type { JenisTruk, KelasBeban } from "./konstanta-sementara";
+import type { KelasBeban } from "./konstanta-sementara";
 import { bulat2 } from "./util";
 
 export interface OpsiProyek {
   /** Jarak kirim (km). Tanpa ini biaya tidak dihitung. */
   jarakKm?: number;
-  jenisTruk?: JenisTruk;
   sertakanKanstin?: boolean;
   hargaPerPcs?: number;
 }
@@ -25,7 +24,7 @@ export interface HasilProyek {
   totalLuasBersihM2: number;
   totalPcsBeli: number;
   material: { pasirAlasM3: number; sirtuM3: number; abuNatM3: number; kanstinPcs: number };
-  logistik: HasilLogistik;
+  armada: HasilArmada;
   biaya?: HasilBiaya;
   peringatan: string[];
 }
@@ -49,16 +48,13 @@ export function hitungProyek(areas: AreaInput[], opsi: OpsiProyek = {}): HasilPr
     return { ...r, kelas, tebalCm, material };
   });
 
-  const logistik = hitungLogistik(
-    rows.map((r) => ({ produkId: r.produkId, tebalCm: r.tebalCm, pcs: r.pcsBeli })),
-    opsi.jenisTruk,
-  );
+  const armada = hitungArmada(multi.totalLuasBersihM2);
 
   const biaya =
     opsi.jarakKm === undefined
       ? undefined
       : hitungBiaya({
-          trip: logistik.trip,
+          trip: armada.rit,
           jarakKm: opsi.jarakKm,
           pasang: rows.map((r) => ({ kelas: r.kelas, luasM2: r.luasBersihM2 })),
           material:
@@ -76,7 +72,7 @@ export function hitungProyek(areas: AreaInput[], opsi: OpsiProyek = {}): HasilPr
       abuNatM3: jumlah((m) => m.abuNat.m3),
       kanstinPcs: rows.reduce((a, r) => a + (r.material.kanstin?.pcs ?? 0), 0),
     },
-    logistik,
+    armada,
     biaya,
     peringatan,
   };

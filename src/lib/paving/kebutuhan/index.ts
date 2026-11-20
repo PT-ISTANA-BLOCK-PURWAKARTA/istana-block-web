@@ -3,6 +3,7 @@ export * from "./beban";
 export * from "./material";
 export * from "./lahan";
 export * from "./logistik";
+export * from "./armada";
 export * from "./biaya";
 export * from "./proyek";
 export * from "./daftar-belanja";

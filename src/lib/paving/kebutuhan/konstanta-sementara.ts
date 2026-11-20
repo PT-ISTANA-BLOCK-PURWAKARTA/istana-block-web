@@ -23,6 +23,24 @@ function s<T>(nilai: T, sumber: string): KonstantaSementara<T> {
   return { nilai, sementara: true, sumber };
 }
 
+/** Konstanta yang bersumber dari konten resmi istanablock.com (`sementara: false`). */
+export interface KonstantaResmi<T> {
+  nilai: T;
+  sementara: false;
+  sumber: string;
+  /** Mutu beton yang dianjurkan (mis. "K-350 s.d. K-400"). */
+  mutu?: string;
+  /** Catatan tambahan dari sumber, ditampilkan ke pengguna. */
+  catatan?: string;
+}
+
+function r<T>(nilai: T, sumber: string, tambahan: { mutu?: string; catatan?: string } = {}): KonstantaResmi<T> {
+  return { nilai, sementara: false, sumber, ...tambahan };
+}
+
+const URL_CARA_PASANG = "https://istanablock.com/artikel/cara-pasang-paving-block";
+const URL_PERBEDAAN = "https://istanablock.com/artikel/perbedaan-truepave-hexagon-fullpave-grass-block";
+
 export const KELAS_BEBAN: KelasBeban[] = ["pejalan", "motor", "mobil", "truk-ringan", "truk-berat"];
 
 export const LABEL_BEBAN: Record<KelasBeban, string> = {
@@ -33,47 +51,67 @@ export const LABEL_BEBAN: Record<KelasBeban, string> = {
   "truk-berat": "Truk berat / industri",
 };
 
-// SEMENTARA — tunggu konfirmasi pabrik
-/** Tebal minimum (cm) per kelas beban. Acuan umum SNI 03-0691 (6/8/10 cm). */
-export const TEBAL_MIN_CM: Record<KelasBeban, KonstantaSementara<number>> = {
-  pejalan: s(6, "Acuan umum SNI 03-0691: 6 cm untuk pejalan kaki"),
-  motor: s(6, "Acuan umum SNI 03-0691: 6 cm untuk beban ringan"),
-  mobil: s(8, "Acuan umum SNI 03-0691: 8 cm untuk kendaraan ringan"),
-  "truk-ringan": s(10, "Acuan umum SNI 03-0691: 10 cm untuk truk"),
-  "truk-berat": s(10, "Acuan umum SNI 03-0691: 10 cm untuk truk/industri"),
+/**
+ * Tebal minimum (cm) per kelas beban, mutu, dan catatan.
+ * Sumber: https://istanablock.com/artikel/cara-pasang-paving-block (tabel kelas beban). Pabrik tidak menjual tebal 10 cm.
+ * Pemetaan kelas: pejalan & motor = Ringan, mobil = Sedang, truk ringan = Berat, truk berat = Sangat berat.
+ */
+export const TEBAL_MIN_CM: Record<KelasBeban, KonstantaResmi<number>> = {
+  pejalan: r(6, `${URL_CARA_PASANG} (kelas Ringan: 6 cm, K-350)`, { mutu: "K-350" }),
+  motor: r(6, `${URL_CARA_PASANG} (kelas Ringan: 6 cm, K-350)`, { mutu: "K-350" }),
+  mobil: r(6, `${URL_CARA_PASANG} (kelas Sedang: 6 cm, 8 cm bila sering bermanuver)`, {
+    mutu: "K-350",
+    catatan: "8 cm bila sering bermanuver atau kendaraan berat",
+  }),
+  "truk-ringan": r(8, `${URL_CARA_PASANG} (kelas Berat: 8 cm, K-350 s.d. K-400)`, { mutu: "K-350 s.d. K-400" }),
+  "truk-berat": r(8, `${URL_CARA_PASANG} (kelas Sangat berat: 8 cm, K-400 s.d. K-450)`, {
+    mutu: "K-400 s.d. K-450",
+    catatan: "perlu perencanaan teknis, konsultasikan ke admin",
+  }),
 };
 
-// SEMENTARA — tunggu konfirmasi pabrik
-/** Produk katalog yang dianggap cocok per kelas beban (disaring lagi menurut tebal). */
-export const PRODUK_PER_BEBAN: KonstantaSementara<Record<KelasBeban, ProductId[]>> = s(
+/**
+ * Produk katalog yang cocok per kelas beban (disaring lagi menurut tebal).
+ * Sumber: https://istanablock.com/artikel/perbedaan-truepave-hexagon-fullpave-grass-block (Truepave: jalan, parkir,
+ * carport, gudang; Hexagon: trotoar, taman, area publik; Fullpave: teras, selasar, plaza; Grass Block: carport hijau,
+ * parkir). Ubin Fullpave tidak untuk kendaraan.
+ */
+export const PRODUK_PER_BEBAN: KonstantaResmi<Record<KelasBeban, ProductId[]>> = r(
   {
     pejalan: ["truepave", "hexagon", "fp21", "fp30", "grass"],
-    motor: ["truepave", "hexagon", "fp21", "fp30", "grass"],
-    mobil: ["truepave", "hexagon", "grass"],
-    "truk-ringan": ["truepave", "hexagon"],
-    "truk-berat": ["truepave", "hexagon"],
+    motor: ["truepave", "hexagon", "grass"],
+    mobil: ["truepave", "grass"],
+    "truk-ringan": ["truepave"],
+    "truk-berat": ["truepave"],
   },
-  "Penilaian umum bentuk produk; ubin 21/30 tidak untuk kendaraan",
+  `${URL_PERBEDAAN} (kegunaan tiap produk)`,
 );
 
-// SEMENTARA — tunggu konfirmasi pabrik
-/** Tebal pasir alas (cm) per kelas beban. */
-export const PASIR_ALAS_CM: Record<KelasBeban, KonstantaSementara<number>> = {
-  pejalan: s(3, "Praktik lapangan umum: 3 cm"),
-  motor: s(3, "Praktik lapangan umum: 3 cm"),
-  mobil: s(5, "Mengikuti abu batu 5 cm di katalog (BED_DEPTH_M)"),
-  "truk-ringan": s(5, "Praktik lapangan umum: 5 cm"),
-  "truk-berat": s(5, "Praktik lapangan umum: 5 cm"),
+/**
+ * Tebal pasir alas / bedding (cm) per kelas beban.
+ * Sumber: https://istanablock.com/artikel/cara-pasang-paving-block (bedding abu batu/pasir kasar 3-5 cm untuk semua
+ * kelas; contoh carport memakai 4 cm). Nilai di bawah berada di dalam rentang itu.
+ */
+export const PASIR_ALAS_CM: Record<KelasBeban, KonstantaResmi<number>> = {
+  pejalan: r(3, `${URL_CARA_PASANG} (bedding 3-5 cm)`),
+  motor: r(3, `${URL_CARA_PASANG} (bedding 3-5 cm)`),
+  mobil: r(5, `${URL_CARA_PASANG} (bedding 3-5 cm)`),
+  "truk-ringan": r(5, `${URL_CARA_PASANG} (bedding 3-5 cm)`),
+  "truk-berat": r(5, `${URL_CARA_PASANG} (bedding 3-5 cm)`),
 };
 
-// SEMENTARA — tunggu konfirmasi pabrik
-/** Tebal sirtu / base course (cm) per kelas beban. */
-export const SIRTU_CM: Record<KelasBeban, KonstantaSementara<number>> = {
-  pejalan: s(10, "Praktik lapangan umum: 10 cm"),
-  motor: s(10, "Praktik lapangan umum: 10 cm"),
-  mobil: s(15, "Praktik lapangan umum: 15 cm"),
-  "truk-ringan": s(20, "Mengikuti base course 20 cm di katalog (BASE_DEPTH_M)"),
-  "truk-berat": s(25, "Praktik lapangan umum: 25 cm"),
+/**
+ * Tebal sirtu / base course (cm) per kelas beban.
+ * Sumber: https://istanablock.com/artikel/cara-pasang-paving-block (Ringan 10, Sedang 15, Berat 20, Sangat berat 20-25 cm).
+ */
+export const SIRTU_CM: Record<KelasBeban, KonstantaResmi<number>> = {
+  pejalan: r(10, `${URL_CARA_PASANG} (kelas Ringan: 10 cm)`),
+  motor: r(10, `${URL_CARA_PASANG} (kelas Ringan: 10 cm)`),
+  mobil: r(15, `${URL_CARA_PASANG} (kelas Sedang: 15 cm)`),
+  "truk-ringan": r(20, `${URL_CARA_PASANG} (kelas Berat: 20 cm)`),
+  "truk-berat": r(25, `${URL_CARA_PASANG} (kelas Sangat berat: 20-25 cm, dipakai 25 cm)`, {
+    catatan: "20-25 cm + perencanaan teknis",
+  }),
 };
 
 // SEMENTARA — tunggu konfirmasi pabrik
@@ -157,12 +195,8 @@ export const TARIF_PASANG_PER_M2: Record<KelasBeban, KonstantaSementara<number>>
 // aktifkan setelah tarif resmi dari pemilik
 export const TAMPILKAN_BIAYA = false;
 
-/** Daftar datar untuk tabel PR / label UI. */
+/** Daftar datar konstanta yang MASIH sementara (tabel PR / label UI). */
 export const DAFTAR_KONSTANTA_SEMENTARA: ReadonlyArray<{ nama: string; nilai: string; sumber: string }> = [
-  { nama: "TEBAL_MIN_CM", nilai: "6 / 6 / 8 / 10 / 10", sumber: TEBAL_MIN_CM.pejalan.sumber },
-  { nama: "PRODUK_PER_BEBAN", nilai: "lihat berkas", sumber: PRODUK_PER_BEBAN.sumber },
-  { nama: "PASIR_ALAS_CM", nilai: "3 / 3 / 5 / 5 / 5", sumber: "Praktik lapangan umum" },
-  { nama: "SIRTU_CM", nilai: "10 / 10 / 15 / 20 / 25", sumber: "Praktik lapangan umum" },
   { nama: "ABU_NAT_M3_PER_M2", nilai: String(ABU_NAT_M3_PER_M2.nilai), sumber: ABU_NAT_M3_PER_M2.sumber },
   { nama: "FAKTOR_PADAT", nilai: String(FAKTOR_PADAT.nilai), sumber: FAKTOR_PADAT.sumber },
   { nama: "FAKTOR_SUSUT_ABU", nilai: String(FAKTOR_SUSUT_ABU.nilai), sumber: FAKTOR_SUSUT_ABU.sumber },
