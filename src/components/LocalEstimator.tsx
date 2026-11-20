@@ -17,6 +17,7 @@ const PRODUCTS: ProductOption[] = [
   { id: "truepave-6", nama: "Truepave (Bata)", tebal: "6 cm", mutu: "K-350", pcsPerM2: 44, kegunaan: "Carport, halaman rumah & trotoar" },
   { id: "truepave-8", nama: "Truepave (Bata)", tebal: "8 cm", mutu: "K-400+", pcsPerM2: 44, kegunaan: "Jalan lingkungan, ruko & akses truk" },
   { id: "hexagon-6", nama: "Hexagon (Segi Enam)", tebal: "6 cm", mutu: "K-350", pcsPerM2: 25, kegunaan: "Taman publik, plaza & estetika arsitektur" },
+  { id: "hexagon-8", nama: "Hexagon (Segi Enam)", tebal: "8 cm", mutu: "K-400+", pcsPerM2: 25, kegunaan: "Parkir, plaza & akses kendaraan" },
   { id: "grassblock-8", nama: "Grass Block (Rumput)", tebal: "8 cm", mutu: "K-350", pcsPerM2: 8.3, kegunaan: "Resapan air, area parkir hijau & villa" },
 ];
 
