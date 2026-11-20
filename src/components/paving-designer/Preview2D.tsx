@@ -4,12 +4,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
 import { fitView, groupPacked, jointWidthM, strokeWidthsM, viewAspect } from "@/lib/paving/render/draw-plan";
 import type { PackedLayoutResult } from "@/lib/paving/render/packed-tiles";
+import { drawGrassHoles, grassCfgFor } from "@/lib/paving/render/draw-grass";
+import type { ProductId } from "@/lib/paving/legacy/types";
 import css from "./PavingDesigner.module.css";
 
 interface Props {
   geometry: ProjectGeometry;
   layout: PackedLayoutResult;
   roleColors?: string[];
+  /** Grass Block menggambar lubang rumput (utuh & potongan); produk lain tidak. */
+  productId?: ProductId;
+  motifId?: string;
+  rotationDeg?: number;
 }
 
 /** Warna blok per peran (abu natural, merah, hitam) mengikuti palet produk Istana Block. */
@@ -25,6 +31,9 @@ const DRAW_SLICE_MS = 12;
 /** Keping per pemeriksaan waktu (menjaga biaya performance.now() tetap kecil). */
 const TILES_PER_CLOCK_CHECK = 1024;
 
+/** Keping per irisan untuk lubang rumput Grass Block. */
+const GRASS_TILES_PER_SLICE = 4096;
+
 const yieldToBrowser = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 /**
@@ -33,7 +42,7 @@ const yieldToBrowser = () => new Promise<void>((resolve) => setTimeout(resolve, 
  * dalam irisan waktu ~12 ms, sehingga lahan ribuan m² (ratusan ribu keping) tergambar tanpa
  * membekukan tab. Lahan kecil selesai dalam satu irisan (sinkron, tanpa kedip).
  */
-export function Preview2D({ geometry, layout, roleColors }: Props) {
+export function Preview2D({ geometry, layout, roleColors, productId, motifId, rotationDeg = 0 }: Props) {
   const [showCutsOnly, setShowCutsOnly] = useState(false);
   const palette = roleColors && roleColors.length > 0 ? roleColors : DEFAULT_ROLE_COLORS;
   const uniquePalette = Array.from(new Set(palette));
@@ -50,6 +59,11 @@ export function Preview2D({ geometry, layout, roleColors }: Props) {
 
   // Pengelompokan keping per gaya: dihitung ulang hanya saat layout/sorotan berubah.
   const groups = useMemo(() => groupPacked(layout.packed, showCutsOnly), [layout, showCutsOnly]);
+
+  const grassCfg = useMemo(
+    () => grassCfgFor(productId, motifId, rotationDeg),
+    [productId, motifId, rotationDeg],
+  );
 
   // Ukuran kanvas mengikuti pembungkus (responsif, termasuk saat dilipat/dibesarkan).
   useEffect(() => {
@@ -163,6 +177,18 @@ export function Preview2D({ geometry, layout, roleColors }: Props) {
         }
       }
 
+      // Grass Block: lubang rumput hijau (satu path + satu fill per irisan) di atas keping.
+      if (grassCfg && !showCutsOnly) {
+        const gOpts = { cfg: grassCfg, gapM: jointM, scale: fit.scale };
+        for (let from = 0; from < layout.packed.count; from += GRASS_TILES_PER_SLICE) {
+          drawGrassHoles(ctx, layout.packed, from, Math.min(layout.packed.count, from + GRASS_TILES_PER_SLICE), gOpts);
+          if (from + GRASS_TILES_PER_SLICE < layout.packed.count) {
+            await yieldToBrowser();
+            if (cancelled) return;
+          }
+        }
+      }
+
       // Garis batas lahan dan lubang.
       ctx.lineWidth = sw.outline;
       ctx.strokeStyle = OUTLINE_COLOR;
@@ -184,7 +210,7 @@ export function Preview2D({ geometry, layout, roleColors }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [box, groups, geometry, layout, paletteKey, showCutsOnly]);
+  }, [box, groups, geometry, layout, paletteKey, showCutsOnly, grassCfg]);
 
   const summary = `Denah 2D paving ukuran ${siteW.toFixed(1)} kali ${siteH.toFixed(1)} meter, luas ${geometry.metrics.areaM2.toFixed(1)} meter persegi: ${layout.metrics.fullCount.toLocaleString("id-ID")} blok utuh dan ${layout.metrics.partialCount.toLocaleString("id-ID")} potongan tepi.`;
 

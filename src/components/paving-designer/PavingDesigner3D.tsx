@@ -6,8 +6,9 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { LayoutResult, LayoutTile } from "@/lib/paving/engine/types";
 import type { ProductId } from "@/lib/paving/legacy/types";
 import { drawLatticeCell, latticeCell, latticeUv } from "@/lib/paving/render/lattice-texture";
-import { grassHolePlacements } from "@/lib/paving/render/grass-holes";
+import { grassHolePlacements, grassHolesForCut, latticeCfgFromUnit } from "@/lib/paving/render/grass-holes";
 import { GRASS } from "@/lib/paving/legacy/types";
+import { unitOf } from "@/lib/paving/legacy/patterns";
 import type { ProjectGeometry } from "@/lib/paving/geometry/types";
 import { IconAlert, IconCollapse, IconExpand } from "./Icons";
 import css from "./PavingDesigner.module.css";
@@ -502,9 +503,14 @@ export function PavingDesigner3D({
 
       // 7a-2. Grass Block: lubang rumput 3 x 2 per keping utuh (satu InstancedMesh untuk semua lubang),
       // mengikuti letak & rotasi keping hasil layout motif, sama dengan gambar 2D.
-      if (productId === "grass" && fullToRender.length > 0) {
+      if (productId === "grass" && (fullToRender.length > 0 || cutTiles.length > 0)) {
         const holes: ReturnType<typeof grassHolePlacements> = [];
         for (const tile of fullToRender) holes.push(...grassHolePlacements(normalizeRing(tile.polygon), JOINT_GAP_M));
+        // Potongan tepi: hanya lubang yang utuh di dalam poligon potongan.
+        if (!needsSampling && cutTiles.length > 0 && motifId) {
+          const cfg = latticeCfgFromUnit(unitOf(productId, motifId), rotationDeg);
+          for (const cut of cutTiles) holes.push(...grassHolesForCut(normalizeRing(cut.polygon), cfg, JOINT_GAP_M));
+        }
         if (holes.length > 0) {
           const holeGeo = new THREE.PlaneGeometry(1, 1);
           holeGeo.rotateX(-Math.PI / 2);

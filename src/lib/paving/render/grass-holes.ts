@@ -4,6 +4,8 @@
  * lubang 20% x 30% sisi keping, jarak antar-lubang dan tepi dibagi rata.
  */
 
+import type { Unit } from "../legacy/types";
+
 export const GRASS_COLS = 3;
 export const GRASS_ROWS = 2;
 const HOLE_W_FRAC = 0.2;
@@ -71,4 +73,103 @@ export function grassHolePlacements(ring: ReadonlyArray<{ x: number; y: number }
     const lv = r.y + r.h / 2 - h / 2;
     return { cx: cx + lu * eux + lv * evx, cy: cy + lu * euy + lv * evy, w: r.w, h: r.h, angle };
   });
+}
+
+type Pt = { x: number; y: number };
+
+/** Titik di dalam poligon (even-odd). */
+function pointInRing(px: number, py: number, ring: ReadonlyArray<Pt>): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const a = ring[i];
+    const b = ring[j];
+    if (a.y > py !== b.y > py && px < ((b.x - a.x) * (py - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
+}
+
+/** Empat sudut lubang pada bidang plan. */
+function holeCorners(h: HolePlacement): Pt[] {
+  const c = Math.cos(h.angle);
+  const s = Math.sin(h.angle);
+  const hw = h.w / 2;
+  const hh = h.h / 2;
+  return [
+    [-hw, -hh],
+    [hw, -hh],
+    [hw, hh],
+    [-hw, hh],
+  ].map(([u, v]) => ({ x: h.cx + u * c - v * s, y: h.cy + u * s + v * c }));
+}
+
+/** Lubang yang seluruhnya (4 sudut) berada di dalam poligon potongan; sisanya dibuang. */
+export function holesInsidePolygon(holes: HolePlacement[], ring: ReadonlyArray<Pt>): HolePlacement[] {
+  if (ring.length < 3) return [];
+  return holes.filter((h) => holeCorners(h).every((p) => pointInRing(p.x, p.y, ring)));
+}
+
+export interface GrassLatticeCfg {
+  /** Satuan ulang motif dalam cm (unitOf(...).w / .h) dan keping-kepingnya (cm). */
+  unitW: number;
+  unitH: number;
+  tiles: ReadonlyArray<{ x: number; y: number; w: number; h: number }>;
+  rotationDeg?: number;
+  originM?: { x: number; y: number };
+}
+
+/**
+ * Cincin keping sumber (persegi panjang utuh, 4 titik) yang memuat titik (px, py); null bila tak ada.
+ * Dipakai untuk potongan tepi: poligon potongan tidak membawa keping asalnya, jadi dicari lewat
+ * titik beratnya (selalu di dalam keping sumber karena potongan adalah himpunan-bagian persegi panjang).
+ */
+export function sourceTileRingAt(px: number, py: number, cfg: GrassLatticeCfg): Pt[] | null {
+  const ox = cfg.originM?.x ?? 0;
+  const oy = cfg.originM?.y ?? 0;
+  const rad = ((cfg.rotationDeg ?? 0) * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  // Balik rotasi ke kerangka lattice.
+  const dx = px - ox;
+  const dy = py - oy;
+  const lx = ox + dx * cos + dy * sin;
+  const ly = oy - dx * sin + dy * cos;
+  const uW = cfg.unitW / 100;
+  const uH = cfg.unitH / 100;
+  const i0 = Math.floor((lx - ox) / uW);
+  const j0 = Math.floor((ly - oy) / uH);
+  for (let j = j0 - 1; j <= j0 + 1; j++)
+    for (let i = i0 - 1; i <= i0 + 1; i++)
+      for (const t of cfg.tiles) {
+        const x0 = ox + i * uW + t.x / 100;
+        const y0 = oy + j * uH + t.y / 100;
+        const x1 = x0 + t.w / 100;
+        const y1 = y0 + t.h / 100;
+        if (lx < x0 || lx > x1 || ly < y0 || ly > y1) continue;
+        return [
+          [x0, y0],
+          [x1, y0],
+          [x1, y1],
+          [x0, y1],
+        ].map(([x, y]) => ({ x: ox + (x - ox) * cos - (y - oy) * sin, y: oy + (x - ox) * sin + (y - oy) * cos }));
+      }
+  return null;
+}
+
+/** Lubang rumput untuk potongan tepi: lubang keping sumber yang jatuh utuh di dalam poligon potongan. */
+export function grassHolesForCut(cutRing: ReadonlyArray<Pt>, cfg: GrassLatticeCfg, gapM = 0): HolePlacement[] {
+  if (cutRing.length < 3) return [];
+  let cx = 0;
+  let cy = 0;
+  for (const p of cutRing) {
+    cx += p.x;
+    cy += p.y;
+  }
+  const src = sourceTileRingAt(cx / cutRing.length, cy / cutRing.length, cfg);
+  if (!src) return [];
+  return holesInsidePolygon(grassHolePlacements(src, gapM), cutRing);
+}
+
+/** Cfg lattice dari satuan motif legacy (unitOf(productId, motifId)). */
+export function latticeCfgFromUnit(unit: Unit, rotationDeg = 0, originM?: { x: number; y: number }): GrassLatticeCfg {
+  return { unitW: unit.w, unitH: unit.h, tiles: unit.tiles, rotationDeg, originM };
 }
