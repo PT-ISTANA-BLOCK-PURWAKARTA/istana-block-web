@@ -6,9 +6,9 @@ import { Icon, type IconName } from "@/components/panel/Icon";
 import { EmailLoginForm, OpsLogin } from "./LoginForms";
 
 export const APP_META: Record<ModuleKey, { icon: IconName; title: string; lead: string; how: string }> = {
-  web: { icon: "web", title: "Situs", lead: "Produk, harga, artikel, dan halaman istanablock.com.", how: "Masuk dengan email" },
-  operasional: { icon: "truck", title: "Operasional", lead: "Pesanan, pengiriman, stok gudang, dan posisi truk.", how: "Nomor HP & PIN, atau email" },
-  keuangan: { icon: "ledger", title: "Keuangan", lead: "Faktur, kas & bank, pembelian, dan laporan keuangan.", how: "Masuk dengan email" },
+  web: { icon: "web", title: "Situs", lead: "Produk, harga, artikel, dan halaman istanablock.com.", how: "Masuk dengan email / username" },
+  operasional: { icon: "truck", title: "Operasional", lead: "Pesanan, pengiriman, stok gudang, dan posisi truk.", how: "Nomor HP & PIN, atau email / username" },
+  keuangan: { icon: "ledger", title: "Keuangan", lead: "Faktur, kas & bank, pembelian, dan laporan keuangan.", how: "Masuk dengan email / username" },
 };
 
 /** Halaman masuk satu aplikasi. Sudah login & berhak → langsung ke aplikasinya. */
@@ -36,7 +36,7 @@ export async function LoginScreen({ module, searchParams }: { module: ModuleKey;
         <p className="muted small">{meta.lead}</p>
         {needEmail && (
           <p className="alert alert-warn" role="alert">
-            {mod.label} hanya bisa dibuka dengan akun email. Anda tadi masuk dengan nomor HP &amp; PIN; masuk lagi dengan email dan password.
+            {mod.label} hanya bisa dibuka dengan akun email/username. Anda tadi masuk dengan nomor HP &amp; PIN; masuk lagi dengan email/username dan password.
           </p>
         )}
         {!needEmail && me && !canOpen(me.roles, module) && (

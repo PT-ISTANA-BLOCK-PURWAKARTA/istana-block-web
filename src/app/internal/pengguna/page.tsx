@@ -45,8 +45,8 @@ const MATRIX: [string, Partial<Record<Role, Cell>>][] = [
   ["Melihat harga pokok, nilai persediaan & nilai faktur", { owner: "ya", keuangan: "ya" }],
   ["Mengelola pengguna & peran", { owner: "ya" }],
 ];
-const HOW: Record<Role, string> = { owner: "email", web: "email", keuangan: "email", operasional: "email / HP", gudang: "HP & PIN", sopir: "HP & PIN",
-  qc: "HP & PIN / email", mandor: "HP & PIN", satpam: "HP & PIN", manajer_qc: "email", pimpinan: "email",
+const HOW: Record<Role, string> = { owner: "email / user", web: "email / user", keuangan: "email / user", operasional: "email / user / HP", gudang: "HP & PIN", sopir: "HP & PIN",
+  qc: "HP & PIN / user", mandor: "HP & PIN", satpam: "HP & PIN", manajer_qc: "email / user", pimpinan: "email / user",
 };
 
 export default async function Pengguna() {
@@ -66,7 +66,7 @@ export default async function Pengguna() {
         <div>
           <h1>Pengguna &amp; peran</h1>
           <p className="muted" style={{ marginTop: 4, maxWidth: 760 }}>
-            Staf kantor masuk dengan <b>email &amp; password</b>. Gudang, sopir, dan staf lapangan masuk ke Operasional dengan <b>nomor HP &amp; PIN 6 angka</b>. Menu dan tombol yang bukan haknya tidak tampil. Satu orang boleh punya beberapa peran.
+            Staf kantor masuk dengan <b>email / username &amp; password</b>. Gudang, sopir, dan staf lapangan masuk ke Operasional dengan <b>nomor HP &amp; PIN 6 angka</b>. Menu dan tombol yang bukan haknya tidak tampil. Satu orang boleh punya beberapa peran.
           </p>
         </div>
       </div>

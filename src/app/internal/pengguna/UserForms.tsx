@@ -75,7 +75,7 @@ export function NewUserForm({ drivers }: { drivers: DriverOption[] }) {
         </label>
         <label className={`kind-opt${kind === "kantor" ? " is-on" : ""}`}>
           <input type="radio" name="kind" value="kantor" checked={kind === "kantor"} onChange={() => { setKind("kantor"); setRoles([]); }} />
-          <b>Kantor: email &amp; password</b>
+          <b>Kantor: email / username &amp; password</b>
           <span>Pemilik, admin situs, keuangan, admin operasional.</span>
         </label>
       </fieldset>
@@ -83,7 +83,10 @@ export function NewUserForm({ drivers }: { drivers: DriverOption[] }) {
         <div className="field full"><label htmlFor="nu-name">Nama</label><input id="nu-name" name="name" required placeholder={kind === "lapangan" ? "mis. Yayan (gudang)" : "mis. Rina (keuangan)"} /></div>
         {kind === "kantor" ? (
           <>
-            <div className="field"><label htmlFor="nu-email">Email</label><input id="nu-email" name="email" type="email" required /></div>
+            <div className="field">
+              <label htmlFor="nu-email">Email atau username</label>
+              <input id="nu-email" name="email" type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="mis. rina atau rina@istanablock.com" required />
+            </div>
             <div className="field"><label htmlFor="nu-pass">Password awal <span className="help">minimal 10 karakter</span></label><input id="nu-pass" name="password" type="password" autoComplete="new-password" required minLength={10} /></div>
           </>
         ) : (
@@ -119,7 +122,7 @@ export function EditUser({
           <RoleChecks idPrefix={`r${user.id}`} value={user.roles} fieldOnly={!user.email} onChange={setRoles} />
           {roles.includes("sopir") && <DriverSelect id={`d${user.id}`} drivers={drivers} value={user.driverId} userName={user.name} />}
           {self && <p className="small muted">Peran pemilik tidak bisa dilepas dari akun sendiri.</p>}
-          {!user.email && <p className="small muted">Akun tanpa email hanya bisa diberi peran lapangan.</p>}
+          {!user.email && <p className="small muted">Akun tanpa email/username hanya bisa diberi peran lapangan.</p>}
           <div><SubmitButton className="btn btn-blue btn-sm">Simpan peran</SubmitButton></div>
         </ActionForm>
         {user.email && !self && (

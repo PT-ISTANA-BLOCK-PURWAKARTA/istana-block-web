@@ -7,6 +7,7 @@ import { z } from "zod";
 import { getDb, getEnv, schema } from "@/db";
 import type { FormState } from "@/components/admin/FormMessage";
 import { requireOwner, requireUser } from "@/lib/auth";
+import { LoginIdSchema } from "@/lib/login-id";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { FIELD_ROLES, formatPhone, normalizePhone, normalizeRoles, weakPin, type Role } from "@/lib/roles";
 import { SESSION_COOKIE, cookieOptions, signSession } from "@/lib/session";
@@ -20,10 +21,10 @@ function rolesFrom(form: FormData): Role[] {
 
 type Db = Awaited<ReturnType<typeof getDb>>;
 
-/** Validasi peran & sopir terkait. officeLogin = akun punya email (boleh peran kantor). */
+/** Validasi peran & sopir terkait. officeLogin = akun punya email/username (boleh peran kantor). */
 async function checkRoles(db: Db, roles: Role[], officeLogin: boolean, driverId: string | null, userId?: number): Promise<string | null> {
   if (!roles.length) return "Pilih minimal satu peran.";
-  if (!officeLogin && roles.some((r) => !FIELD_ROLES.includes(r))) return "Peran pemilik, situs, dan keuangan butuh akun email & password. Untuk akun nomor HP, pilih operasional, gudang, atau sopir.";
+  if (!officeLogin && roles.some((r) => !FIELD_ROLES.includes(r))) return "Peran pemilik, situs, dan keuangan butuh akun email/username & password. Untuk akun nomor HP, pilih operasional, gudang, atau sopir.";
   if (roles.includes("sopir")) {
     if (!driverId) return "Pilih data sopir untuk akun berperan sopir.";
     const d = await db.query.drivers.findFirst({ where: eq(schema.drivers.id, driverId) });
@@ -56,14 +57,14 @@ export async function createUser(_prev: FormState, form: FormData): Promise<Form
   const db = await getDb();
 
   if (kind === "kantor") {
-    const parsed = z.object({ email: z.email("Email tidak valid.").trim().toLowerCase(), password: Password }).safeParse(Object.fromEntries(form));
+    const parsed = z.object({ email: LoginIdSchema, password: Password }).safeParse(Object.fromEntries(form));
     if (!parsed.success) return { error: parsed.error.issues[0]?.message };
     const bad = await checkRoles(db, roles, true, roles.includes("sopir") ? driverId : null);
     if (bad) return { error: bad };
-    if (await db.query.users.findFirst({ where: eq(schema.users.email, parsed.data.email) })) return { error: "Email sudah terdaftar." };
+    if (await db.query.users.findFirst({ where: eq(schema.users.email, parsed.data.email) })) return { error: "Email atau username sudah terdaftar." };
     await db.insert(schema.users).values({ name, email: parsed.data.email, passwordHash: await hashPassword(parsed.data.password), roles, driverId: roles.includes("sopir") ? driverId : null });
     revalidatePath("/internal/pengguna");
-    return { ok: `Akun ${parsed.data.email} dibuat. Ia masuk lewat halaman aplikasi dengan email & password itu.` };
+    return { ok: `Akun ${parsed.data.email} dibuat. Ia masuk lewat halaman aplikasi dengan email/username & password itu.` };
   }
 
   const pin = String(form.get("pin") ?? "").trim();
@@ -100,7 +101,7 @@ export async function resetUserPassword(id: number, _prev: FormState, form: Form
   if (!next.success) return { error: next.error.issues[0]?.message };
   const db = await getDb();
   const user = await db.query.users.findFirst({ where: eq(schema.users.id, id) });
-  if (!user?.email) return { error: "Akun ini tidak memakai email." };
+  if (!user?.email) return { error: "Akun ini tidak memakai email/username." };
   await db.update(schema.users).set({ passwordHash: await hashPassword(next.data), updatedAt: nowDate() }).where(eq(schema.users.id, id));
   return { ok: `Password ${user.email} diatur ulang. Berikan ke yang bersangkutan dan minta ia menggantinya.` };
 }

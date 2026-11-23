@@ -19,7 +19,7 @@ const get = (k) => {
   const i = args.indexOf(`--${k}`);
   return i >= 0 ? args[i + 1] : undefined;
 };
-const email = get("email")?.trim().toLowerCase();
+const email = (get("email") ?? get("username"))?.trim().toLowerCase();
 const name = get("name") ?? "Admin";
 const password = get("password");
 const remote = args.includes("--remote");

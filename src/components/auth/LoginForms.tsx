@@ -12,8 +12,20 @@ export function EmailLoginForm({ module, next, autoFocus = true }: { module: Mod
     <ActionForm action={loginEmail.bind(null, module)} className="stack login-form">
       <input type="hidden" name="next" value={next} />
       <div className="field">
-        <label htmlFor="email">Email</label>
-        <input id="email" name="email" type="email" autoComplete="username" required autoFocus={autoFocus} />
+        <label htmlFor="email">Email atau username</label>
+        <input
+          id="email"
+          name="email"
+          type="text"
+          inputMode="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          autoComplete="username"
+          placeholder="nama@istanablock.com atau username"
+          required
+          autoFocus={autoFocus}
+        />
       </div>
       <div className="field">
         <label htmlFor="password">Password</label>
@@ -62,7 +74,7 @@ export function PinLoginForm({ next }: { next: string }) {
   );
 }
 
-/** Operasional: staf lapangan memakai nomor HP + PIN, pemilik/admin bisa memakai email. */
+/** Operasional: staf lapangan memakai nomor HP + PIN, pemilik/admin bisa memakai email atau username. */
 export function OpsLogin({ next, initial }: { next: string; initial: "pin" | "email" }) {
   const [tab, setTab] = useState(initial);
   return (
@@ -72,11 +84,11 @@ export function OpsLogin({ next, initial }: { next: string; initial: "pin" | "em
           <Icon name="phone" size={18} /> Nomor HP &amp; PIN
         </button>
         <button type="button" role="tab" aria-selected={tab === "email"} onClick={() => setTab("email")}>
-          <Icon name="mail" size={18} /> Email
+          <Icon name="mail" size={18} /> Email / Username
         </button>
       </div>
       {tab === "pin" ? <PinLoginForm next={next} /> : <EmailLoginForm module="operasional" next={next} />}
-      {tab === "email" && <p className="small muted login-help">Untuk pemilik dan admin kantor yang punya akun email.</p>}
+      {tab === "email" && <p className="small muted login-help">Untuk pemilik dan admin kantor yang punya akun email atau username.</p>}
     </>
   );
 }

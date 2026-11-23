@@ -17,7 +17,7 @@ export default async function Profil() {
   const signatureKey = canSign ? (await (await getDb()).query.users.findFirst({ where: eq(schema.users.id, user.id) }))?.signatureKey ?? null : null;
   return (
     <>
-      <PageHead title="Akun saya" sub={`${userHandle(user)} · masuk dengan ${user.via === "pin" ? "nomor HP & PIN" : "email & password"}`} />
+      <PageHead title="Akun saya" sub={`${userHandle(user)} · masuk dengan ${user.via === "pin" ? "nomor HP & PIN" : "email/username & password"}`} />
       <div className="stack" style={{ gap: 20, maxWidth: 760 }}>
         <ProfileForm name={user.name} />
         {user.via === "pin" ? <PinForm /> : <PasswordForm />}

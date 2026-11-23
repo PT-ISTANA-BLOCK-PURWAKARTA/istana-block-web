@@ -4,6 +4,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { eq, sql } from "drizzle-orm";
 import { getDb, getEnv, schema } from "@/db";
+import { escapeLike, isValidLoginId, normalizeLoginId } from "@/lib/login-id";
 import { verifyPassword } from "@/lib/password";
 import { canOpen, effectiveRoles, moduleHome, moduleOf, normalizePhone, normalizeRoles, safeNext, type ModuleKey } from "@/lib/roles";
 import { SESSION_COOKIE, cookieOptions, signSession } from "@/lib/session";
@@ -50,24 +51,37 @@ async function startSession(userId: number, via: "pw" | "pin") {
 
 const SERVER_NOT_READY = "Server belum siap: kunci AUTH_SECRET belum dipasang atau kurang dari 32 karakter.";
 
-/** Masuk dengan email + password ke satu aplikasi (situs, keuangan, atau operasional untuk pemilik/admin). */
+/** Masuk dengan email atau username + password ke satu aplikasi (situs, keuangan, atau operasional untuk pemilik/admin). */
 export async function loginEmail(module: ModuleKey, _prev: LoginState, form: FormData): Promise<LoginState> {
-  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const identifier = normalizeLoginId(form.get("email") ?? form.get("identifier"));
   const password = String(form.get("password") ?? "");
-  if (!email || !password) return { error: "Email dan password wajib diisi." };
+  if (!identifier || !password) return { error: "Email/username dan password wajib diisi." };
+  if (!isValidLoginId(identifier)) return { error: "Masukkan email atau username yang valid." };
 
   const db = await getDb();
   const now = Math.floor(Date.now() / 1000);
   const ipKey = `login:${await clientIp()}`;
-  const accKey = `email:${email}`;
+  const accKey = `email:${identifier}`;
   const wait = await lockedFor(db, [[ipKey, MAX_FAILS_IP], [accKey, MAX_FAILS_ACCOUNT]], now);
   if (wait) return { error: `Terlalu banyak percobaan gagal. Coba lagi dalam ${wait} menit.` };
 
-  const user = await db.query.users.findFirst({ where: eq(schema.users.email, email) });
+  // Cari kecocokan persis (email penuh atau akun username murni).
+  // Bila belum ketemu dan input berupa username (tanpa @), cocokkan juga bagian sebelum @ dari akun email yang unik.
+  let user = await db.query.users.findFirst({ where: eq(schema.users.email, identifier) });
+  if (!user && !identifier.includes("@")) {
+    const prefix = `${escapeLike(identifier)}@%`;
+    const matches = await db
+      .select()
+      .from(schema.users)
+      .where(sql`lower(${schema.users.email}) LIKE ${prefix} ESCAPE '\\'`);
+    const exactLocal = matches.filter((u) => (u.email ?? "").trim().toLowerCase().startsWith(`${identifier}@`));
+    if (exactLocal.length === 1) user = exactLocal[0];
+  }
+
   const ok = user?.passwordHash ? await verifyPassword(password, user.passwordHash) : false;
   if (!ok || !user) {
     await recordFail(db, [ipKey, accKey], now);
-    return { error: "Email atau password salah." };
+    return { error: "Email/username atau password salah." };
   }
 
   const roles = normalizeRoles(user.roles);
