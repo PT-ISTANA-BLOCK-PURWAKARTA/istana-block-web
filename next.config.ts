@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import legacyUploads from "./src/data/legacy-uploads.json";
+import { OPS_APP_URL } from "./src/lib/ops-app";
 
 const nextConfig: NextConfig = {
   typescript: {
@@ -40,7 +41,13 @@ const nextConfig: NextConfig = {
         destination: to,
         statusCode: 301 as const,
       }));
-    return [...sitemap, ...uploads];
+    // Operasional dipindah ke aplikasi operasional utama (satu program, satu data, fitur selalu terbaru).
+    // 302 (sementara) supaya mudah dibalik. Halaman /operasional lama tetap ada di kode tapi tidak dibuka lagi.
+    const ops = [
+      { source: "/operasional", destination: OPS_APP_URL, permanent: false },
+      { source: "/operasional/:path*", destination: OPS_APP_URL, permanent: false },
+    ];
+    return [...sitemap, ...uploads, ...ops];
   },
   async headers() {
     return [

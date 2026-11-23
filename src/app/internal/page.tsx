@@ -4,6 +4,7 @@ import { APP_META } from "@/components/auth/LoginScreen";
 import { Icon } from "@/components/panel/Icon";
 import { getCurrentAdmin } from "@/lib/auth";
 import { canOpen, MODULES, moduleHome, ROLE_SHORT } from "@/lib/roles";
+import { OPS_APP_URL } from "@/lib/ops-app";
 import { logout } from "./actions/auth";
 
 export const metadata: Metadata = { title: "Aplikasi internal", robots: { index: false, follow: false } };
@@ -46,11 +47,14 @@ export default async function Internal({ searchParams }: { searchParams: Promise
         <div className="portal-grid">
           {MODULES.map((m) => {
             const meta = APP_META[m.key];
-            const open = !!me && canOpen(me.roles, m.key);
+            // Operasional = aplikasi operasional utama (login sendiri di sana), terbuka untuk semua.
+            const ops = m.key === "operasional";
+            const open = ops || (!!me && canOpen(me.roles, m.key));
             const locked = !!me && !open;
-            const href = open ? moduleHome(me!.roles, m.key) : m.login;
+            const href = ops ? OPS_APP_URL : open ? moduleHome(me!.roles, m.key) : m.login;
+            const Tile = ops ? "a" : Link;
             return (
-              <Link key={m.key} href={href} className={`app-tile app-${m.key}${locked ? " is-locked" : ""}`} aria-describedby={`app-${m.key}-desc`}>
+              <Tile key={m.key} href={href} className={`app-tile app-${m.key}${locked ? " is-locked" : ""}`} aria-describedby={`app-${m.key}-desc`}>
                 <span className="app-mark" aria-hidden="true"><Icon name={meta.icon} size={30} /></span>
                 <span className="app-name">{meta.title}</span>
                 <span className="app-desc" id={`app-${m.key}-desc`}>{meta.lead}</span>
@@ -64,7 +68,7 @@ export default async function Internal({ searchParams }: { searchParams: Promise
                   )}
                   <span className="app-go" aria-hidden="true"><Icon name="chevron" size={18} /></span>
                 </span>
-              </Link>
+              </Tile>
             );
           })}
         </div>
