@@ -42,9 +42,9 @@ export interface FleetPhotoUploadResult {
 }
 
 const REVALIDATE_PATHS = [
-  "/operasional/biaya-armada",
-  "/operasional/dana-cepi",
-  "/operasional/piutang-cepi",
+  "/anak-usaha/biaya-armada",
+  "/anak-usaha/dana-cepi",
+  "/anak-usaha/piutang-cepi",
 ] as const;
 
 function revalidateFleet(): void {
@@ -119,7 +119,7 @@ async function notifyFleetApprovers(
       await pushToUsers(db, env, targetIds, {
         title,
         body,
-        url: "/operasional/biaya-armada",
+        url: "/anak-usaha/biaya-armada",
         tag,
       });
     }
@@ -507,7 +507,7 @@ export async function approveFleetExpense(input: {
         await pushToUsers(db, env, [row.createdBy], {
           title: decision === "disetujui" ? "Biaya Armada Disetujui" : "Biaya Armada Ditolak",
           body: `${row.item} (${formatRpSimple(row.total)}) ${decision} oleh ${me.name}${note ? `: ${note}` : ""}`,
-          url: "/operasional/biaya-armada",
+          url: "/anak-usaha/biaya-armada",
           tag: `fleet-acc-res-${id}`,
         });
       } catch {

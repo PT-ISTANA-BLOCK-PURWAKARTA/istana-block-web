@@ -45,18 +45,12 @@ const ITEMS: ShellItem[] = [
   { href: "/operasional/laporan", label: "Laporan pimpinan", group: "Kantor", icon: "report", perm: "laporan" },
   { href: "/operasional/piket", label: "Piket", group: "Kantor", icon: "clock", perm: ["piket", "selesaikan", "kalender_kelola"] },
   { href: "/operasional/keamanan", label: "Keamanan", group: "Kantor", icon: "shield", perm: "keamanan" },
-  { href: "/operasional/gaji", label: "Gaji", group: "Kantor", icon: "report", perm: ["keuangan"] },
-  { href: "/operasional/kasbon", label: "Kasbon karyawan", group: "Kantor", icon: "cash", perm: ["keuangan"] },
   { href: "/operasional/absensi-pekerja", label: "Absensi pekerja", group: "Kantor", icon: "users", perm: ["absensi_pekerja"] },
   { href: "/operasional/insiden", label: "Lapor Insiden", group: "Kantor", icon: "shield", perm: ["insiden"] },
   { href: "/operasional/jadwal-sopir", label: "Jadwal sopir", group: "Data", icon: "clock", perm: ["pengiriman", "keuangan", "ekspedisi"] },
   { href: "/operasional/gerbang", label: "Buku gerbang", group: "Data", icon: "truck", perm: ["muat", "pengiriman", "keamanan", "keuangan"] },
   { href: "/operasional/armada", label: "Armada", group: "Data", icon: "car", perm: ["pengiriman", "keuangan", "ekspedisi"] },
   { href: "/operasional/sopir", label: "Sopir", group: "Data", icon: "id", perm: ["pengiriman", "keuangan", "ekspedisi"] },
-  { href: "/operasional/uditch", label: "Cashflow U-Ditch", group: "Anak Perusahaan", icon: "invoice", perm: ["keuangan"] },
-  { href: "/operasional/biaya-armada", label: "Ekspedisi: biaya armada", group: "Anak Perusahaan", icon: "car", perm: ["keuangan", "pengiriman", "ekspedisi", "laporan", "ttd_pimpinan", "setujui_qc"] },
-  { href: "/operasional/dana-cepi", label: "Dana Cepi", group: "Anak Perusahaan", icon: "pay", perm: ["keuangan", "ekspedisi"] },
-  { href: "/operasional/piutang-cepi", label: "Piutang Cepi", group: "Anak Perusahaan", icon: "ledger", perm: ["keuangan", "ekspedisi"] },
   { href: "/operasional/profil", label: "Akun saya", group: "Akun", icon: "user" },
 ];
 

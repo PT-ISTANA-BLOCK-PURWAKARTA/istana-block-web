@@ -13,6 +13,8 @@ const ITEMS: ShellItem[] = [
   { href: "/akuntansi/pembayaran", label: "Pembayaran", group: "Pembelian", icon: "pay" },
   { href: "/akuntansi/kas", label: "Kas & bank", group: "Kas & jurnal", icon: "cash" },
   { href: "/akuntansi/jurnal", label: "Jurnal umum", group: "Kas & jurnal", icon: "book" },
+  { href: "/akuntansi/gaji", label: "Gaji & slip gaji", group: "Gaji & kasbon", icon: "report" },
+  { href: "/akuntansi/kasbon", label: "Kasbon karyawan", group: "Gaji & kasbon", icon: "cash" },
   { href: "/akuntansi/laporan", label: "Laporan", group: "Laporan", icon: "chart" },
   { href: "/akuntansi/kontak", label: "Kontak", group: "Data", icon: "users" },
   { href: "/akuntansi/barang", label: "Barang & jasa", group: "Data", icon: "box" },

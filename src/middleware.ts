@@ -56,6 +56,7 @@ const PANELS = [
   { base: "/situs", login: "/situs/masuk" },
   { base: "/akuntansi", login: "/akuntansi/masuk" },
   { base: "/operasional", login: "/operasional/masuk" },
+  { base: "/anak-usaha", login: "/anak-usaha/masuk" },
   { base: "/internal/pengguna", login: "/internal" },
 ];
 

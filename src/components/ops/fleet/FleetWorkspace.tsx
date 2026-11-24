@@ -46,7 +46,7 @@ import {
   markTempoPaid,
   saveFleetExpense,
   saveFleetTrip,
-} from "@/app/operasional/(panel)/biaya-armada/actions";
+} from "@/app/anak-usaha/(panel)/biaya-armada/actions";
 import "./fleet.css";
 
 interface FleetWorkspaceProps {
@@ -203,7 +203,7 @@ export function FleetWorkspace({
     const params = new URLSearchParams();
     if (safeFrom) params.set("from", safeFrom);
     if (nextTo) params.set("to", nextTo);
-    router.push(`/operasional/biaya-armada?${params.toString()}`);
+    router.push(`/anak-usaha/biaya-armada?${params.toString()}`);
   }
 
   function applyPreset(preset: "this_month" | "last_month" | "this_year" | "since_start") {

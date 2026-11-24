@@ -29,6 +29,7 @@
 .admin-side { background-color: var(--biru-tua); color: #d3dcef; padding: 20px 14px; display: flex; flex-direction: column; gap: 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .panel-keuangan .admin-side { background-color: #11305f; }
 .panel-operasional .admin-side { background-color: #1b2945; }
+.panel-anak .admin-side { background-color: #2b1f4a; }
 .side-top { display: flex; flex-direction: column; gap: 16px; }
 .admin-side .brand { color: #fff; padding: 0 6px; }
 .admin-side .brand img { height: 40px; width: auto; }
@@ -287,6 +288,7 @@ a.kpi:hover .k-label { color: var(--biru); }
 /* ---------- Tanda aplikasi (segi enam seperti paving) ---------- */
 .app-web { --app: #4d66a8; --app-soft: #e3e9f5; }
 .app-operasional { --app: #d63f12; --app-soft: #ffe6dc; }
+.app-anak { --app: #6d3fc0; --app-soft: #ece6fb; }
 .app-keuangan { --app: #1d6b3a; --app-soft: #dff3e6; }
 .app-mark { display: inline-grid; place-items: center; width: 56px; height: 56px; flex: none; clip-path: var(--hex); background: var(--app, var(--biru)); color: #fff; }
 

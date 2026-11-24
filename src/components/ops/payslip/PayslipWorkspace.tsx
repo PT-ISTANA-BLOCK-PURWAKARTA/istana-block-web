@@ -24,7 +24,7 @@ import {
   type SignerOption,
 } from "@/lib/ops/payslip";
 import { parseQty, parseRupiah } from "@/lib/erp/util";
-import { deletePayslipAction, loadProductionPayAction, savePayslipAction } from "@/app/operasional/(panel)/gaji/actions";
+import { deletePayslipAction, loadProductionPayAction, savePayslipAction } from "@/app/akuntansi/(panel)/gaji/actions";
 
 type EarningForm = { quantity: string; description: string; rate: string };
 type DeductionForm = { description: string; amount: string };

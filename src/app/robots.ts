@@ -15,7 +15,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   // Saklar SEARCH_INDEXING bukan "on" (soft launch): semua host tertutup, termasuk SITE_URL.
   if (!isIndexable((await headers()).get("host"), env.SITE_URL, env.SEARCH_INDEXING)) return { rules: [{ userAgent: "*", disallow: "/" }] };
   return {
-    rules: [{ userAgent: "*", allow: "/", disallow: ["/internal", "/situs", "/akuntansi", "/operasional", "/admin", "/keuangan", "/api"] }],
+    rules: [{ userAgent: "*", allow: "/", disallow: ["/internal", "/situs", "/akuntansi", "/operasional", "/anak-usaha", "/admin", "/keuangan", "/api"] }],
     sitemap: `${env.SITE_URL}/sitemap.xml`,
   };
 }

@@ -124,7 +124,7 @@ export async function remindFleetTempo(c: CronContext) {
     {
       title,
       body,
-      url: "/operasional/biaya-armada",
+      url: "/anak-usaha/biaya-armada",
       tag: `alarm-tempo-${todayWib}`,
     },
     c.budget,

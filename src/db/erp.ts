@@ -1440,6 +1440,8 @@ export const payslips = sqliteTable(
     payKind: text("pay_kind"),
     periodFrom: text("period_from"),
     periodTo: text("period_to"),
+    /** Dibayar lewat cash / transfer. */
+    payMethod: text("pay_method"),
     kasbonNote: text("kasbon_note"),
     note: text("note"),
     signerId: integer("signer_id"),
@@ -1769,6 +1771,15 @@ export const kasbonEntries = sqliteTable(
     createdBy: createdBy(),
     createdByName: text("created_by_name"),
     createdAt: integer("created_at", { mode: "timestamp" }),
+    /** Kategori kasbon: utama / bulanan / mingguan (potongan slip gaji). */
+    category: text("category"),
+    /** Diberikan lewat cash / transfer. */
+    payMethod: text("pay_method"),
+    /** Sumber dana: ib = dana PT, kosong = Dana Cepi (kasbon sopir). */
+    fundedBy: text("funded_by"),
+    payslipId: text("payslip_id"),
+    /** Kasbon sopir (Ekspedisi, dicatat PIC Kendaraan) dipisah dari kasbon karyawan pabrik (Keuangan). */
+    isDriver: integer("is_driver", { mode: "boolean" }).notNull().default(false),
   },
   (t) => [index("ops_kasbon_name_idx").on(t.employeeName, t.entryDate)],
 );

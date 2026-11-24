@@ -40,7 +40,7 @@ export function OpsAlarmListener() {
 
   const isTempo = alert.tag.startsWith("alarm-tempo-");
   const targetHref = isTempo
-    ? "/operasional/biaya-armada"
+    ? "/anak-usaha/biaya-armada"
     : alert.kind === "delivery"
       ? "/operasional/pengiriman"
       : "/operasional";

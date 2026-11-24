@@ -8,7 +8,8 @@ import { EmailLoginForm, OpsLogin } from "./LoginForms";
 export const APP_META: Record<ModuleKey, { icon: IconName; title: string; lead: string; how: string }> = {
   web: { icon: "web", title: "Situs", lead: "Produk, harga, artikel, dan halaman istanablock.com.", how: "Masuk dengan email / username" },
   operasional: { icon: "truck", title: "Operasional", lead: "Pesanan, pengiriman, stok gudang, dan posisi truk.", how: "Nomor HP & PIN, atau email / username" },
-  keuangan: { icon: "ledger", title: "Keuangan", lead: "Faktur, kas & bank, pembelian, dan laporan keuangan.", how: "Masuk dengan email / username" },
+  keuangan: { icon: "ledger", title: "Keuangan", lead: "Faktur, kas & bank, pembelian, gaji, kasbon, dan laporan keuangan.", how: "Masuk dengan email / username" },
+  anak: { icon: "car", title: "Anak Perusahaan", lead: "Ekspedisi Istana Block (Cepi) dan cashflow U-Ditch — terpisah dari pabrik.", how: "Masuk dengan email / username" },
 };
 
 /** Halaman masuk satu aplikasi. Sudah login & berhak → langsung ke aplikasinya. */

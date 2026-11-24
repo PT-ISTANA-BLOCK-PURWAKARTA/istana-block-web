@@ -118,13 +118,14 @@ export function can(roles: readonly Role[], perm: Perm) {
   return roles.some((r) => ROLE_PERMS[r]?.includes(perm));
 }
 
-export type ModuleKey = "web" | "keuangan" | "operasional";
+export type ModuleKey = "web" | "keuangan" | "operasional" | "anak";
 export type Via = "pw" | "pin";
 
 export const MODULES: { key: ModuleKey; href: string; login: string; label: string; perms: Perm[]; pin: boolean }[] = [
   { key: "web", href: "/situs", login: "/situs/masuk", label: "Situs", perms: ["web"], pin: false },
   { key: "operasional", href: "/operasional", login: "/operasional/masuk", label: "Operasional", perms: ["lihat_ops", "antar"], pin: true },
   { key: "keuangan", href: "/akuntansi", login: "/akuntansi/masuk", label: "Keuangan", perms: ["keuangan"], pin: false },
+  { key: "anak", href: "/anak-usaha", login: "/anak-usaha/masuk", label: "Anak Perusahaan", perms: ["ekspedisi", "keuangan"], pin: false },
 ];
 
 export const moduleOf = (key: ModuleKey) => MODULES.find((m) => m.key === key)!;
