@@ -35,6 +35,7 @@ const ITEMS: ShellItem[] = [
   { href: "/operasional/stok/cat-genteng", label: "Cat genteng", group: "Gudang", icon: "box", perm: "cat_genteng" },
   { href: "/operasional/hapus-produksi", label: "Produksi dihapus", group: "Gudang", icon: "list", perm: ["stok", "keuangan"] },
   { href: "/operasional/qc", label: "QC", group: "Mutu", icon: "flask", perm: ["qc", "setujui_qc", "ttd_pimpinan"] },
+  { href: "/operasional/qc-beton", label: "QC Beton", group: "Mutu", icon: "flask", perm: ["qc_beton"] },
   { href: "/operasional/uji-pasir", label: "Uji lumpur pasir", group: "Mutu", icon: "sand", perm: ["uji_pasir", "lihat_uji_pasir", "ttd_sekretaris"] },
   { href: "/operasional/bahan-baku", label: "Bahan baku & supplier", group: "Mutu", icon: "chart", perm: ["lihat_uji_pasir", "nilai_mutu", "nilai_kirim", "nilai_harga"] },
   { href: "/operasional/spesifikasi-produk", label: "Spesifikasi produk", group: "Mutu", icon: "doc", perm: "spesifikasi_produk" },

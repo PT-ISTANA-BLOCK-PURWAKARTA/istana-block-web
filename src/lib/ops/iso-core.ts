@@ -111,7 +111,7 @@ function inputRolesOf(roles: readonly Role[]) {
   const out = new Set<IsoInputRole>();
   for (const r of roles) {
     if (r === "owner" || r === "operasional" || r === "qc" || r === "mandor" || r === "satpam" || r === "pimpinan") out.add(r);
-    if (r === "manajer_qc") out.add("qc");
+    if (r === "manajer_qc" || r === "qcbeton") out.add("qc");
   }
   return out;
 }

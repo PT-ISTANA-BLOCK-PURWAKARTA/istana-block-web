@@ -1,0 +1,43 @@
+import { notFound } from "next/navigation";
+import { BackLink, PageHead } from "@/components/erp/ui";
+import { DEFAULT_BETON_MATERIALS } from "@/components/ops/qc/BetonForms";
+import { numText } from "@/components/ops/qc/labels";
+import type { StrengthInitial } from "@/components/ops/qc/strengthInit";
+import { StrengthForm } from "@/components/ops/qc/StrengthForm";
+import { getDb } from "@/db";
+import { requirePerm } from "@/lib/auth";
+import { getStrengthTest, qcCan } from "@/lib/ops/qc";
+
+export const metadata = { title: "Ubah laporan uji mutu beton" };
+
+export default async function UjiBetonUbah({ params }: { params: Promise<{ id: string }> }) {
+  const me = await requirePerm("qc_beton");
+  const { id } = await params;
+  const db = await getDb();
+  const test = await getStrengthTest(db, id);
+  if (!test || test.scope !== "beton") notFound();
+  const back = "/operasional/qc-beton?tab=uji";
+  const c = qcCan(me.roles, "beton");
+  const problem = test.reviewStatus === "disetujui" ? "Laporan yang sudah di-ACC tidak dapat diubah." : !c.editAny && test.createdBy !== me.id ? "Hanya pembuat laporan atau kantor yang dapat mengubah." : null;
+  if (problem) {
+    return (
+      <>
+        <BackLink href={back}>Uji mutu beton</BackLink>
+        <PageHead title="Ubah laporan uji tekan beton" />
+        <p className="alert alert-error" role="alert">{problem}</p>
+      </>
+    );
+  }
+  const initial: StrengthInitial = {
+    id: test.id, scope: "beton", reportDate: test.reportDate, companyName: test.companyName, address: test.address, concreteGrade: test.concreteGrade, addressedTo: test.addressedTo,
+    composition: test.composition.length ? test.composition : DEFAULT_BETON_MATERIALS, notes: test.notes,
+    samples: test.samples.map((s) => ({ sampleName: s.sampleName, batchCode: s.batchCode ?? "", madeAt: s.madeAt ?? "", testedAt: s.testedAt ?? "", weightKg: numText(s.weightKg), areaCm2: numText(s.areaCm2), maxLoadKn: numText(s.maxLoadKn) })),
+  };
+  return (
+    <>
+      <BackLink href={back}>Uji mutu beton</BackLink>
+      <PageHead title="Ubah laporan uji tekan beton" sub={test.reviewStatus === "revisi" && test.reviewNote ? `Perlu revisi: ${test.reviewNote}` : "Setelah disimpan, laporan kembali menunggu ACC."} />
+      <StrengthForm initial={initial} back={back} />
+    </>
+  );
+}

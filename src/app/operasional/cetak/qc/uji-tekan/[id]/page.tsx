@@ -13,7 +13,7 @@ export const metadata = { title: "Cetak uji kuat tekan", robots: { index: false 
 
 // Form "Hasil Uji Kuat Tekan Beton" + tabel standarisasi 3/14/21/28 hari + tanda tangan bergambar (Lab & Pimpinan).
 export default async function CetakUjiTekan({ params }: { params: Promise<{ id: string }> }) {
-  await requirePerm("qc", "setujui_qc", "ttd_pimpinan");
+  await requirePerm("qc", "qc_beton", "setujui_qc", "ttd_pimpinan");
   const { id } = await params;
   const db = await getDb();
   const [site, test] = await Promise.all([getSettings(), getStrengthTest(db, id)]);

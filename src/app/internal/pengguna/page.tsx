@@ -45,6 +45,7 @@ const MATRIX: [string, Partial<Record<Role, Cell>>][] = [
   ["Melihat harga pokok, nilai persediaan & nilai faktur", { owner: "ya", keuangan: "ya" }],
   ["Biaya armada: mencatat pengeluaran mobil (PIC Kendaraan)", { owner: "ya", operasional: "ya", keuangan: "ya", ekspedisi: "ya" }],
   ["Melihat hasil & target produksi", { owner: "ya", operasional: "ya", gudang: "ya", keuangan: "ya", mandor: "ya", qc: "ya", absensi: "ya", qcbeton: "ya" }],
+  ["QC Beton: mix desain & uji mutu beton, waktu terbuang", { owner: "ya", operasional: "ya", qcbeton: "ya", manajer_qc: "lihat", pimpinan: "lihat" }],
   ["Mengelola pengguna & peran", { owner: "ya" }],
 ];
 const HOW: Record<Role, string> = { owner: "email / user", web: "email / user", keuangan: "email / user", operasional: "email / user / HP", gudang: "HP & PIN", sopir: "HP & PIN",

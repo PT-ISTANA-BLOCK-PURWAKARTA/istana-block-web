@@ -46,6 +46,7 @@ export function StrengthForm({ initial, back }: { initial: StrengthInitial; back
 
   return (
     <ActionForm action={initial.id ? updateStrengthTest : createStrengthTest} className="stack" style={{ gap: 20 }}>
+      <input type="hidden" name="scope" value={initial.scope ?? "paving"} />
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
       <input type="hidden" name="samples" value={JSON.stringify(samples)} />
       <input type="hidden" name="composition" value={JSON.stringify(fromRows(comp))} />

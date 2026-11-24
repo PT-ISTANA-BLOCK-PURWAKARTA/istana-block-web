@@ -13,7 +13,7 @@ function monthsAgo(day: string, n: number) {
 }
 
 /** Pilihan cepat periode + kotak Dari/Sampai. `kind` "minggu" (Sabtu-Jumat, bulan ini) atau "rekap" (bulan, 3 bulan, tahun). */
-export function RangeBar({ tab, from, to, now, kind = "minggu" }: { tab: string; from: string; to: string; now: string; kind?: "minggu" | "rekap" }) {
+export function RangeBar({ tab, from, to, now, kind = "minggu", base = "/operasional/qc" }: { tab: string; from: string; to: string; now: string; kind?: "minggu" | "rekap"; base?: string }) {
   const presets =
     kind === "rekap"
       ? [{ label: "Bulan ini", from: monthStart(now), to: now }, { label: "3 bulan", from: monthsAgo(now, 2), to: now }, { label: "Tahun ini", from: yearStart(now), to: now }]
@@ -22,7 +22,7 @@ export function RangeBar({ tab, from, to, now, kind = "minggu" }: { tab: string;
     <div className="qc-presets">
       <nav className="seg no-print" aria-label="Periode cepat">
         {presets.map((p) => (
-          <Link key={p.label} href={`/operasional/qc?tab=${tab}&from=${p.from}&to=${p.to}`} aria-current={p.from === from && p.to === to ? "page" : undefined}>{p.label}</Link>
+          <Link key={p.label} href={`${base}?tab=${tab}&from=${p.from}&to=${p.to}`} aria-current={p.from === from && p.to === to ? "page" : undefined}>{p.label}</Link>
         ))}
       </nav>
       <RangeForm from={from} to={to} extra={<input type="hidden" name="tab" value={tab} />} />

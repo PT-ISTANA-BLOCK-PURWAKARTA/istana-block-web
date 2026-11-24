@@ -794,6 +794,9 @@ export const backupRuns = sqliteTable(
 
 /* ---------------------------------------------------------------- QC: mix desain & uji kuat tekan */
 
+export const qcScopes = ["paving", "beton"] as const;
+export type QcScope = (typeof qcScopes)[number];
+
 export const mixLayers = ["badan", "kepalaan", "lainnya"] as const;
 export type MixLayer = (typeof mixLayers)[number];
 /** gagal = sempat dipakai tapi hasilnya gagal; masuk rekapan bersama yang ditolak. */
@@ -825,6 +828,8 @@ export const mixDesigns = sqliteTable(
     retiredReason: text("retired_reason"),
     retiredBy: integer("retired_by"),
     retiredAt: integer("retired_at", { mode: "timestamp" }),
+    /** Bagian pemilik template: paving (Team Leader Paving) atau beton (QC Beton: U-Ditch, Buis vibrasi, Kanstin). */
+    scope: text("scope").$type<QcScope>().notNull().default("paving"),
     ...created,
   },
   (t) => [index("qc_md_status_idx").on(t.status, t.layer)],
@@ -856,6 +861,10 @@ export const mixLogs = sqliteTable(
     /** TTD "Diperiksa oleh" (manajer QC) saat disetujui. */
     managerSignedBy: integer("manager_signed_by"),
     managerSignedAt: integer("manager_signed_at", { mode: "timestamp" }),
+    /** paving (Team Leader Paving) atau beton (QC Beton). */
+    scope: text("scope").$type<QcScope>().notNull().default("paving"),
+    /** Leader produksi (mix beton). */
+    leader: text("leader"),
     ...created,
   },
   (t) => [index("qc_ml_date_idx").on(t.workDate, t.layer)],
@@ -889,9 +898,32 @@ export const strengthTests = sqliteTable(
     /** TTD pembuat benda uji (padanan `strengthTests.makerSignedBy/At`). */
     makerSignedBy: integer("maker_signed_by"),
     makerSignedAt: integer("maker_signed_at", { mode: "timestamp" }),
+    /** paving (uji paving) atau beton (uji mutu beton precast & genteng oleh QC Beton). */
+    scope: text("scope").$type<QcScope>().notNull().default("paving"),
     ...created,
   },
   (t) => [index("qc_st_date_idx").on(t.reportDate)],
+);
+
+/** Waktu produksi terbuang (QC Beton): lama, alasan (sama seperti alasan produksi berhenti), area/produk. */
+export const downtimes = sqliteTable(
+  "qc_downtimes",
+  {
+    id: id(),
+    workDate: text("work_date").notNull(),
+    scope: text("scope").$type<QcScope>().notNull().default("beton"),
+    area: text("area"),
+    startTime: text("start_time"),
+    endTime: text("end_time"),
+    minutes: integer("minutes").notNull(),
+    reasons: text("reasons", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    workersShort: integer("workers_short"),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    ...created,
+  },
+  (t) => [index("qc_dt_date_idx").on(t.workDate, t.scope)],
 );
 
 /** Benda uji dalam satu laporan uji kuat tekan (tanggal buat/uji = teks YYYY-MM-DD). */

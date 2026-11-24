@@ -24,6 +24,10 @@ describe("peran ekspedisi, absensi, qcbeton (setara app live)", () => {
   it("QC Beton mengisi produksi precast saja", () => {
     expect(can(["qcbeton"], "produksi_lapangan")).toBe(true);
     expect(can(["qcbeton"], "qc")).toBe(false);
+    expect(can(["qcbeton"], "qc_beton")).toBe(true);
+    expect(can(["qc"], "qc_beton")).toBe(false);
+    expect(can(["operasional"], "qc_beton")).toBe(true);
+    expect(can(["owner"], "qc_beton")).toBe(true);
     expect(productionCategories(["qcbeton"])).toEqual(["precast"]);
   });
 
