@@ -161,15 +161,19 @@ async function supplementsFor(db: OpsDb, code: IsoCode, keys: string[]) {
   return new Map(rows.map((r) => [r.sourceKey ?? "", r.data]));
 }
 
-const appRow = (form: IsoForm, key: string, values: IsoValues, day: string): IsoRow => ({
+/** values._by = nama akun yang mengerjakan (filter "dikerjakan oleh" & batas lihat orang lapangan); tidak ikut tampil di kolom. */
+const appRow = (form: IsoForm, key: string, values: IsoValues, day: string): IsoRow => {
+  const { _by, ...rest } = values;
+  return {
   key,
   source: "app",
   recordId: null,
   number: null,
-  values: computeIsoValues(form, values, day, [], true),
+  values: computeIsoValues(form, rest, day, [], true),
   createdBy: null,
-  createdByName: null,
-});
+  createdByName: _by ? String(_by) : null,
+};
+};
 
 type Page = { limit: number; offset: number };
 type AppPage = { rows: IsoRow[]; hasMore: boolean };
@@ -285,6 +289,7 @@ async function productionRows(db: OpsDb, range: DayRange, page: Page): Promise<A
       const issues = first ? parseIssues(row.issues) : [];
       return appRow(form, `production:${row.id}:${row.rn}`, {
         tanggal: row.date,
+        _by: row.creator,
         leader: row.leader || row.creator,
         lini: productionLine(category, product),
         produk: product || null,
@@ -358,6 +363,7 @@ async function mixRows(db: OpsDb, range: DayRange, page: Page): Promise<AppPage>
         status: CHECK_LABELS[row.status],
         catatan: joinText([row.notes, row.reviewStatus === "disetujui" ? `ACC ${row.reviewer ?? ""}`.trim() : row.reviewStatus === "revisi" ? "Diminta revisi" : "Menunggu ACC"]),
         paraf: row.creator,
+        _by: row.creator,
       }, day);
     }),
   };
@@ -404,6 +410,7 @@ async function strengthRows(db: OpsDb, range: DayRange, page: Page, withSuppleme
         lab: supplement.lab ?? "Internal",
         catatan: joinText([result.target === null ? null : `Target umur ${result.ageDays} hari ${fmt(result.target, 2)} kg/cm² (${row.grade})`, row.notes]),
         paraf: row.lab ?? row.creator,
+        _by: row.creator,
       }, day);
     }),
   };
@@ -519,6 +526,7 @@ async function receiptRows(db: OpsDb, range: DayRange, page: Page): Promise<AppP
         ]),
         tindakan: supplement.tindakan ?? (row.status === "ditolak" ? "Retur ke pemasok" : null),
         paraf: row.qc ?? test?.completer ?? null,
+        _by: row.qc ?? test?.completer ?? null,
       }, day);
     }),
   };

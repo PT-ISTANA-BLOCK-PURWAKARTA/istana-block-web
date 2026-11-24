@@ -4,6 +4,7 @@ import { DateField } from "@/components/ui";
 import { FormsTab } from "@/components/ops/iso/FormsTab";
 import { ExportAllButton } from "@/components/ops/iso/IsoExportButtons";
 import { IsoRecordForm } from "@/components/ops/iso/IsoRecordForm";
+import { CompleteIsoForm } from "@/components/ops/iso/CompleteIsoForm";
 import { ObjectiveForm } from "@/components/ops/iso/ObjectiveForm";
 import { ObjectivesTab } from "@/components/ops/iso/ObjectivesTab";
 import { SummaryTab } from "@/components/ops/iso/SummaryTab";
@@ -14,6 +15,7 @@ import { canInputForm, getManualRecord, isoAccess, isoOverview, isoPresets, isoS
 import { FORM_BY_CODE, ISO_FORMS, type IsoCode, type IsoValues } from "@/lib/ops/shared/isoForms";
 import { QUALITY_OBJECTIVES } from "@/lib/ops/shared/isoObjectives";
 import { monthsInRange, rangeText } from "@/lib/ops/shared/isoRecap";
+import { can } from "@/lib/roles";
 import "./rekap-iso.css";
 
 export const metadata = { title: "Rekap ISO" };
@@ -31,7 +33,9 @@ export default async function Halaman({ searchParams }: { searchParams: Promise<
   const sp = await searchParams;
   const today = todayWib();
   const { range, error } = parseRange(one(sp.dari), one(sp.sampai), today);
-  const tab: IsoTab = one(sp.tab) === "sasaran" ? "sasaran" : one(sp.tab) === "form" ? "form" : "ringkasan";
+  // Orang lapangan (mandor, QC, QC Beton): hanya tab Form, berisi isian yang mereka kerjakan sendiri.
+  const fieldOnly = !isOffice && !can(user.roles, "laporan");
+  const tab: IsoTab = fieldOnly ? "form" : one(sp.tab) === "sasaran" ? "sasaran" : one(sp.tab) === "form" ? "form" : "ringkasan";
   const forms = ISO_FORMS.filter((f) => f.code !== "F-IB-01" || canCustomers);
   const wanted = one(sp.form);
   const code: IsoCode = (forms.find((f) => f.code === wanted) ?? forms.find((f) => f.code === "F-IB-02") ?? forms[0]).code;
@@ -44,11 +48,34 @@ export default async function Halaman({ searchParams }: { searchParams: Promise<
 
   // ---- tab Form F-IB
   let formsTab: React.ReactNode = null;
+  let byFilter: React.ReactNode = null;
   if (tab === "form") {
     const form = FORM_BY_CODE[code];
     const canInput = canInputForm(user.roles, form);
     const supplementable = form.columns.some((c) => c.supplement);
     const page = await listIsoRows(db, { code, from: range.from, to: range.to, offset });
+    const mine = (r: IsoRow) => r.createdBy === user.id || (r.createdByName !== null && r.createdByName === user.name);
+    const workers = fieldOnly ? [] : [...new Set(page.rows.map((r) => r.createdByName).filter((n): n is string => Boolean(n)))].sort((a, b) => a.localeCompare(b, "id"));
+    const by = workers.includes(one(sp.oleh) ?? "") ? (one(sp.oleh) as string) : "";
+    page.rows = fieldOnly ? page.rows.filter(mine) : by ? page.rows.filter((r) => r.createdByName === by) : page.rows;
+    byFilter = workers.length ? (
+      <form className="filter-bar" method="get" style={{ marginBottom: 12 }}>
+        <input type="hidden" name="tab" value="form" />
+        <input type="hidden" name="form" value={code} />
+        <input type="hidden" name="dari" value={range.from} />
+        <input type="hidden" name="sampai" value={range.to} />
+        <div className="field">
+          <label htmlFor="iso-oleh">Dikerjakan oleh</label>
+          <select id="iso-oleh" name="oleh" defaultValue={by}>
+            <option value="">Semua</option>
+            {workers.map((w) => <option key={w} value={w}>{w}</option>)}
+          </select>
+        </div>
+        <button type="submit" className="btn btn-blue btn-sm">Filter</button>
+        {by && <Link href={here} className="btn btn-ghost btn-sm">Hapus filter</Link>}
+        <span className="small muted">Baris dari data aplikasi tanpa nama pengerja tidak muncul bila memilih nama.</span>
+      </form>
+    ) : null;
     const rows: IsoRow[] = sortRows(form, page.rows);
     const suggestions = canInput && SUGGESTION_FORMS.includes(code) ? await isoSuggestions(db, { code, from: range.from, to: range.to }) : [];
 
@@ -64,16 +91,22 @@ export default async function Halaman({ searchParams }: { searchParams: Promise<
         if (one(sp.selesai) === "1" && code === "F-IB-06") initial.terakhir = today;
         editor = <IsoRecordForm key={`ubah-${record.id}-${one(sp.selesai) ?? ""}`} code={code} mode="ubah" recordId={record.id} number={record.number} initial={initial} userName={user.name} today={today} back={here} cancelHref={here} office={isOffice} />;
       }
+    } else if (aksi === "selesaikan" && canInput && (code === "F-IB-06" || code === "F-IB-14")) {
+      const record = await getManualRecord(db, code, one(sp.id) ?? "");
+      if (record) editor = <CompleteIsoForm code={code} recordId={record.id} values={record.data} today={today} back={here} />;
     } else if (aksi === "lengkapi" && canInput && supplementable) {
       const row = rows.find((r) => r.source === "app" && r.key === one(sp.key));
       if (row) editor = <IsoRecordForm key={`lengkapi-${row.key}`} code={code} mode="lengkapi" sourceKey={row.key} initial={row.values} userName={user.name} today={today} back={here} cancelHref={here} office={isOffice} />;
     }
 
     formsTab = (
+      <>
+      {byFilter}
       <FormsTab roles={user.roles}
         view={view} forms={forms} counts={overview.counts} form={form} rows={rows} nextOffset={page.nextOffset}
         canInput={canInput} isOffice={isOffice} userId={user.id} userName={user.name} today={today} suggestions={suggestions} editor={editor}
       />
+      </>
     );
   }
 
@@ -104,7 +137,7 @@ export default async function Halaman({ searchParams }: { searchParams: Promise<
   return (
     <>
       <PageHead title="Rekap ISO" sub="Rekaman mutu ISO 9001 & SNI: form F-IB-01 s/d F-IB-16 dalam satu tempat. Data PO, produksi, mix desain, uji tekan, dan barang masuk masuk otomatis; form lainnya diisi langsung di sini. Pilih rentang tanggal, lalu unduh Excel dalam format form yang sama.">
-        <ExportAllButton range={range} codes={forms.map((f) => f.code)} printedBy={user.name} />
+        {!fieldOnly && <ExportAllButton range={range} codes={forms.map((f) => f.code)} printedBy={user.name} />}
       </PageHead>
       <Ok ok={one(sp.ok)} />
       {error && <p className="alert alert-warn" role="status" style={{ marginBottom: 16 }}>{error}</p>}
@@ -124,7 +157,7 @@ export default async function Halaman({ searchParams }: { searchParams: Promise<
       </form>
 
       <nav className="seg" aria-label="Bagian Rekap ISO" style={{ marginBottom: 16 }}>
-        {TABS.map((t) => (
+        {TABS.filter((t) => !fieldOnly || t.key === "form").map((t) => (
           <Link key={t.key} href={isoUrl({ range, tab: t.key, code })} aria-current={t.key === tab ? "page" : undefined}>{t.label}</Link>
         ))}
       </nav>

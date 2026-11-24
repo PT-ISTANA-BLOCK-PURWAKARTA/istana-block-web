@@ -905,6 +905,40 @@ export const strengthTests = sqliteTable(
   (t) => [index("qc_st_date_idx").on(t.reportDate)],
 );
 
+export type PurchaseLetterItem = { name: string; quantity: number | null; unit: string | null; price: number | null; total: number | null; note: string | null };
+/** Surat pesanan barang ke pemasok (eksternal) dari F-IB-10. Nomor 001/SP-IBP/XI/2026 per tahun; draft belum bernomor resmi. */
+export const purchaseLetters = sqliteTable(
+  "ops_purchase_letters",
+  {
+    id: id(),
+    seq: integer("seq").notNull().default(0),
+    number: text("number").notNull(),
+    status: text("status").$type<"draft" | "final">().notNull().default("final"),
+    letterDate: text("letter_date").notNull(),
+    supplierName: text("supplier_name").notNull(),
+    contactName: text("contact_name"),
+    contactPhone: text("contact_phone"),
+    supplierAddress: text("supplier_address"),
+    items: text("items", { mode: "json" }).$type<PurchaseLetterItem[]>().notNull().default(sql`'[]'`),
+    showPrices: integer("show_prices", { mode: "boolean" }).notNull().default(false),
+    deliveryTo: text("delivery_to"),
+    neededBy: text("needed_by"),
+    receiverName: text("receiver_name"),
+    receiverPhone: text("receiver_phone"),
+    payment: text("payment"),
+    paymentDays: integer("payment_days"),
+    note: text("note"),
+    isoKeys: text("iso_keys", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    signerId: integer("signer_id"),
+    signerName: text("signer_name"),
+    signerTitle: text("signer_title"),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    ...created,
+  },
+  (t) => [uniqueIndex("ops_pl_number_uq").on(t.number), index("ops_pl_supplier_idx").on(t.supplierName)],
+);
+
 /** Absensi pekerja harian (PIC absensi): nama bebas, tugas, jenis upah, jam kerja & lembur, hasil borongan. Sopir tetap di jadwal sopir. */
 export const workerPayTypes = ["harian", "jam", "borongan"] as const;
 export const workerStatuses = ["hadir", "izin", "sakit", "alfa"] as const;

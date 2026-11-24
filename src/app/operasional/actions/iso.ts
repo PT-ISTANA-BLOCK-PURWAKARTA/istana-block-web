@@ -8,8 +8,9 @@ import { guard, UserError } from "@/lib/erp/server";
 import { logActivity } from "@/lib/ops/activity";
 import { asUserError, deleteIsoRecord, saveIsoRecord, saveIsoSupplement, setObjective, signIsoRecord } from "@/lib/ops/iso";
 import { revalidatePath } from "next/cache";
+import { getManualRecord, todayWib } from "@/lib/ops/iso-core";
 import { saveImage, UploadError } from "@/lib/media";
-import { FORM_BY_CODE, type IsoCode } from "@/lib/ops/shared/isoForms";
+import { FORM_BY_CODE, isSignColumn, type IsoCode } from "@/lib/ops/shared/isoForms";
 import { QUALITY_OBJECTIVES } from "@/lib/ops/shared/isoObjectives";
 
 const BASE = "/operasional/rekap-iso";
@@ -127,4 +128,40 @@ export async function signIsoRecordAction(id: string, column: string): Promise<F
     revalidatePath(INCIDENT);
   }
   return res;
+}
+
+/**
+ * Tombol "Selesaikan": F-IB-06 = kalibrasi / maintenance selesai (Tgl Terakhir diperbarui, riwayat lama tersimpan,
+ * jadwal berikutnya terhitung ulang); F-IB-14 = tindak lanjut rapat Closed. Keterangan Selesai terisi otomatis.
+ */
+export async function completeIsoRecordAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requirePerm("iso");
+  const code = String(form.get("code") ?? "");
+  const id = String(form.get("id") ?? "");
+  const res = await guard(async () => {
+    if (code !== "F-IB-06" && code !== "F-IB-14") throw new UserError("Form ini tidak punya tombol Selesaikan.");
+    const date = String(form.get("date") ?? "");
+    const today = todayWib();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > today) throw new UserError("Tanggal selesai tidak boleh kosong atau setelah hari ini.");
+    const db = await getDb();
+    const row = await getManualRecord(db, code, id);
+    if (!row) throw new UserError("Data tidak ditemukan.");
+    const def = FORM_BY_CODE[code];
+    const values: Record<string, unknown> = {};
+    for (const c of def.columns) if (!c.auto && !isSignColumn(c)) values[c.key] = row.data[c.key] ?? null;
+    const ket = String(form.get("keterangan") ?? "").trim().slice(0, 300);
+    const pelaksana = String(form.get("pelaksana") ?? "Internal") === "Vendor" ? "Vendor" : "Internal";
+    const dmy = date.split("-").reverse().join("/");
+    const note = `Selesai ${dmy} oleh ${me.name}${code === "F-IB-14" ? "" : ` (${pelaksana})`}${ket ? ` — ${ket}` : ""}`;
+    if (code === "F-IB-14") Object.assign(values, { status: "Closed", selesai: date, ketSelesai: note });
+    else {
+      const sertifikat = String(form.get("sertifikat") ?? "").trim().slice(0, 200);
+      Object.assign(values, { terakhir: date, pelaksana, sertifikat: sertifikat || null, keterangan: ket || row.data.keterangan || null, ketSelesai: note });
+    }
+    await asUserError(() => saveIsoRecord(db, me, { code, id, values }));
+    await logActivity(me, { action: "iso.selesaikan", label: code === "F-IB-14" ? "Menyelesaikan tindak lanjut rapat" : "Menyelesaikan jadwal kalibrasi / maintenance", summary: `${code} · ${String(row.data.nama ?? row.data.topik ?? "")}`.slice(0, 120) });
+    return { done: true };
+  });
+  if ("error" in res) return res;
+  redirect(withOk(backUrl(form.get("back")), "~Ditandai selesai."));
 }

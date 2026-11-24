@@ -158,8 +158,8 @@ export function FormsTab({ view, forms, counts, form, rows, nextOffset, canInput
                   })}
                   <td>
                     <div className="iso-actions">
-                    {canEdit && form.master && row.source === "manual" && row.values.terakhir !== today && (
-                      <Link href={isoUrl(view, { aksi: "ubah", id: row.recordId ?? undefined, selesai: "1" })} title="Sudah dikalibrasi/diservis hari ini">Sudah dikerjakan</Link>
+                    {canEdit && row.source === "manual" && row.recordId && (form.master || (form.code === "F-IB-14" && row.values.status === "Open")) && (
+                      <Link href={isoUrl(view, { aksi: "selesaikan", id: row.recordId })} className="btn btn-ghost btn-sm text-sukses" title={form.master ? "Tandai sudah dikalibrasi / diservis, pilih tanggal selesai" : "Tandai tindak lanjut selesai"}>✓ Selesaikan</Link>
                     )}
                     {canEdit && (
                       row.source === "manual"
