@@ -46,6 +46,8 @@ const ITEMS: ShellItem[] = [
   { href: "/operasional/keamanan", label: "Keamanan", group: "Kantor", icon: "shield", perm: "keamanan" },
   { href: "/operasional/gaji", label: "Gaji", group: "Kantor", icon: "report", perm: ["keuangan"] },
   { href: "/operasional/kasbon", label: "Kasbon karyawan", group: "Kantor", icon: "cash", perm: ["keuangan"] },
+  { href: "/operasional/absensi-pekerja", label: "Absensi pekerja", group: "Kantor", icon: "users", perm: ["absensi_pekerja"] },
+  { href: "/operasional/insiden", label: "Lapor Insiden", group: "Kantor", icon: "shield", perm: ["insiden"] },
   { href: "/operasional/jadwal-sopir", label: "Jadwal sopir", group: "Data", icon: "clock", perm: ["pengiriman", "keuangan", "ekspedisi"] },
   { href: "/operasional/gerbang", label: "Buku gerbang", group: "Data", icon: "truck", perm: ["muat", "pengiriman", "keamanan", "keuangan"] },
   { href: "/operasional/armada", label: "Armada", group: "Data", icon: "car", perm: ["pengiriman", "keuangan", "ekspedisi"] },

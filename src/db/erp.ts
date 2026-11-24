@@ -905,6 +905,33 @@ export const strengthTests = sqliteTable(
   (t) => [index("qc_st_date_idx").on(t.reportDate)],
 );
 
+/** Absensi pekerja harian (PIC absensi): nama bebas, tugas, jenis upah, jam kerja & lembur, hasil borongan. Sopir tetap di jadwal sopir. */
+export const workerPayTypes = ["harian", "jam", "borongan"] as const;
+export const workerStatuses = ["hadir", "izin", "sakit", "alfa"] as const;
+export const workerAttendance = sqliteTable(
+  "ops_worker_attendance",
+  {
+    id: id(),
+    workDate: text("work_date").notNull(),
+    workerName: text("worker_name").notNull(),
+    task: text("task"),
+    payType: text("pay_type").$type<(typeof workerPayTypes)[number]>().notNull().default("harian"),
+    status: text("status").$type<(typeof workerStatuses)[number]>().notNull().default("hadir"),
+    startTime: text("start_time"),
+    endTime: text("end_time"),
+    hours: real("hours"),
+    overtimeHours: real("overtime_hours"),
+    output: real("output"),
+    outputUnit: text("output_unit"),
+    note: text("note"),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    updatedByName: text("updated_by_name"),
+    ...created,
+  },
+  (t) => [index("ops_wa_date_idx").on(t.workDate), index("ops_wa_name_idx").on(t.workerName, t.workDate)],
+);
+
 /** Waktu produksi terbuang (QC Beton): lama, alasan (sama seperti alasan produksi berhenti), area/produk. */
 export const downtimes = sqliteTable(
   "qc_downtimes",

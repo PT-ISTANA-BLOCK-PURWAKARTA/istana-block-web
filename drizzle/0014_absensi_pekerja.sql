@@ -1,0 +1,3 @@
+CREATE TABLE `ops_worker_attendance` (`id` text PRIMARY KEY NOT NULL, `work_date` text NOT NULL, `worker_name` text NOT NULL, `task` text, `pay_type` text DEFAULT 'harian' NOT NULL, `status` text DEFAULT 'hadir' NOT NULL, `start_time` text, `end_time` text, `hours` real, `overtime_hours` real, `output` real, `output_unit` text, `note` text, `created_by` integer, `created_by_name` text, `updated_by_name` text, `created_at` integer DEFAULT (unixepoch()) NOT NULL, `updated_at` integer DEFAULT (unixepoch()) NOT NULL);
+CREATE INDEX `ops_wa_date_idx` ON `ops_worker_attendance` (`work_date`);
+CREATE INDEX `ops_wa_name_idx` ON `ops_worker_attendance` (`worker_name`,`work_date`);

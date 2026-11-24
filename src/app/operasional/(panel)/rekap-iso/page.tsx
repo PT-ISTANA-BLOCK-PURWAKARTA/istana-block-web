@@ -56,21 +56,21 @@ export default async function Halaman({ searchParams }: { searchParams: Promise<
     let editor: React.ReactNode = null;
     if (aksi === "tambah" && form.manual && canInput) {
       const saran = suggestions.find((s) => s.from === one(sp.saran));
-      editor = <IsoRecordForm key={`tambah-${saran?.from ?? ""}`} code={code} mode="tambah" initial={saran?.values ?? {}} from={saran?.from} userName={user.name} today={today} back={here} cancelHref={here} />;
+      editor = <IsoRecordForm key={`tambah-${saran?.from ?? ""}`} code={code} mode="tambah" initial={saran?.values ?? {}} from={saran?.from} userName={user.name} today={today} back={here} cancelHref={here} office={isOffice} />;
     } else if (aksi === "ubah" && form.manual && canInput) {
       const record = await getManualRecord(db, code, one(sp.id) ?? "");
       if (record) {
         const initial: IsoValues = { ...record.data };
         if (one(sp.selesai) === "1" && code === "F-IB-06") initial.terakhir = today;
-        editor = <IsoRecordForm key={`ubah-${record.id}-${one(sp.selesai) ?? ""}`} code={code} mode="ubah" recordId={record.id} number={record.number} initial={initial} userName={user.name} today={today} back={here} cancelHref={here} />;
+        editor = <IsoRecordForm key={`ubah-${record.id}-${one(sp.selesai) ?? ""}`} code={code} mode="ubah" recordId={record.id} number={record.number} initial={initial} userName={user.name} today={today} back={here} cancelHref={here} office={isOffice} />;
       }
     } else if (aksi === "lengkapi" && canInput && supplementable) {
       const row = rows.find((r) => r.source === "app" && r.key === one(sp.key));
-      if (row) editor = <IsoRecordForm key={`lengkapi-${row.key}`} code={code} mode="lengkapi" sourceKey={row.key} initial={row.values} userName={user.name} today={today} back={here} cancelHref={here} />;
+      if (row) editor = <IsoRecordForm key={`lengkapi-${row.key}`} code={code} mode="lengkapi" sourceKey={row.key} initial={row.values} userName={user.name} today={today} back={here} cancelHref={here} office={isOffice} />;
     }
 
     formsTab = (
-      <FormsTab
+      <FormsTab roles={user.roles}
         view={view} forms={forms} counts={overview.counts} form={form} rows={rows} nextOffset={page.nextOffset}
         canInput={canInput} isOffice={isOffice} userId={user.id} userName={user.name} today={today} suggestions={suggestions} editor={editor}
       />

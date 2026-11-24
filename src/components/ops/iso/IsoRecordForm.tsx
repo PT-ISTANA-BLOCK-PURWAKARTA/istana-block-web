@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { saveIsoRecordAction, saveIsoSupplementAction } from "@/app/operasional/actions/iso";
+import { saveIsoRecordAction, saveIsoSupplementAction, uploadIsoPhoto } from "@/app/operasional/actions/iso";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { DateField, Select } from "@/components/ui";
-import { computeIsoValues, FORM_BY_CODE, inputColumns, type IsoCode, type IsoColumn, type IsoValues } from "@/lib/ops/shared/isoForms";
+import { computeIsoValues, FORM_BY_CODE, inputColumns, isSignColumn, type IsoCode, type IsoColumn, type IsoValues } from "@/lib/ops/shared/isoForms";
 import { cellText } from "@/lib/ops/shared/isoRecap";
 
 /** Isian awal yang wajar per form (masih bisa diubah). */
@@ -20,6 +20,7 @@ const DEFAULTS: Partial<Record<IsoCode, IsoValues>> = {
   "F-IB-13": { status: "Diajukan" },
   "F-IB-14": { jenis: "Mingguan", status: "Open" },
   "F-IB-15": { status: "Open" },
+  "F-IB-18": { status: "Open" },
 };
 
 const toText = (value: unknown) => (value === null || value === undefined ? "" : String(value));
@@ -41,14 +42,69 @@ type Props = {
   today: string;
   back: string;
   cancelHref: string;
+  /** Akun kantor (pemilik / operasional): boleh mengisi kolom khusus kantor (mis. harga). */
+  office?: boolean;
 };
 
-function Field({ column, value, onChange }: { column: IsoColumn; value: string; onChange: (v: string) => void }) {
+/** Foto (maks. 3): unggah langsung, simpan kuncinya (dipisah baris baru) di kolom. */
+function PhotoField({ column, value, onChange, cls }: { column: IsoColumn; value: string; onChange: (v: string) => void; cls: string }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const keys = value.split(/\n+/).map((k) => k.trim()).filter(Boolean);
+  async function pick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setBusy(true);
+    setErr("");
+    const fd = new FormData();
+    fd.set("file", file);
+    const res = await uploadIsoPhoto(fd);
+    setBusy(false);
+    if (res.error || !res.key) return setErr(res.error ?? "Gagal mengunggah foto.");
+    onChange([...keys, res.key].slice(0, 3).join("\n"));
+  }
+  return (
+    <div className={cls}>
+      <span className="label">{column.label}</span>
+      <input type="hidden" name={`v_${column.key}`} value={value} />
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        {keys.map((k) => (
+          <span key={k} style={{ position: "relative" }}>
+            <img src={`/operasional/berkas/${k}`} alt="" width={72} height={72} style={{ objectFit: "cover", borderRadius: 8 }} />
+            <button type="button" className="link-btn" aria-label="Hapus foto" onClick={() => onChange(keys.filter((x) => x !== k).join("\n"))} style={{ position: "absolute", top: -6, right: -6 }}>×</button>
+          </span>
+        ))}
+        {keys.length < 3 && (
+          <label className="btn btn-ghost btn-sm">
+            {busy ? "Mengunggah…" : "+ Foto"}
+            <input type="file" accept="image/*" capture="environment" hidden disabled={busy} onChange={pick} />
+          </label>
+        )}
+      </div>
+      {err && <span className="help small text-bahaya">{err}</span>}
+      {column.hint && <span className="help small muted">{column.hint}</span>}
+    </div>
+  );
+}
+
+function Field({ column, value, onChange, disabled }: { column: IsoColumn; value: string; onChange: (v: string) => void; disabled?: boolean }) {
   const name = `v_${column.key}`, id = `iso-${column.key}`;
   const wide = (column.width ?? 0) >= 24;
   const label = <label htmlFor={id}>{column.label}{column.required ? <span className="text-bahaya"> *</span> : null}</label>;
   const hint = column.hint ? <span className="help small muted">{column.hint}</span> : null;
   const cls = `field${wide ? " span-2" : ""}`;
+
+  if (column.type === "photos") return <PhotoField column={column} value={value} onChange={onChange} cls={`field span-2`} />;
+  if (disabled) {
+    return (
+      <div className={cls}>
+        {label}
+        <input id={id} value={value} disabled readOnly />
+        <span className="help small muted">Diisi kantor.</span>
+      </div>
+    );
+  }
 
   if (column.type === "select" && column.options && column.options.length <= 4) {
     return (
@@ -88,9 +144,10 @@ function Field({ column, value, onChange }: { column: IsoColumn; value: string; 
 }
 
 /** Formulir tambah/ubah baris form F-IB (isian langsung) dan lengkapi kolom pada baris dari data aplikasi. */
-export function IsoRecordForm({ code, mode, recordId, sourceKey, from, number, initial, userName, today, back, cancelHref }: Props) {
+export function IsoRecordForm({ code, mode, recordId, sourceKey, from, number, initial, userName, today, back, cancelHref, office = false }: Props) {
   const form = FORM_BY_CODE[code];
-  const columns = useMemo(() => (mode === "lengkapi" ? form.columns.filter((c) => c.supplement) : inputColumns(form)), [form, mode]);
+  // Kolom paraf/TTD diisi lewat tombol di tabel, bukan diketik.
+  const columns = useMemo(() => (mode === "lengkapi" ? form.columns.filter((c) => c.supplement) : inputColumns(form).filter((c) => !isSignColumn(c))), [form, mode]);
   const [values, setValues] = useState<Record<string, string>>(() => {
     const base = mode === "tambah" ? { ...DEFAULTS[code], ...initial } : initial;
     const start: Record<string, string> = {};
@@ -134,9 +191,11 @@ export function IsoRecordForm({ code, mode, recordId, sourceKey, from, number, i
         </div>
       )}
       <div className="form-grid">
-        {columns.map((column) => (
-          <Field key={column.key} column={column} value={values[column.key] ?? ""} onChange={(v) => setValues((current) => ({ ...current, [column.key]: v }))} />
-        ))}
+        {columns
+          .filter((column) => !column.showWhen || column.showWhen(values))
+          .map((column) => (
+            <Field key={column.key} column={column} value={values[column.key] ?? ""} disabled={column.officeOnly && !office} onChange={(v) => setValues((current) => ({ ...current, [column.key]: v }))} />
+          ))}
       </div>
       {preview.length > 0 && (
         <div className="flag flag-info iso-preview">

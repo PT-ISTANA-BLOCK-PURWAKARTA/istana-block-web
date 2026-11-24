@@ -82,13 +82,14 @@ export function needsShift(roles: readonly Role[]) {
  * - ttd_sekretaris: TTD tingkat pertama uji lumpur (Sekretaris); tingkat Manager = setujui_qc, Pimpinan = ttd_pimpinan
  * - ekspedisi: PIC Kendaraan, mencatat biaya armada & melihat data armada/sopir/Dana & Piutang Cepi (setara peran ekspedisi app live)
  * - lihat_produksi: melihat hasil & target produksi tanpa mengisi (peran absensi app live)
+ * - insiden: Lapor Insiden (F-IB-18) dari HP; absensi_pekerja: absensi pekerja harian (PIC absensi & kantor)
  * - qc_beton: halaman QC Beton (mix desain & uji mutu beton precast/genteng, waktu terbuang); pemilik & operasional ikut
  */
 export const PERMS = [
   "web", "keuangan", "lihat_ops", "pesanan", "pengiriman", "muat", "stok", "lacak", "antar",
   "qc", "setujui_qc", "ttd_pimpinan", "uji_pasir", "lihat_uji_pasir", "barang_masuk", "lihat_barang_masuk",
   "nilai_mutu", "nilai_kirim", "nilai_harga", "produksi_lapangan", "kalender", "kalender_kelola", "laporan", "iso", "piket", "selesaikan", "keamanan",
-  "rekap_pelanggan", "opname", "cat_genteng", "spesifikasi_produk", "ttd_sekretaris", "ekspedisi", "lihat_produksi", "qc_beton",
+  "rekap_pelanggan", "opname", "cat_genteng", "spesifikasi_produk", "ttd_sekretaris", "ekspedisi", "lihat_produksi", "qc_beton", "insiden", "absensi_pekerja",
 ] as const;
 export type Perm = (typeof PERMS)[number];
 
@@ -96,17 +97,17 @@ const ROLE_PERMS: Record<Role, readonly Perm[]> = {
   owner: PERMS.filter((p) => p !== "antar"),
   web: ["web"],
   keuangan: ["keuangan", "lihat_ops"],
-  operasional: ["lihat_ops", "pesanan", "pengiriman", "muat", "lacak", "qc", "barang_masuk", "lihat_barang_masuk", "nilai_kirim", "produksi_lapangan", "kalender", "kalender_kelola", "iso", "selesaikan", "rekap_pelanggan", "opname", "cat_genteng", "spesifikasi_produk", "ttd_sekretaris", "qc_beton"],
+  operasional: ["lihat_ops", "pesanan", "pengiriman", "muat", "lacak", "qc", "barang_masuk", "lihat_barang_masuk", "nilai_kirim", "produksi_lapangan", "kalender", "kalender_kelola", "iso", "selesaikan", "rekap_pelanggan", "opname", "cat_genteng", "spesifikasi_produk", "ttd_sekretaris", "qc_beton", "insiden", "absensi_pekerja"],
   gudang: ["lihat_ops", "stok", "muat", "opname", "cat_genteng"],
   sopir: ["antar"],
-  qc: ["lihat_ops", "qc", "uji_pasir", "lihat_uji_pasir", "lihat_barang_masuk", "nilai_mutu", "produksi_lapangan", "kalender", "iso", "opname", "cat_genteng", "spesifikasi_produk"],
-  mandor: ["lihat_ops", "muat", "produksi_lapangan", "kalender", "iso", "piket", "cat_genteng"],
-  satpam: ["lihat_ops", "muat", "barang_masuk", "lihat_barang_masuk", "uji_pasir", "piket"],
+  qc: ["lihat_ops", "qc", "uji_pasir", "lihat_uji_pasir", "lihat_barang_masuk", "nilai_mutu", "produksi_lapangan", "kalender", "iso", "opname", "cat_genteng", "spesifikasi_produk", "insiden"],
+  mandor: ["lihat_ops", "muat", "produksi_lapangan", "kalender", "iso", "piket", "cat_genteng", "insiden"],
+  satpam: ["lihat_ops", "muat", "barang_masuk", "lihat_barang_masuk", "uji_pasir", "piket", "insiden"],
   manajer_qc: ["lihat_ops", "qc", "setujui_qc", "lihat_uji_pasir", "lihat_barang_masuk", "iso", "kalender"],
   pimpinan: ["lihat_ops", "laporan", "ttd_pimpinan", "nilai_harga", "lihat_uji_pasir", "lihat_barang_masuk", "iso", "kalender"],
-  ekspedisi: ["lihat_ops", "ekspedisi"],
-  absensi: ["lihat_ops", "lihat_produksi"],
-  qcbeton: ["lihat_ops", "qc_beton", "produksi_lapangan", "lihat_produksi", "opname", "kalender", "iso"],
+  ekspedisi: ["lihat_ops", "ekspedisi", "insiden"],
+  absensi: ["lihat_ops", "lihat_produksi", "absensi_pekerja"],
+  qcbeton: ["lihat_ops", "qc_beton", "insiden", "produksi_lapangan", "lihat_produksi", "opname", "kalender", "iso"],
 };
 
 export function permsOf(roles: readonly Role[]): Set<Perm> {

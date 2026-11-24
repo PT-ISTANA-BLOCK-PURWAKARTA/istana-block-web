@@ -6,16 +6,19 @@ import { getDb } from "@/db";
 import { requirePerm } from "@/lib/auth";
 import { guard, UserError } from "@/lib/erp/server";
 import { logActivity } from "@/lib/ops/activity";
-import { asUserError, deleteIsoRecord, saveIsoRecord, saveIsoSupplement, setObjective } from "@/lib/ops/iso";
+import { asUserError, deleteIsoRecord, saveIsoRecord, saveIsoSupplement, setObjective, signIsoRecord } from "@/lib/ops/iso";
+import { revalidatePath } from "next/cache";
+import { saveImage, UploadError } from "@/lib/media";
 import { FORM_BY_CODE, type IsoCode } from "@/lib/ops/shared/isoForms";
 import { QUALITY_OBJECTIVES } from "@/lib/ops/shared/isoObjectives";
 
 const BASE = "/operasional/rekap-iso";
+const INCIDENT = "/operasional/insiden";
 
 /** Alamat kembali setelah simpan: hanya halaman Rekap ISO (cegah pengalihan ke luar). */
 function backUrl(raw: unknown) {
   const url = String(raw ?? "");
-  return url.startsWith(BASE) && !url.startsWith("//") && !url.includes("\\") && !url.includes("://") ? url : BASE;
+  return (url.startsWith(BASE) || url.startsWith(INCIDENT)) && !url.startsWith("//") && !url.includes("\\") && !url.includes("://") ? url : BASE;
 }
 const withOk = (url: string, message: string) => `${url}${url.includes("?") ? "&" : "?"}ok=${encodeURIComponent(message)}`;
 
@@ -37,7 +40,7 @@ const toNumber = (v: FormDataEntryValue | null) => {
 
 /** Simpan (baru/ubah) baris form yang diisi langsung. */
 export async function saveIsoRecordAction(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requirePerm("iso");
+  const me = await requirePerm("iso", "insiden");
   const code = String(form.get("code") ?? "");
   const id = String(form.get("id") ?? "") || undefined;
   const res = await guard(async () => {
@@ -96,4 +99,32 @@ export async function saveObjectiveAction(_prev: FormState, form: FormData): Pro
   });
   if ("error" in res) return res;
   redirect(withOk(backUrl(form.get("back")), clear ? "~Angka bulan itu dihapus." : "~Angka Sasaran Mutu tersimpan."));
+}
+
+/** Unggah satu foto untuk kolom foto form (maks. 5 MB); mengembalikan kunci berkas. */
+export async function uploadIsoPhoto(form: FormData): Promise<{ key?: string; error?: string }> {
+  await requirePerm("iso", "insiden");
+  try {
+    const key = await saveImage(form.get("file"), "iso");
+    return key ? { key } : { error: "Pilih foto dulu." };
+  } catch (e) {
+    if (e instanceof UploadError) return { error: e.message };
+    throw e;
+  }
+}
+
+/** Tombol Paraf / TTD pada baris form. */
+export async function signIsoRecordAction(id: string, column: string): Promise<FormState> {
+  const me = await requirePerm("iso", "insiden", "setujui_qc", "ttd_pimpinan");
+  const res = await guard(async () => {
+    const db = await getDb();
+    const out = await asUserError(() => signIsoRecord(db, me, { id, column }));
+    await logActivity(me, { action: "iso.paraf", label: "Memaraf form ISO", summary: `${out.formCode} · ${column}` });
+    return { ok: "Tersimpan." };
+  });
+  if (!("error" in res)) {
+    revalidatePath(BASE);
+    revalidatePath(INCIDENT);
+  }
+  return res;
 }
