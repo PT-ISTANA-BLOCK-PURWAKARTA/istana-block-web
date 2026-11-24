@@ -76,7 +76,7 @@ export function NewUserForm({ drivers }: { drivers: DriverOption[] }) {
         <label className={`kind-opt${kind === "kantor" ? " is-on" : ""}`}>
           <input type="radio" name="kind" value="kantor" checked={kind === "kantor"} onChange={() => { setKind("kantor"); setRoles([]); }} />
           <b>Kantor: email / username &amp; password</b>
-          <span>Pemilik, admin situs, keuangan, admin operasional.</span>
+          <span>Super admin, admin situs, keuangan, admin operasional.</span>
         </label>
       </fieldset>
       <div className="form-grid" key={kind}>

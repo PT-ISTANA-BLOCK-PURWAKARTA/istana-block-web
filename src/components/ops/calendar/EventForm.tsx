@@ -5,6 +5,7 @@ import { saveEvent } from "@/app/operasional/actions/calendar";
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { DateField } from "@/components/ui";
+import { ROLE_SHORT } from "@/lib/roles";
 import { REMINDER_OPTIONS, TYPE_LABEL, wibKey, wibTime, type CalType, type EventView, type Person } from "./common";
 
 const TYPES: CalType[] = ["rapat", "training", "lainnya"];
@@ -13,7 +14,7 @@ const TYPES: CalType[] = ["rapat", "training", "lainnya"];
 export function EventForm({ people, event, date: initialDate }: { people: Person[]; event?: EventView; date: string }) {
   const [date, setDate] = useState(event ? wibKey(event.startAt) : initialDate);
   const [endDate, setEndDate] = useState(event?.endAt ? wibKey(event.endAt) : initialDate);
-  const [ids, setIds] = useState<number[]>(() => (event ? event.participants.map((p) => p.userId) : people.filter((p) => p.role === "Pemilik" || p.role === "Operasional").map((p) => p.id)));
+  const [ids, setIds] = useState<number[]>(() => (event ? event.participants.map((p) => p.userId) : people.filter((p) => p.role === ROLE_SHORT.owner || p.role === ROLE_SHORT.operasional).map((p) => p.id)));
   const [reminders, setReminders] = useState<number[]>(event ? event.reminderMinutes : [1440, 60]);
   const [repeat, setRepeat] = useState<"none" | "weekly" | "monthly">("none");
   const [until, setUntil] = useState("");

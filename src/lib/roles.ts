@@ -4,7 +4,7 @@ export const ROLES = ["owner", "web", "keuangan", "operasional", "gudang", "sopi
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_SHORT: Record<Role, string> = {
-  owner: "Pemilik",
+  owner: "Super admin",
   web: "Situs",
   keuangan: "Keuangan",
   operasional: "Operasional",
@@ -22,7 +22,7 @@ export const ROLE_SHORT: Record<Role, string> = {
 
 /** Penjelasan singkat di halaman pengguna. */
 export const ROLE_LABEL: Record<Role, string> = {
-  owner: "Pemilik: semua aplikasi dan kelola pengguna",
+  owner: "Super admin: semua aplikasi dan kelola pengguna",
   web: "Situs: produk, harga, artikel, halaman",
   keuangan: "Keuangan: faktur, penerimaan, pembelian, kas, laporan",
   operasional: "Operasional: pesanan (PO), jadwal kirim, surat jalan, pelanggan, armada, lacak truk",

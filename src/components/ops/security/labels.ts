@@ -7,7 +7,7 @@ export const MODULE_LABELS: Record<string, string> = {
 };
 export const moduleLabel = (key: string) => MODULE_LABELS[key] ?? key.replace(/_/g, " ");
 
-/** "owner,qc" → "Pemilik, QC". */
+/** "owner,qc" → "Super admin, QC". */
 export const roleText = (role: string | null) => (role ? role.split(",").map((r) => ROLE_SHORT[r as Role] ?? r).join(", ") : "");
 
 export const deviceLabel = (device: string | null) =>
