@@ -52,7 +52,7 @@ function revalidateFleet(): void {
 }
 
 async function requireEditPerm() {
-  return requirePerm("keuangan", "pengiriman");
+  return requirePerm("keuangan", "pengiriman", "ekspedisi");
 }
 
 async function requireApprovePerm() {

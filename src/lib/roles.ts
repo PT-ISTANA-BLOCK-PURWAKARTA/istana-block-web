@@ -1,6 +1,6 @@
 /** Peran pengguna, izin per aksi, dan aplikasi yang boleh dibuka. Dipakai di server dan klien (tanpa import server). */
 
-export const ROLES = ["owner", "web", "keuangan", "operasional", "gudang", "sopir", "qc", "mandor", "satpam", "manajer_qc", "pimpinan"] as const;
+export const ROLES = ["owner", "web", "keuangan", "operasional", "gudang", "sopir", "qc", "mandor", "satpam", "manajer_qc", "pimpinan", "ekspedisi", "absensi", "qcbeton"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_SHORT: Record<Role, string> = {
@@ -15,6 +15,9 @@ export const ROLE_SHORT: Record<Role, string> = {
   satpam: "Satpam",
   manajer_qc: "Manajer QC",
   pimpinan: "Pimpinan",
+  ekspedisi: "PIC Kendaraan",
+  absensi: "Absensi",
+  qcbeton: "QC Beton",
 };
 
 /** Penjelasan singkat di halaman pengguna. */
@@ -30,13 +33,16 @@ export const ROLE_LABEL: Record<Role, string> = {
   satpam: "Satpam: catat barang masuk, uji lumpur pasir, tandai sudah dimuat, absen piket",
   manajer_qc: "Manajer QC: ACC catatan & uji kuat tekan (tanda tangan Diperiksa), template mix desain",
   pimpinan: "Pimpinan: laporan harian/mingguan/bulanan, tanda tangan Mengetahui, nilai harga bahan",
+  ekspedisi: "PIC Kendaraan (Ekspedisi): catat biaya armada, lihat armada, sopir, jadwal sopir, Dana & Piutang Cepi",
+  absensi: "Absensi: PIC absensi pekerja, lihat hasil produksi & stok",
+  qcbeton: "QC Beton: hasil produksi precast, stok opname, kalender, rekap & form ISO",
 };
 
 /**
  * Peran yang boleh masuk dengan nomor HP + PIN (staf lapangan). Sesi PIN hanya membuka aplikasi
  * operasional; peran kantor (pemilik, situs, keuangan) selalu lewat email + password.
  */
-export const FIELD_ROLES: readonly Role[] = ["operasional", "gudang", "sopir", "qc", "mandor", "satpam"];
+export const FIELD_ROLES: readonly Role[] = ["operasional", "gudang", "sopir", "qc", "mandor", "satpam", "absensi", "qcbeton"];
 
 /**
  * Akun lapangan yang WAJIB sedang piket sebelum mencatat (barang masuk, uji pasir, sudah dimuat, produksi, form ISO).
@@ -74,12 +80,14 @@ export function needsShift(roles: readonly Role[]) {
  * - opname: stok opname (hitung fisik -> penyesuaian selisih); cat_genteng: konversi genteng natural -> warna
  * - spesifikasi_produk: kelola spesifikasi & berat produk (membaca untuk form produksi tidak butuh izin ini)
  * - ttd_sekretaris: TTD tingkat pertama uji lumpur (Sekretaris); tingkat Manager = setujui_qc, Pimpinan = ttd_pimpinan
+ * - ekspedisi: PIC Kendaraan, mencatat biaya armada & melihat data armada/sopir/Dana & Piutang Cepi (setara peran ekspedisi app live)
+ * - lihat_produksi: melihat hasil & target produksi tanpa mengisi (peran absensi app live)
  */
 export const PERMS = [
   "web", "keuangan", "lihat_ops", "pesanan", "pengiriman", "muat", "stok", "lacak", "antar",
   "qc", "setujui_qc", "ttd_pimpinan", "uji_pasir", "lihat_uji_pasir", "barang_masuk", "lihat_barang_masuk",
   "nilai_mutu", "nilai_kirim", "nilai_harga", "produksi_lapangan", "kalender", "kalender_kelola", "laporan", "iso", "piket", "selesaikan", "keamanan",
-  "rekap_pelanggan", "opname", "cat_genteng", "spesifikasi_produk", "ttd_sekretaris",
+  "rekap_pelanggan", "opname", "cat_genteng", "spesifikasi_produk", "ttd_sekretaris", "ekspedisi", "lihat_produksi",
 ] as const;
 export type Perm = (typeof PERMS)[number];
 
@@ -95,6 +103,9 @@ const ROLE_PERMS: Record<Role, readonly Perm[]> = {
   satpam: ["lihat_ops", "muat", "barang_masuk", "lihat_barang_masuk", "uji_pasir", "piket"],
   manajer_qc: ["lihat_ops", "qc", "setujui_qc", "lihat_uji_pasir", "lihat_barang_masuk", "iso", "kalender"],
   pimpinan: ["lihat_ops", "laporan", "ttd_pimpinan", "nilai_harga", "lihat_uji_pasir", "lihat_barang_masuk", "iso", "kalender"],
+  ekspedisi: ["lihat_ops", "ekspedisi"],
+  absensi: ["lihat_ops", "lihat_produksi"],
+  qcbeton: ["lihat_ops", "produksi_lapangan", "lihat_produksi", "opname", "kalender", "iso"],
 };
 
 export function permsOf(roles: readonly Role[]): Set<Perm> {

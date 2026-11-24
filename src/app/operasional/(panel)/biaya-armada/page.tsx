@@ -29,7 +29,7 @@ export default async function BiayaArmadaPage({
   ]);
   const alerts = getFleetAlerts(vehicles, todayDate);
 
-  const canEdit = can(user.roles, "keuangan") || can(user.roles, "pengiriman");
+  const canEdit = can(user.roles, "keuangan") || can(user.roles, "pengiriman") || can(user.roles, "ekspedisi");
   const canApprove =
     can(user.roles, "keuangan") ||
     can(user.roles, "laporan") ||

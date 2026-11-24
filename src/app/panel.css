@@ -197,6 +197,9 @@ a.kpi:hover .k-label { color: var(--biru); }
 .role-satpam { background: #e5e7eb; color: #1f2937; }
 .role-manajer_qc { background: #cffafe; color: #155e75; }
 .role-pimpinan { background: #fce7f3; color: #9d174d; }
+.role-ekspedisi { background: #dbeafe; color: #1e3a8a; }
+.role-absensi { background: #dcfce7; color: #166534; }
+.role-qcbeton { background: #e0e7ff; color: #3730a3; }
 .role-checks { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 18px; }
 .role-checks .check { font-weight: 500; align-items: flex-start; min-height: 0; padding: 6px 0; font-size: 14px; line-height: 1.4; }
 .role-checks .check input { margin-top: 1px; flex: 0 0 auto; }
