@@ -54,8 +54,8 @@ if (phoneRaw) {
   console.error('Pakai: npm run admin:create -- --email EMAIL --name "NAMA" --password "PASSWORD" [--remote]');
   process.exit(1);
 }
-if (!phone && password.length < 10) {
-  console.error("Password minimal 10 karakter.");
+if (!phone && password.length < 6) {
+  console.error("Password minimal 6 karakter.");
   process.exit(1);
 }
 
