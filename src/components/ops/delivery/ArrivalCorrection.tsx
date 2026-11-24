@@ -45,7 +45,7 @@ export function ArrivalCorrection({
             </div>
             <div className="field">
               <label htmlFor="ac-reason">Alasan &amp; bukti *</label>
-              <input id="ac-reason" name="reason" minLength={6} maxLength={500} required={!cancelling} disabled={cancelling} placeholder="mis. sopir lupa tekan Sampai; konfirmasi pelanggan via WA pukul 10.15" autoComplete="off" />
+              <input id="ac-reason" name="reason" minLength={10} maxLength={500} required={!cancelling} disabled={cancelling} placeholder="mis. sopir lupa tekan Sampai; konfirmasi pelanggan via WA pukul 10.15" autoComplete="off" />
             </div>
           </div>
           {correctedText && (
