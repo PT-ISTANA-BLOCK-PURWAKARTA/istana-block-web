@@ -22,8 +22,8 @@ export default async function GantiPassword({ searchParams }: { searchParams: Pr
         <p className="portal-lead">Anda masuk dengan password sementara. Buat password baru milik Anda sendiri sebelum membuka aplikasi.</p>
         <ActionForm action={setNewPassword} className="form-section card" >
           <input type="hidden" name="dest" value={next ?? ""} />
-          <div className="field"><label htmlFor="gp-new">Password baru <span className="help">minimal 10 karakter</span></label><input id="gp-new" name="next" type="password" autoComplete="new-password" minLength={10} required /></div>
-          <div className="field"><label htmlFor="gp-confirm">Ulangi password baru</label><input id="gp-confirm" name="confirm" type="password" autoComplete="new-password" minLength={10} required /></div>
+          <div className="field"><label htmlFor="gp-new">Password baru <span className="help">minimal 6 karakter</span></label><input id="gp-new" name="next" type="password" autoComplete="new-password" minLength={6} required /></div>
+          <div className="field"><label htmlFor="gp-confirm">Ulangi password baru</label><input id="gp-confirm" name="confirm" type="password" autoComplete="new-password" minLength={6} required /></div>
           <div><SubmitButton className="btn btn-blue">Simpan &amp; lanjut</SubmitButton></div>
         </ActionForm>
         <form action={logout} style={{ marginTop: 12 }}><button type="submit" className="btn btn-ghost btn-sm">Keluar</button></form>

@@ -13,7 +13,7 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { FIELD_ROLES, formatPhone, homeFor, normalizePhone, normalizeRoles, safeNext, weakPin, type Role } from "@/lib/roles";
 import { SESSION_COOKIE, cookieOptions, signSession } from "@/lib/session";
 
-const Password = z.string().min(10, "Password minimal 10 karakter.").max(200);
+const Password = z.string().min(6, "Password minimal 6 karakter.").max(200);
 const nowDate = () => new Date(Math.floor(Date.now() / 1000) * 1000);
 
 function rolesFrom(form: FormData): Role[] {

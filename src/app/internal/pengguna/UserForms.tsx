@@ -87,7 +87,7 @@ export function NewUserForm({ drivers }: { drivers: DriverOption[] }) {
               <label htmlFor="nu-email">Email atau username</label>
               <input id="nu-email" name="email" type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="mis. rina atau rina@istanablock.com" required />
             </div>
-            <div className="field"><label htmlFor="nu-pass">Password sementara <span className="help">minimal 10 karakter; wajib diganti saat pertama masuk</span></label><input id="nu-pass" name="password" type="password" autoComplete="new-password" required minLength={10} /></div>
+            <div className="field"><label htmlFor="nu-pass">Password sementara <span className="help">minimal 6 karakter; wajib diganti saat pertama masuk</span></label><input id="nu-pass" name="password" type="password" autoComplete="new-password" required minLength={6} /></div>
           </>
         ) : (
           <>

@@ -20,8 +20,8 @@ export function PasswordForm() {
       <h2>Ganti password</h2>
       <div className="field"><label htmlFor="pw-cur">Password saat ini</label><input id="pw-cur" name="current" type="password" autoComplete="current-password" required /></div>
       <div className="form-grid">
-        <div className="field"><label htmlFor="pw-new">Password baru</label><input id="pw-new" name="next" type="password" autoComplete="new-password" minLength={10} required /></div>
-        <div className="field"><label htmlFor="pw-conf">Ulangi password baru</label><input id="pw-conf" name="confirm" type="password" autoComplete="new-password" minLength={10} required /></div>
+        <div className="field"><label htmlFor="pw-new">Password baru</label><input id="pw-new" name="next" type="password" autoComplete="new-password" minLength={6} required /></div>
+        <div className="field"><label htmlFor="pw-conf">Ulangi password baru</label><input id="pw-conf" name="confirm" type="password" autoComplete="new-password" minLength={6} required /></div>
       </div>
       <div><SubmitButton>Ganti password</SubmitButton></div>
     </ActionForm>
