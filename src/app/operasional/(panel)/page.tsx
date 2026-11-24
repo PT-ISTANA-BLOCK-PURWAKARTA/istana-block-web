@@ -10,14 +10,21 @@ import { documentAlerts, loadingPlan, orderStats, stockPosition } from "@/lib/er
 import { opsAccess } from "@/lib/erp/ops";
 import { addDays, formatQty, monthStart, tgl, today } from "@/lib/erp/util";
 import { unreadNotifications } from "@/lib/ops/deliveries";
+import { OfficeHome } from "@/components/ops/home/OfficeHome";
 
 export const metadata = { title: "Ringkasan operasional" };
 
 const C_TRIPS = "#3d63c4";
 
-export default async function OpsDashboard() {
+export default async function OpsDashboard({ searchParams }: { searchParams: Promise<{ po?: string; ringkasan?: string }> }) {
   const { user, canOrders, canShip, canLoad, canStock } = await opsAccess();
   const db = await getDb();
+  const sp = await searchParams;
+  // Kantor (PO & pengiriman) mendapat beranda seperti app.kirimistanablock.com; peran lain tetap ringkasan gudang.
+  if ((canOrders || canShip) && !sp.ringkasan) {
+    const tab = sp.po === "batal" || sp.po === "hapus" ? sp.po : "aktif";
+    return <OfficeHome db={db} canOrders={canOrders} canShip={canShip} canLoad={canLoad} tab={tab} />;
+  }
   const now = today();
   const tomorrow = addDays(now, 1);
   const from14 = addDays(now, -13);
