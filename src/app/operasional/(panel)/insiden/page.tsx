@@ -109,7 +109,10 @@ export default async function InsidenPage({ searchParams }: { searchParams: Prom
                 )}
                 <div className="qc-bar small muted">
                   <span>Dilaporkan {str(v.pelapor) || row.createdByName || "-"}</span>
-                  {canEdit && row.recordId && <Link href={`${BASE}?aksi=ubah&id=${row.recordId}`} className="btn btn-ghost btn-sm">{office ? "Lengkapi / tutup" : "Ubah"}</Link>}
+                  <span className="qc-row-actions">
+                    {row.recordId && <Link href={`/operasional/cetak/insiden/${row.recordId}`} target="_blank" className="btn btn-ghost btn-sm">Cetak</Link>}
+                    {canEdit && row.recordId && <Link href={`${BASE}?aksi=ubah&id=${row.recordId}`} className="btn btn-ghost btn-sm">{office ? "Lengkapi / tutup" : "Ubah"}</Link>}
+                  </span>
                 </div>
               </article>
             );

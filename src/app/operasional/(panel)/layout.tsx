@@ -40,6 +40,7 @@ const ITEMS: ShellItem[] = [
   { href: "/operasional/bahan-baku", label: "Bahan baku & supplier", group: "Mutu", icon: "chart", perm: ["lihat_uji_pasir", "nilai_mutu", "nilai_kirim", "nilai_harga"] },
   { href: "/operasional/spesifikasi-produk", label: "Spesifikasi produk", group: "Mutu", icon: "doc", perm: "spesifikasi_produk" },
   { href: "/operasional/rekap-iso", label: "Rekap ISO", group: "Mutu", icon: "award", perm: "iso" },
+  { href: "/operasional/surat-pesanan", label: "Surat pesanan", group: "Mutu", icon: "doc", perm: ["pesanan"] },
   { href: "/operasional/kalender", label: "Kalender", group: "Kantor", icon: "calendar", perm: "kalender" },
   { href: "/operasional/laporan", label: "Laporan pimpinan", group: "Kantor", icon: "report", perm: "laporan" },
   { href: "/operasional/piket", label: "Piket", group: "Kantor", icon: "clock", perm: ["piket", "selesaikan", "kalender_kelola"] },

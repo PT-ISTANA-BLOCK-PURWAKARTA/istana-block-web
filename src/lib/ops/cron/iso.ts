@@ -4,6 +4,8 @@ import { normalizeRoles } from "../../roles";
 import { loadIsoAlerts } from "../iso-core";
 import { pushToUsers } from "../push";
 import { wibDate } from "../shared/period";
+import { CLEANING_REMINDERS, isWeeklyOff } from "../shared/isoForms";
+import { and, eq } from "drizzle-orm";
 import type { CronContext } from "./types";
 
 const WIB_MS = 7 * 3600_000;
@@ -37,5 +39,28 @@ export async function remindIsoSchedules(c: CronContext): Promise<void> {
     body: lines.join("\n"),
     url: `/operasional/rekap-iso?tab=form&form=${target}`,
     tag: "iso-reminder",
+  }, c.budget);
+}
+
+/**
+ * 08.00 & 16.00 WIB (kecuali hari libur mingguan): ingatkan mandor bila checklist kebersihan F-IB-17
+ * pre-operasional / after-operasional hari ini belum diisi.
+ */
+export async function remindCleaningChecklist(c: CronContext): Promise<void> {
+  const wib = new Date(c.now.getTime() + WIB_MS);
+  const slot = CLEANING_REMINDERS.find((item) => item.hour === wib.getUTCHours());
+  const day = wibDate(c.now);
+  if (!slot || wib.getUTCMinutes() >= 5 || isWeeklyOff(day)) return;
+  const ir = schema.isoRecords;
+  const today = await c.db.select({ data: ir.data }).from(ir).where(and(eq(ir.formCode, "F-IB-17"), eq(ir.kind, "record"), eq(ir.recordDate, day)));
+  if (today.some((row) => row.data.waktu === slot.waktu)) return;
+  const people = await c.db.select({ id: schema.users.id, roles: schema.users.roles, passwordHash: schema.users.passwordHash, pinHash: schema.users.pinHash }).from(schema.users);
+  const mandor = people.filter((u) => (u.passwordHash || u.pinHash) && normalizeRoles(u.roles).includes("mandor")).map((u) => u.id);
+  if (!mandor.length) return;
+  await pushToUsers(c.db, c.env, mandor, {
+    title: `Checklist kebersihan ${slot.waktu.toLowerCase()} belum diisi`,
+    body: "Isi F-IB-17 (paving) hari ini: 10 butir Baik/Tidak + foto area.",
+    url: "/operasional/rekap-iso?tab=form&form=F-IB-17",
+    tag: "iso-f-ib-17",
   }, c.budget);
 }
