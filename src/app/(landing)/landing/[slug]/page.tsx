@@ -4,6 +4,7 @@ import { LandingFooter, LandingHeader, LandingStickyBar } from "@/components/Lan
 import { Hex } from "@/components/Hex";
 import { JsonLd } from "@/components/JsonLd";
 import { Markdown } from "@/components/Markdown";
+import { PatternCalculator } from "@/components/PatternCalculator";
 import { SpecSheetGrid } from "@/components/SpecSheetGrid";
 import specSheets from "@/data/spec-sheets.json";
 import { getEnv } from "@/db";
@@ -193,6 +194,7 @@ export default async function ProductLandingPage({ params }: Props) {
 
   const h1 = p.category === "Jasa" || /purwakarta/i.test(p.name) ? p.name : `${p.name} Purwakarta`;
   const noPrices = p.priceRows.length > 0 && p.priceRows.every((r) => r.price == null);
+  const showPavingCalculator = p.slug === "paving-block";
 
   return (
     <>
@@ -312,6 +314,11 @@ export default async function ProductLandingPage({ params }: Props) {
                   {noPrices ? "Lihat Ukuran" : "Lihat Tabel Harga"}
                 </a>
               )}
+              {showPavingCalculator && (
+                <a className="btn btn-ghost" href="#kalkulator">
+                  Hitung Kebutuhan Paving
+                </a>
+              )}
             </div>
           </div>
 
@@ -387,6 +394,19 @@ export default async function ProductLandingPage({ params }: Props) {
                 Kirimkan ukuran dan lokasi proyek; admin sales segera membalas dengan penawaran resmi + ongkir.
               </span>
             </div>
+          </section>
+        )}
+
+        {/* KALKULATOR KEBUTUHAN & POLA PAVING (KHUSUS LANDING PAVING BLOCK) */}
+        {showPavingCalculator && (
+          <section id="kalkulator" aria-labelledby="kalkulator-title" style={{ paddingBottom: 56, scrollMarginTop: 84 }}>
+            <div className="section-head" style={{ marginBottom: 20 }}>
+              <h2 id="kalkulator-title">Hitung Kebutuhan Paving &amp; Simulasi Pola</h2>
+              <p className="muted small" style={{ maxWidth: 740 }}>
+                Masukkan luas lahan Anda (atau gambar bentuk lahan langsung di peta satelit), pilih motif &amp; warna, lalu kirim rincian jumlah keping dan material dasar ke WhatsApp untuk penawaran resmi pabrik.
+              </p>
+            </div>
+            <PatternCalculator whatsapp={s.whatsapp} />
           </section>
         )}
 
