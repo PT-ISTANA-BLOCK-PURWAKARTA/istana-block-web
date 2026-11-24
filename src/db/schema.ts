@@ -25,6 +25,8 @@ export const users = sqliteTable("users", {
   roles: text("roles", { mode: "json" }).$type<string[]>().notNull().default(sql`'["owner"]'`),
   /** Kunci R2 (ttd/…) gambar tanda tangan, dicetak di dokumen QC (ACC manajer QC, TTD pimpinan). */
   signatureKey: text("signature_key"),
+  /** Password masih sementara (dibuat/diatur ulang pemilik): wajib membuat password baru sebelum membuka aplikasi. */
+  mustChangePassword: integer("must_change_password", { mode: "boolean" }).notNull().default(false),
   ...timestamps,
 });
 

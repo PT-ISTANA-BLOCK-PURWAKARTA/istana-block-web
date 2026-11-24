@@ -1,4 +1,5 @@
 "use server";
+import { CHANGE_PASSWORD_PATH } from "@/lib/auth";
 
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -94,7 +95,10 @@ export async function loginEmail(module: ModuleKey, _prev: LoginState, form: For
   } catch {
     return { error: SERVER_NOT_READY };
   }
-  redirect(safeNext(form.get("next"), roles) ?? moduleHome(roles, module));
+  const dest = safeNext(form.get("next"), roles) ?? moduleHome(roles, module);
+  // Password sementara (baru dibuat/diatur ulang pemilik): buat password baru dulu, lalu lanjut ke tujuan.
+  if (user.mustChangePassword) redirect(`${CHANGE_PASSWORD_PATH}?next=${encodeURIComponent(dest)}`);
+  redirect(dest);
 }
 
 /** Masuk aplikasi operasional dengan nomor HP + PIN 6 digit (gudang, sopir, staf lapangan). */
