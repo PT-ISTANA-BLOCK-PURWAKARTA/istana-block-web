@@ -42,7 +42,9 @@
 .nav-toggle { display: none; }
 .admin-nav { display: flex; flex-direction: column; gap: 1px; }
 .admin-nav-item { display: contents; }
-.admin-nav-group { display: block; margin: 14px 10px 4px; font-size: 12px; color: #93a4c9; font-weight: 600; }
+.admin-nav-group { display: flex; width: calc(100% - 20px); justify-content: space-between; align-items: center; margin: 14px 10px 4px; padding: 0; border: 0; background: none; cursor: pointer; font: inherit; font-size: 12px; color: #93a4c9; font-weight: 600; text-align: left; }
+.admin-nav-group:hover { color: #fff; }
+.admin-nav-caret { font-size: 11px; opacity: .8; }
 .admin-nav a { color: #d3dcef; text-decoration: none; padding: 7px 10px; border-radius: 9px; font-weight: 500; font-size: 14.5px; display: flex; align-items: center; gap: 10px; }
 .admin-nav a .icon { flex: 0 0 auto; opacity: .8; }
 .admin-nav a:hover { background: rgba(255, 255, 255, .07); color: #fff; }
