@@ -1,5 +1,5 @@
 // Nilai awal formulir uji kuat tekan (dipakai halaman server dan komponen klien; bukan modul "use client").
-import type { MaterialLine } from "@/db/erp";
+import type { MaterialLine, QcScope } from "@/db/erp";
 import { STANDARD_AREA_CM2 } from "@/lib/ops/shared/strength";
 import { numText } from "./labels";
 
@@ -14,6 +14,8 @@ export type StrengthInitial = {
   composition: MaterialLine[];
   notes: string;
   samples: SampleInitial[];
+  /** paving (bawaan) atau beton (QC Beton). */
+  scope?: QcScope;
 };
 
 /** Luas bidang bawaan (cm²) seperti pada tabel standar form. */

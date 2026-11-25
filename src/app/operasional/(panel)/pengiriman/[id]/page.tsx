@@ -16,6 +16,7 @@ import { Steps } from "@/components/ops/delivery/Steps";
 import { TrackingShare } from "@/components/ops/delivery/TrackingShare";
 import { STATUS_LABEL } from "@/components/ops/delivery/status";
 import { getDb, schema } from "@/db";
+import "@/components/ops/home/home.css";
 import { MAX_DELIVERY_PROOFS } from "@/db/erp";
 import { isArchive } from "@/lib/erp/archive";
 import { deliveryItems, opsAccess } from "@/lib/erp/ops";
@@ -70,8 +71,9 @@ export default async function PengirimanDetail({ params, searchParams }: { param
   const canDelete = canEdit && (d.status === "dijadwalkan" || d.status === "dimuat" || d.status === "batal");
 
   return (
-    <>
-      <BackLink href="/operasional/pengiriman">Pengiriman</BackLink>
+    <div className="ohome odetail">
+      <BackLink href="/operasional">PO &amp; pengiriman</BackLink>
+      <p className="ohome-kicker">Surat jalan · {order?.number}</p>
       <PageHead title={d.number} sub={<DeliveryStatusBadge s={d.status} />}>
         <Link href={`/operasional/cetak/surat-jalan/${d.id}`} target="_blank" className="btn btn-ghost btn-sm">Cetak surat jalan</Link>
         {canEdit && d.status === "dijadwalkan" && <Link href={`/operasional/pengiriman/${d.id}/ubah`} className="btn btn-ghost btn-sm">Ubah jadwal</Link>}
@@ -117,7 +119,7 @@ export default async function PengirimanDetail({ params, searchParams }: { param
         {(d.note || order?.note) && <section className="admin-card"><span className="muted small">Catatan</span><p className="pre" style={{ marginTop: 4 }}>{[d.note, order?.note].filter(Boolean).join("\n")}</p></section>}
 
         {(d.receivedBy || proofKeys.length > 0 || (canEdit && d.status !== "batal")) && (
-          <section className="admin-card stack" style={{ gap: 10 }}>
+          <section id="bukti" className="admin-card stack" style={{ gap: 10 }}>
             <h2 style={{ fontSize: 17 }}>Bukti terima {proofKeys.length > 0 && <span className="muted small">({proofKeys.length} foto)</span>}</h2>
             {d.receivedBy && <p>Diterima oleh <b>{d.receivedBy}</b>{d.deliveredAt ? ` · ${stamp(d.deliveredAt)}` : ""}</p>}
             {d.status === "terkirim" && !d.receivedBy && <p className="muted small">Diselesaikan dari kantor tanpa nama penerima.</p>}
@@ -135,6 +137,7 @@ export default async function PengirimanDetail({ params, searchParams }: { param
           </section>
         )}
 
+        {(canEdit || canLoad || (!archived && perms.has("selesaikan"))) && <div id="aksi" />}
         {(canEdit || canLoad || (!archived && perms.has("selesaikan"))) && <DeliveryActions id={d.id} status={d.status} canShip={canEdit} canLoad={canLoad} canComplete={!archived && perms.has("selesaikan")} hasDriver={!!d.driverId} />}
         {canCorrect && (
           <ArrivalCorrection
@@ -148,10 +151,11 @@ export default async function PengirimanDetail({ params, searchParams }: { param
             nowLocal={wibNowLocal()}
           />
         )}
+        {canAssign && <div id="tugaskan" />}
         {canAssign && <AssignForm id={d.id} vehicleId={d.vehicleId} driverId={d.driverId} vehicles={vehicles} drivers={drivers} />}
 
         {canEdit && d.status !== "batal" && (
-          <section className="admin-card stack" style={{ gap: 8 }}>
+          <section id="lacak" className="admin-card stack" style={{ gap: 8 }}>
             <h2 style={{ fontSize: 17 }}>Tautan lacak untuk pelanggan</h2>
             <TrackingShare deliveryId={d.id} summary={summary} count={track?.count ?? 0} lastOpened={lastOpened} />
           </section>
@@ -180,6 +184,6 @@ export default async function PengirimanDetail({ params, searchParams }: { param
           <div><ConfirmAction action={deleteDelivery.bind(null, d.id)} label="Hapus surat jalan" confirmText={`Hapus ${d.number} permanen?`} /></div>
         )}
       </div>
-    </>
+    </div>
   );
 }

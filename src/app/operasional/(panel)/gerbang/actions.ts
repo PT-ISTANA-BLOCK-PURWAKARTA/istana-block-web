@@ -40,6 +40,7 @@ export async function catatKeluar(fd: FormData) {
     createdBy: user.id,
   });
   revalidatePath("/operasional/gerbang");
+  revalidatePath("/operasional/muatan");
 }
 
 export async function catatMasuk(fd: FormData) {
@@ -52,6 +53,7 @@ export async function catatMasuk(fd: FormData) {
     .set({ inAt: waktu(fd.get("masuk")) ?? new Date(), inByName: user.name })
     .where(eq(schema.vehicleTrips.id, id));
   revalidatePath("/operasional/gerbang");
+  revalidatePath("/operasional/muatan");
 }
 
 export async function hapusTrip(fd: FormData) {
@@ -67,4 +69,5 @@ export async function hapusTrip(fd: FormData) {
   if (row?.deliveryId) throw new Error("Rit yang lahir dari surat jalan tidak bisa dihapus di sini.");
   await db.delete(schema.vehicleTrips).where(eq(schema.vehicleTrips.id, id));
   revalidatePath("/operasional/gerbang");
+  revalidatePath("/operasional/muatan");
 }

@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, getEnv, schema } from "@/db";
@@ -9,10 +10,10 @@ import type { FormState } from "@/components/admin/FormMessage";
 import { requireOwner, requireUser } from "@/lib/auth";
 import { LoginIdSchema } from "@/lib/login-id";
 import { hashPassword, verifyPassword } from "@/lib/password";
-import { FIELD_ROLES, formatPhone, normalizePhone, normalizeRoles, weakPin, type Role } from "@/lib/roles";
+import { FIELD_ROLES, formatPhone, homeFor, normalizePhone, normalizeRoles, safeNext, weakPin, type Role } from "@/lib/roles";
 import { SESSION_COOKIE, cookieOptions, signSession } from "@/lib/session";
 
-const Password = z.string().min(10, "Password minimal 10 karakter.").max(200);
+const Password = z.string().min(6, "Password minimal 6 karakter.").max(200);
 const nowDate = () => new Date(Math.floor(Date.now() / 1000) * 1000);
 
 function rolesFrom(form: FormData): Role[] {
@@ -62,9 +63,9 @@ export async function createUser(_prev: FormState, form: FormData): Promise<Form
     const bad = await checkRoles(db, roles, true, roles.includes("sopir") ? driverId : null);
     if (bad) return { error: bad };
     if (await db.query.users.findFirst({ where: eq(schema.users.email, parsed.data.email) })) return { error: "Email atau username sudah terdaftar." };
-    await db.insert(schema.users).values({ name, email: parsed.data.email, passwordHash: await hashPassword(parsed.data.password), roles, driverId: roles.includes("sopir") ? driverId : null });
+    await db.insert(schema.users).values({ name, email: parsed.data.email, passwordHash: await hashPassword(parsed.data.password), mustChangePassword: true, roles, driverId: roles.includes("sopir") ? driverId : null });
     revalidatePath("/internal/pengguna");
-    return { ok: `Akun ${parsed.data.email} dibuat. Ia masuk lewat halaman aplikasi dengan email/username & password itu.` };
+    return { ok: `Akun ${parsed.data.email} dibuat. Password itu sementara: saat pertama masuk ia wajib membuat password baru.` };
   }
 
   const pin = String(form.get("pin") ?? "").trim();
@@ -93,17 +94,28 @@ export async function updateUserRoles(id: number, _prev: FormState, form: FormDa
   return { ok: `Peran ${user.name} diperbarui.` };
 }
 
-/** Pemilik mengatur ulang password staf yang lupa; semua sesi staf itu otomatis keluar. */
-export async function resetUserPassword(id: number, _prev: FormState, form: FormData): Promise<FormState> {
+/** Password sementara acak, mudah dibacakan: tanpa huruf/angka yang mirip (0/O, 1/l/I). */
+function tempPassword() {
+  const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  return Array.from(bytes, (b) => chars[b % chars.length]).join("");
+}
+
+/**
+ * Pemilik mengatur ulang password staf: sistem membuat password SEMENTARA yang diberikan ke staf itu.
+ * Semua sesi staf itu keluar, dan saat masuk ia wajib membuat password baru sendiri.
+ */
+export async function resetUserPassword(id: number, _prev: FormState, _form: FormData): Promise<FormState> {
   const me = await requireOwner();
   if (id === me.id) return { error: "Ganti password Anda sendiri lewat Akun saya." };
-  const next = Password.safeParse(form.get("password"));
-  if (!next.success) return { error: next.error.issues[0]?.message };
   const db = await getDb();
   const user = await db.query.users.findFirst({ where: eq(schema.users.id, id) });
   if (!user?.email) return { error: "Akun ini tidak memakai email/username." };
-  await db.update(schema.users).set({ passwordHash: await hashPassword(next.data), updatedAt: nowDate() }).where(eq(schema.users.id, id));
-  return { ok: `Password ${user.email} diatur ulang. Berikan ke yang bersangkutan dan minta ia menggantinya.` };
+  const temp = tempPassword();
+  await db.update(schema.users).set({ passwordHash: await hashPassword(temp), mustChangePassword: true, updatedAt: nowDate() }).where(eq(schema.users.id, id));
+  await db.delete(schema.loginAttempts).where(eq(schema.loginAttempts.key, `email:${user.email.toLowerCase()}`));
+  revalidatePath("/internal/pengguna");
+  return { ok: `Password sementara ${user.name} (${user.email}): ${temp}. Berikan langsung ke yang bersangkutan; saat masuk ia wajib membuat password baru. Password ini tidak ditampilkan lagi.` };
 }
 
 /** Pemilik memberi atau mengatur ulang nomor HP + PIN akun lapangan; sesi lama akun itu berakhir. */
@@ -148,7 +160,7 @@ async function renewSession(userId: number, via: "pw" | "pin") {
 }
 
 export async function changePassword(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireUser();
+  const me = await requireUser("/internal", { allowTempPassword: true });
   const current = String(form.get("current") ?? "");
   const next = Password.safeParse(form.get("next"));
   if (!next.success) return { error: next.error.issues[0]?.message };
@@ -156,10 +168,30 @@ export async function changePassword(_prev: FormState, form: FormData): Promise<
   const db = await getDb();
   const user = await db.query.users.findFirst({ where: eq(schema.users.id, me.id) });
   if (!user?.passwordHash || !(await verifyPassword(current, user.passwordHash))) return { error: "Password saat ini salah." };
+  if (await verifyPassword(next.data, user.passwordHash)) return { error: "Password baru harus berbeda dari password sementara/lama." };
   // updatedAt dipakai sebagai penanda: sesi lain yang dibuat sebelum ini otomatis keluar.
-  await db.update(schema.users).set({ passwordHash: await hashPassword(next.data), updatedAt: nowDate() }).where(eq(schema.users.id, me.id));
+  await db.update(schema.users).set({ passwordHash: await hashPassword(next.data), mustChangePassword: false, updatedAt: nowDate() }).where(eq(schema.users.id, me.id));
   await renewSession(me.id, me.via);
   return { ok: "Password diganti. Sesi di perangkat lain sudah dikeluarkan." };
+}
+
+/**
+ * Membuat password baru setelah masuk dengan password sementara (tanpa mengetik ulang password sementara:
+ * sesi barusan sudah membuktikannya). Setelah berhasil lanjut ke halaman tujuan.
+ */
+export async function setNewPassword(_prev: FormState, form: FormData): Promise<FormState> {
+  const me = await requireUser("/internal", { allowTempPassword: true });
+  const next = Password.safeParse(form.get("next"));
+  if (!next.success) return { error: next.error.issues[0]?.message };
+  if (next.data !== form.get("confirm")) return { error: "Konfirmasi password tidak sama." };
+  const db = await getDb();
+  const user = await db.query.users.findFirst({ where: eq(schema.users.id, me.id) });
+  if (!user) return { error: "Akun tidak ditemukan." };
+  if (user.passwordHash && (await verifyPassword(next.data, user.passwordHash))) return { error: "Password baru harus berbeda dari password sementara." };
+  await db.update(schema.users).set({ passwordHash: await hashPassword(next.data), mustChangePassword: false, updatedAt: nowDate() }).where(eq(schema.users.id, me.id));
+  await renewSession(me.id, me.via);
+  const dest = safeNext(form.get("dest"), me.allRoles) ?? homeFor(me.allRoles) ?? "/internal";
+  redirect(dest);
 }
 
 /** Staf lapangan mengganti PIN sendiri. */

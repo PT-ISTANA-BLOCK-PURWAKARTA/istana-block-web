@@ -1,8 +1,10 @@
 // Form rekaman mutu ISO 9001:2015 / SNI (F-IB-01 s/d F-IB-15) — kolom, dropdown, dan rumus kolom abu-abu
 // disalin dari file Excel di folder "Data Form Istana Block" (Rev. 00, terbit 15/10/2026).
 // Dipakai bersama oleh server (validasi & rekap) dan aplikasi (input, tabel, Excel).
+// Disamakan dengan app.kirimistanablock.com (F-IB-17 kebersihan, F-IB-18 insiden, foto, paraf bertingkat, kolom kantor).
 
 import { addDays, daysBetween } from "../../erp/util";
+import { can, type Role as WebRole } from "../../roles";
 
 // Tanggal bisnis = teks YYYY-MM-DD WIB; addDays/daysBetween identik dengan src/lib/erp/util.ts, jadi dipakai ulang dari sana.
 export { addDays, daysBetween };
@@ -10,13 +12,13 @@ export { addDays, daysBetween };
 export type IsoValue = string | number | null;
 export type IsoValues = Record<string, IsoValue>;
 /**
- * Peran yang boleh menginput form (nama peran web, keputusan K3).
- * Padanan inventori-ops: superadmin -> owner, admin -> operasional. Hak sebenarnya dijaga izin `iso` di server;
- * daftar `inputRoles` di bawah hanya meniru kolom "roles input" form kertas.
+ * Peran yang boleh menginput / memaraf form (nama peran web). Padanan app lama: superadmin -> owner, admin -> operasional.
+ * Hak sebenarnya dijaga izin di server; daftar ini meniru kolom "roles input" form kertas.
  */
-export type IsoInputRole = "owner" | "operasional" | "qc" | "mandor" | "satpam" | "manajer_qc" | "pimpinan";
+export type IsoInputRole = "owner" | "operasional" | "qc" | "mandor" | "satpam" | "manajer_qc" | "pimpinan" | "qcbeton" | "ekspedisi";
+type Role = IsoInputRole;
 
-export const ISO_CODES = ["F-IB-01", "F-IB-02", "F-IB-03", "F-IB-04", "F-IB-05", "F-IB-06", "F-IB-07", "F-IB-08", "F-IB-09", "F-IB-10", "F-IB-11", "F-IB-12", "F-IB-13", "F-IB-14", "F-IB-15"] as const;
+export const ISO_CODES = ["F-IB-01", "F-IB-02", "F-IB-03", "F-IB-04", "F-IB-05", "F-IB-06", "F-IB-07", "F-IB-08", "F-IB-09", "F-IB-10", "F-IB-11", "F-IB-12", "F-IB-13", "F-IB-14", "F-IB-15", "F-IB-17", "F-IB-18"] as const;
 export type IsoCode = (typeof ISO_CODES)[number];
 
 // ---------------------------------------------------------------------------
@@ -34,13 +36,15 @@ export const LISTS = {
   param: ["pH Air", "Suhu Ruang", "Kelembaban"],
   jenisJadwal: ["Kalibrasi", "Maintenance"],
   pelaksana: ["Internal", "Vendor"],
-  jenisLog: ["Pemeriksaan Rutin", "Kerusakan/Gangguan"],
+  jenisLog: ["Pemeriksaan Rutin", "Kerusakan/Gangguan", "Kalibrasi", "Maintenance/Servis"],
+  waktuKebersihan: ["Pre-operasional", "After-operasional"],
   kondisiMesin: ["Baik", "Perlu Perbaikan", "Rusak/Berhenti"],
   prioritas: ["Tinggi", "Sedang", "Rendah"],
-  kategoriVendor: ["Material", "Jasa Maintenance/IT", "Transportasi", "Lainnya"],
-  satuan: ["Sak", "Kg", "Ton", "m3", "Liter", "Pcs", "Unit", "Rit"],
+  kategoriVendor: ["Material", "Jasa Maintenance/IT", "Jasa Perbaikan Mesin", "Transportasi", "Lainnya"],
+  satuan: ["Sak", "Kg", "Ton", "m3", "Liter", "Dus", "Botol", "Jerigen", "Pail", "Drum", "Galon", "Pcs", "Unit", "Set", "Lembar", "Batang", "Roll", "Meter", "Pak", "Rit"],
   bahanAlat: ["Bahan Baku", "Alat"],
-  statusMinta: ["Tersedia", "Kurang", "Pending", "Selesai"],
+  kategoriMinta: ["Semen", "Pasir & Agregat", "Besi & Wiremesh", "Pigmen & Cat", "Oli & BBM", "Sparepart", "Ban & Aki", "Alat Kerja", "Perlengkapan K3", "ATK & Kantor", "Lainnya"],
+  statusMinta: ["Tersedia", "Kurang", "Pending", "Selesai", "Ditolak", "Tidak Tersedia"],
   kegiatanPalet: ["Pengecekan", "Penggunaan", "Kerusakan"],
   kondisiPalet: ["Normal", "Retak", "Patah", "Lapuk"],
   bersih: ["Bersih", "Kotor"],
@@ -55,6 +59,8 @@ export const LISTS = {
   sumberNcr: ["Produk Reject", "Material Masuk", "Proses Produksi", "Keluhan Pelanggan", "Audit Internal", "Pengiriman/Lapangan"],
   disposisi: ["Rework", "Scrap", "Concession", "Retur ke Pemasok", "Tidak Ada"],
   nilai5: ["1", "2", "3", "4", "5"],
+  jenisInsiden: ["Kecelakaan kerja (pekerja)", "Kecelakaan kendaraan", "Nyaris celaka", "Kerusakan barang / alat"],
+  keparahan: ["Ringan", "Sedang", "Berat"],
   /** Tambahan aplikasi untuk F-IB-15: dipakai menghitung Sasaran Mutu bagian D (keluhan valid). */
   kategoriKeluhan: ["Mutu produk", "Terlambat", "Jumlah/jenis tidak sesuai", "Rusak saat tiba", "Pelayanan", "Hasil pemasangan", "Lainnya"],
 } as const;
@@ -90,6 +96,10 @@ const text = (value: IsoValue | undefined) => value === null || value === undefi
  * Dipakai untuk "≤ 7 hari kerja" pada Sasaran Mutu.
  */
 export const WEEKLY_OFF_DAY = 5;
+/** Pengingat F-IB-17 ke HP mandor (jam WIB): pre-operasional & after-operasional. */
+export const CLEANING_REMINDERS = [{ hour: 8, waktu: "Pre-operasional" }, { hour: 16, waktu: "After-operasional" }] as const;
+export const isWeeklyOff = (day: string) => new Date(`${day}T00:00:00Z`).getUTCDay() === WEEKLY_OFF_DAY;
+
 export function workingDaysBetween(from: string, to: string) {
   let days = 0;
   for (let day = from; day < to; day = addDays(day, 1)) if (new Date(`${addDays(day, 1)}T00:00:00Z`).getUTCDay() !== WEEKLY_OFF_DAY) days += 1;
@@ -104,9 +114,12 @@ export type IsoColumn = {
   key: string;
   label: string;
   /** Jenis isian untuk kolom putih. Kolom abu-abu (otomatis) memakai `auto`. */
-  type: "date" | "time" | "text" | "number" | "select";
+  /** photos = foto (kunci berkas, dipisah baris baru, maks. 3; disajikan lewat /operasional/berkas/<kunci>). */
+  type: "date" | "time" | "text" | "number" | "select" | "photos";
   options?: readonly string[];
   required?: boolean;
+  /** Tampilkan isian hanya bila kondisi terpenuhi (mis. berat kering/basah hanya untuk uji serapan air). */
+  showWhen?: (values: Record<string, string>) => boolean;
   /** Rumus kolom abu-abu (sama dengan rumus di file Excel). */
   auto?: (values: IsoValues, today: string) => IsoValue;
   format?: "percent" | "decimal1" | "decimal2" | "integer";
@@ -118,7 +131,28 @@ export type IsoColumn = {
   extra?: boolean;
   hint?: string;
   width?: number;
+  /** Hanya kantor yang mengisi (mis. harga); peminta boleh mengosongkan. */
+  officeOnly?: boolean;
+  /** Kolom paraf: akun dengan peran ini mendapat tombol "Paraf" (nama + tanggal terisi otomatis). */
+  signRoles?: readonly Role[];
+  /** Kolom tanda tangan untuk akun dengan izin ini (centang di Pengguna), mis. Manager = ACC QC, Pimpinan = TTD pimpinan. */
+  signFlag?: "canApproveQc" | "canSignAsLeader";
+  /** Baru bisa ditandatangani setelah kolom ini terisi (urutan PIC → Manager → Pimpinan). */
+  signAfter?: string;
+  /** Teks tombol tanda tangan (default "Paraf"). */
+  signLabel?: string;
 };
+
+/** Kolom paraf / tanda tangan (diisi lewat tombol, bukan diketik). */
+export const isSignColumn = (column: IsoColumn) => Boolean(column.signRoles || column.signFlag);
+/** Izin web untuk kolom tanda tangan: Manager = ACC QC (setujui_qc), Pimpinan = TTD pimpinan (ttd_pimpinan). */
+const SIGN_FLAG_PERM = { canApproveQc: "setujui_qc", canSignAsLeader: "ttd_pimpinan" } as const;
+/** Akun ini berhak menandatangani kolom tersebut (manajer QC setara QC untuk paraf). */
+export const canSignColumn = (roles: readonly WebRole[], column: IsoColumn) =>
+  Boolean(
+    column.signRoles?.some((r) => roles.includes(r as WebRole) || (r === "qc" && roles.includes("manajer_qc"))) ||
+      (column.signFlag && can(roles, SIGN_FLAG_PERM[column.signFlag])),
+  );
 
 export type IsoForm = {
   code: IsoCode;
@@ -131,25 +165,56 @@ export type IsoForm = {
   /** Kolom tanggal yang dibaca rekap per periode (kolom B pada file). */
   dateKey: string;
   columns: IsoColumn[];
+  /** Kolom tanda tangan khusus pada cetakan (judul + nama yang berwenang); default Dibuat / Diperiksa / Disetujui. */
+  signs?: { title: string; names: string; column?: string }[];
   /** Data diambil otomatis dari halaman lain di aplikasi. */
   app?: { page: string; pageLabel: string; note: string };
   /** Baris boleh ditambah langsung di halaman Rekap Form (input manual). */
   manual?: { hint: string };
   /** Daftar induk (F-IB-06): semua baris selalu tampil; periode menghitung jadwal jatuh tempo. */
   master?: boolean;
-  inputRoles: IsoInputRole[];
+  inputRoles: Role[];
   /** Kolom "No" pada form: nomor urut, atau nomor NCR yang tersimpan. */
   numberLabel: string;
 };
 
-const OFFICE: IsoInputRole[] = ["owner", "operasional"];
-const QC_TEAM: IsoInputRole[] = ["owner", "operasional", "qc"];
-const PLANT: IsoInputRole[] = ["owner", "operasional", "qc", "mandor"];
+const OFFICE: Role[] = ["owner", "operasional"];
+const QC_TEAM: Role[] = ["owner", "operasional", "qc", "qcbeton"];
+const PLANT: Role[] = ["owner", "operasional", "qc", "mandor", "qcbeton"];
+/** Laporan insiden (F-IB-18): semua petugas lapangan boleh melapor, termasuk satpam & PIC Kendaraan. */
+export const INCIDENT_ROLES: Role[] = ["owner", "operasional", "mandor", "satpam", "ekspedisi", "qc", "qcbeton"];
+/** Paraf QC: tim QC & pimpinan (bukan admin kantor). */
+const QC_SIGN: Role[] = ["owner", "qc", "qcbeton"];
 
 const ratio = (part: number | null, whole: number | null) => part === null || whole === null || whole === 0 ? null : part / whole;
 const sni = (values: IsoValues) => SNI_PAVING[text(values.mutu)];
 const env = (values: IsoValues) => ENVIRONMENT_LIMITS[text(values.parameter)];
 const VENDOR_CRITERIA = ["ketepatan", "kualitas", "kerapihan", "keselamatan", "respon", "penyelesaian"] as const;
+/** Penilaian vendor perbaikan mesin (F-IB-07): rata-rata biaya, kecepatan, hasil. */
+export const repairScore = (v: IsoValues) => { const scores = ["nilaiBiaya", "nilaiKecepatan", "nilaiHasil"].flatMap(key => { const n = num(v[key]); return n === null ? [] : [n]; }); return scores.length ? scores.reduce((sum, n) => sum + n, 0) / scores.length : null; };
+export const repairTier = (score: IsoValue) => { const n = num(score); return n === null ? null : n >= 4.5 ? "S" : n >= 4 ? "A" : n >= 3 ? "B" : n >= 2 ? "C" : "D"; };
+
+export type MachineCost = { mesin: string; catatan: number; kerusakan: number; open: number; downtime: number; barang: number; jasa: number; total: number; terakhir: string | null };
+/** Biaya perawatan per mesin dari baris F-IB-07 (termasuk yang dikerjakan internal), urut total biaya terbesar. */
+export function machineCosts(rows: IsoValues[]): MachineCost[] {
+  const byMachine = new Map<string, MachineCost>();
+  for (const v of rows) {
+    const mesin = String(v.mesin ?? "").trim();
+    if (!mesin) continue;
+    const key = mesin.toUpperCase();
+    const entry = byMachine.get(key) ?? { mesin, catatan: 0, kerusakan: 0, open: 0, downtime: 0, barang: 0, jasa: 0, total: 0, terakhir: null };
+    const barang = num(v.biayaBarang) ?? 0, jasa = num(v.biayaJasa) ?? 0;
+    entry.catatan += 1;
+    if (v.jenis === "Kerusakan/Gangguan" || (v.kondisi && v.kondisi !== "Baik")) entry.kerusakan += 1;
+    if (v.kondisi && v.kondisi !== "Baik" && !isDay(v.selesai)) entry.open += 1;
+    entry.downtime += num(v.downtime) ?? 0;
+    entry.barang += barang; entry.jasa += jasa; entry.total += barang + jasa;
+    if (isDay(v.tanggal) && (!entry.terakhir || String(v.tanggal) > entry.terakhir)) entry.terakhir = String(v.tanggal);
+    byMachine.set(key, entry);
+  }
+  return [...byMachine.values()].sort((a, b) => b.total - a.total || b.kerusakan - a.kerusakan || a.mesin.localeCompare(b.mesin));
+}
+export const CLEANING_ITEMS = ["1. Mesin cetak paving bersih dari sisa adukan", "2. Mixer & bak adukan bersih", "3. Conveyor / belt bersih", "4. Cetakan (mould) & tamper bersih", "5. Papan cetak / palet bersih & tersusun", "6. Lantai area produksi bersih", "7. Saluran air / drainase tidak tersumbat", "8. Sisa adukan & limbah dibuang ke tempatnya", "9. Alat kerja (sekop, ember, sapu) dirapikan", "10. Area bahan baku (pasir, abu batu, semen) rapi"];
 export const WAREHOUSE_ITEMS = ["1. Kebersihan area", "2. Kerapihan susunan barang", "3. Kondisi palet", "4. Kondisi produk jadi", "5. Jalur forklift aman", "6. Penataan sesuai area", "7. Label barang lengkap", "8. Tidak ada barang rusak", "9. APAR tersedia & aman", "10. Pencahayaan baik"];
 
 export const ISO_FORMS: IsoForm[] = [
@@ -205,7 +270,7 @@ export const ISO_FORMS: IsoForm[] = [
       { key: "hasil", label: "Hasil di Lapangan", type: "text", width: 34 },
       { key: "status", label: "Status", type: "select", options: LISTS.sesuai3 },
       { key: "catatan", label: "Catatan", type: "text", width: 24 },
-      { key: "paraf", label: "Paraf QC", type: "text" },
+      { key: "paraf", label: "Paraf QC", type: "text", signRoles: QC_SIGN },
     ],
   },
   {
@@ -222,22 +287,21 @@ export const ISO_FORMS: IsoForm[] = [
       { key: "umur", label: "Umur (hari)", type: "number", format: "integer", auto: v => isDay(v.tanggalUji) && isDay(v.tanggalProduksi) ? daysBetween(v.tanggalProduksi, v.tanggalUji) : null },
       { key: "jenisUji", label: "Jenis Uji", type: "select", options: LISTS.jenisUji, required: true },
       { key: "mutu", label: "Mutu Target (SNI)", type: "select", options: LISTS.mutu, required: true },
-      { key: "beratKering", label: "Berat Kering / Awal (g)", type: "number", hint: "Khusus serapan air" },
-      { key: "beratBasah", label: "Berat Basah / Akhir (g)", type: "number", hint: "Khusus serapan air" },
-      { key: "beban", label: "Beban Maks (kN)", type: "number", hint: "Khusus kuat tekan" },
-      { key: "luas", label: "Luas Bidang Tekan (cm²)", type: "number", hint: "Khusus kuat tekan" },
-      { key: "hasilUji", label: "Hasil", type: "number", format: "decimal2", auto: v => {
+      { key: "beratKering", label: "Berat Kering / Awal (g)", type: "number", hint: "Ditimbang setelah dioven / kering", showWhen: v => v.jenisUji === "Serapan Air" },
+      { key: "beratBasah", label: "Berat Basah / Akhir (g)", type: "number", hint: "Ditimbang setelah direndam 24 jam", showWhen: v => v.jenisUji === "Serapan Air" },
+      { key: "luas", label: "Luas Bidang Tekan (cm²)", type: "number", hint: "Khusus kuat tekan", showWhen: v => v.jenisUji === "Kuat Tekan" },
+      { key: "beban", label: "Beban Maks (kN)", type: "number", hint: "Khusus kuat tekan", showWhen: v => v.jenisUji === "Kuat Tekan" },
+      { key: "kgcm2", label: "Kuat Tekan (kg/cm²)", type: "number", format: "decimal1", auto: v => { const load = num(v.beban), area = num(v.luas); return v.jenisUji === "Kuat Tekan" && load !== null && area ? ((load * 10) / area) * KGCM2_PER_MPA : null; } },
+      { key: "hasilUji", label: "Hasil (MPa / serapan %)", type: "number", format: "decimal2", hint: "Kuat tekan dalam MPa; serapan air dalam %", auto: v => {
         if (v.jenisUji === "Serapan Air") { const dry = num(v.beratKering), wet = num(v.beratBasah); return dry && wet !== null ? ((wet - dry) / dry) * 100 : null; }
         if (v.jenisUji === "Kuat Tekan") { const load = num(v.beban), area = num(v.luas); return load !== null && area ? (load * 10) / area : null; }
         return null;
       } },
-      { key: "satuan", label: "Satuan", type: "text", auto: v => v.jenisUji === "Serapan Air" ? "%" : v.jenisUji === "Kuat Tekan" ? "MPa" : null },
-      { key: "kgcm2", label: "Kuat Tekan (kg/cm²)", type: "number", format: "decimal1", auto: v => { const load = num(v.beban), area = num(v.luas); return v.jenisUji === "Kuat Tekan" && load !== null && area ? ((load * 10) / area) * KGCM2_PER_MPA : null; } },
-      { key: "batas", label: "Batas Standar", type: "number", format: "decimal1", auto: v => { const s = sni(v); return !s ? null : v.jenisUji === "Serapan Air" ? s.absorption : v.jenisUji === "Kuat Tekan" ? s.strength : null; } },
+      { key: "batas", label: "Batas Standar (MPa / %)", type: "number", format: "decimal1", auto: v => { const s = sni(v); return !s ? null : v.jenisUji === "Serapan Air" ? s.absorption : v.jenisUji === "Kuat Tekan" ? s.strength : null; } },
       { key: "statusUji", label: "Status", type: "text", auto: v => strengthStatus(v) },
       { key: "lab", label: "Lab Penguji", type: "select", options: LISTS.lab, supplement: true },
       { key: "catatan", label: "Catatan", type: "text", width: 24 },
-      { key: "paraf", label: "Paraf QC", type: "text", defaultUser: true },
+      { key: "paraf", label: "Paraf QC", type: "text", signRoles: QC_SIGN },
     ],
   },
   {
@@ -262,7 +326,7 @@ export const ISO_FORMS: IsoForm[] = [
         return value < limit.min ? "Di bawah standar" : value > limit.max ? "Di atas standar" : "Normal";
       } },
       { key: "tindakan", label: "Tindakan / Catatan", type: "text", width: 26 },
-      { key: "paraf", label: "Paraf QC", type: "text", defaultUser: true },
+      { key: "paraf", label: "Paraf QC", type: "text", signRoles: QC_SIGN },
     ],
   },
   {
@@ -275,14 +339,15 @@ export const ISO_FORMS: IsoForm[] = [
       { key: "kode", label: "Kode Alat", type: "text" },
       { key: "jenis", label: "Jenis", type: "select", options: LISTS.jenisJadwal, required: true },
       { key: "pekerjaan", label: "Jenis Pekerjaan", type: "text", width: 22 },
-      { key: "frekuensi", label: "Frekuensi (hari)", type: "number", required: true, format: "integer" },
+      { key: "frekuensi", label: "Frekuensi (hari)", type: "number", required: true, format: "integer", hint: "0 = sekali saja (tidak berulang)" },
       { key: "terakhir", label: "Tgl Terakhir", type: "date", required: true },
-      { key: "berikutnya", label: "Jadwal Berikutnya", type: "date", auto: v => { const days = num(v.frekuensi); return isDay(v.terakhir) && days !== null ? addDays(v.terakhir, Math.round(days)) : null; } },
-      { key: "sisaHari", label: "Sisa Hari", type: "number", format: "integer", auto: (v, today) => { const days = num(v.frekuensi); return isDay(v.terakhir) && days !== null ? daysBetween(today, addDays(v.terakhir, Math.round(days))) : null; } },
-      { key: "status", label: "Status", type: "text", auto: (v, today) => { const days = num(v.frekuensi); if (!isDay(v.terakhir) || days === null) return null; const left = daysBetween(today, addDays(v.terakhir, Math.round(days))); return left < 0 ? "TERLAMBAT" : left <= 7 ? "SEGERA" : "Terjadwal"; } },
+      { key: "berikutnya", label: "Jadwal Berikutnya", type: "date", auto: v => { const days = num(v.frekuensi); return isDay(v.terakhir) && days !== null && days > 0 ? addDays(v.terakhir, Math.round(days)) : null; } },
+      { key: "sisaHari", label: "Sisa Hari", type: "number", format: "integer", auto: (v, today) => { const days = num(v.frekuensi); return isDay(v.terakhir) && days !== null && days > 0 ? daysBetween(today, addDays(v.terakhir, Math.round(days))) : null; } },
+      { key: "status", label: "Status", type: "text", auto: (v, today) => { const days = num(v.frekuensi); if (!isDay(v.terakhir) || days === null) return null; if (days <= 0) return "Selesai"; const left = daysBetween(today, addDays(v.terakhir, Math.round(days))); return left < 0 ? "TERLAMBAT" : left <= 7 ? "SEGERA" : "Terjadwal"; } },
       { key: "pelaksana", label: "Pelaksana", type: "select", options: LISTS.pelaksana },
       { key: "sertifikat", label: "No. Sertifikat / Bukti", type: "text" },
       { key: "keterangan", label: "Keterangan", type: "text", width: 22 },
+      { key: "ketSelesai", label: "Keterangan Selesai", type: "text", width: 26, hint: "Terisi otomatis dari tombol Selesaikan" },
     ],
   },
   {
@@ -303,14 +368,24 @@ export const ISO_FORMS: IsoForm[] = [
       { key: "downtime", label: "Downtime (jam)", type: "number", format: "decimal1" },
       { key: "selesai", label: "Tgl Selesai", type: "date" },
       { key: "status", label: "Status", type: "text", auto: v => !isDay(v.tanggal) ? null : v.kondisi === "Baik" ? "Closed" : isDay(v.selesai) ? "Closed" : "Open" },
-      { key: "paraf", label: "Paraf QC", type: "text", defaultUser: true },
+      { key: "paraf", label: "Paraf QC", type: "text", signRoles: QC_SIGN },
+      { key: "vendor", label: "Vendor / Pelaksana", type: "text", extra: true, hint: "Kosongkan / tulis Internal bila dikerjakan sendiri", width: 20 },
+      { key: "biayaBarang", label: "Biaya Barang / Sparepart (Rp)", type: "number", format: "integer", extra: true },
+      { key: "biayaJasa", label: "Biaya Jasa (Rp)", type: "number", format: "integer", extra: true },
+      { key: "totalBiaya", label: "Total Biaya (Rp)", type: "number", format: "integer", extra: true, auto: v => { const a = num(v.biayaBarang), b = num(v.biayaJasa); return a === null && b === null ? null : (a ?? 0) + (b ?? 0); } },
+      { key: "nilaiBiaya", label: "Nilai Biaya (1-5)", type: "select", options: LISTS.nilai5, extra: true, hint: "5 = paling murah / wajar" },
+      { key: "nilaiKecepatan", label: "Nilai Kecepatan (1-5)", type: "select", options: LISTS.nilai5, extra: true },
+      { key: "nilaiHasil", label: "Nilai Hasil (1-5)", type: "select", options: LISTS.nilai5, extra: true },
+      { key: "nilaiVendor", label: "Nilai Vendor", type: "number", format: "decimal2", extra: true, auto: v => repairScore(v) },
+      { key: "tierVendor", label: "Tier Vendor", type: "text", extra: true, auto: v => repairTier(repairScore(v)) },
+      { key: "foto", label: "Foto (kalibrasi / maintenance / kerusakan)", type: "photos", extra: true, width: 24 },
     ],
   },
   {
     code: "F-IB-08", title: "EVALUASI KINERJA VENDOR / PEMASOK", short: "Evaluasi vendor", fileName: "F-IB-08 Evaluasi Vendor.xlsx",
     clause: "8.4", procedure: "PM-IB-08.06, 08.07", replaces: "Form Penilaian Vendor (docx) + Performa Vendor IT (Maintenance Mesin)",
     dateKey: "tanggal", numberLabel: "No", inputRoles: QC_TEAM,
-    app: { page: "/bahan-baku", pageLabel: "Catatan Bahan Baku", note: "Satu baris per supplier & ekspedisi pada periode ini, dihitung dari penilaian barang masuk: kualitas (tier QC) dan ketepatan waktu (kecepatan kirim), skala 1–5." },
+    app: { page: "/bahan-baku", pageLabel: "Catatan Bahan Baku", note: "Satu baris per supplier & ekspedisi pada periode ini, dihitung dari penilaian barang masuk: kualitas (tier QC) dan ketepatan waktu (kecepatan kirim), skala 1–5. Vendor perbaikan mesin dari F-IB-07 masuk kategori \"Jasa Perbaikan Mesin\" (kecepatan → ketepatan waktu, hasil → kualitas)." },
     manual: { hint: "Tambah evaluasi lengkap 6 kriteria (mis. vendor jasa maintenance/IT, transportasi)." },
     columns: [
       { key: "tanggal", label: "Tanggal", type: "date", required: true },
@@ -345,13 +420,14 @@ export const ISO_FORMS: IsoForm[] = [
       { key: "hasil", label: "Hasil Pemeriksaan", type: "select", options: ["Diterima", "Diterima Bersyarat", "Ditolak/Retur"] },
       { key: "kondisi", label: "Kondisi / Catatan Pemeriksaan", type: "text", width: 34 },
       { key: "tindakan", label: "Tindakan", type: "text", supplement: true, width: 20 },
-      { key: "paraf", label: "Paraf QC", type: "text" },
+      { key: "paraf", label: "Paraf QC", type: "text", signRoles: QC_SIGN },
     ],
   },
   {
     code: "F-IB-10", title: "PERMINTAAN BAHAN BAKU & ALAT (INTERNAL)", short: "Permintaan bahan & alat", fileName: "F-IB-10 Permintaan Bahan dan Alat.xlsx",
     clause: "8.4, 7.1", procedure: "PM-IB-08.06", replaces: "Perencanaan & Delivery Order Pemesanan Bahan & Alat - 2 sheet (BAHAN, ALAT)",
     dateKey: "tanggal", numberLabel: "No", inputRoles: PLANT,
+    signs: [{ title: "Dibuat oleh,\nPIC", names: "Roki Suryana / Yishak / PIC Kantor", column: "paraf" }, { title: "Mengetahui,\nManager", names: "Lukman", column: "ttdManager" }, { title: "Mengetahui,\nPimpinan", names: "Hamad Salim / Muhamad Abdulah", column: "ttdPimpinan" }],
     manual: { hint: "Permintaan bahan baku/alat dari lapangan. Ubah status ke \"Selesai\" dan isi tanggal selesai saat barang sudah ada." },
     columns: [
       { key: "tanggal", label: "Tanggal", type: "date", required: true },
@@ -364,7 +440,14 @@ export const ISO_FORMS: IsoForm[] = [
       { key: "status", label: "Status", type: "select", options: LISTS.statusMinta, required: true },
       { key: "selesai", label: "Tgl Selesai", type: "date" },
       { key: "lama", label: "Lama Proses (hari)", type: "number", format: "integer", auto: v => isDay(v.tanggal) && isDay(v.selesai) ? daysBetween(v.tanggal, v.selesai) : null },
-      { key: "paraf", label: "Paraf", type: "text" },
+      { key: "paraf", label: "Dibuat (PIC)", type: "text", signRoles: ["owner", "operasional", "qc", "mandor", "qcbeton"], signLabel: "TTD PIC" },
+      { key: "ttdManager", label: "Mengetahui Manager", type: "text", signFlag: "canApproveQc", signAfter: "paraf", signLabel: "TTD Manager" },
+      { key: "ttdPimpinan", label: "Mengetahui Pimpinan", type: "text", signFlag: "canSignAsLeader", signAfter: "ttdManager", signLabel: "TTD Pimpinan" },
+      { key: "hargaSatuan", label: "Harga Satuan (Rp)", type: "number", format: "integer", extra: true, officeOnly: true, hint: "Diisi kantor" },
+      { key: "biayaLain", label: "Biaya Lain / Ongkir (Rp)", type: "number", format: "integer", extra: true, officeOnly: true },
+      { key: "totalBiaya", label: "Total Biaya (Rp)", type: "number", format: "integer", extra: true, auto: v => { const q = num(v.jumlah), p = num(v.hargaSatuan), o = num(v.biayaLain); return p === null && o === null ? null : (q ?? 0) * (p ?? 0) + (o ?? 0); } },
+      { key: "pemasok", label: "Toko / Pemasok", type: "text", extra: true, officeOnly: true },
+      { key: "kategori", label: "Kategori", type: "select", options: LISTS.kategoriMinta, extra: true, hint: "Isi saat permintaan Selesai" },
     ],
   },
   {
@@ -385,7 +468,7 @@ export const ISO_FORMS: IsoForm[] = [
       { key: "kerusakan", label: "Jenis Kerusakan", type: "text" },
       { key: "tindakan", label: "Tindakan", type: "select", options: LISTS.tindakanPalet },
       { key: "statusAkhir", label: "Status Akhir", type: "select", options: LISTS.statusPalet },
-      { key: "paraf", label: "Paraf QC", type: "text", defaultUser: true },
+      { key: "paraf", label: "Paraf QC", type: "text", signRoles: QC_SIGN },
     ],
   },
   {
@@ -437,6 +520,7 @@ export const ISO_FORMS: IsoForm[] = [
       { key: "target", label: "Target Waktu", type: "date" },
       { key: "status", label: "Status", type: "select", options: LISTS.openClosed, required: true },
       { key: "selesai", label: "Tgl Selesai", type: "date" },
+      { key: "ketSelesai", label: "Keterangan Selesai", type: "text", width: 26 },
       { key: "ketepatan", label: "Ketepatan", type: "text", auto: (v, today) => {
         if (!isDay(v.tanggal) || !v.status) return null;
         if (v.status === "Open") return !isDay(v.target) ? "Berjalan" : today > v.target ? "TERLAMBAT" : "Berjalan";
@@ -465,6 +549,50 @@ export const ISO_FORMS: IsoForm[] = [
       { key: "efektif", label: "Efektif?", type: "select", options: LISTS.yaTidak },
       { key: "umur", label: "Umur (hari)", type: "number", format: "integer", auto: (v, today) => !isDay(v.tanggal) ? null : daysBetween(v.tanggal, isDay(v.closed) ? v.closed : today) },
       { key: "kategori", label: "Kategori Keluhan", type: "select", options: LISTS.kategoriKeluhan, extra: true, hint: "Khusus keluhan pelanggan yang sudah diverifikasi QC (valid)." },
+    ],
+  },
+  {
+    code: "F-IB-17", title: "CHECKLIST KEBERSIHAN MISE EN PLACE (PRE-OP) & AFTER OPERASIONAL (PAVING BLOCK)", short: "Kebersihan mise en place / after op", fileName: "F-IB-17 Kebersihan Operasional Paving.xlsx",
+    clause: "7.1.4, 8.5.1", procedure: "PM-IB-07.04, 08.09", replaces: "Form baru (aplikasi) — diatur mandor; melengkapi F-IB-12 untuk area produksi (IK-IB-07.18 Housekeeping, IK-IB-08.13 Persiapan Produksi)",
+    dateKey: "tanggal", numberLabel: "No", inputRoles: PLANT,
+    manual: { hint: "Diisi mandor saat mise en place sebelum mulai (pre-operasional) dan setelah selesai produksi paving (after-operasional). Skor = jumlah \"Baik\" ÷ butir yang diisi. Lampirkan foto area." },
+    columns: [
+      { key: "tanggal", label: "Tanggal", type: "date", required: true },
+      { key: "waktu", label: "Waktu", type: "select", options: LISTS.waktuKebersihan, required: true },
+      { key: "area", label: "Area / Mesin", type: "text", required: true },
+      { key: "mandor", label: "Mandor (PIC)", type: "text", defaultUser: true },
+      ...CLEANING_ITEMS.map((label, index): IsoColumn => ({ key: `k${index + 1}`, label, type: "select", options: LISTS.baikTidak, width: 12 })),
+      { key: "skor", label: "Skor", type: "number", format: "percent", auto: v => { const filled = CLEANING_ITEMS.map((_, i) => v[`k${i + 1}`]).filter(value => value === "Baik" || value === "Tidak"); return filled.length ? filled.filter(value => value === "Baik").length / filled.length : null; } },
+      { key: "tindakan", label: "Tindakan / Catatan", type: "text", width: 26 },
+      { key: "foto", label: "Foto Area", type: "photos", width: 24 },
+    ],
+  },
+  {
+    code: "F-IB-18", title: "LAPORAN INSIDEN & KECELAKAAN (KERJA, KENDARAAN, NYARIS CELAKA)", short: "Insiden / kecelakaan", fileName: "F-IB-18 Insiden dan Kecelakaan.xlsx",
+    clause: "7.1.4, 8.5.1, 10.2", procedure: "PM-IB-08.14, 10.01", replaces: "Form baru (aplikasi) — dilaporkan mandor / satpam / PIC Kendaraan dari HP di menu Lapor Insiden; pimpinan langsung mendapat notifikasi",
+    dateKey: "tanggal", numberLabel: "No. Insiden", inputRoles: INCIDENT_ROLES,
+    manual: { hint: "Nomor insiden dibuat otomatis (INS-tahun-urut). Laporkan segera: jenis, lokasi, siapa terlibat, kronologi singkat, akibat, dan foto. Kantor melengkapi penyebab & tindakan perbaikan, lalu menutup (Closed) bila sudah selesai." },
+    columns: [
+      { key: "tanggal", label: "Tanggal Kejadian", type: "date", required: true },
+      { key: "jam", label: "Jam", type: "time" },
+      { key: "jenis", label: "Jenis Insiden", type: "select", options: LISTS.jenisInsiden, required: true },
+      { key: "lokasi", label: "Lokasi", type: "text", required: true, hint: "Mis. area cetak paving, gudang, jalan tol Cikampek km 70" },
+      { key: "terlibat", label: "Pekerja / Sopir Terlibat", type: "text" },
+      { key: "kendaraan", label: "Kendaraan / Alat", type: "text", hint: "Nomor polisi atau nama mesin / alat (bila ada)" },
+      { key: "kronologi", label: "Kronologi Singkat", type: "text", required: true, width: 30 },
+      { key: "akibat", label: "Akibat (luka / kerusakan)", type: "text", width: 26 },
+      { key: "keparahan", label: "Tingkat", type: "select", options: LISTS.keparahan },
+      { key: "berobat", label: "Berobat?", type: "select", options: LISTS.yaTidak },
+      { key: "biaya", label: "Perkiraan Biaya / Kerugian (Rp)", type: "number", format: "integer", extra: true },
+      { key: "foto", label: "Foto Kejadian", type: "photos", width: 24 },
+      { key: "penyebab", label: "Penyebab", type: "text", width: 24, extra: true },
+      { key: "tindakan", label: "Tindakan Perbaikan / Pencegahan", type: "text", width: 26, extra: true },
+      { key: "pj", label: "PJ Tindak Lanjut", type: "text", extra: true },
+      { key: "target", label: "Target Selesai", type: "date", extra: true },
+      { key: "status", label: "Status", type: "select", options: LISTS.openClosed, required: true },
+      { key: "closed", label: "Tgl Closed", type: "date", extra: true },
+      { key: "pelapor", label: "Dilaporkan oleh", type: "text", defaultUser: true },
+      { key: "umur", label: "Umur (hari)", type: "number", format: "integer", auto: (v, today) => !isDay(v.tanggal) ? null : daysBetween(v.tanggal, isDay(v.closed) ? v.closed : today) },
     ],
   },
 ];
@@ -526,6 +654,9 @@ export function cleanIsoValues(form: IsoForm, input: Record<string, unknown>, op
     } else if (column.type === "time") {
       if (typeof raw !== "string" || !/^([01]\d|2[0-3]):[0-5]\d$/.test(raw)) return { values, error: `Jam "${column.label}" tidak valid (contoh 08:30)` };
       values[column.key] = raw;
+    } else if (column.type === "photos") {
+      const urls = String(raw).split(/\n+/).map(url => url.trim().replace(/^\/(files|operasional\/berkas)\//, "")).filter(url => /^[\w-]+\/[\w./-]+$/.test(url) && !url.includes("..")).slice(0, 3);
+      values[column.key] = urls.length ? urls.join("\n") : null;
     } else if (column.type === "select") {
       const value = String(raw).trim();
       if (column.options && !column.options.includes(value)) return { values, error: `Pilihan "${column.label}" tidak dikenal` };
@@ -541,6 +672,8 @@ export function cleanIsoValues(form: IsoForm, input: Record<string, unknown>, op
 export type ProductClass = "paving" | "uditch" | "kanstin" | "buisVibrasi" | "buisTumbuk" | "greffel" | "lainnya";
 export function productClass(name: string | null | undefined, category?: string | null): ProductClass {
   const value = String(name ?? "").toLowerCase();
+  // Tutup U-Ditch / tutup buis dihitung terpisah (bukan U-Ditch / buis beton).
+  if (/tutup|cover/.test(value)) return "lainnya";
   if (category === "paving" || /paving|bata\s*beton|hexagon|cacing|grass\s*block/.test(value)) return "paving";
   if (/u[\s-]?ditch/.test(value)) return "uditch";
   if (/kanstin|kereb|kerb/.test(value)) return "kanstin";

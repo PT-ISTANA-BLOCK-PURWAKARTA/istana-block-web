@@ -76,7 +76,7 @@ export function NewUserForm({ drivers }: { drivers: DriverOption[] }) {
         <label className={`kind-opt${kind === "kantor" ? " is-on" : ""}`}>
           <input type="radio" name="kind" value="kantor" checked={kind === "kantor"} onChange={() => { setKind("kantor"); setRoles([]); }} />
           <b>Kantor: email / username &amp; password</b>
-          <span>Pemilik, admin situs, keuangan, admin operasional.</span>
+          <span>Super admin, admin situs, keuangan, admin operasional.</span>
         </label>
       </fieldset>
       <div className="form-grid" key={kind}>
@@ -87,7 +87,7 @@ export function NewUserForm({ drivers }: { drivers: DriverOption[] }) {
               <label htmlFor="nu-email">Email atau username</label>
               <input id="nu-email" name="email" type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="mis. rina atau rina@istanablock.com" required />
             </div>
-            <div className="field"><label htmlFor="nu-pass">Password awal <span className="help">minimal 10 karakter</span></label><input id="nu-pass" name="password" type="password" autoComplete="new-password" required minLength={10} /></div>
+            <div className="field"><label htmlFor="nu-pass">Password sementara <span className="help">minimal 6 karakter; wajib diganti saat pertama masuk</span></label><input id="nu-pass" name="password" type="password" autoComplete="new-password" required minLength={6} /></div>
           </>
         ) : (
           <>
@@ -126,12 +126,11 @@ export function EditUser({
           <div><SubmitButton className="btn btn-blue btn-sm">Simpan peran</SubmitButton></div>
         </ActionForm>
         {user.email && !self && (
-          <ActionForm action={resetUserPassword.bind(null, user.id)} className="inline-form" resetOnOk>
+          <ActionForm action={resetUserPassword.bind(null, user.id)} className="inline-form">
             <div className="field" style={{ flex: "1 1 220px" }}>
-              <label htmlFor={`rp${user.id}`}>Atur ulang password</label>
-              <input id={`rp${user.id}`} name="password" type="text" autoComplete="off" minLength={10} required placeholder="minimal 10 karakter" />
+              <span className="help">Lupa password? Sistem membuat password sementara; saat masuk ia wajib membuat password baru.</span>
             </div>
-            <SubmitButton className="btn btn-ghost btn-sm">Atur ulang</SubmitButton>
+            <SubmitButton className="btn btn-ghost btn-sm">Buat password sementara</SubmitButton>
           </ActionForm>
         )}
         {user.roles.some((r) => FIELD_ROLES.includes(r)) && (

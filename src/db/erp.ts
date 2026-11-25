@@ -794,6 +794,9 @@ export const backupRuns = sqliteTable(
 
 /* ---------------------------------------------------------------- QC: mix desain & uji kuat tekan */
 
+export const qcScopes = ["paving", "beton"] as const;
+export type QcScope = (typeof qcScopes)[number];
+
 export const mixLayers = ["badan", "kepalaan", "lainnya"] as const;
 export type MixLayer = (typeof mixLayers)[number];
 /** gagal = sempat dipakai tapi hasilnya gagal; masuk rekapan bersama yang ditolak. */
@@ -825,6 +828,8 @@ export const mixDesigns = sqliteTable(
     retiredReason: text("retired_reason"),
     retiredBy: integer("retired_by"),
     retiredAt: integer("retired_at", { mode: "timestamp" }),
+    /** Bagian pemilik template: paving (Team Leader Paving) atau beton (QC Beton: U-Ditch, Buis vibrasi, Kanstin). */
+    scope: text("scope").$type<QcScope>().notNull().default("paving"),
     ...created,
   },
   (t) => [index("qc_md_status_idx").on(t.status, t.layer)],
@@ -856,6 +861,10 @@ export const mixLogs = sqliteTable(
     /** TTD "Diperiksa oleh" (manajer QC) saat disetujui. */
     managerSignedBy: integer("manager_signed_by"),
     managerSignedAt: integer("manager_signed_at", { mode: "timestamp" }),
+    /** paving (Team Leader Paving) atau beton (QC Beton). */
+    scope: text("scope").$type<QcScope>().notNull().default("paving"),
+    /** Leader produksi (mix beton). */
+    leader: text("leader"),
     ...created,
   },
   (t) => [index("qc_ml_date_idx").on(t.workDate, t.layer)],
@@ -889,9 +898,93 @@ export const strengthTests = sqliteTable(
     /** TTD pembuat benda uji (padanan `strengthTests.makerSignedBy/At`). */
     makerSignedBy: integer("maker_signed_by"),
     makerSignedAt: integer("maker_signed_at", { mode: "timestamp" }),
+    /** paving (uji paving) atau beton (uji mutu beton precast & genteng oleh QC Beton). */
+    scope: text("scope").$type<QcScope>().notNull().default("paving"),
     ...created,
   },
   (t) => [index("qc_st_date_idx").on(t.reportDate)],
+);
+
+export type PurchaseLetterItem = { name: string; quantity: number | null; unit: string | null; price: number | null; total: number | null; note: string | null };
+/** Surat pesanan barang ke pemasok (eksternal) dari F-IB-10. Nomor 001/SP-IBP/XI/2026 per tahun; draft belum bernomor resmi. */
+export const purchaseLetters = sqliteTable(
+  "ops_purchase_letters",
+  {
+    id: id(),
+    seq: integer("seq").notNull().default(0),
+    number: text("number").notNull(),
+    status: text("status").$type<"draft" | "final">().notNull().default("final"),
+    letterDate: text("letter_date").notNull(),
+    supplierName: text("supplier_name").notNull(),
+    contactName: text("contact_name"),
+    contactPhone: text("contact_phone"),
+    supplierAddress: text("supplier_address"),
+    items: text("items", { mode: "json" }).$type<PurchaseLetterItem[]>().notNull().default(sql`'[]'`),
+    showPrices: integer("show_prices", { mode: "boolean" }).notNull().default(false),
+    deliveryTo: text("delivery_to"),
+    neededBy: text("needed_by"),
+    receiverName: text("receiver_name"),
+    receiverPhone: text("receiver_phone"),
+    payment: text("payment"),
+    paymentDays: integer("payment_days"),
+    note: text("note"),
+    isoKeys: text("iso_keys", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    signerId: integer("signer_id"),
+    signerName: text("signer_name"),
+    signerTitle: text("signer_title"),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    ...created,
+  },
+  (t) => [uniqueIndex("ops_pl_number_uq").on(t.number), index("ops_pl_supplier_idx").on(t.supplierName)],
+);
+
+/** Absensi pekerja harian (PIC absensi): nama bebas, tugas, jenis upah, jam kerja & lembur, hasil borongan. Sopir tetap di jadwal sopir. */
+export const workerPayTypes = ["harian", "jam", "borongan"] as const;
+export const workerStatuses = ["hadir", "izin", "sakit", "alfa"] as const;
+export const workerAttendance = sqliteTable(
+  "ops_worker_attendance",
+  {
+    id: id(),
+    workDate: text("work_date").notNull(),
+    workerName: text("worker_name").notNull(),
+    task: text("task"),
+    payType: text("pay_type").$type<(typeof workerPayTypes)[number]>().notNull().default("harian"),
+    status: text("status").$type<(typeof workerStatuses)[number]>().notNull().default("hadir"),
+    startTime: text("start_time"),
+    endTime: text("end_time"),
+    hours: real("hours"),
+    overtimeHours: real("overtime_hours"),
+    output: real("output"),
+    outputUnit: text("output_unit"),
+    note: text("note"),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    updatedByName: text("updated_by_name"),
+    ...created,
+  },
+  (t) => [index("ops_wa_date_idx").on(t.workDate), index("ops_wa_name_idx").on(t.workerName, t.workDate)],
+);
+
+/** Waktu produksi terbuang (QC Beton): lama, alasan (sama seperti alasan produksi berhenti), area/produk. */
+export const downtimes = sqliteTable(
+  "qc_downtimes",
+  {
+    id: id(),
+    workDate: text("work_date").notNull(),
+    scope: text("scope").$type<QcScope>().notNull().default("beton"),
+    area: text("area"),
+    startTime: text("start_time"),
+    endTime: text("end_time"),
+    minutes: integer("minutes").notNull(),
+    reasons: text("reasons", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+    workersShort: integer("workers_short"),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    ...created,
+  },
+  (t) => [index("qc_dt_date_idx").on(t.workDate, t.scope)],
 );
 
 /** Benda uji dalam satu laporan uji kuat tekan (tanggal buat/uji = teks YYYY-MM-DD). */
@@ -1347,6 +1440,8 @@ export const payslips = sqliteTable(
     payKind: text("pay_kind"),
     periodFrom: text("period_from"),
     periodTo: text("period_to"),
+    /** Dibayar lewat cash / transfer. */
+    payMethod: text("pay_method"),
     kasbonNote: text("kasbon_note"),
     note: text("note"),
     signerId: integer("signer_id"),
@@ -1676,6 +1771,15 @@ export const kasbonEntries = sqliteTable(
     createdBy: createdBy(),
     createdByName: text("created_by_name"),
     createdAt: integer("created_at", { mode: "timestamp" }),
+    /** Kategori kasbon: utama / bulanan / mingguan (potongan slip gaji). */
+    category: text("category"),
+    /** Diberikan lewat cash / transfer. */
+    payMethod: text("pay_method"),
+    /** Sumber dana: ib = dana PT, kosong = Dana Cepi (kasbon sopir). */
+    fundedBy: text("funded_by"),
+    payslipId: text("payslip_id"),
+    /** Kasbon sopir (Ekspedisi, dicatat PIC Kendaraan) dipisah dari kasbon karyawan pabrik (Keuangan). */
+    isDriver: integer("is_driver", { mode: "boolean" }).notNull().default(false),
   },
   (t) => [index("ops_kasbon_name_idx").on(t.employeeName, t.entryDate)],
 );

@@ -4,16 +4,19 @@ import { can, type Perm, type Role } from "@/lib/roles";
 
 // Foto & lampiran operasional (barang masuk, uji pasir, produksi, tanda tangan, kalender, armada): hanya untuk pengguna
 // yang boleh membuka operasional. Tidak lewat /media publik.
-const FOLDERS = /^(penerimaan|uji-pasir|produksi|ttd|kalender|armada)\/[\w\-./]+$/;
+const FOLDERS = /^(penerimaan|uji-pasir|produksi|ttd|signatures|kalender|armada|iso)\/[\w\-./]+$/;
 
 // Izin tambahan per folder (pemilik selalu boleh): tanda tangan, kalender, uji pasir, dan lain-lain tidak terbuka untuk semua akun operasional.
 const FOLDER_PERMS: Record<string, readonly Perm[]> = {
   ttd: ["setujui_qc", "ttd_pimpinan", "qc"],
+  // Tanda tangan dari app lama (kunci signatures/...): aturan sama dengan ttd/.
+  signatures: ["setujui_qc", "ttd_pimpinan", "qc"],
   kalender: ["kalender"],
   "uji-pasir": ["uji_pasir", "lihat_uji_pasir", "iso"],
   penerimaan: ["barang_masuk", "lihat_barang_masuk", "iso"],
   produksi: ["stok", "produksi_lapangan", "keuangan", "iso", "laporan"],
   armada: ["keuangan", "pengiriman", "laporan", "ttd_pimpinan", "setujui_qc"],
+  iso: ["iso", "insiden"],
 };
 
 function folderAllowed(roles: readonly Role[], path: string) {

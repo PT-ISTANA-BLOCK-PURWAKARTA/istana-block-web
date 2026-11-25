@@ -13,7 +13,8 @@ import { isDate, parseQty, today } from "@/lib/erp/util";
 import { deleteImage, saveImage, UploadError } from "@/lib/media";
 import { logActivity } from "@/lib/ops/activity";
 import { syncMixProduction } from "@/lib/ops/production-mix";
-import { qcCan } from "@/lib/ops/qc";
+import { QC_SCOPE, qcCan, scopeOf } from "@/lib/ops/qc";
+import type { QcScope } from "@/db/erp";
 
 /* ============================================================ pembantu */
 
@@ -95,16 +96,23 @@ function noteArg(note: string | undefined, label: string, min: number, max = 500
   return v;
 }
 
-async function backToWeek(date: string, tab: string, ok: string): Promise<never> {
+async function backToWeek(date: string, tab: string, ok: string, scope: QcScope = "paving"): Promise<never> {
+  if (scope === "beton") redirect(`${QC_SCOPE.beton.base}?tab=mix&from=${date.slice(0, 7)}-01&to=${date > today() ? date : today()}&ok=${encodeURIComponent(ok)}`);
   const w = weekRange(date);
   redirect(`/operasional/qc?tab=${tab}&from=${w.from}&to=${w.to}&ok=${encodeURIComponent(ok)}`);
+}
+
+/** Izin mengisi data QC bagian ini: paving = izin qc (Team Leader Paving), beton = izin qc_beton (QC Beton). */
+function requireQcInput(scope: QcScope) {
+  return requirePerm(QC_SCOPE[scope].perm);
 }
 
 /* ============================================================ template mix desain */
 
 /** Template baru: pemegang izin setujui_qc (termasuk pemilik) langsung disetujui, selain itu diajukan. */
 export async function createMixDesign(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requirePerm("qc");
+  const scope = scopeOf(form.get("scope"));
+  const me = await requireQcInput(scope);
   const res = await guard(async () => {
     const db = await getDb();
     const name = text(form, "name", "Nama template", 2, 100);
@@ -112,9 +120,9 @@ export async function createMixDesign(_prev: FormState, form: FormData): Promise
     const product = text(form, "product", "Item pekerjaan / produk", 2, 100);
     const mats = materials(form.get("materials"), "Komposisi", 1);
     const notes = optText(form, "notes", "Catatan");
-    const approved = qcCan(me.roles).approve;
+    const approved = qcCan(me.roles, scope).approve;
     await db.insert(schema.mixDesigns).values({
-      name, layer, product, materials: mats, notes,
+      name, layer, product, materials: mats, notes, scope,
       status: approved ? "disetujui" : "diajukan",
       createdBy: me.id,
       approvedBy: approved ? me.id : null,
@@ -124,7 +132,7 @@ export async function createMixDesign(_prev: FormState, form: FormData): Promise
     return { approved };
   });
   if ("error" in res) return res;
-  redirect(`/operasional/qc?tab=template&ok=${encodeURIComponent(res.approved ? "~Template disimpan & langsung dipakai." : "~Template diajukan, menunggu persetujuan.")}`);
+  redirect(`${QC_SCOPE[scope].base}?tab=${scope === "beton" ? "mix" : "template"}&ok=${encodeURIComponent(res.approved ? "~Template disimpan & langsung dipakai." : "~Template diajukan, menunggu persetujuan.")}`);
 }
 
 /** Setujui (langsung dipakai, keluar dari rekapan) atau tolak template. */
@@ -217,22 +225,24 @@ async function mixLogValues(db: DB, form: FormData) {
     halfPieces: layer === "badan" ? optNumber(form.get("halfPieces"), "Belahan setengah") : null,
     status,
     notes: optText(form, "notes", "Catatan", 2000),
+    leader: optText(form, "leader", "Leader produksi", 100) || null,
   };
 }
 
 export async function createMixLog(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requirePerm("qc");
+  const scope = scopeOf(form.get("scope"));
+  const me = await requireQcInput(scope);
   const res = await guard(async () => {
     const db = await getDb();
     const v = await mixLogValues(db, form);
     const logId = crypto.randomUUID();
-    await db.insert(schema.mixLogs).values({ ...v, id: logId, createdBy: me.id });
+    await db.insert(schema.mixLogs).values({ ...v, scope, id: logId, createdBy: me.id });
     await syncMixProduction(db, logId);
     await logActivity(me, { action: "qc.catatan_buat", label: "Mengisi mix desain harian", summary: `${v.workDate} · ${v.layer} · ${v.product}` });
     return { date: v.workDate };
   });
   if ("error" in res) return res;
-  return backToWeek(res.date, "harian", "~Data mix desain tersimpan.");
+  return backToWeek(res.date, "harian", "~Data mix desain tersimpan.", scope);
 }
 
 /** Catatan boleh diubah/dihapus bila belum di-ACC dan (pembuatnya atau kantor). */
@@ -240,29 +250,31 @@ async function editableMixLog(db: DB, me: Pick<CurrentUser, "id" | "roles">, id:
   const row = await db.query.mixLogs.findFirst({ where: eq(schema.mixLogs.id, id) });
   if (!row) throw new UserError("Data tidak ditemukan.");
   if (row.reviewStatus === "disetujui") throw new UserError("Data yang sudah di-ACC tidak dapat diubah.");
-  if (!qcCan(me.roles).editAny && row.createdBy !== me.id) throw new UserError("Hanya pembuat data atau kantor yang dapat mengubah.");
+  const c = qcCan(me.roles, row.scope);
+  if (!c.input && !c.editAny) throw new UserError(row.scope === "beton" ? "Mix desain beton diisi QC Beton." : "Mix desain paving diisi Team Leader Paving.");
+  if (!c.editAny && row.createdBy !== me.id) throw new UserError("Hanya pembuat data atau kantor yang dapat mengubah.");
   return row;
 }
 
 /** Setelah diubah (mis. revisi), data kembali menunggu ACC. */
 export async function updateMixLog(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requirePerm("qc");
+  const me = await requirePerm("qc", "qc_beton");
   const res = await guard(async () => {
     const db = await getDb();
     const id = String(form.get("id") ?? "");
-    await editableMixLog(db, me, id);
+    const row = await editableMixLog(db, me, id);
     const v = await mixLogValues(db, form);
     await db.update(schema.mixLogs).set({ ...v, reviewStatus: "menunggu", reviewNote: null, updatedAt: new Date() }).where(eq(schema.mixLogs.id, id));
     await syncMixProduction(db, id);
     await logActivity(me, { action: "qc.catatan_ubah", label: "Mengubah mix desain harian", summary: `${v.workDate} · ${v.layer} · ${v.product}` });
-    return { date: v.workDate };
+    return { date: v.workDate, scope: row.scope };
   });
   if ("error" in res) return res;
-  return backToWeek(res.date, "harian", "~Data mix desain tersimpan.");
+  return backToWeek(res.date, "harian", "~Data mix desain tersimpan.", res.scope);
 }
 
 export async function deleteMixLog(id: string): Promise<FormState> {
-  const me = await requirePerm("qc");
+  const me = await requirePerm("qc", "qc_beton");
   const res = await guard(async () => {
     const db = await getDb();
     const row = await editableMixLog(db, me, id);
@@ -372,43 +384,46 @@ async function strengthValues(form: FormData) {
 }
 
 export async function createStrengthTest(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requirePerm("qc");
+  const scope = scopeOf(form.get("scope"));
+  const me = await requireQcInput(scope);
   const res = await guard(async () => {
     const db = await getDb();
     const { header, samples } = await strengthValues(form);
     const id = crypto.randomUUID();
     await runBatch(db, [
-      db.insert(schema.strengthTests).values({ id, ...header, createdBy: me.id }),
+      db.insert(schema.strengthTests).values({ id, ...header, scope, createdBy: me.id }),
       insertMany(db, schema.strengthSamples, samples.map((s) => ({ ...s, testId: id }))),
     ]);
     await logActivity(me, { action: "qc.uji_buat", label: "Membuat laporan uji kuat tekan", summary: `${header.reportDate} · ${header.concreteGrade} · ${samples.length} benda uji` });
     return { date: header.reportDate };
   });
   if ("error" in res) return res;
-  return backToMonth(res.date, "~Laporan uji kuat tekan tersimpan.");
+  return backToMonth(res.date, "~Laporan uji kuat tekan tersimpan.", scope);
 }
 
-async function backToMonth(date: string, ok: string): Promise<never> {
+async function backToMonth(date: string, ok: string, scope: QcScope = "paving"): Promise<never> {
   const from = `${date.slice(0, 7)}-01`;
   const to = date > today() ? date : today();
-  redirect(`/operasional/qc?tab=uji-tekan&from=${from}&to=${to}&ok=${encodeURIComponent(ok)}`);
+  redirect(`${QC_SCOPE[scope].base}?tab=${scope === "beton" ? "uji" : "uji-tekan"}&from=${from}&to=${to}&ok=${encodeURIComponent(ok)}`);
 }
 
 async function editableStrengthTest(db: DB, me: Pick<CurrentUser, "id" | "roles">, id: string) {
   const row = await db.query.strengthTests.findFirst({ where: eq(schema.strengthTests.id, id) });
   if (!row) throw new UserError("Laporan tidak ditemukan.");
   if (row.reviewStatus === "disetujui") throw new UserError("Laporan yang sudah di-ACC tidak dapat diubah.");
-  if (!qcCan(me.roles).editAny && row.createdBy !== me.id) throw new UserError("Hanya pembuat laporan atau kantor yang dapat mengubah.");
+  const c = qcCan(me.roles, row.scope);
+  if (!c.input && !c.editAny) throw new UserError(row.scope === "beton" ? "Uji mutu beton diisi QC Beton; uji paving hanya bisa dilihat." : "Uji paving diisi Team Leader Paving.");
+  if (!c.editAny && row.createdBy !== me.id) throw new UserError("Hanya pembuat laporan atau kantor yang dapat mengubah.");
   return row;
 }
 
 /** Setelah diubah (mis. revisi), laporan kembali menunggu ACC dan TTD lab dicabut. Benda uji diisi ulang. */
 export async function updateStrengthTest(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requirePerm("qc");
+  const me = await requirePerm("qc", "qc_beton");
   const res = await guard(async () => {
     const db = await getDb();
     const id = String(form.get("id") ?? "");
-    await editableStrengthTest(db, me, id);
+    const row = await editableStrengthTest(db, me, id);
     const { header, samples } = await strengthValues(form);
     await runBatch(db, [
       db.update(schema.strengthTests).set({ ...header, reviewStatus: "menunggu", reviewNote: null, labSignedBy: null, labSignedAt: null, updatedAt: new Date() }).where(eq(schema.strengthTests.id, id)),
@@ -416,14 +431,14 @@ export async function updateStrengthTest(_prev: FormState, form: FormData): Prom
       insertMany(db, schema.strengthSamples, samples.map((s) => ({ ...s, testId: id }))),
     ]);
     await logActivity(me, { action: "qc.uji_ubah", label: "Mengubah laporan uji kuat tekan", summary: `${header.reportDate} · ${header.concreteGrade} · ${samples.length} benda uji` });
-    return { date: header.reportDate };
+    return { date: header.reportDate, scope: row.scope };
   });
   if ("error" in res) return res;
-  return backToMonth(res.date, "~Laporan uji kuat tekan tersimpan.");
+  return backToMonth(res.date, "~Laporan uji kuat tekan tersimpan.", res.scope);
 }
 
 export async function deleteStrengthTest(id: string): Promise<FormState> {
-  const me = await requirePerm("qc");
+  const me = await requirePerm("qc", "qc_beton");
   const res = await guard(async () => {
     const db = await getDb();
     const row = await editableStrengthTest(db, me, id);

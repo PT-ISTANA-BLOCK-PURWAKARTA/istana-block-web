@@ -1,0 +1,61 @@
+/* Beranda Operasional kantor — warna & susunan seperti app.kirimistanablock.com */
+.ohome { display: grid; gap: 22px; background: #f8f6f1; margin: -8px; padding: 8px; border-radius: 16px; }
+.ohome-head { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-end; }
+.ohome-kicker { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: #c36f34; }
+.ohome-head h1 { margin: 6px 0 0; font-size: clamp(26px, 4vw, 36px); font-weight: 700; letter-spacing: -.01em; color: #1f3441; }
+.ohome-lead { margin: 6px 0 0; color: #64748b; font-size: 14px; max-width: 520px; }
+.ohome-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ohome-card { background: #fff; border-radius: 18px; padding: 18px; box-shadow: 0 1px 3px rgba(31, 52, 65, .06); }
+.ohome-card-head { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.ohome-card-head h2 { margin: 0; font-size: 18px; color: #1f3441; }
+.ohome-card-head p { margin: 2px 0 0; }
+.ohome-stats { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.ohome-stat { display: grid; gap: 2px; }
+.ohome-stat-label { font-size: 13px; color: #64748b; font-weight: 600; }
+.ohome-stat b { font-size: 34px; line-height: 1.1; }
+.c-orange { color: #d97732; } .c-amber { color: #d97706; } .c-green { color: #047857; } .c-navy { color: #1f3441; }
+.ohome-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ohome-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: #fbfaf7; border: 1px solid #f0ece3; }
+.ohome-docs { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.ohome-doc { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; border: 1px solid #fde68a; background: #fffbeb; color: #1f3441; text-decoration: none; }
+.ohome-doc.is-past { border-color: #fecaca; background: #fef2f2; }
+.ohome-po td { vertical-align: top; }
+.ohome-row-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.ohome-status { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.st-wait { background: #f1f5f9; color: #334155; } .st-load { background: #ede9fe; color: #5b21b6; } .st-road { background: #fef3c7; color: #92400e; }
+.st-warn { background: #ffedd5; color: #9a3412; } .st-done { background: #d1fae5; color: #065f46; } .st-cancel { background: #fee2e2; color: #991b1b; }
+.ohome-fleet { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.ohome-fleet h3 { margin: 0 0 8px; font-size: 15px; color: #1f3441; }
+.ohome-export { position: relative; }
+.ohome-export > summary { list-style: none; cursor: pointer; }
+.ohome-export > summary::-webkit-details-marker { display: none; }
+.ohome-export-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: min(420px, 90vw); background: #fff; border-radius: 14px; padding: 12px; box-shadow: 0 10px 30px rgba(31, 52, 65, .18); }
+.ohome { grid-template-columns: minmax(0, 1fr); }
+.ohome > * { min-width: 0; }
+.ohome-head > div:first-child { flex: 1 1 280px; min-width: 0; }
+.ohome-actions { min-width: 0; }
+.ohome-list li { flex-wrap: wrap; } .ohome-list li > div { min-width: 0; flex: 1 1 220px; }
+
+.btn-teal { background: #1f6b72; color: #fff; border-color: #1f6b72; }
+.ohome-warn { color: #b45309; border-color: #fde68a; }
+.ohome-danger { color: #e11d48; border-color: #fecdd3; }
+/* Halaman detail PO / surat jalan dengan latar & kartu app lama */
+.odetail { gap: 14px; }
+.odetail .ohome-kicker { margin-bottom: -10px; }
+.odetail .admin-card, .odetail .admin-table { border-radius: 18px; border-color: transparent; box-shadow: 0 1px 3px rgba(31, 52, 65, .06); }
+.odetail-actions { display: grid; gap: 8px; }
+.odetail [id] { scroll-margin-top: 90px; }
+/* Tombol aksi PO seperti app lama (shadcn Button size sm, varian outline + ikon lucide) */
+.oa-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; color: #0f172a; font: 500 13.5px var(--font-isi, inherit); white-space: nowrap; text-decoration: none; cursor: pointer; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+.oa-btn:hover { background: #f8fafc; }
+.oa-btn .icon { flex: 0 0 auto; opacity: 1; }
+.oa-sky { border-color: #bae6fd; color: #0369a1; } .oa-sky:hover { background: #f0f9ff; }
+.oa-teal { border-color: #1f6b72; background: #1f6b72; color: #fff; } .oa-teal:hover { background: #17565c; }
+.oa-nopin { border-color: #fcd34d; background: #fffbeb; color: #92400e; }
+.oa-share { color: #1f6b72; }
+.oa-green { border-color: #a7f3d0; color: #047857; } .oa-green:hover { background: #ecfdf5; }
+.oa-rose { border-color: #fecdd3; color: #be123c; } .oa-rose:hover { background: #fff1f2; }
+.oa-amber { border-color: #fde68a; color: #b45309; } .oa-amber:hover { background: #fffbeb; }
+.oa-danger { border-color: #fecdd3; color: #e11d48; } .oa-danger:hover { background: #fff1f2; }
+.ohome-row-actions form { display: contents; }
+.ohome-po td:last-child { min-width: 320px; }

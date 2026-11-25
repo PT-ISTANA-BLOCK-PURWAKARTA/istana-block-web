@@ -29,9 +29,12 @@
 .admin-side { background-color: var(--biru-tua); color: #d3dcef; padding: 20px 14px; display: flex; flex-direction: column; gap: 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .panel-keuangan .admin-side { background-color: #11305f; }
 .panel-operasional .admin-side { background-color: #1b2945; }
+.panel-anak .admin-side { background-color: #2b1f4a; }
 .side-top { display: flex; flex-direction: column; gap: 16px; }
-.admin-side .brand { color: #fff; padding: 0 6px; }
-.admin-side .brand img { height: 40px; width: auto; }
+/* Lambang + tulisan "Istana Block" (lambang tidak boleh menyusut/gepeng di layar sempit). */
+.admin-side .brand { display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; color: #fff; padding: 0 6px; text-decoration: none; }
+.admin-side .brand img { height: 40px; width: auto; aspect-ratio: 129 / 150; flex: 0 0 auto; object-fit: contain; }
+.admin-side .brand span { font-family: var(--font-judul, inherit); font-weight: 800; font-size: 20px; letter-spacing: -.01em; white-space: nowrap; line-height: 1; }
 .admin-tag { font-size: 13px; color: var(--oranye-terang); padding: 0 8px; }
 .module-switch { display: flex; gap: 2px; background: rgba(255, 255, 255, .08); border-radius: var(--p-radius-sm, 10px); padding: 3px; }
 .module-switch a { flex: 1 1 auto; text-align: center; padding: 7px 6px; border-radius: 8px; color: #c9d3ea; text-decoration: none; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
@@ -41,7 +44,16 @@
 .nav-toggle { display: none; }
 .admin-nav { display: flex; flex-direction: column; gap: 1px; }
 .admin-nav-item { display: contents; }
-.admin-nav-group { display: block; margin: 14px 10px 4px; font-size: 12px; color: #93a4c9; font-weight: 600; }
+/* Judul grup = tombol buka/tutup (akordeon): hanya judul + panah ke bawah; pilihan muncul saat diklik. */
+.admin-nav-group { display: flex; width: 100%; gap: 8px; align-items: center; margin-top: 2px; padding: 9px 10px; border: 0; border-radius: 9px; background: none; cursor: pointer; font: inherit; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: #93a4c9; font-weight: 700; text-align: left; }
+.admin-nav-group > span:first-child { flex: 1 1 auto; }
+.admin-nav-group:hover { color: #fff; background: rgba(255, 255, 255, .06); }
+.admin-nav-group.has-active { color: #fff; }
+.admin-nav-group .nav-badge { margin-left: 0; }
+.admin-nav-caret { display: inline-flex; opacity: .85; transform: rotate(90deg); transition: transform .15s ease; }
+.admin-nav-item.is-open > .admin-nav-group .admin-nav-caret { transform: rotate(-90deg); }
+.admin-nav-sub { display: flex; flex-direction: column; gap: 1px; padding: 2px 0 6px 8px; margin-left: 10px; border-left: 1px solid rgba(255, 255, 255, .12); }
+.admin-nav-sub[hidden] { display: none; }
 .admin-nav a { color: #d3dcef; text-decoration: none; padding: 7px 10px; border-radius: 9px; font-weight: 500; font-size: 14.5px; display: flex; align-items: center; gap: 10px; }
 .admin-nav a .icon { flex: 0 0 auto; opacity: .8; }
 .admin-nav a:hover { background: rgba(255, 255, 255, .07); color: #fff; }
@@ -197,6 +209,9 @@ a.kpi:hover .k-label { color: var(--biru); }
 .role-satpam { background: #e5e7eb; color: #1f2937; }
 .role-manajer_qc { background: #cffafe; color: #155e75; }
 .role-pimpinan { background: #fce7f3; color: #9d174d; }
+.role-ekspedisi { background: #dbeafe; color: #1e3a8a; }
+.role-absensi { background: #dcfce7; color: #166534; }
+.role-qcbeton { background: #e0e7ff; color: #3730a3; }
 .role-checks { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 18px; }
 .role-checks .check { font-weight: 500; align-items: flex-start; min-height: 0; padding: 6px 0; font-size: 14px; line-height: 1.4; }
 .role-checks .check input { margin-top: 1px; flex: 0 0 auto; }
@@ -284,6 +299,7 @@ a.kpi:hover .k-label { color: var(--biru); }
 /* ---------- Tanda aplikasi (segi enam seperti paving) ---------- */
 .app-web { --app: #4d66a8; --app-soft: #e3e9f5; }
 .app-operasional { --app: #d63f12; --app-soft: #ffe6dc; }
+.app-anak { --app: #6d3fc0; --app-soft: #ece6fb; }
 .app-keuangan { --app: #1d6b3a; --app-soft: #dff3e6; }
 .app-mark { display: inline-grid; place-items: center; width: 56px; height: 56px; flex: none; clip-path: var(--hex); background: var(--app, var(--biru)); color: #fff; }
 
@@ -548,12 +564,14 @@ a.kpi:hover .k-label { color: var(--biru); }
   .admin { grid-template-columns: 1fr; }
   .admin-side { position: sticky; top: 0; z-index: 30; height: auto; max-height: 100vh; padding: 10px 14px; gap: 10px; }
   .side-top { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
+  .admin-side .brand { gap: 7px; padding: 0; }
   .admin-side .brand img { height: 32px; }
-  .module-switch { flex: 0 1 auto; }
+  .admin-side .brand span { font-size: 15px; }
+  .module-switch { flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   .nav-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .06); color: #fff; font: 600 14px var(--font-isi); cursor: pointer; }
   .side-body { display: none; }
   .side-body.is-open { display: flex; padding-bottom: 8px; }
-  .admin-nav-group { margin: 10px 10px 2px; }
+  .admin-nav-group { padding: 10px; }
   .admin-main { padding: 18px 16px 64px; }
   .form-grid { grid-template-columns: 1fr; }
 }
@@ -790,3 +808,57 @@ a.kpi:hover .k-label { color: var(--biru); }
 .ops-alarm-toast-body strong { font-size: 14px; color: var(--biru-tua); }
 .ops-alarm-toast-body span { font-size: 13px; color: var(--redup); }
 .ops-alarm-toast-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ---------- Laporan 12 bulan gaya Zahir Accounting 6 ---------- */
+.zr-filter { align-items: flex-end; }
+.zr-wrap { margin: 0; }
+.zr { font-size: 13px; min-width: 1200px; }
+.zr th { white-space: nowrap; }
+.zr td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.zr .zr-code { width: 74px; color: var(--p-muted, #64748b); white-space: nowrap; }
+.zr-section td { font-weight: 800; color: var(--biru-tua, #1f3441); padding-top: 14px; font-size: 14px; }
+.zr-sub td { font-weight: 700; padding-left: 18px; color: #334155; }
+.zr-acc td:nth-child(2) { padding-left: 30px; }
+.zr-acc a { color: inherit; text-decoration: none; }
+.zr-acc a:hover { text-decoration: underline; }
+.zr-subtotal td { font-weight: 700; border-top: 1px solid #cbd5e1; }
+.zr-subtotal td:first-child { padding-left: 18px; }
+.zr-total td { font-weight: 800; border-top: 2px solid #94a3b8; background: #f8fafc; }
+.zr-result td { font-weight: 800; background: #eef6f5; color: #1f3441; border-top: 2px solid #1f6b72; }
+.zr-neg { color: #b91c1c; }
+@media print { .zr { min-width: 0; font-size: 9px; } .zr td, .zr th { padding: 2px 4px; } }
+
+/* ---------- Beranda Keuangan gaya Zahir Accounting 6 ---------- */
+.zh { display: grid; gap: 16px; margin-bottom: 16px; }
+.zh-head h1 { margin: 2px 0 0; font-size: clamp(22px, 3vw, 28px); color: var(--biru-tua, #1f3441); }
+.zh-kicker { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #1f6b72; }
+.zh-modules { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr)); }
+.zh-mod { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; display: grid; gap: 10px; --zh: #1f3441; --zh-bg: #eef2f7; }
+.zh-orange { --zh: #c2410c; --zh-bg: #fff4ec; } .zh-blue { --zh: #1d4ed8; --zh-bg: #eef3ff; } .zh-green { --zh: #047857; --zh-bg: #ecfdf5; }
+.zh-violet { --zh: #6d28d9; --zh-bg: #f5f3ff; } .zh-navy { --zh: #1f3441; --zh-bg: #eef2f7; } .zh-teal { --zh: #1f6b72; --zh-bg: #eef8f7; }
+.zh-mod h2 { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--zh); }
+.zh-mod-icon { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--zh-bg); }
+.zh-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px 22px; }
+.zh-flow li { position: relative; }
+.zh-flow li + li::before { content: "→"; position: absolute; left: -17px; top: 18px; color: #94a3b8; font-weight: 700; }
+.zh-step { display: grid; justify-items: center; gap: 4px; width: 92px; padding: 8px 4px; border-radius: 10px; text-align: center; font-size: 12px; font-weight: 600; line-height: 1.25; color: #1f3441; text-decoration: none; }
+.zh-step:hover { background: var(--zh-bg); }
+.zh-step-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--zh-bg); color: var(--zh); border: 1px solid color-mix(in srgb, var(--zh) 25%, transparent); }
+.zh-more { display: flex; flex-wrap: wrap; gap: 6px 14px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
+.zh-more a { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: #475569; text-decoration: none; }
+.zh-more a:hover { color: var(--zh); }
+.zh-sum td:first-child a { color: inherit; text-decoration: none; }
+.zh-sum .zh-strong td { font-weight: 800; background: #f8fafc; }
+.zh-sum .zh-split td { border-top: 2px solid #cbd5e1; }
+.zh-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+/* Beranda Keuangan: jangan melebihi lebar layar (tabel ringkasan menggulung di dalam kartunya). */
+.zh { grid-template-columns: minmax(0, 1fr); }
+.zh > *, .zh-modules > * { min-width: 0; }
+.zh .admin-card { overflow: hidden; }
+@media (max-width: 640px) {
+  .zh-flow { gap: 6px 16px; }
+  .zh-flow li + li::before { left: -13px; }
+  .zh-step { width: 78px; font-size: 11.5px; }
+  .zh-step-icon { width: 40px; height: 40px; }
+  .zh-mod { padding: 12px; }
+}

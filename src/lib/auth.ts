@@ -17,6 +17,8 @@ export type CurrentUser = {
   allRoles: Role[];
   via: Via;
   driverId: string | null;
+  /** Masuk dengan password sementara: harus membuat password baru dulu (lihat /internal/ganti-password). */
+  mustChangePassword: boolean;
 };
 
 /** Ambil pengguna yang sedang login, atau null. Selalu cek ke database. */
@@ -43,6 +45,7 @@ export async function getCurrentAdmin(): Promise<CurrentUser | null> {
     allRoles,
     via: session.via,
     driverId: user.driverId,
+    mustChangePassword: session.via === "pw" && Boolean(user.mustChangePassword),
   };
 }
 
@@ -50,10 +53,17 @@ function denied(user: CurrentUser): never {
   redirect(homeFor(user.roles) ?? "/internal?e=akses");
 }
 
-/** Wajib login (peran apa pun). */
-export async function requireUser(login = "/internal") {
+/** Halaman membuat password baru untuk akun yang masih memakai password sementara. */
+export const CHANGE_PASSWORD_PATH = "/internal/ganti-password";
+
+/**
+ * Wajib login (peran apa pun). Akun dengan password sementara diarahkan membuat password baru dulu,
+ * kecuali `allowTempPassword` (dipakai halaman & aksi ganti password itu sendiri).
+ */
+export async function requireUser(login = "/internal", { allowTempPassword = false } = {}) {
   const user = await getCurrentAdmin();
   if (!user) redirect(login);
+  if (user.mustChangePassword && !allowTempPassword) redirect(CHANGE_PASSWORD_PATH);
   return user;
 }
 

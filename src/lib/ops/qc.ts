@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, desc, eq, gte, inArray, lte, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { getDb, schema } from "@/db";
-import type { MaterialLine, MixDesignStatus } from "@/db/erp";
+import type { MaterialLine, MixDesignStatus, QcScope } from "@/db/erp";
 import type { CurrentUser } from "@/lib/auth";
 import type { DB } from "@/lib/erp/server";
 import { addDays, today } from "@/lib/erp/util";
@@ -18,10 +18,19 @@ import { evaluateSample, type SampleResult } from "@/lib/ops/shared/strength";
  * - sign: TTD "Mengetahui Pimpinan" (izin ttd_pimpinan)
  * - editAny: boleh mengubah/menghapus data buatan orang lain (padanan "kantor" di aplikasi lama: pemilik, manajer QC, operasional)
  */
-export function qcCan(roles: readonly Role[]) {
+export function qcCan(roles: readonly Role[], scope: QcScope = "paving") {
   const approve = can(roles, "setujui_qc");
-  return { input: can(roles, "qc"), approve, sign: can(roles, "ttd_pimpinan"), editAny: approve || roles.includes("operasional") };
+  // Paving diisi Team Leader Paving (izin qc), beton diisi QC Beton (izin qc_beton); kantor keduanya.
+  return { input: can(roles, scope === "beton" ? "qc_beton" : "qc"), approve, sign: can(roles, "ttd_pimpinan"), editAny: approve || roles.includes("operasional") || roles.includes("owner") };
 }
+
+/** Bagian QC: halaman, izin isi, dan label. */
+export const QC_SCOPE = {
+  paving: { base: "/operasional/qc", perm: "qc", label: "paving" },
+  beton: { base: "/operasional/qc-beton", perm: "qc_beton", label: "beton" },
+} as const;
+
+export const scopeOf = (v: unknown): QcScope => (v === "beton" ? "beton" : "paving");
 
 /* ------------------------------------------------------------ notifikasi */
 
@@ -34,7 +43,7 @@ export type QcPending = { mixToApprove: number; strengthToApprove: number; stren
  */
 export async function qcPending(me: Pick<CurrentUser, "id" | "roles">, db?: DB): Promise<QcPending> {
   const c = qcCan(me.roles);
-  const isQc = me.roles.includes("qc");
+  const isQc = me.roles.includes("qc") || me.roles.includes("qcbeton");
   const zero = { mixToApprove: 0, strengthToApprove: 0, strengthToSign: 0, mixRevisions: 0, strengthRevisions: 0, total: 0 };
   if (!c.approve && !c.sign && !isQc) return zero;
   const d = db ?? (await getDb());
@@ -78,7 +87,7 @@ export type MixDesignRow = {
 };
 
 /** Semua template + rekap pemakaiannya di catatan harian. */
-export async function listMixDesigns(db: DB): Promise<MixDesignRow[]> {
+export async function listMixDesigns(db: DB, scope: QcScope = "paving"): Promise<MixDesignRow[]> {
   const d = schema.mixDesigns;
   const l = schema.mixLogs;
   const [designs, usage] = await Promise.all([
@@ -91,6 +100,7 @@ export async function listMixDesigns(db: DB): Promise<MixDesignRow[]> {
       .leftJoin(creator, eq(d.createdBy, creator.id))
       .leftJoin(approver, eq(d.approvedBy, approver.id))
       .leftJoin(retirer, eq(d.retiredBy, retirer.id))
+      .where(eq(d.scope, scope))
       .orderBy(desc(d.active), d.layer, desc(d.createdAt)),
     db
       .select({
@@ -143,6 +153,8 @@ export type MixLogRow = {
   managerSignedByName: string | null;
   managerSignatureKey: string | null;
   managerSignedAt: Date | null;
+  scope: QcScope;
+  leader: string | null;
 };
 
 const mixLogColumns = () => {
@@ -151,18 +163,19 @@ const mixLogColumns = () => {
     id: l.id, workDate: l.workDate, layer: l.layer, product: l.product, mixDesignId: l.mixDesignId, approvedMaterials: l.approvedMaterials, actualMaterials: l.actualMaterials,
     mixingCount: l.mixingCount, boards: l.boards, squareMeters: l.squareMeters, rejects: l.rejects, gradeB: l.gradeB, halfPieces: l.halfPieces, status: l.status, notes: l.notes, reviewStatus: l.reviewStatus, reviewNote: l.reviewNote,
     createdBy: l.createdBy, createdByName: creator.name, managerSignedByName: manager.name, managerSignatureKey: manager.signatureKey, managerSignedAt: l.managerSignedAt,
+    scope: l.scope, leader: l.leader,
   };
 };
 
 /** Catatan harian dalam rentang tanggal (YYYY-MM-DD, inklusif), urut tanggal, lapisan, waktu input. */
-export async function listMixLogs(db: DB, from: string, to: string, layer?: string): Promise<MixLogRow[]> {
+export async function listMixLogs(db: DB, from: string, to: string, layer?: string, scope: QcScope = "paving"): Promise<MixLogRow[]> {
   const l = schema.mixLogs;
   return db
     .select(mixLogColumns())
     .from(l)
     .leftJoin(creator, eq(l.createdBy, creator.id))
     .leftJoin(manager, eq(l.managerSignedBy, manager.id))
-    .where(and(gte(l.workDate, from), lte(l.workDate, to), layer ? eq(l.layer, layer as "badan") : undefined))
+    .where(and(eq(l.scope, scope), gte(l.workDate, from), lte(l.workDate, to), layer ? eq(l.layer, layer as "badan") : undefined))
     .orderBy(asc(l.workDate), l.layer, asc(l.createdAt));
 }
 
@@ -238,6 +251,7 @@ export type StrengthTestRow = {
   leaderSignedByName: string | null;
   leaderSignatureKey: string | null;
   leaderSignedAt: Date | null;
+  scope: QcScope;
   samples: StrengthSampleRow[];
 };
 
@@ -248,6 +262,7 @@ const testColumns = () => {
     reviewStatus: t.reviewStatus, reviewNote: t.reviewNote, createdBy: t.createdBy, createdByName: creator.name,
     labSignedByName: lab.name, labSignatureKey: lab.signatureKey, labSignedAt: t.labSignedAt,
     leaderSignedByName: leader.name, leaderSignatureKey: leader.signatureKey, leaderSignedAt: t.leaderSignedAt,
+    scope: t.scope,
   };
 };
 
@@ -261,9 +276,9 @@ function withSamples(tests: Omit<StrengthTestRow, "samples">[], samples: (typeof
 }
 
 /** Laporan uji kuat tekan dalam rentang tanggal laporan, lengkap dengan benda uji yang sudah dievaluasi. */
-export async function listStrengthTests(db: DB, from: string, to: string): Promise<StrengthTestRow[]> {
+export async function listStrengthTests(db: DB, from: string, to: string, scope: QcScope = "paving"): Promise<StrengthTestRow[]> {
   const t = schema.strengthTests;
-  const inRange = and(gte(t.reportDate, from), lte(t.reportDate, to));
+  const inRange = and(eq(t.scope, scope), gte(t.reportDate, from), lte(t.reportDate, to));
   const [tests, samples] = await Promise.all([
     db.select(testColumns()).from(t).leftJoin(creator, eq(t.createdBy, creator.id)).leftJoin(lab, eq(t.labSignedBy, lab.id)).leftJoin(leader, eq(t.leaderSignedBy, leader.id)).where(inRange).orderBy(desc(t.reportDate), desc(t.createdAt)),
     db.select().from(schema.strengthSamples).where(inArray(schema.strengthSamples.testId, db.select({ id: t.id }).from(t).where(inRange))).orderBy(schema.strengthSamples.testId, schema.strengthSamples.position),

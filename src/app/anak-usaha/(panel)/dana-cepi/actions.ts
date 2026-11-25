@@ -7,44 +7,39 @@ import { opsAccess } from "@/lib/erp/ops";
 import { can } from "@/lib/roles";
 
 const TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
-const JENIS = ["kasbon", "bayar"] as const;
 
 async function boleh() {
   const { user } = await opsAccess();
-  if (!can(user.roles, "keuangan")) throw new Error("Tidak berhak mengelola kasbon karyawan.");
+  if (!can(user.roles, "keuangan")) throw new Error("Tidak berhak mencatat dana Cepi.");
   return user;
 }
 
 /** "1.250.000" / "1250000" → 1250000. */
 const rupiah = (v: FormDataEntryValue | null) => Math.round(Number(String(v ?? "").replace(/[^\d.-]/g, "")) || 0);
 
-export async function tambahKasbon(fd: FormData) {
+export async function tambahDanaCepi(fd: FormData) {
   const user = await boleh();
-  const karyawan = String(fd.get("karyawan") || "").trim().toUpperCase();
   const tanggal = String(fd.get("tanggal") || "").trim();
-  const jenis = String(fd.get("jenis") || "kasbon").trim();
   const jumlah = rupiah(fd.get("jumlah"));
-  if (!karyawan || !TANGGAL.test(tanggal)) throw new Error("Nama karyawan dan tanggal wajib diisi.");
-  if (!JENIS.includes(jenis as (typeof JENIS)[number])) throw new Error("Jenis harus kasbon atau bayar.");
-  if (!jumlah) throw new Error("Jumlah harus lebih dari nol.");
+  if (!TANGGAL.test(tanggal)) throw new Error("Tanggal wajib diisi.");
+  if (jumlah <= 0) throw new Error("Jumlah harus lebih dari nol.");
   const db = await getDb();
-  await db.insert(schema.kasbonEntries).values({
-    employeeName: karyawan,
+  await db.insert(schema.fleetCash).values({
     entryDate: tanggal,
-    kind: jenis,
     amount: jumlah,
+    source: String(fd.get("sumber") || "").trim() || null,
     note: String(fd.get("catatan") || "").trim() || null,
     createdBy: user.id,
     createdByName: user.name,
   });
-  revalidatePath("/operasional/kasbon");
+  revalidatePath("/anak-usaha/dana-cepi");
 }
 
-export async function hapusKasbon(fd: FormData) {
+export async function hapusDanaCepi(fd: FormData) {
   await boleh();
   const id = String(fd.get("id") || "");
   if (!id) return;
   const db = await getDb();
-  await db.delete(schema.kasbonEntries).where(eq(schema.kasbonEntries.id, id));
-  revalidatePath("/operasional/kasbon");
+  await db.delete(schema.fleetCash).where(eq(schema.fleetCash.id, id));
+  revalidatePath("/anak-usaha/dana-cepi");
 }

@@ -20,7 +20,7 @@ export default async function CetakSlipGaji({ params }: { params: Promise<{ id: 
     <div className="print-wrap">
       <style>{PAYSLIP_A5_STYLE}</style>
       <div className="print-tools no-print" style={{ maxWidth: "148mm" }}>
-        <a href="/operasional/gaji" className="btn btn-ghost btn-sm">
+        <a href="/akuntansi/gaji" className="btn btn-ghost btn-sm">
           ← Kembali ke Gaji
         </a>
         <PrintButton label="Cetak / Simpan PDF (A5)" />

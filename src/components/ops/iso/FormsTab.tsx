@@ -1,9 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { deleteIsoRecordAction } from "@/app/operasional/actions/iso";
+import { deleteIsoRecordAction, signIsoRecordAction } from "@/app/operasional/actions/iso";
+import { QcActionButton } from "@/components/ops/qc/QcActionButton";
+import type { Role } from "@/lib/roles";
 import { ConfirmAction } from "@/components/erp/ConfirmAction";
 import { PAGE_SIZE, type IsoRow, type IsoSuggestion } from "@/lib/ops/iso-core";
-import type { IsoCode, IsoColumn, IsoForm } from "@/lib/ops/shared/isoForms";
+import { canSignColumn, isSignColumn, type IsoCode, type IsoColumn, type IsoForm } from "@/lib/ops/shared/isoForms";
 import { cellText, rangeText } from "@/lib/ops/shared/isoRecap";
 import { Chip } from "./Chip";
 import { ExportFormButton } from "./IsoExportButtons";
@@ -29,6 +31,8 @@ type Props = {
   rows: IsoRow[];
   nextOffset: number | null;
   canInput: boolean;
+  /** Peran akun (tombol Paraf / TTD per kolom). */
+  roles?: readonly Role[];
   isOffice: boolean;
   userId: number;
   userName: string;
@@ -39,7 +43,7 @@ type Props = {
 };
 
 /** Tab Form F-IB: pilih form, saran pengisian, formulir isi, dan tabel baris (300 per halaman). */
-export function FormsTab({ view, forms, counts, form, rows, nextOffset, canInput, isOffice, userId, userName, today, suggestions, editor }: Props) {
+export function FormsTab({ view, forms, counts, form, rows, nextOffset, canInput, isOffice, userId, userName, today, suggestions, editor, roles = [] }: Props) {
   const columns = columnsOf(form);
   const supplementable = form.columns.some((c) => c.supplement);
   const here = isoUrl(view);
@@ -126,6 +130,26 @@ export function FormsTab({ view, forms, counts, form, rows, nextOffset, canInput
                   {columns.map((c) => {
                     const text = cellText(c, row.values[c.key]);
                     const wide = (c.width ?? 0) >= 24;
+                    if (c.type === "photos") {
+                      const keys = text.split(/\n+/).map((k) => k.trim()).filter(Boolean);
+                      return (
+                        <td key={c.key}>
+                          {keys.map((k) => (
+                            <a key={k} href={`/operasional/berkas/${k}`} target="_blank" rel="noreferrer" style={{ marginRight: 4 }}>
+                              <img src={`/operasional/berkas/${k}`} alt="Foto" width={40} height={40} style={{ objectFit: "cover", borderRadius: 6 }} />
+                            </a>
+                          ))}
+                        </td>
+                      );
+                    }
+                    if (isSignColumn(c) && !text && row.source === "manual" && row.recordId) {
+                      const ready = !c.signAfter || String(row.values[c.signAfter] ?? "").trim() !== "";
+                      return (
+                        <td key={c.key}>
+                          {canSignColumn(roles, c) && ready ? <QcActionButton className="btn btn-blue btn-sm" label={c.signLabel ?? "Paraf"} confirmText={`${c.signLabel ?? "Paraf"} baris ini atas nama Anda?`} action={signIsoRecordAction.bind(null, row.recordId, c.key)} /> : <span className="small muted">{ready ? "—" : "menunggu"}</span>}
+                        </td>
+                      );
+                    }
                     return (
                       <td key={c.key} className={`${c.auto ? "iso-auto " : ""}${c.type === "number" ? "num" : wide ? "wrap" : ""}`} title={text.length > 40 ? text : undefined}>
                         <Chip text={text} />
@@ -134,8 +158,11 @@ export function FormsTab({ view, forms, counts, form, rows, nextOffset, canInput
                   })}
                   <td>
                     <div className="iso-actions">
-                    {canEdit && form.master && row.source === "manual" && row.values.terakhir !== today && (
-                      <Link href={isoUrl(view, { aksi: "ubah", id: row.recordId ?? undefined, selesai: "1" })} title="Sudah dikalibrasi/diservis hari ini">Sudah dikerjakan</Link>
+                    {isOffice && form.code === "F-IB-10" && row.source === "manual" && row.recordId && (
+                      <Link href={`/operasional/surat-pesanan?aksi=baru&iso=${row.recordId}`} className="btn btn-ghost btn-sm" title="Buat surat pesanan resmi ke pemasok dari permintaan ini">Surat eksternal</Link>
+                    )}
+                    {canEdit && row.source === "manual" && row.recordId && (form.master || (form.code === "F-IB-14" && row.values.status === "Open")) && (
+                      <Link href={isoUrl(view, { aksi: "selesaikan", id: row.recordId })} className="btn btn-ghost btn-sm text-sukses" title={form.master ? "Tandai sudah dikalibrasi / diservis, pilih tanggal selesai" : "Tandai tindak lanjut selesai"}>✓ Selesaikan</Link>
                     )}
                     {canEdit && (
                       row.source === "manual"

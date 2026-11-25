@@ -9,6 +9,9 @@ import { OrderDanger } from "@/components/ops/order/OrderDanger";
 import { PaymentBadge } from "@/components/ops/order/PaymentBadge";
 import { ShareOrderButton } from "@/components/ops/order/ShareOrderButton";
 import { getDb, schema } from "@/db";
+import { OrderActions } from "@/components/ops/home/OrderActions";
+import { proofRowCount } from "@/lib/ops/deliveries";
+import "@/components/ops/home/home.css";
 import { isArchive } from "@/lib/erp/archive";
 import { docTotals } from "@/lib/erp/docs";
 import { overdueByContact, stockPosition } from "@/lib/erp/insights";
@@ -22,7 +25,7 @@ export const metadata = { title: "Pesanan" };
 const EPS = 1e-9;
 
 export default async function PesananDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string }> }) {
-  const { canOrders, canShip: canShipAccess, canFinance } = await opsAccess();
+  const { canOrders, canShip: canShipAccess, canFinance, canLoad, perms } = await opsAccess();
   // Harga terlihat oleh keuangan dan peran yang mengisi harga di form PO (izin pesanan).
   const canPrice = canFinance || canOrders;
   const { id } = await params;
@@ -79,10 +82,13 @@ export default async function PesananDetail({ params, searchParams }: { params: 
   };
   const canCancel = canEdit && o.status !== "batal" && o.status !== "selesai" && o.status !== "terkirim" && !shippedAny && invoices.length === 0;
   const canDelete = canEdit && !shippedAny && invoices.length === 0;
+  const latest = deliveries.find((x) => x.d.status !== "batal") ?? deliveries[0];
+  const proofCount = latest ? await proofRowCount(db, latest.d.id) : 0;
 
   return (
-    <>
-      <BackLink href="/operasional/pesanan">Pesanan</BackLink>
+    <div className="ohome odetail">
+      <BackLink href="/operasional">PO &amp; pengiriman</BackLink>
+      <p className="ohome-kicker">PO · {contact?.name}</p>
       <PageHead title={o.number} sub={<><Status s={o.status} /> <PaymentBadge status={o.paymentStatus} long /></>}>
         {canShip && canSchedule && <Link href={`/operasional/pengiriman/baru?pesanan=${o.id}`} className="btn btn-primary btn-sm">+ Jadwalkan pengiriman</Link>}
         {canInvoice && <Link href={`/akuntansi/penjualan/baru?pesanan=${o.id}`} className="btn btn-blue btn-sm">Buat faktur</Link>}
@@ -90,6 +96,12 @@ export default async function PesananDetail({ params, searchParams }: { params: 
         {canEdit && o.status !== "batal" && o.status !== "selesai" && <Link href={`/operasional/pesanan/${o.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>}
       </PageHead>
       <Ok ok={ok} />
+      {!archived && (
+        <section className="ohome-card odetail-actions">
+          <span className="small muted">Aksi</span>
+          <OrderActions r={{ orderId: o.id, orderStatus: o.status, contactId: o.contactId, mapsUrl: o.mapsUrl, deliveryId: latest?.d.id ?? null, status: latest?.d.status ?? null, hasDriver: Boolean(latest?.d.driverId), proofCount }} canOrders={canOrders} canShip={canShip} canLoad={canLoad} canComplete={perms.has("selesaikan")} back={`/operasional/pesanan/${o.id}`} />
+        </section>
+      )}
       {archived && <p className="flag flag-info" style={{ marginBottom: 16 }}>Arsip aplikasi lama. Pesanan ini hanya bisa dilihat, tidak bisa diubah, dijadwalkan kirim, atau difaktur.</p>}
       {o.status === "draft" && (
         <p className="alert alert-ok" style={{ marginBottom: 16, background: "var(--biru-muda)", color: "var(--biru-tua)" }}>
@@ -212,7 +224,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
         )}
 
         {canEdit && (
-          <section className="admin-card stack" style={{ gap: 12 }}>
+          <section id="batal" className="admin-card stack" style={{ gap: 12 }}>
             <h2 style={{ fontSize: 17 }}>Status pesanan</h2>
             <div className="head-actions">
               {o.status === "draft" && <ConfirmAction action={setOrderStatus.bind(null, o.id, "konfirmasi")} label="Konfirmasi pesanan" confirmText="Konfirmasi pesanan ini?" className="btn btn-blue btn-sm" />}
@@ -223,6 +235,6 @@ export default async function PesananDetail({ params, searchParams }: { params: 
           </section>
         )}
       </div>
-    </>
+    </div>
   );
 }

@@ -29,7 +29,7 @@ type DeliveryRow = typeof schema.deliveries.$inferSelect;
 /** Alamat kembali yang diizinkan setelah aksi (papan muatan / pengiriman / tugas), supaya tidak jadi open-redirect. */
 function backTarget(form: FormData, fallback: string) {
   const v = String(form.get("back") ?? "");
-  return /^\/operasional\/(muatan|pengiriman|tugas)(\/[\w-]+)?(\?[\w=&%.~-]*)?$/.test(v) ? v : fallback;
+  return /^\/operasional(\/(muatan|pengiriman|tugas|pesanan)(\/[\w-]+)?)?(\?[\w=&%.~-]*)?$/.test(v) ? v : fallback;
 }
 
 /** Sopir yang dipilih harus ada dan aktif ("tersedia"); kendaraan harus ada dan aktif. Hanya diperiksa bila berubah. */

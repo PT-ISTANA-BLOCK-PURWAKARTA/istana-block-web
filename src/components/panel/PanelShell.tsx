@@ -19,7 +19,8 @@ export function PanelShell({ module, tag, items, user, children }: { module: Mod
       <aside className="admin-side hexpat">
         <div className="side-top">
           <Link href={MODULES.find((m) => m.key === module)?.href ?? "/internal"} className="brand">
-            <img src="/brand/logo-istana-block-putih.webp" alt="Istana Block Purwakarta" width={147} height={44} />
+            <img src="/brand/lambang-istana-block-putih.webp" alt="" width={129} height={150} />
+            <span>Istana Block</span>
           </Link>
           {mods.length > 1 ? (
             <nav aria-label="Pilih modul" className="module-switch">

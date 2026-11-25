@@ -110,14 +110,15 @@ export const canViewForm = (roles: readonly Role[], code: IsoCode) => can(roles,
 function inputRolesOf(roles: readonly Role[]) {
   const out = new Set<IsoInputRole>();
   for (const r of roles) {
-    if (r === "owner" || r === "operasional" || r === "qc" || r === "mandor" || r === "satpam" || r === "pimpinan") out.add(r);
-    if (r === "manajer_qc") out.add("qc");
+    if (r === "owner" || r === "operasional" || r === "qc" || r === "mandor" || r === "satpam" || r === "pimpinan" || r === "qcbeton" || r === "ekspedisi") out.add(r);
+    if (r === "manajer_qc" || r === "qcbeton") out.add("qc");
   }
   return out;
 }
 export const canInputForm = (roles: readonly Role[], form: IsoForm) => {
   const mine = inputRolesOf(roles);
-  return can(roles, "iso") && form.inputRoles.some((r) => mine.has(r));
+  // Laporan insiden (F-IB-18) boleh dari HP petugas lapangan tanpa akses Rekap ISO (izin insiden).
+  return can(roles, form.code === "F-IB-18" ? "insiden" : "iso") && form.inputRoles.some((r) => mine.has(r));
 };
 export const canSetObjective = (roles: readonly Role[]) => can(roles, "iso") && (isOfficeRole(roles) || roles.includes("qc") || roles.includes("manajer_qc"));
 export const canDeleteAny = isOfficeRole;
@@ -160,15 +161,19 @@ async function supplementsFor(db: OpsDb, code: IsoCode, keys: string[]) {
   return new Map(rows.map((r) => [r.sourceKey ?? "", r.data]));
 }
 
-const appRow = (form: IsoForm, key: string, values: IsoValues, day: string): IsoRow => ({
+/** values._by = nama akun yang mengerjakan (filter "dikerjakan oleh" & batas lihat orang lapangan); tidak ikut tampil di kolom. */
+const appRow = (form: IsoForm, key: string, values: IsoValues, day: string): IsoRow => {
+  const { _by, ...rest } = values;
+  return {
   key,
   source: "app",
   recordId: null,
   number: null,
-  values: computeIsoValues(form, values, day, [], true),
+  values: computeIsoValues(form, rest, day, [], true),
   createdBy: null,
-  createdByName: null,
-});
+  createdByName: _by ? String(_by) : null,
+};
+};
 
 type Page = { limit: number; offset: number };
 type AppPage = { rows: IsoRow[]; hasMore: boolean };
@@ -284,6 +289,7 @@ async function productionRows(db: OpsDb, range: DayRange, page: Page): Promise<A
       const issues = first ? parseIssues(row.issues) : [];
       return appRow(form, `production:${row.id}:${row.rn}`, {
         tanggal: row.date,
+        _by: row.creator,
         leader: row.leader || row.creator,
         lini: productionLine(category, product),
         produk: product || null,
@@ -357,6 +363,7 @@ async function mixRows(db: OpsDb, range: DayRange, page: Page): Promise<AppPage>
         status: CHECK_LABELS[row.status],
         catatan: joinText([row.notes, row.reviewStatus === "disetujui" ? `ACC ${row.reviewer ?? ""}`.trim() : row.reviewStatus === "revisi" ? "Diminta revisi" : "Menunggu ACC"]),
         paraf: row.creator,
+        _by: row.creator,
       }, day);
     }),
   };
@@ -403,6 +410,7 @@ async function strengthRows(db: OpsDb, range: DayRange, page: Page, withSuppleme
         lab: supplement.lab ?? "Internal",
         catatan: joinText([result.target === null ? null : `Target umur ${result.ageDays} hari ${fmt(result.target, 2)} kg/cm² (${row.grade})`, row.notes]),
         paraf: row.lab ?? row.creator,
+        _by: row.creator,
       }, day);
     }),
   };
@@ -518,6 +526,7 @@ async function receiptRows(db: OpsDb, range: DayRange, page: Page): Promise<AppP
         ]),
         tindakan: supplement.tindakan ?? (row.status === "ditolak" ? "Retur ke pemasok" : null),
         paraf: row.qc ?? test?.completer ?? null,
+        _by: row.qc ?? test?.completer ?? null,
       }, day);
     }),
   };

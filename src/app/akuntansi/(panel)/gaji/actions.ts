@@ -131,7 +131,7 @@ export async function savePayslipAction(
         label: "Mengubah slip gaji",
         summary: `${employeeName} · ${slipDate}`,
       });
-      revalidatePath("/operasional/gaji");
+      revalidatePath("/akuntansi/gaji");
       return { ok: true, id: existingId };
     }
 
@@ -146,7 +146,7 @@ export async function savePayslipAction(
       label: "Membuat slip gaji",
       summary: `${employeeName} · ${slipDate}`,
     });
-    revalidatePath("/operasional/gaji");
+    revalidatePath("/akuntansi/gaji");
     return { ok: true, id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Gagal menyimpan slip gaji." };
@@ -171,7 +171,7 @@ export async function deletePayslipAction(id: string): Promise<{ ok: true } | { 
       label: "Menghapus slip gaji",
       summary: `${existing.employeeName} · ${existing.slipDate}`,
     });
-    revalidatePath("/operasional/gaji");
+    revalidatePath("/akuntansi/gaji");
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Gagal menghapus slip gaji." };
@@ -210,7 +210,7 @@ export async function buatPayslip(fd: FormData) {
     signerName: String(fd.get("penandaTangan") || "").trim() || null,
     createdBy: user.id,
   });
-  revalidatePath("/operasional/gaji");
+  revalidatePath("/akuntansi/gaji");
 }
 
 export async function hapusPayslip(fd: FormData) {
@@ -219,5 +219,5 @@ export async function hapusPayslip(fd: FormData) {
   if (!id) return;
   const db = await getDb();
   await db.delete(schema.payslips).where(eq(schema.payslips.id, id));
-  revalidatePath("/operasional/gaji");
+  revalidatePath("/akuntansi/gaji");
 }

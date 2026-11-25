@@ -5,7 +5,10 @@ import { requirePerm, type CurrentUser } from "@/lib/auth";
 import { UserError, runBatch, type DB } from "@/lib/erp/server";
 import { requireShift } from "./duty";
 import { canDeleteAny, canInputForm, canSetObjective, canViewCustomers, getManualRecord, IsoError } from "./iso-core";
-import { cleanIsoValues, FORM_BY_CODE, isDay, type IsoCode, type IsoValues } from "./shared/isoForms";
+import { canSignColumn, cleanIsoValues, FORM_BY_CODE, isDay, isSignColumn, type IsoCode, type IsoValues } from "./shared/isoForms";
+import { getEnv } from "@/db";
+import { pushToUsers } from "./push";
+import { can } from "@/lib/roles";
 import { QUALITY_OBJECTIVES } from "./shared/isoObjectives";
 import { wibDate } from "./shared/period";
 
@@ -42,10 +45,10 @@ function formOf(code: string) {
   return form;
 }
 
-/** Nomor NCR otomatis NCR-<tahun>-<nnn>. */
-async function nextNcrNumber(db: DB, day: string) {
-  const prefix = `NCR-${day.slice(0, 4)}-`;
-  const rows = await db.select({ number: ir.number }).from(ir).where(and(eq(ir.formCode, "F-IB-15"), like(ir.number, `${prefix}%`)));
+/** Nomor otomatis per tahun: NCR-<tahun>-<nnn> (F-IB-15) atau INS-<tahun>-<nnn> (F-IB-18, insiden). */
+async function nextNcrNumber(db: DB, day: string, code: "F-IB-15" | "F-IB-18" = "F-IB-15") {
+  const prefix = `${code === "F-IB-18" ? "INS" : "NCR"}-${day.slice(0, 4)}-`;
+  const rows = await db.select({ number: ir.number }).from(ir).where(and(eq(ir.formCode, code), like(ir.number, `${prefix}%`)));
   const last = Math.max(0, ...rows.map((r) => Number(r.number?.slice(prefix.length)) || 0));
   return `${prefix}${String(last + 1).padStart(3, "0")}`;
 }
@@ -58,6 +61,13 @@ export async function saveIsoRecord(db: DB, me: CurrentUser, input: { code: stri
   await requireShift(me);
   const { values, error } = cleanIsoValues(form, input.values);
   if (error) throw new UserError(error);
+  // Kolom khusus kantor (mis. harga F-IB-10) dan kolom paraf (hanya lewat tombol Paraf): nilai lama dipertahankan.
+  const office = me.roles.includes("owner") || me.roles.includes("operasional");
+  const kept = form.columns.filter((c) => isSignColumn(c) || (c.officeOnly && !office));
+  if (kept.length) {
+    const current = input.id ? await getManualRecord(db, form.code, input.id) : undefined;
+    for (const c of kept) values[c.key] = (current?.data[c.key] as IsoValues[string] | undefined) ?? null;
+  }
   const recordDate = values[form.dateKey];
   if (!isDay(recordDate)) throw new UserError("Tanggal wajib diisi.");
   const who = me.name;
@@ -71,15 +81,78 @@ export async function saveIsoRecord(db: DB, me: CurrentUser, input: { code: stri
       form.code === "F-IB-06" && row.data.terakhir && row.data.terakhir !== values.terakhir
         ? [...row.history, { at: new Date().toISOString(), by: who, values: { terakhir: row.data.terakhir, pelaksana: row.data.pelaksana ?? null, sertifikat: row.data.sertifikat ?? null, keterangan: row.data.keterangan ?? null } }].slice(-50)
         : row.history;
-    await db.update(ir).set({ data: { ...values, ...(row.data._from ? { _from: row.data._from } : {}) }, recordDate, history, updatedByName: who, updatedAt: new Date() }).where(eq(ir.id, row.id));
+    const sigs = Object.fromEntries(Object.entries(row.data).filter(([key]) => key.startsWith("_sig_")));
+    await db.update(ir).set({ data: { ...values, ...(row.data._from ? { _from: row.data._from } : {}), ...sigs }, recordDate, history, updatedByName: who, updatedAt: new Date() }).where(eq(ir.id, row.id));
     return { id: row.id, number: row.number, created: false };
   }
-  const number = form.code === "F-IB-15" ? await nextNcrNumber(db, recordDate) : null;
+  const number = form.code === "F-IB-15" || form.code === "F-IB-18" ? await nextNcrNumber(db, recordDate, form.code) : null;
   const [row] = await db
     .insert(ir)
     .values({ formCode: form.code, kind: "record", recordDate, number, data: { ...values, ...(input.from ? { _from: input.from.slice(0, 60) } : {}) }, createdBy: me.id, createdByName: who })
     .returning({ id: ir.id, number: ir.number });
+  if (form.code === "F-IB-18") await notifyIncident(db, me, values);
+  if (form.code === "F-IB-10") await notifyMaterialRequest(db, values, who);
   return { id: row.id, number: row.number, created: true };
+}
+
+/** Penerima notifikasi kantor: pemilik & operasional, atau juga pimpinan (izin laporan). */
+async function officeUserIds(db: DB, exceptId: number, withLeaders: boolean) {
+  const people = await db.select({ id: schema.users.id, roles: schema.users.roles }).from(schema.users);
+  return people
+    .filter((p) => p.id !== exceptId)
+    .filter((p) => {
+      const roles = (Array.isArray(p.roles) ? p.roles : []) as Parameters<typeof can>[0];
+      return roles.includes("owner") || roles.includes("operasional") || (withLeaders && can(roles, "laporan"));
+    })
+    .map((p) => p.id);
+}
+
+/** Insiden baru -> notifikasi ke pimpinan & kantor (kecuali pelapor). Kegagalan push tidak menggagalkan simpan. */
+async function notifyIncident(db: DB, me: CurrentUser, v: IsoValues) {
+  try {
+    const ids = await officeUserIds(db, me.id, true);
+    if (!ids.length) return;
+    await pushToUsers(db, await getEnv(), ids, {
+      title: `INSIDEN: ${v.jenis ?? "laporan baru"}${v.keparahan ? ` · ${v.keparahan}` : ""}`,
+      body: `${v.lokasi ?? "-"} — ${String(v.kronologi ?? "").slice(0, 120)} (dilaporkan ${me.name})`,
+      url: "/operasional/insiden",
+      tag: "incident-new",
+    });
+  } catch {
+    // push bersifat tambahan
+  }
+}
+
+/** Permintaan bahan & alat (F-IB-10) baru -> notifikasi kantor untuk mengisi harga. */
+async function notifyMaterialRequest(db: DB, v: IsoValues, by: string) {
+  try {
+    const ids = await officeUserIds(db, -1, false);
+    if (!ids.length) return;
+    const qty = v.jumlah !== null && v.jumlah !== undefined ? ` ${v.jumlah} ${v.satuan ?? ""}` : "";
+    await pushToUsers(db, await getEnv(), ids, {
+      title: `Permintaan ${String(v.jenis ?? "bahan").toLowerCase()} dari ${by}`,
+      body: `${v.nama ?? "-"}${qty}${v.tujuan ? ` · ${v.tujuan}` : ""}. Isi harga di Rekap ISO → F-IB-10.`,
+      url: "/operasional/rekap-iso?tab=form&form=F-IB-10",
+      tag: "iso-f-ib-10",
+    });
+  } catch {
+    // push bersifat tambahan
+  }
+}
+
+/** Tombol "Paraf" / TTD: isi kolom dengan nama akun + tanggal (hanya yang berhak, hanya bila masih kosong). */
+export async function signIsoRecord(db: DB, me: CurrentUser, input: { id: string; column: string }) {
+  const [row] = await db.select().from(ir).where(and(eq(ir.id, input.id), eq(ir.kind, "record"))).limit(1);
+  if (!row) throw new UserError("Data tidak ditemukan.");
+  const column = formOf(row.formCode).columns.find((c) => c.key === input.column);
+  if (!column || !isSignColumn(column)) throw new UserError("Kolom ini bukan kolom paraf.");
+  if (column.signAfter && !String(row.data[column.signAfter] ?? "").trim()) throw new UserError("Belum bisa: tanda tangan sebelumnya belum diisi.");
+  if (!canSignColumn(me.roles, column)) throw new UserError(`Akun Anda tidak berhak mengisi ${column.label}.`);
+  if (String(row.data[column.key] ?? "").trim()) throw new UserError(`${column.label} sudah diisi.`);
+  const value = `${me.name} (${wibDate(new Date()).split("-").reverse().join("/")})`;
+  // Akun yang memaraf disimpan agar gambar tanda tangannya ikut tercetak.
+  await db.update(ir).set({ data: { ...row.data, [column.key]: value, [`_sig_${column.key}`]: me.id }, updatedByName: me.name, updatedAt: new Date() }).where(eq(ir.id, row.id));
+  return { value, formCode: row.formCode };
 }
 
 /** Hapus baris isian langsung: pembuat atau kantor. */

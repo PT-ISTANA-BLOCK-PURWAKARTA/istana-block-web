@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { approveStrengthTest, deleteStrengthTest, requestStrengthRevision, signStrengthAsLeader } from "@/app/operasional/actions/qc";
 import { tglPanjang } from "@/lib/erp/util";
-import { qcCan, type StrengthTestRow } from "@/lib/ops/qc";
+import { QC_SCOPE, qcCan, type StrengthTestRow } from "@/lib/ops/qc";
+import type { QcScope } from "@/db/erp";
 import { batchAverages } from "@/lib/ops/shared/strength";
 import type { Role } from "@/lib/roles";
 import { qnum } from "./labels";
@@ -32,19 +33,23 @@ function excelSheet(tests: StrengthTestRow[]): QcSheet {
   };
 }
 
-export function UjiTekanTab({ me, from, to, now, tests }: { me: { id: number; roles: readonly Role[] }; from: string; to: string; now: string; tests: StrengthTestRow[] }) {
-  const c = qcCan(me.roles);
+/** scope: paving (Team Leader Paving) / beton (QC Beton). readOnly: hanya melihat pekerjaan bagian lain. */
+export function UjiTekanTab({ me, from, to, now, tests, scope = "paving", readOnly = false, tab = "uji-tekan", rangeBase }: { me: { id: number; roles: readonly Role[] }; from: string; to: string; now: string; tests: StrengthTestRow[]; scope?: QcScope; readOnly?: boolean; tab?: string; rangeBase?: string }) {
+  const full = qcCan(me.roles, scope);
+  const c = readOnly ? { input: false, approve: false, sign: false, editAny: false } : full;
+  const base = QC_SCOPE[scope].base;
+  const label = scope === "beton" ? "uji mutu beton" : "uji kuat tekan";
   return (
     <>
       <div className="qc-bar">
-        <RangeBar tab="uji-tekan" from={from} to={to} now={now} />
+        <RangeBar tab={tab} from={from} to={to} now={now} base={rangeBase ?? base} />
         <div className="qc-tools no-print">
           <QcExcelButton fileName={`Uji-Kuat-Tekan_${from}_sd_${to}.xlsx`} sheets={[excelSheet(tests)]} dateKeys={["report", "made", "tested"]} />
-          {c.input && <Link href="/operasional/qc/uji-tekan/baru" className="btn btn-primary btn-sm">+ Laporan uji tekan</Link>}
+          {c.input && <Link href={`${base}/uji-tekan/baru`} className="btn btn-primary btn-sm">+ Laporan uji tekan{scope === "beton" ? " beton" : ""}</Link>}
         </div>
       </div>
 
-      {tests.length === 0 && <div className="admin-card muted">Belum ada laporan uji kuat tekan pada periode ini.</div>}
+      {tests.length === 0 && <div className="admin-card muted">Belum ada laporan {label} pada periode ini.</div>}
       <div className="qc-tests">
         {tests.map((t) => {
           const passed = t.samples.filter((s) => s.passed === true).length;
@@ -103,7 +108,7 @@ export function UjiTekanTab({ me, from, to, now, tests }: { me: { id: number; ro
                 {c.approve && t.reviewStatus !== "disetujui" && <QcActionButton className="btn btn-blue btn-sm" label="ACC (Diperiksa Lab)" action={approveStrengthTest.bind(null, t.id)} />}
                 {c.approve && t.reviewStatus === "menunggu" && <QcActionButton label="Revisi" promptText="Catatan revisi untuk QC (apa yang harus diperbaiki?)" promptRequired action={requestStrengthRevision.bind(null, t.id)} />}
                 {c.sign && t.reviewStatus === "disetujui" && !t.leaderSignedAt && <QcActionButton className="btn btn-blue btn-sm" label="TTD Pimpinan" confirmText="Tanda tangani laporan ini sebagai Mengetahui Pimpinan?" action={signStrengthAsLeader.bind(null, t.id)} />}
-                {canEdit && <Link href={`/operasional/qc/uji-tekan/${t.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>}
+                {canEdit && <Link href={`${base}/uji-tekan/${t.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>}
                 {canEdit && <QcActionButton className="link-btn" label="Hapus" confirmText="Hapus laporan ini?" action={deleteStrengthTest.bind(null, t.id)} />}
               </div>
             </article>

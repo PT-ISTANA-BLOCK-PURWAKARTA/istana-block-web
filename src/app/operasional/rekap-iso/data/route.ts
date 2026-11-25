@@ -21,12 +21,19 @@ export async function GET(request: Request) {
   if (error) return json({ error }, 400);
   try {
     const db = await getDb();
-    if (q.get("kind") === "overview") return json(await isoOverview(db, range));
+    // Orang lapangan (bukan kantor / pimpinan): ringkasan tidak dibuka, baris hanya isian sendiri.
+    const fieldOnly = !user.roles.includes("owner") && !user.roles.includes("operasional") && !can(user.roles, "laporan");
+    if (q.get("kind") === "overview") {
+      if (fieldOnly) return json({ error: "Ringkasan hanya untuk kantor & pimpinan." }, 403);
+      return json(await isoOverview(db, range));
+    }
     if (q.get("kind") === "rows") {
       const code = q.get("code") as IsoCode;
       if (!ISO_CODES.includes(code)) return json({ error: "Form tidak dikenal." }, 400);
       if (!canViewForm(user.roles, code)) return json({ error: "Akun Anda tidak memiliki akses ke form ini." }, 403);
-      return json(await listIsoRows(db, { code, from: range.from, to: range.to, offset: Number(q.get("offset")) || 0 }));
+      const page = await listIsoRows(db, { code, from: range.from, to: range.to, offset: Number(q.get("offset")) || 0 });
+      if (fieldOnly) page.rows = page.rows.filter((r) => r.createdBy === user.id || (r.createdByName !== null && r.createdByName === user.name));
+      return json(page);
     }
     return json({ error: "Permintaan tidak dikenal." }, 400);
   } catch (e) {
