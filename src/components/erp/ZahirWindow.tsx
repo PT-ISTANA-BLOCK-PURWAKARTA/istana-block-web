@@ -1,7 +1,8 @@
 "use client";
 
-// Bingkai form transaksi seperti jendela Zahir Accounting 6: bilah judul, toolbar ikon (Baru · Simpan · Cetak · Tutup),
-// isi (kepala dokumen + tabel rincian), dan bilah status di bawah. Dipakai di dalam <ActionForm> (Simpan = submit).
+// Kerangka form transaksi gaya Zahir Online: kartu putih dengan judul & nomor dokumen di kiri atas,
+// tombol Tutup · Baru · Cetak · Simpan (hijau) di kanan atas (tetap terlihat saat menggulir), isi, dan catatan di bawah.
+// Dipakai di dalam <ActionForm> (Simpan = submit).
 import Link from "next/link";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { Icon, type IconName } from "@/components/panel/Icon";
@@ -28,20 +29,21 @@ export function ZahirWindow({
 }) {
   return (
     <div className="zw">
-      <div className="zw-title">
-        <span className="zw-title-text"><Icon name={icon} size={16} /> {title}</span>
-        <span className="zw-no">No. <b>{number || "[Otomatis]"}</b></span>
-        <Link href={closeHref} className="zw-x" aria-label="Tutup">×</Link>
-      </div>
-      <div className="zw-toolbar" role="toolbar" aria-label={`Perintah ${title}`}>
-        <Link href={newHref} className="zw-tool"><Icon name="doc" size={20} /><span>Baru</span></Link>
-        <SubmitButton className="zw-tool zw-save" pendingText="Menyimpan…"><Icon name="check" size={20} /><span>Simpan</span></SubmitButton>
-        {printHref ? (
-          <Link href={printHref} target="_blank" className="zw-tool"><Icon name="report" size={20} /><span>Cetak</span></Link>
-        ) : (
-          <span className="zw-tool is-off" title="Simpan dulu untuk mencetak"><Icon name="report" size={20} /><span>Cetak</span></span>
-        )}
-        <Link href={closeHref} className="zw-tool"><Icon name="close" size={20} /><span>Tutup</span></Link>
+      <div className="zw-top">
+        <div className="zw-title">
+          <h1><Icon name={icon} size={20} /> {title}</h1>
+          <span className="zw-no">No. <b>{number || "[Otomatis]"}</b></span>
+        </div>
+        <div className="zw-toolbar" role="toolbar" aria-label={`Perintah ${title}`}>
+          <Link href={closeHref} className="zw-tool"><Icon name="back" size={16} /> Tutup</Link>
+          <Link href={newHref} className="zw-tool"><Icon name="doc" size={16} /> Baru</Link>
+          {printHref ? (
+            <Link href={printHref} target="_blank" className="zw-tool"><Icon name="report" size={16} /> Cetak</Link>
+          ) : (
+            <span className="zw-tool is-off" title="Simpan dulu untuk mencetak"><Icon name="report" size={16} /> Cetak</span>
+          )}
+          <SubmitButton className="zw-tool zw-save" pendingText="Menyimpan…"><Icon name="check" size={16} /> Simpan</SubmitButton>
+        </div>
       </div>
       <div className="zw-body">{children}</div>
       {status && <div className="zw-status">{status}</div>}

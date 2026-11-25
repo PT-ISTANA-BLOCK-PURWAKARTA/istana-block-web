@@ -4,16 +4,35 @@ import type { CurrentUser } from "@/lib/auth";
 import { can, canOpen, MODULES, ROLE_SHORT, type ModuleKey, type Perm } from "@/lib/roles";
 import { Icon } from "./Icon";
 import { PanelNav, type NavItem } from "./PanelNav";
+import { TopNav } from "./TopNav";
 
 export type ShellItem = NavItem & { perm?: Perm | Perm[] };
 
 /** Kerangka panel (sidebar + konten) yang dipakai /situs, /akuntansi, dan /operasional. */
-export function PanelShell({ module, tag, items, user, children }: { module: ModuleKey; tag: string; items: ShellItem[]; user: CurrentUser; children: React.ReactNode }) {
+/** layout "top" = menu atas horizontal (gaya Zahir Online, dipakai Keuangan); bawaan = menu samping. */
+export function PanelShell({ module, tag, items, user, children, layout = "side" }: { module: ModuleKey; tag: string; items: ShellItem[]; user: CurrentUser; children: React.ReactNode; layout?: "side" | "top" }) {
   const mods = MODULES.filter((m) => canOpen(user.roles, m.key) || m.key === module);
   // Menu yang tidak boleh dipakai akun ini tidak ditampilkan sama sekali.
   const visible = items
     .filter((i) => !i.perm || (Array.isArray(i.perm) ? i.perm : [i.perm]).some((p) => can(user.roles, p)))
     .map(({ perm: _p, ...i }) => i);
+  if (layout === "top") {
+    return (
+      <div className={`admin admin-top panel-${module}`}>
+        <TopNav
+          items={visible}
+          modules={mods.map((m) => ({ key: m.key, href: m.href, label: m.label }))}
+          current={module}
+          user={{ name: user.name, role: user.roles.map((r) => ROLE_SHORT[r]).join(", ") || "Tanpa peran" }}
+          homeHref={MODULES.find((m) => m.key === module)?.href ?? "/internal"}
+          logout={logout}
+        />
+        <main className="admin-main" id="konten">
+          <div className="main-inner">{children}</div>
+        </main>
+      </div>
+    );
+  }
   return (
     <div className={`admin panel-${module}`}>
       <aside className="admin-side hexpat">

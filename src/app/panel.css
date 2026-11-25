@@ -863,42 +863,133 @@ a.kpi:hover .k-label { color: var(--biru); }
   .zh-mod { padding: 12px; }
 }
 
-/* ---------- Form transaksi gaya jendela Zahir Accounting 6 ---------- */
+/* ---------- Keuangan gaya Zahir Online: menu atas, kartu putih, tabel bersih ---------- */
+.admin-top { display: block; background: #f2f5f9; --zo: #1565c0; --zo-dark: #0d47a1; --zo-green: #16a34a; }
+.admin-top .admin-main { padding: 22px 28px 80px; }
+.tn { position: sticky; top: 0; z-index: 40; background: linear-gradient(90deg, var(--zo-dark), var(--zo)); color: #fff; box-shadow: 0 2px 8px rgba(13, 71, 161, .25); }
+.tn-bar { display: flex; align-items: center; gap: 12px; max-width: 1400px; margin: 0 auto; padding: 0 16px; min-height: 56px; }
+.tn-brand { display: inline-flex; align-items: center; gap: 8px; color: #fff; text-decoration: none; flex: 0 0 auto; }
+.tn-brand img { height: 30px; width: auto; }
+.tn-brand span { font-family: var(--font-judul, inherit); font-weight: 800; font-size: 16px; line-height: 1.05; }
+.tn-brand small { display: block; font-size: 11px; font-weight: 600; opacity: .8; letter-spacing: .06em; text-transform: uppercase; }
+.tn-burger { display: none; }
+.tn-menu { display: flex; align-items: stretch; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.tn-right { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+.tn-group { position: relative; display: flex; }
+.tn-top { display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; min-height: 56px; border: 0; background: none; color: rgba(255, 255, 255, .9); font: 600 13.5px var(--font-isi, inherit); text-decoration: none; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; }
+.tn-top:hover, .tn-group.is-open > .tn-top { background: rgba(255, 255, 255, .12); color: #fff; }
+.tn-top[aria-current="page"], .tn-top.is-active { color: #fff; border-bottom-color: #fff; }
+.tn-top .icon { opacity: .95; }
+.tn-caret { font-size: 10px; opacity: .8; }
+.tn-drop { position: absolute; top: 100%; left: 0; min-width: 230px; background: #fff; color: #1e293b; border-radius: 0 0 10px 10px; box-shadow: 0 12px 28px rgba(15, 23, 42, .18); padding: 6px; display: grid; gap: 1px; }
+.tn-drop[hidden] { display: none; }
+.tn-drop-right { left: auto; right: 0; }
+.tn-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 7px; color: #1e293b; text-decoration: none; font: 500 14px var(--font-isi, inherit); background: none; border: 0; width: 100%; text-align: left; cursor: pointer; }
+.tn-item:hover { background: #eef4fd; color: var(--zo-dark); }
+.tn-item[aria-current="page"] { background: #e3edfb; color: var(--zo-dark); font-weight: 700; }
+.tn-item .icon { color: var(--zo); opacity: 1; }
+.tn-drop form { margin: 0; }
+.tn-who { display: grid; padding: 8px 12px 10px; border-bottom: 1px solid #e2e8f0; margin-bottom: 4px; }
+.tn-who span { font-size: 12px; color: #64748b; }
+.tn-avatar { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #fff; color: var(--zo-dark); font-weight: 800; font-size: 13px; }
+.tn-fab { position: fixed; right: 24px; bottom: 24px; z-index: 35; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--zo-green); color: #fff; font-size: 30px; font-weight: 400; line-height: 1; text-decoration: none; box-shadow: 0 8px 20px rgba(22, 163, 74, .35); }
+.tn-fab:hover { background: #15803d; }
+/* Konten: judul, filter & tabel dalam kartu putih */
+.admin-top .admin-head h1 { font-size: 22px; color: #0f2a4a; }
+.admin-top .filter-bar { background: #fff; border: 1px solid #e3e9f1; border-radius: 12px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+.admin-top .admin-table { background: #fff; border: 1px solid #e3e9f1; border-radius: 12px; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+.admin-top .admin-table thead th { background: #f6f9fc; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.admin-top .admin-table tbody tr:hover td { background: #f8fbff; }
+.admin-top .admin-card { border-color: #e3e9f1; border-radius: 12px; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+.admin-top .btn-primary { background: var(--zo-green); border-color: var(--zo-green); }
+.admin-top .btn-blue { background: var(--zo); border-color: var(--zo); }
+@media (max-width: 1100px) {
+  .tn-bar { flex-wrap: wrap; padding: 6px 12px; min-height: 0; }
+  .tn-burger { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .1); color: #fff; font: 600 14px var(--font-isi, inherit); cursor: pointer; order: 3; }
+  .tn-right { order: 2; }
+  .tn-menu { display: none; order: 4; flex: 1 1 100%; flex-direction: column; padding: 6px 0 10px; }
+  .tn-menu.is-open { display: flex; }
+  .tn-menu .tn-top { min-height: 44px; border-bottom: 0; border-left: 3px solid transparent; width: 100%; justify-content: space-between; }
+  .tn-menu .tn-top[aria-current="page"], .tn-menu .tn-top.is-active { border-left-color: #fff; }
+  .tn-menu .tn-group { flex-direction: column; }
+  .tn-menu .tn-drop { position: static; box-shadow: none; border-radius: 8px; margin: 0 0 6px 12px; }
+  .tn-hide-sm { display: none; }
+  .admin-top .admin-main { padding: 16px 14px 90px; }
+}
+
+/* ---------- Form transaksi gaya Zahir Online (halaman putih, tombol di kanan atas) ---------- */
 .admin-main:has(.zw) .admin-head { display: none; }
-.zw { border: 1px solid #9fb3c8; border-radius: 6px; background: #f3f6fa; box-shadow: 0 4px 14px rgba(31, 52, 65, .12); overflow: hidden; }
-.zw-title { display: flex; align-items: center; gap: 12px; padding: 7px 10px 7px 14px; background: linear-gradient(#2d5c8a, #1f4468); color: #fff; font-weight: 700; font-size: 14px; }
-.zw-title-text { display: inline-flex; align-items: center; gap: 8px; flex: 1 1 auto; }
-.zw-no { font-weight: 500; font-size: 13px; opacity: .95; }
-.zw-no b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-.zw-x { color: #fff; text-decoration: none; font-size: 20px; line-height: 1; padding: 0 6px; border-radius: 4px; }
-.zw-x:hover { background: #c42b1c; }
-.zw-toolbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 2px; padding: 4px 6px; background: linear-gradient(#fdfdfd, #e6ebf1); border-bottom: 1px solid #b8c6d6; }
-.zw-tool { display: inline-grid; justify-items: center; gap: 2px; min-width: 64px; padding: 5px 8px; border: 1px solid transparent; border-radius: 4px; background: none; color: #1f3441; font: 600 12px var(--font-isi, inherit); text-decoration: none; cursor: pointer; }
-.zw-tool:hover { border-color: #9fb3c8; background: #fff; }
-.zw-tool .icon { color: #2d5c8a; opacity: 1; }
-.zw-save .icon { color: #047857; }
+.zw { background: #fff; border: 1px solid #e3e9f1; border-radius: 14px; box-shadow: 0 2px 10px rgba(15, 23, 42, .06); overflow: visible; }
+.zw-top { position: sticky; top: 56px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 18px; background: #fff; border-bottom: 1px solid #e8eef5; border-radius: 14px 14px 0 0; }
+.zw-title { display: grid; gap: 2px; margin-right: auto; }
+.zw-title h1 { margin: 0; font-size: 20px; color: #0f2a4a; display: flex; align-items: center; gap: 8px; }
+.zw-title h1 .icon { color: var(--zo, #1565c0); }
+.zw-no { font-size: 13px; color: #64748b; }
+.zw-no b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #0f2a4a; }
+.zw-toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+.zw-tool { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border: 1px solid #d5dfeb; border-radius: 8px; background: #fff; color: #1e3a5f; font: 600 13.5px var(--font-isi, inherit); text-decoration: none; cursor: pointer; }
+.zw-tool:hover { background: #f3f7fc; }
+.zw-tool .icon { color: var(--zo, #1565c0); opacity: 1; }
+.zw-save { background: var(--zo-green, #16a34a); border-color: var(--zo-green, #16a34a); color: #fff; }
+.zw-save:hover { background: #15803d; }
+.zw-save .icon { color: #fff; }
 .zw-tool.is-off { opacity: .45; cursor: default; }
 .zw-tool[disabled] { opacity: .6; }
-.zw-body { display: grid; gap: 12px; padding: 12px; }
-.zw-head, .zw-grid { background: #fff; border: 1px solid #c9d5e2; border-radius: 4px; padding: 12px; }
-.zw-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 28px; }
-.zw-fields > .field { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 10px; margin: 0; }
-.zw-fields > .field > label, .zw-fields > .field > .label { font-size: 13px; font-weight: 600; color: #334155; margin: 0; }
+.zw-body { display: grid; gap: 16px; padding: 18px; }
+.zw-head { display: block; }
+.zw-grid { border: 1px solid #e8eef5; border-radius: 10px; padding: 14px; }
+.zw-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 28px; }
+.zw-fields > .field { display: grid; gap: 4px; margin: 0; }
+.zw-fields > .field > label, .zw-fields > .field > .label { font-size: 12.5px; font-weight: 600; color: #64748b; margin: 0; }
 .zw-fields > .field.span-3, .zw-fields > .field.span-4 { grid-column: 1 / -1; }
 .zw-fields > .field p { margin: 0 !important; }
-.zw-grid .lines-head { background: linear-gradient(#f4f7fa, #dfe6ee); border: 1px solid #b8c6d6; border-radius: 3px 3px 0 0; padding: 6px 9px; color: #1f3441; font-size: 12.5px; }
-.zw-grid .lines-table { gap: 0; }
-.zw-grid .lines-row { border-radius: 0; border-top: 0; background: #fff; padding: 4px 8px; }
-.zw-grid .lines-row:nth-child(odd) { background: #f8fafc; }
-.zw-grid .lines-row input, .zw-grid .lines-row select { min-height: 34px; border-radius: 3px; font-size: 14px; }
-.zw-grid .totals { background: #f3f6fa; border: 1px solid #c9d5e2; border-radius: 4px; padding: 10px 12px; }
-.zw-grid .totals .grand { color: #1f4468; }
-.zw-grid table.compact thead th { background: linear-gradient(#f4f7fa, #dfe6ee); color: #1f3441; }
-.zw-grid-title { font-size: 14px !important; color: #1f4468; }
-.zw-status { padding: 6px 12px; border-top: 1px solid #c9d5e2; background: #e9eef4; font-size: 12.5px; color: #475569; }
+.zw-grid .lines-head { background: #f6f9fc; border-radius: 8px; padding: 8px 9px; color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+.zw-grid .lines-row { background: #fff; border-color: #e8eef5; border-radius: 8px; }
+.zw-grid .totals { background: #f6f9fc; border-radius: 10px; padding: 12px 14px; }
+.zw-grid .totals .grand { color: #0f2a4a; }
+.zw-grid table.compact thead th { background: #f6f9fc; color: #475569; }
+.zw-grid-title { font-size: 15px !important; color: #0f2a4a; }
+.zw-status { padding: 10px 18px; border-top: 1px solid #e8eef5; font-size: 12.5px; color: #64748b; }
 @media (max-width: 760px) {
+  .zw-top { top: 0; position: static; }
   .zw-fields { grid-template-columns: minmax(0, 1fr); }
-  .zw-fields > .field { grid-template-columns: minmax(0, 1fr); gap: 4px; }
-  .zw-body { padding: 8px; }
-  .zw-tool { min-width: 56px; }
+  .zw-body { padding: 12px; }
 }
+
+/* ---------- Dashboard Keuangan gaya Zahir Online ---------- */
+.zd { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.zd > * { min-width: 0; }
+.zd-hello { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.zd-hello h1 { margin: 0; font-size: 22px; color: #0f2a4a; }
+.zd-hello p { margin: 2px 0 0; color: #64748b; font-size: 13.5px; }
+.zd-quick { display: flex; flex-wrap: wrap; gap: 8px; }
+.zd-kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.zd-kpi { background: #fff; border: 1px solid #e3e9f1; border-radius: 14px; padding: 14px 16px; display: grid; gap: 4px; text-decoration: none; color: inherit; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+.zd-kpi:hover { border-color: #bcd3f1; }
+.zd-kpi-top { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #64748b; }
+.zd-kpi-ico { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; }
+.zd-kpi b { font-size: 21px; color: #0f2a4a; font-variant-numeric: tabular-nums; }
+.zd-kpi small { font-size: 12px; color: #64748b; }
+.zd-up { color: #16a34a !important; } .zd-down { color: #dc2626 !important; }
+.ico-blue { background: #e3edfb; color: #1565c0; } .ico-green { background: #e5f6ec; color: #16a34a; } .ico-amber { background: #fff4dc; color: #b45309; }
+.ico-red { background: #fde8e8; color: #dc2626; } .ico-violet { background: #efe9fd; color: #6d28d9; }
+.zd-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.zd-grid > * { min-width: 0; }
+.zd-card { background: #fff; border: 1px solid #e3e9f1; border-radius: 14px; padding: 16px; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+.zd-card h2 { margin: 0 0 10px; font-size: 15px; color: #0f2a4a; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.zd-card h2 a { font-size: 12.5px; font-weight: 600; }
+.zd-ratios { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.zd-ratio { background: #f6f9fc; border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
+.zd-ratio span { font-size: 12px; color: #64748b; }
+.zd-ratio b { font-size: 18px; color: #0f2a4a; }
+.zd-ratio small { font-size: 11.5px; color: #64748b; }
+.zd-bars { display: grid; gap: 8px; }
+.zd-bar { display: grid; grid-template-columns: 170px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13px; }
+.zd-bar i { display: block; height: 10px; border-radius: 6px; background: #1565c0; min-width: 2px; }
+.zd-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.zd-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid #eef2f7; font-size: 13.5px; }
+.zd-list li:first-child { border-top: 0; }
+.zd-list small { display: block; color: #64748b; font-size: 12px; }
+.zd-empty { color: #64748b; font-size: 13px; margin: 0; }
+@media (max-width: 980px) { .zd-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1100px) { .tn-menu a.tn-top { justify-content: flex-start; } }
