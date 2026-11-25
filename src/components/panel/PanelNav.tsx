@@ -12,32 +12,14 @@ const matches = (path: string, href: string) => path === href || path.startsWith
 
 /**
  * Menu samping modul. Item pertama dianggap beranda modul (aktif hanya bila path sama persis).
- * Judul grup bisa diciutkan (tersimpan per perangkat); grup yang berisi halaman aktif selalu terbuka.
+ * Item bergrup hanya tampil sebagai judul grup + panah; klik judul untuk membuka pilihan di bawahnya.
+ * Satu grup terbuka dalam satu waktu (akordeon); grup yang berisi halaman aktif terbuka otomatis.
+ * Item tanpa grup (mis. Ringkasan) selalu tampil di atas. Grup berlabel sama digabung jadi satu.
  * Di layar kecil menu dilipat di balik tombol "Menu" dan tertutup lagi setiap pindah halaman.
  */
 export function PanelNav({ items, label, footer }: { items: NavItem[]; label: string; footer: React.ReactNode }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
-  const [folded, setFolded] = useState<Record<string, boolean>>({});
-  const store = `nav-folded:${label}`;
-  useEffect(() => setOpen(false), [path]);
-  useEffect(() => {
-    try {
-      setFolded(JSON.parse(localStorage.getItem(store) || "{}"));
-    } catch {
-      setFolded({});
-    }
-  }, [store]);
-  const toggle = (g: string) =>
-    setFolded((cur) => {
-      const next = { ...cur, [g]: !cur[g] };
-      try {
-        localStorage.setItem(store, JSON.stringify(next));
-      } catch {
-        // abaikan (mode privat)
-      }
-      return next;
-    });
 
   const root = items[0]?.href;
   // Yang aktif adalah tautan terpanjang yang cocok (mis. /stok/penyesuaian mengalahkan /stok), termasuk alamat "also".
@@ -46,13 +28,23 @@ export function PanelNav({ items, label, footer }: { items: NavItem[]; label: st
     .filter(({ h, i }) => (i.href === root && h === root ? path === root : matches(path, h)))
     .sort((a, b) => b.h.length - a.h.length)[0];
   const current = best?.i;
+  const activeGroup = current?.group ?? null;
 
-  // Kelompokkan item berurutan per grup; item tanpa grup tampil di atas tanpa judul.
-  const sections: { group?: string; items: NavItem[] }[] = [];
+  // Grup yang sedang terbuka: awalnya grup halaman aktif; ikut pindah saat halaman aktif pindah grup.
+  const [shown, setShown] = useState<string | null>(activeGroup);
+  useEffect(() => {
+    setOpen(false);
+    setShown(activeGroup);
+  }, [path, activeGroup]);
+
+  // Item tanpa grup di atas (urutan asli), lalu grup menurut urutan kemunculan pertama.
+  const loose = items.filter((i) => !i.group);
+  const groups: { name: string; items: NavItem[] }[] = [];
   for (const i of items) {
-    const last = sections[sections.length - 1];
-    if (last && last.group === i.group) last.items.push(i);
-    else sections.push({ group: i.group, items: [i] });
+    if (!i.group) continue;
+    const g = groups.find((x) => x.name === i.group);
+    if (g) g.items.push(i);
+    else groups.push({ name: i.group, items: [i] });
   }
 
   const link = (i: NavItem) => (
@@ -71,17 +63,26 @@ export function PanelNav({ items, label, footer }: { items: NavItem[]; label: st
       </button>
       <div id="panel-menu" className={`side-body${open ? " is-open" : ""}`}>
         <nav aria-label={label} className="admin-nav">
-          {sections.map((s, n) => {
-            if (!s.group) return <div key={`s${n}`} className="admin-nav-item">{s.items.map(link)}</div>;
-            const hasActive = s.items.some((i) => i === current);
-            const shut = !hasActive && folded[s.group];
+          {loose.length > 0 && <div className="admin-nav-item">{loose.map(link)}</div>}
+          {groups.map((g) => {
+            const isOpen = shown === g.name;
+            const hasActive = g.name === activeGroup;
+            const badge = g.items.map((i) => i.badge).find(Boolean);
+            const id = `nav-${label}-${g.name}`.replace(/\W+/g, "-");
             return (
-              <div key={`${s.group}${n}`} className="admin-nav-item">
-                <button type="button" className="admin-nav-group" aria-expanded={!shut} onClick={() => toggle(s.group!)} title={shut ? "Buka grup" : "Ciutkan grup"}>
-                  <span>{s.group}</span>
-                  <span aria-hidden="true" className="admin-nav-caret">{shut ? "▸" : "▾"}</span>
+              <div key={g.name} className={`admin-nav-item${isOpen ? " is-open" : ""}`}>
+                <button
+                  type="button"
+                  className={`admin-nav-group${hasActive ? " has-active" : ""}`}
+                  aria-expanded={isOpen}
+                  aria-controls={id}
+                  onClick={() => setShown((cur) => (cur === g.name ? null : g.name))}
+                >
+                  <span>{g.name}</span>
+                  {!isOpen && badge ? <span className="nav-badge">{badge}</span> : null}
+                  <span aria-hidden="true" className="admin-nav-caret"><Icon name="chevron" size={16} /></span>
                 </button>
-                {!shut && s.items.map(link)}
+                <div id={id} className="admin-nav-sub" hidden={!isOpen}>{g.items.map(link)}</div>
               </div>
             );
           })}

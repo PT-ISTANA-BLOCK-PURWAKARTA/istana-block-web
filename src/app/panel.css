@@ -31,8 +31,10 @@
 .panel-operasional .admin-side { background-color: #1b2945; }
 .panel-anak .admin-side { background-color: #2b1f4a; }
 .side-top { display: flex; flex-direction: column; gap: 16px; }
-.admin-side .brand { color: #fff; padding: 0 6px; }
-.admin-side .brand img { height: 40px; width: auto; }
+/* Lambang + tulisan "Istana Block" (lambang tidak boleh menyusut/gepeng di layar sempit). */
+.admin-side .brand { display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; color: #fff; padding: 0 6px; text-decoration: none; }
+.admin-side .brand img { height: 40px; width: auto; aspect-ratio: 129 / 150; flex: 0 0 auto; object-fit: contain; }
+.admin-side .brand span { font-family: var(--font-judul, inherit); font-weight: 800; font-size: 20px; letter-spacing: -.01em; white-space: nowrap; line-height: 1; }
 .admin-tag { font-size: 13px; color: var(--oranye-terang); padding: 0 8px; }
 .module-switch { display: flex; gap: 2px; background: rgba(255, 255, 255, .08); border-radius: var(--p-radius-sm, 10px); padding: 3px; }
 .module-switch a { flex: 1 1 auto; text-align: center; padding: 7px 6px; border-radius: 8px; color: #c9d3ea; text-decoration: none; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
@@ -42,9 +44,16 @@
 .nav-toggle { display: none; }
 .admin-nav { display: flex; flex-direction: column; gap: 1px; }
 .admin-nav-item { display: contents; }
-.admin-nav-group { display: flex; width: calc(100% - 20px); justify-content: space-between; align-items: center; margin: 14px 10px 4px; padding: 0; border: 0; background: none; cursor: pointer; font: inherit; font-size: 12px; color: #93a4c9; font-weight: 600; text-align: left; }
-.admin-nav-group:hover { color: #fff; }
-.admin-nav-caret { font-size: 11px; opacity: .8; }
+/* Judul grup = tombol buka/tutup (akordeon): hanya judul + panah ke bawah; pilihan muncul saat diklik. */
+.admin-nav-group { display: flex; width: 100%; gap: 8px; align-items: center; margin-top: 2px; padding: 9px 10px; border: 0; border-radius: 9px; background: none; cursor: pointer; font: inherit; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: #93a4c9; font-weight: 700; text-align: left; }
+.admin-nav-group > span:first-child { flex: 1 1 auto; }
+.admin-nav-group:hover { color: #fff; background: rgba(255, 255, 255, .06); }
+.admin-nav-group.has-active { color: #fff; }
+.admin-nav-group .nav-badge { margin-left: 0; }
+.admin-nav-caret { display: inline-flex; opacity: .85; transform: rotate(90deg); transition: transform .15s ease; }
+.admin-nav-item.is-open > .admin-nav-group .admin-nav-caret { transform: rotate(-90deg); }
+.admin-nav-sub { display: flex; flex-direction: column; gap: 1px; padding: 2px 0 6px 8px; margin-left: 10px; border-left: 1px solid rgba(255, 255, 255, .12); }
+.admin-nav-sub[hidden] { display: none; }
 .admin-nav a { color: #d3dcef; text-decoration: none; padding: 7px 10px; border-radius: 9px; font-weight: 500; font-size: 14.5px; display: flex; align-items: center; gap: 10px; }
 .admin-nav a .icon { flex: 0 0 auto; opacity: .8; }
 .admin-nav a:hover { background: rgba(255, 255, 255, .07); color: #fff; }
@@ -555,12 +564,14 @@ a.kpi:hover .k-label { color: var(--biru); }
   .admin { grid-template-columns: 1fr; }
   .admin-side { position: sticky; top: 0; z-index: 30; height: auto; max-height: 100vh; padding: 10px 14px; gap: 10px; }
   .side-top { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
+  .admin-side .brand { gap: 7px; padding: 0; }
   .admin-side .brand img { height: 32px; }
-  .module-switch { flex: 0 1 auto; }
+  .admin-side .brand span { font-size: 15px; }
+  .module-switch { flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   .nav-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .2); background: rgba(255, 255, 255, .06); color: #fff; font: 600 14px var(--font-isi); cursor: pointer; }
   .side-body { display: none; }
   .side-body.is-open { display: flex; padding-bottom: 8px; }
-  .admin-nav-group { margin: 10px 10px 2px; }
+  .admin-nav-group { padding: 10px; }
   .admin-main { padding: 18px 16px 64px; }
   .form-grid { grid-template-columns: 1fr; }
 }

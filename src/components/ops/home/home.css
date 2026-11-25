@@ -45,3 +45,17 @@
 .odetail .admin-card, .odetail .admin-table { border-radius: 18px; border-color: transparent; box-shadow: 0 1px 3px rgba(31, 52, 65, .06); }
 .odetail-actions { display: grid; gap: 8px; }
 .odetail [id] { scroll-margin-top: 90px; }
+/* Tombol aksi PO seperti app lama (shadcn Button size sm, varian outline + ikon lucide) */
+.oa-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; color: #0f172a; font: 500 13.5px var(--font-isi, inherit); white-space: nowrap; text-decoration: none; cursor: pointer; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+.oa-btn:hover { background: #f8fafc; }
+.oa-btn .icon { flex: 0 0 auto; opacity: 1; }
+.oa-sky { border-color: #bae6fd; color: #0369a1; } .oa-sky:hover { background: #f0f9ff; }
+.oa-teal { border-color: #1f6b72; background: #1f6b72; color: #fff; } .oa-teal:hover { background: #17565c; }
+.oa-nopin { border-color: #fcd34d; background: #fffbeb; color: #92400e; }
+.oa-share { color: #1f6b72; }
+.oa-green { border-color: #a7f3d0; color: #047857; } .oa-green:hover { background: #ecfdf5; }
+.oa-rose { border-color: #fecdd3; color: #be123c; } .oa-rose:hover { background: #fff1f2; }
+.oa-amber { border-color: #fde68a; color: #b45309; } .oa-amber:hover { background: #fffbeb; }
+.oa-danger { border-color: #fecdd3; color: #e11d48; } .oa-danger:hover { background: #fff1f2; }
+.ohome-row-actions form { display: contents; }
+.ohome-po td:last-child { min-width: 320px; }
