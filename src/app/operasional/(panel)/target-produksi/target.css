@@ -1,0 +1,30 @@
+/* Target produksi — gaya halaman Target app.kirimistanablock.com */
+.tg-sections { display: flex; flex-wrap: wrap; gap: 6px; }
+.tg-sections > * { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; color: #475569; font-weight: 600; font-size: 14px; text-decoration: none; }
+.tg-sections [aria-current="page"] { background: #1f3441; border-color: #1f3441; color: #fff; }
+.tg-period { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: #1f3441; }
+.tg-period input[type="date"] { height: 36px; width: 150px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0 8px; background: #fff; }
+.oa-btn.is-on, .oa-navy { background: #1f3441; border-color: #1f3441; color: #fff; }
+.oa-btn.is-on:hover, .oa-navy:hover { background: #172836; }
+.tg-card { display: grid; gap: 12px; }
+.tg-card.is-alert { border: 1px solid #fda4af; background: #fff7f8; }
+.tg-title { display: flex; align-items: center; gap: 8px; font-size: 16px !important; }
+.tg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tg-chip { border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+.tg-chip.ok { background: #ecfdf5; color: #047857; } .tg-chip.warn { background: #fffbeb; color: #92400e; } .tg-chip.bad { background: #e11d48; color: #fff; }
+.tg-note { margin: 0; background: #fffbeb; color: #78350f; border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+.tg-missed { border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; }
+.tg-miss { padding: 10px 12px; border-top: 1px solid #f1f5f9; display: grid; gap: 3px; }
+.tg-miss:first-child { border-top: 0; }
+.tg-miss p { margin: 0; }
+.tg-miss-title { font-weight: 600; color: #1f3441; }
+.tg-group { display: inline-block; margin-right: 6px; border-radius: 4px; padding: 1px 6px; font-size: 11px; background: rgba(31, 107, 114, .1); color: #1f6b72; }
+.tg-reason, .tg-edit { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+.tg-reason input { flex: 1 1 auto; height: 36px; border: 1px solid #fda4af; border-radius: 8px; padding: 0 10px; background: #fff; min-width: 0; }
+.tg-edit input { width: 96px; height: 32px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0 8px; text-align: right; }
+.tg-toggle { font-weight: 600; font-size: 14px; color: #1f6b72; text-decoration: none; }
+.tg-std { border-radius: 12px; }
+.tg-grouprow td { background: #f0faf8; }
+.tg-actions { white-space: nowrap; text-align: right; }
+.tg-actions > * { margin-left: 6px; }
+.tg-actions .confirm-action { display: inline-flex; }

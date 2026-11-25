@@ -29,7 +29,8 @@ export type ProdRow = {
   createdByName: string | null;
   /** ms epoch */
   createdAt: number;
-  hasil: { itemId: string; name: string; unit: string; qty: number }[];
+  /** line = kelompok barang jadi (production_line) bila diisi. */
+  hasil: { itemId: string; name: string; unit: string; qty: number; line?: string | null }[];
   canChange: boolean;
 };
 

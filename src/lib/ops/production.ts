@@ -18,8 +18,8 @@ export const FIELD_EDIT_WINDOW_MS = 7 * 24 * 3600_000;
  * Input: stok (kantor/gudang, kedua kategori) atau produksi_lapangan (mandor precast, QC paving, operasional keduanya).
  */
 export async function productionAccess() {
-  // Manager in charge & Pimpinan ikut melihat (menandatangani ketidaksesuaian), tanpa hak input.
-  const user = await requirePerm("stok", "keuangan", "produksi_lapangan", "setujui_qc", "ttd_pimpinan");
+  // Manager in charge & Pimpinan ikut melihat (menandatangani ketidaksesuaian), tanpa hak input; "lihat_produksi" (absensi) hanya melihat.
+  const user = await requirePerm("stok", "keuangan", "produksi_lapangan", "lihat_produksi", "setujui_qc", "ttd_pimpinan");
   const p = permsOf(user.roles);
   const hasStok = p.has("stok");
   const categories: ProductionCategory[] = hasStok ? [...ALL_CATEGORIES] : p.has("produksi_lapangan") ? categoriesByRole(user.roles) : [];
@@ -77,13 +77,13 @@ export async function listProductions(db: DB, acc: Pick<ProductionAccess, "user"
   if (!docs.length) return [];
   const pl = schema.productionLines;
   const lines = await db
-    .select({ productionId: pl.productionId, itemId: pl.itemId, qty: pl.qty, name: schema.items.name, unit: schema.items.unit })
+    .select({ productionId: pl.productionId, itemId: pl.itemId, qty: pl.qty, name: schema.items.name, unit: schema.items.unit, line: schema.items.productionLine })
     .from(pl)
     .innerJoin(p, eq(p.id, pl.productionId))
     .leftJoin(schema.items, eq(schema.items.id, pl.itemId))
     .where(and(eq(pl.role, "hasil"), gte(p.date, range.from), lte(p.date, range.to)));
   const by = new Map<string, ProdRow["hasil"]>();
-  for (const l of lines) by.set(l.productionId, [...(by.get(l.productionId) ?? []), { itemId: l.itemId, name: l.name ?? "(barang dihapus)", unit: l.unit ?? "", qty: l.qty }]);
+  for (const l of lines) by.set(l.productionId, [...(by.get(l.productionId) ?? []), { itemId: l.itemId, name: l.name ?? "(barang dihapus)", unit: l.unit ?? "", qty: l.qty, line: l.line ?? null }]);
   // Nama penanda tangan ketidaksesuaian.
   const signerIds = [...new Set(docs.flatMap(({ p: d }) => [d.rejectManagerBy, d.rejectLeaderBy]).filter((x): x is number => x != null))];
   const signers = signerIds.length ? await db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users).where(inArray(schema.users.id, signerIds)) : [];
