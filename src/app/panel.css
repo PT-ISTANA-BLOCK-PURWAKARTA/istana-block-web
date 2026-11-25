@@ -993,3 +993,34 @@ a.kpi:hover .k-label { color: var(--biru); }
 .zd-empty { color: #64748b; font-size: 13px; margin: 0; }
 @media (max-width: 980px) { .zd-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 1100px) { .tn-menu a.tn-top { justify-content: flex-start; } }
+
+/* ---------- Rekonsiliasi bank ---------- */
+.rc { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.rc > * { min-width: 0; }
+.rc-import input[type="file"] { margin: 6px 0; }
+.rc-preview { display: grid; gap: 8px; margin-top: 8px; padding: 10px 12px; background: #f6f9fc; border-radius: 10px; }
+.rc-preview table { background: #fff; }
+.rc-tools { display: inline-flex; align-items: center; gap: 12px; font-weight: 500; }
+.rc-cols { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.rc-cols > * { min-width: 0; }
+.rc-cols h3 { margin: 0 0 6px; font-size: 13.5px; color: #334155; }
+.rc-table { font-size: 13px; }
+.rc-table tr.is-sel td { background: #e3edfb !important; }
+.rc-table tr.is-ok td { color: #64748b; }
+.rc-ok { color: #16a34a; font-weight: 600; font-size: 12px; }
+.rc-act { white-space: nowrap; }
+.rc-act .link-btn { margin-left: 6px; }
+.rc-bookrow td { background: #fffbeb !important; }
+.rc-bookform { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rc-bookform select, .rc-bookform input { height: 34px; border: 1px solid #d5dfeb; border-radius: 8px; padding: 0 8px; max-width: 320px; }
+.rc-pairbar { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-top: 10px; padding: 10px 12px; background: #fff; border: 1px solid #e3e9f1; border-radius: 10px; box-shadow: 0 -4px 12px rgba(15, 23, 42, .06); }
+.rc-sum { display: grid; gap: 16px; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; }
+.rc-sum table { background: #fff; }
+.rc-sum input { width: 180px; height: 34px; border: 1px solid #d5dfeb; border-radius: 8px; padding: 0 8px; text-align: right; }
+.rc-strong td { font-weight: 700; background: #f6f9fc; }
+.rc-diff td { font-weight: 800; font-size: 15px; }
+.rc-diff.is-zero td { color: #16a34a; background: #ecfdf5; }
+.rc-diff.is-off td { color: #dc2626; background: #fef2f2; }
+.rc-save { display: grid; gap: 8px; }
+.rc-save input { height: 36px; border: 1px solid #d5dfeb; border-radius: 8px; padding: 0 10px; }
+@media (max-width: 980px) { .rc-cols, .rc-sum { grid-template-columns: minmax(0, 1fr); } }

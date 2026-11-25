@@ -26,6 +26,7 @@ const ITEMS: ShellItem[] = [
   { href: "/akuntansi/kas/baru?jenis=masuk", label: "Kas Masuk", group: "Kas & Bank", icon: "receive" },
   { href: "/akuntansi/kas/baru?jenis=keluar", label: "Kas Keluar", group: "Kas & Bank", icon: "pay" },
   { href: "/akuntansi/kas/baru?jenis=transfer", label: "Transfer Kas", group: "Kas & Bank", icon: "adjust" },
+  { href: "/akuntansi/kas/rekonsiliasi", label: "Rekonsiliasi Bank", group: "Kas & Bank", icon: "check" },
   { href: "/operasional/stok", label: "Stok Barang", group: "Persediaan", icon: "stack" },
   { href: "/operasional/produksi", label: "Hasil Produksi", group: "Persediaan", icon: "factory" },
   { href: "/akuntansi/laporan", label: "Daftar Laporan", group: "Laporan", icon: "chart" },
