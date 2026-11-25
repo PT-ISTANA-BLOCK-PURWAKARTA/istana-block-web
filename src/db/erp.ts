@@ -1827,3 +1827,46 @@ export type Invoice = typeof invoices.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
 export type Journal = typeof journals.$inferSelect;
 export type JournalLine = typeof journalLines.$inferSelect;
+
+/* ---------------------------------------------------------------- Rekonsiliasi bank (migrasi 0019) */
+
+/** Baris mutasi rekening koran (impor BCA/CSV/Excel). amount: + masuk (kredit di bank), − keluar. */
+export const bankLines = sqliteTable(
+  "fin_bank_lines",
+  {
+    id: id(),
+    accountId: text("account_id").notNull(),
+    date: text("date").notNull(),
+    description: text("description").notNull().default(""),
+    amount: integer("amount").notNull(),
+    balance: integer("balance"),
+    /** Kunci anti-dobel saat impor ulang file yang sama. */
+    fingerprint: text("fingerprint").notNull(),
+    importId: text("import_id"),
+    /** Baris jurnal (fin_journal_lines) rekening ini yang cocok. */
+    matchedLineId: text("matched_line_id"),
+    matchedAt: integer("matched_at", { mode: "timestamp" }),
+    matchedBy: integer("matched_by"),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [uniqueIndex("fin_bank_lines_fp_uq").on(t.accountId, t.fingerprint), index("fin_bank_lines_acc_idx").on(t.accountId, t.date)],
+);
+
+/** Rekonsiliasi yang sudah diselesaikan per rekening per akhir periode. */
+export const bankRecons = sqliteTable(
+  "fin_bank_recons",
+  {
+    id: id(),
+    accountId: text("account_id").notNull(),
+    periodEnd: text("period_end").notNull(),
+    statementBalance: integer("statement_balance").notNull(),
+    bookBalance: integer("book_balance").notNull(),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    createdByName: text("created_by_name"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [uniqueIndex("fin_bank_recons_uq").on(t.accountId, t.periodEnd)],
+);
