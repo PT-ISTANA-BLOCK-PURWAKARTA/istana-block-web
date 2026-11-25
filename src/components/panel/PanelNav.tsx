@@ -13,7 +13,8 @@ const matches = (path: string, href: string) => path === href || path.startsWith
 /**
  * Menu samping modul. Item pertama dianggap beranda modul (aktif hanya bila path sama persis).
  * Item bergrup hanya tampil sebagai judul grup + panah; klik judul untuk membuka pilihan di bawahnya.
- * Satu grup terbuka dalam satu waktu (akordeon); grup yang berisi halaman aktif terbuka otomatis.
+ * Beberapa grup boleh terbuka bersamaan; grup yang berisi halaman aktif terbuka otomatis.
+ * Grup yang dibuka diingat selama tab browser masih terbuka (sessionStorage); sesi baru mulai dari judul saja.
  * Item tanpa grup (mis. Ringkasan) selalu tampil di atas. Grup berlabel sama digabung jadi satu.
  * Di layar kecil menu dilipat di balik tombol "Menu" dan tertutup lagi setiap pindah halaman.
  */
@@ -30,11 +31,28 @@ export function PanelNav({ items, label, footer }: { items: NavItem[]; label: st
   const current = best?.i;
   const activeGroup = current?.group ?? null;
 
-  // Grup yang sedang terbuka: awalnya grup halaman aktif; ikut pindah saat halaman aktif pindah grup.
-  const [shown, setShown] = useState<string | null>(activeGroup);
+  // Grup yang terbuka: grup halaman aktif + grup yang dibuka sendiri (diingat per tab browser).
+  const store = `nav-open:${label}`;
+  const [shown, setShown] = useState<string[]>(activeGroup ? [activeGroup] : []);
+  useEffect(() => {
+    try {
+      const saved: unknown = JSON.parse(sessionStorage.getItem(store) || "[]");
+      if (Array.isArray(saved)) setShown((cur) => [...new Set([...cur, ...saved.filter((x): x is string => typeof x === "string")])]);
+    } catch {
+      // abaikan (mode privat)
+    }
+  }, [store]);
+  const remember = (next: string[]) => {
+    try {
+      sessionStorage.setItem(store, JSON.stringify(next));
+    } catch {
+      // abaikan
+    }
+    return next;
+  };
   useEffect(() => {
     setOpen(false);
-    setShown(activeGroup);
+    if (activeGroup) setShown((cur) => (cur.includes(activeGroup) ? cur : remember([...cur, activeGroup])));
   }, [path, activeGroup]);
 
   // Item tanpa grup di atas (urutan asli), lalu grup menurut urutan kemunculan pertama.
@@ -65,7 +83,7 @@ export function PanelNav({ items, label, footer }: { items: NavItem[]; label: st
         <nav aria-label={label} className="admin-nav">
           {loose.length > 0 && <div className="admin-nav-item">{loose.map(link)}</div>}
           {groups.map((g) => {
-            const isOpen = shown === g.name;
+            const isOpen = shown.includes(g.name);
             const hasActive = g.name === activeGroup;
             const badge = g.items.map((i) => i.badge).find(Boolean);
             const id = `nav-${label}-${g.name}`.replace(/\W+/g, "-");
@@ -76,7 +94,7 @@ export function PanelNav({ items, label, footer }: { items: NavItem[]; label: st
                   className={`admin-nav-group${hasActive ? " has-active" : ""}`}
                   aria-expanded={isOpen}
                   aria-controls={id}
-                  onClick={() => setShown((cur) => (cur === g.name ? null : g.name))}
+                  onClick={() => setShown((cur) => remember(cur.includes(g.name) ? cur.filter((x) => x !== g.name) : [...cur, g.name]))}
                 >
                   <span>{g.name}</span>
                   {!isOpen && badge ? <span className="nav-badge">{badge}</span> : null}
