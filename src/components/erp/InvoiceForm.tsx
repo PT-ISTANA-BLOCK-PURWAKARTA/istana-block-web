@@ -1,13 +1,13 @@
 "use client";
 
 import { ActionForm } from "@/components/admin/ActionForm";
-import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveInvoice } from "@/app/akuntansi/actions/sales";
 import { saveBill } from "@/app/akuntansi/actions/purchases";
 import { LinesEditor, type EditorLine, type PickAccount, type PickItem } from "./LinesEditor";
 import { DateField, Select } from "@/components/ui";
+import { ZahirWindow } from "./ZahirWindow";
 
-type Head = { id?: string; contactId?: string; date: string; dueDate?: string; note?: string; orderId?: string | null; supplierRef?: string; discount?: number; ongkir?: number; taxable?: boolean };
+type Head = { id?: string; number?: string; contactId?: string; date: string; dueDate?: string; note?: string; orderId?: string | null; supplierRef?: string; discount?: number; ongkir?: number; taxable?: boolean };
 
 /** Formulir faktur penjualan (kind="sales") atau faktur pembelian (kind="purchase"). */
 export function InvoiceForm({
@@ -31,23 +31,31 @@ export function InvoiceForm({
 }) {
   const sales = kind === "sales";
   return (
-    <ActionForm action={sales ? saveInvoice : saveBill} className="stack" style={{ gap: 20 }}>
+    <ActionForm action={sales ? saveInvoice : saveBill}>
+      <ZahirWindow
+        title={sales ? "Faktur Penjualan" : "Faktur Pembelian"}
+        icon={sales ? "invoice" : "cart"}
+        number={head.number}
+        newHref={sales ? "/akuntansi/penjualan/baru" : "/akuntansi/pembelian/baru"}
+        closeHref={head.id ? `/akuntansi/${sales ? "penjualan" : "pembelian"}/${head.id}` : `/akuntansi/${sales ? "penjualan" : "pembelian"}`}
+        printHref={head.id ? `/akuntansi/${sales ? "penjualan" : "pembelian"}/${head.id}` : null}
+        status={head.id ? (sales ? "Jurnal faktur ini dibuat ulang saat disimpan." : "Jurnal dan stok masuk dari faktur ini dibuat ulang saat disimpan.") : sales ? "Nomor faktur dibuat otomatis saat disimpan." : "Bahan baku yang dilacak stoknya menambah persediaan; baris rekening biaya langsung dibebankan."}
+      >
       {head.id && <input type="hidden" name="id" value={head.id} />}
       {head.orderId && <input type="hidden" name="orderId" value={head.orderId} />}
-      <section className="form-section">
-        <div className="form-grid cols-4">
+      <section className="zw-head">
+        <div className="zw-fields">
           <div className="field span-2">
             <label htmlFor="iv-contact">{sales ? "Pelanggan" : "Pemasok"}</label>
             <Select id="iv-contact" name="contactId" defaultValue={head.contactId ?? ""} required searchable placeholder={sales ? "Pilih pelanggan…" : "Pilih pemasok…"} options={contacts.map((c) => ({ value: c.id, label: c.name, hint: c.company && c.company !== c.name ? c.company : undefined }))} />
           </div>
           <div className="field"><label htmlFor="iv-date">Tanggal</label><DateField id="iv-date" name="date" defaultValue={head.date} required /></div>
-          <div className="field"><label htmlFor="iv-due">Jatuh tempo <span className="help">kosong = termin kontak</span></label><DateField id="iv-due" name="dueDate" defaultValue={head.dueDate} /></div>
-          {!sales && <div className="field span-2"><label htmlFor="iv-ref">No. faktur pemasok</label><input id="iv-ref" name="supplierRef" defaultValue={head.supplierRef} /></div>}
-          {orderLabel && <div className="field span-2"><span className="label">Dari pesanan</span><p className="tabular" style={{ margin: "10px 0" }}>{orderLabel}</p></div>}
+          <div className="field"><label htmlFor="iv-due">Jatuh Tempo</label><DateField id="iv-due" name="dueDate" defaultValue={head.dueDate} /></div>
+          {!sales && <div className="field span-2"><label htmlFor="iv-ref">No. Faktur Pemasok</label><input id="iv-ref" name="supplierRef" defaultValue={head.supplierRef} /></div>}
+          {orderLabel && <div className="field span-2"><span className="label">No. Pesanan</span><p className="tabular" style={{ margin: "10px 0" }}>{orderLabel}</p></div>}
         </div>
       </section>
-      <section className="form-section">
-        <h2>{sales ? "Barang & jasa" : "Rincian pembelian"}</h2>
+      <section className="zw-grid">
         <LinesEditor
           mode={sales ? "sales" : "purchase"}
           items={items}
@@ -57,10 +65,11 @@ export function InvoiceForm({
           initialOngkir={head.ongkir}
           initialTaxable={head.taxable}
           taxRate={taxRate}
+          zahir
         />
-        <div className="field"><label htmlFor="iv-note">Catatan {sales && <span className="help">dicetak di faktur</span>}</label><textarea id="iv-note" name="note" rows={2} defaultValue={head.note} style={{ minHeight: 64 }} /></div>
+        <div className="field"><label htmlFor="iv-note">Keterangan {sales && <span className="help">dicetak di faktur</span>}</label><textarea id="iv-note" name="note" rows={2} defaultValue={head.note} style={{ minHeight: 64 }} /></div>
       </section>
-      <div className="form-actions"><SubmitButton>{head.id ? "Simpan perubahan" : sales ? "Simpan faktur" : "Simpan pembelian"}</SubmitButton></div>
+      </ZahirWindow>
     </ActionForm>
   );
 }

@@ -20,14 +20,14 @@ export function CashEditor({ accounts, initial, kind }: { accounts: PickAccount[
       <input type="hidden" name="lines" value={json} />
       <div className="lines-table clines" role="table" aria-label="Rincian">
         <div className="lines-head" role="row">
-          <span role="columnheader">{kind === "keluar" ? "Untuk akun (biaya/hutang/aset)" : "Dari akun (pendapatan/modal/piutang)"}</span>
+          <span role="columnheader">{kind === "keluar" ? "Rekening (biaya/utang/harta)" : "Rekening (pendapatan/modal/piutang)"}</span>
           <span role="columnheader">Keterangan</span>
           <span role="columnheader" className="num">Jumlah</span>
           <span role="columnheader" aria-label="Hapus" />
         </div>
         {rows.map((r, i) => (
           <div className="lines-row" role="row" key={i}>
-            <Select aria-label={`Akun baris ${i + 1}`} value={r.accountId} onChange={(v) => update(i, { accountId: v })} required placeholder="Pilih akun…" searchable menuWidth={320} options={accountOptions} />
+            <Select aria-label={`Akun baris ${i + 1}`} value={r.accountId} onChange={(v) => update(i, { accountId: v })} required placeholder="Pilih rekening…" searchable menuWidth={320} options={accountOptions} />
             <input aria-label={`Keterangan baris ${i + 1}`} value={r.memo} onChange={(e) => update(i, { memo: e.target.value })} />
             <input aria-label={`Jumlah baris ${i + 1}`} className="num" inputMode="numeric" value={r.amount} onChange={(e) => update(i, { amount: e.target.value })} />
             <button type="button" className="icon-btn" aria-label={`Hapus baris ${i + 1}`} onClick={() => setRows((rs) => (rs.length > 1 ? rs.filter((_, j) => j !== i) : [blank()]))}>×</button>

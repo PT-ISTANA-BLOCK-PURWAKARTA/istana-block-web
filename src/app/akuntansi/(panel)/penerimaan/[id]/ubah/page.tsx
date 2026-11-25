@@ -23,6 +23,7 @@ export default async function Ubah({ params }: { params: Promise<{ id: string }>
       <SettleForm
         kind="receipt"
         id={r.id}
+        number={r.number}
         contactId={r.contactId}
         contactName={contact?.name ?? ""}
         date={r.date}

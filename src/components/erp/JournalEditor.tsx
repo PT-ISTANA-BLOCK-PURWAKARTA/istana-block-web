@@ -21,7 +21,7 @@ export function JournalEditor({ accounts, initial }: { accounts: PickAccount[]; 
       <input type="hidden" name="lines" value={json} />
       <div className="lines-table jlines" role="table" aria-label="Baris jurnal">
         <div className="lines-head" role="row">
-          <span role="columnheader">Akun</span>
+          <span role="columnheader">Rekening</span>
           <span role="columnheader">Keterangan</span>
           <span role="columnheader" className="num">Debit</span>
           <span role="columnheader" className="num">Kredit</span>
@@ -29,7 +29,7 @@ export function JournalEditor({ accounts, initial }: { accounts: PickAccount[]; 
         </div>
         {rows.map((r, i) => (
           <div className="lines-row" role="row" key={i}>
-            <Select aria-label={`Akun baris ${i + 1}`} value={r.accountId} onChange={(v) => update(i, { accountId: v })} required placeholder="Pilih akun…" searchable menuWidth={320} options={accountOptions} />
+            <Select aria-label={`Akun baris ${i + 1}`} value={r.accountId} onChange={(v) => update(i, { accountId: v })} required placeholder="Pilih rekening…" searchable menuWidth={320} options={accountOptions} />
             <input aria-label={`Keterangan baris ${i + 1}`} value={r.memo} onChange={(e) => update(i, { memo: e.target.value })} />
             <input aria-label={`Debit baris ${i + 1}`} className="num" inputMode="numeric" value={r.debit} onChange={(e) => update(i, { debit: e.target.value, credit: e.target.value ? "" : r.credit })} />
             <input aria-label={`Kredit baris ${i + 1}`} className="num" inputMode="numeric" value={r.credit} onChange={(e) => update(i, { credit: e.target.value, debit: e.target.value ? "" : r.debit })} />
@@ -40,8 +40,8 @@ export function JournalEditor({ accounts, initial }: { accounts: PickAccount[]; 
       <div className="lines-foot">
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRows((rs) => [...rs, blank()])}>+ Tambah baris</button>
         <dl className="totals">
-          <dt>Total debit</dt><dd className="tabular">{formatAmount(d)}</dd>
-          <dt>Total kredit</dt><dd className="tabular">{formatAmount(c)}</dd>
+          <dt>Total Debit</dt><dd className="tabular">{formatAmount(d)}</dd>
+          <dt>Total Kredit</dt><dd className="tabular">{formatAmount(c)}</dd>
           <dt className="grand">Selisih</dt>
           <dd className={`grand tabular ${d === c && d > 0 ? "text-sukses" : "text-bahaya"}`}>{d === c && d > 0 ? "Seimbang" : formatAmount(d - c)}</dd>
         </dl>

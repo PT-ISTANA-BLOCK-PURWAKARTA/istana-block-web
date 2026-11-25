@@ -27,7 +27,7 @@ export default async function UbahPembelian({ params }: { params: Promise<{ id: 
       <PageHead title={`Ubah ${b.number}`} sub="Jurnal dan stok masuk dari faktur ini dibuat ulang saat disimpan." />
       <InvoiceForm
         kind="purchase"
-        head={{ id: b.id, contactId: b.contactId, date: b.date, dueDate: b.dueDate, note: b.note, supplierRef: b.supplierRef, discount: b.discount, taxable: b.taxable }}
+        head={{ id: b.id, number: b.number, contactId: b.contactId, date: b.date, dueDate: b.dueDate, note: b.note, supplierRef: b.supplierRef, discount: b.discount, taxable: b.taxable }}
         lines={lines.map((l) => ({ ref: l.itemId ? `item:${l.itemId}` : `acc:${l.accountId}`, description: l.description, qty: String(l.qty).replace(".", ","), unit: l.unit, price: String(l.price) }))}
         contacts={contacts}
         items={lists.items}
