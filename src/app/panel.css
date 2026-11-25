@@ -808,3 +808,46 @@ a.kpi:hover .k-label { color: var(--biru); }
 .ops-alarm-toast-body strong { font-size: 14px; color: var(--biru-tua); }
 .ops-alarm-toast-body span { font-size: 13px; color: var(--redup); }
 .ops-alarm-toast-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ---------- Laporan 12 bulan gaya Zahir Accounting 6 ---------- */
+.zr-filter { align-items: flex-end; }
+.zr-wrap { margin: 0; }
+.zr { font-size: 13px; min-width: 1200px; }
+.zr th { white-space: nowrap; }
+.zr td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.zr .zr-code { width: 74px; color: var(--p-muted, #64748b); white-space: nowrap; }
+.zr-section td { font-weight: 800; color: var(--biru-tua, #1f3441); padding-top: 14px; font-size: 14px; }
+.zr-sub td { font-weight: 700; padding-left: 18px; color: #334155; }
+.zr-acc td:nth-child(2) { padding-left: 30px; }
+.zr-acc a { color: inherit; text-decoration: none; }
+.zr-acc a:hover { text-decoration: underline; }
+.zr-subtotal td { font-weight: 700; border-top: 1px solid #cbd5e1; }
+.zr-subtotal td:first-child { padding-left: 18px; }
+.zr-total td { font-weight: 800; border-top: 2px solid #94a3b8; background: #f8fafc; }
+.zr-result td { font-weight: 800; background: #eef6f5; color: #1f3441; border-top: 2px solid #1f6b72; }
+.zr-neg { color: #b91c1c; }
+@media print { .zr { min-width: 0; font-size: 9px; } .zr td, .zr th { padding: 2px 4px; } }
+
+/* ---------- Beranda Keuangan gaya Zahir Accounting 6 ---------- */
+.zh { display: grid; gap: 16px; margin-bottom: 16px; }
+.zh-head h1 { margin: 2px 0 0; font-size: clamp(22px, 3vw, 28px); color: var(--biru-tua, #1f3441); }
+.zh-kicker { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #1f6b72; }
+.zh-modules { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr)); }
+.zh-mod { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; display: grid; gap: 10px; --zh: #1f3441; --zh-bg: #eef2f7; }
+.zh-orange { --zh: #c2410c; --zh-bg: #fff4ec; } .zh-blue { --zh: #1d4ed8; --zh-bg: #eef3ff; } .zh-green { --zh: #047857; --zh-bg: #ecfdf5; }
+.zh-violet { --zh: #6d28d9; --zh-bg: #f5f3ff; } .zh-navy { --zh: #1f3441; --zh-bg: #eef2f7; } .zh-teal { --zh: #1f6b72; --zh-bg: #eef8f7; }
+.zh-mod h2 { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--zh); }
+.zh-mod-icon { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--zh-bg); }
+.zh-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px 22px; }
+.zh-flow li { position: relative; }
+.zh-flow li + li::before { content: "→"; position: absolute; left: -17px; top: 18px; color: #94a3b8; font-weight: 700; }
+.zh-step { display: grid; justify-items: center; gap: 4px; width: 92px; padding: 8px 4px; border-radius: 10px; text-align: center; font-size: 12px; font-weight: 600; line-height: 1.25; color: #1f3441; text-decoration: none; }
+.zh-step:hover { background: var(--zh-bg); }
+.zh-step-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--zh-bg); color: var(--zh); border: 1px solid color-mix(in srgb, var(--zh) 25%, transparent); }
+.zh-more { display: flex; flex-wrap: wrap; gap: 6px 14px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
+.zh-more a { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: #475569; text-decoration: none; }
+.zh-more a:hover { color: var(--zh); }
+.zh-sum td:first-child a { color: inherit; text-decoration: none; }
+.zh-sum .zh-strong td { font-weight: 800; background: #f8fafc; }
+.zh-sum .zh-split td { border-top: 2px solid #cbd5e1; }
+.zh-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { desc, sql } from "drizzle-orm";
 import { ColumnChart } from "@/components/erp/ColumnChart";
-import { Kpis, payStatus, PageHead, Rp, Status } from "@/components/erp/ui";
+import { Kpis, payStatus, Rp, Status } from "@/components/erp/ui";
+import { ZahirHome } from "@/components/erp/ZahirHome";
+import { getSettings } from "@/lib/settings";
 import { getDb, schema } from "@/db";
 import { requireModule } from "@/lib/auth";
 import { BULAN, lastMonths, stockPosition, unbilledOrders } from "@/lib/erp/insights";
@@ -10,7 +12,7 @@ import { cashBalances, profitLoss } from "@/lib/erp/reports";
 import { loadAccounts } from "@/lib/erp/server";
 import { addDays, formatAmount, formatQty, monthStart, tgl, today } from "@/lib/erp/util";
 
-export const metadata = { title: "Ringkasan" };
+export const metadata = { title: "Beranda" };
 
 const C_BILLED = "#3d63c4";
 const C_RECEIVED = "#dd6a2c";
@@ -22,7 +24,8 @@ export default async function KeuanganHome() {
   const acc = await loadAccounts(db);
   const months = lastMonths(now, 6);
   const deposit = acc.sys("uang_muka_pelanggan");
-  const [cash, pl, ar, ap, dueSoon, overdueList, recent, billed, received, unbilled, materials] = await Promise.all([
+  const [site, cash, pl, ar, ap, dueSoon, overdueList, recent, billed, received, unbilled, materials] = await Promise.all([
+    getSettings(),
     cashBalances(db, acc.rows, now),
     profitLoss(db, acc.rows, monthStart(now), now),
     db.get<{ n: number; s: number; late: number; lateSum: number }>(sql`
@@ -52,11 +55,13 @@ export default async function KeuanganHome() {
 
   return (
     <>
-      <PageHead title="Ringkasan keuangan" sub={`Per ${tgl(now)}`}>
+      <ZahirHome db={db} accounts={acc.rows} nowYm={now.slice(0, 7)} company={site.legal_name || site.company_name} />
+      <div className="zh-quick">
+        <span className="small muted">Per {tgl(now)}</span>
         <Link href="/akuntansi/penjualan/baru" className="btn btn-primary btn-sm">+ Faktur penjualan</Link>
         <Link href="/akuntansi/penerimaan/baru" className="btn btn-blue btn-sm">+ Penerimaan</Link>
         <Link href="/akuntansi/kas/baru?jenis=keluar" className="btn btn-ghost btn-sm">+ Kas keluar</Link>
-      </PageHead>
+      </div>
 
       <Kpis
         items={[

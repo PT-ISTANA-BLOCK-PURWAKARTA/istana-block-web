@@ -38,6 +38,10 @@ export default async function Laporan() {
     { href: "/akuntansi/laporan/penjualan", q: "Apa yang paling laku?", name: "Penjualan", icon: "invoice", value: formatAmount(sales.byCustomer.reduce((a, r) => a + r.amount, 0)), sub: top ? `terlaris: ${top.name}` : `penjualan ${month}` },
     { href: "/akuntansi/laporan/neraca", q: "Berapa kekayaan dan hutang usaha?", name: "Neraca", icon: "ledger", value: formatAmount(bs.assetTotal), sub: "total aset hari ini" },
   ];
+  const zahir: Card[] = [
+    { href: "/akuntansi/laporan/neraca-12", q: "Saldo akhir tiap bulan, susunan Zahir", name: "Neraca - 12 Bulan", icon: "ledger" },
+    { href: "/akuntansi/laporan/laba-rugi-12", q: "Laba rugi tiap bulan, susunan Zahir", name: "Laba Rugi - 12 Bulan", icon: "report" },
+  ];
   const detail: Card[] = [
     { href: "/akuntansi/laporan/buku-besar", q: "Rincian transaksi satu akun", name: "Buku besar", icon: "book" },
     { href: "/akuntansi/laporan/neraca-saldo", q: "Cek keseimbangan pembukuan", name: "Neraca saldo", icon: "list" },
@@ -54,6 +58,16 @@ export default async function Laporan() {
             <span className="hub-name">{c.name}</span>
             {c.value && <span className="hub-value tabular">{c.value}</span>}
             {c.sub && <span className="hub-sub">{c.sub}</span>}
+          </Link>
+        ))}
+      </div>
+      <h2 className="hub-h2">Format Zahir Accounting 6</h2>
+      <div className="report-hub is-small">
+        {zahir.map((c) => (
+          <Link key={c.href} href={c.href} className="hub-card">
+            <span className="hub-icon" aria-hidden="true"><Icon name={c.icon} size={20} /></span>
+            <span className="hub-name">{c.name}</span>
+            <span className="hub-sub">{c.q}</span>
           </Link>
         ))}
       </div>
