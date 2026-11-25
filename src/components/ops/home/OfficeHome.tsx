@@ -6,6 +6,7 @@ import { sql } from "drizzle-orm";
 import { ExportButton } from "@/components/ops/delivery/ExportButton";
 import { LoadButton } from "@/components/ops/delivery/LoadButton";
 import { NotificationPanel } from "@/components/ops/order/NotificationPanel";
+import { OrderActions } from "@/components/ops/home/OrderActions";
 import { PaymentBadge } from "@/components/ops/order/PaymentBadge";
 import { TruckTracker } from "@/components/ops/TruckTracker";
 import type { DB } from "@/lib/erp/server";
@@ -29,11 +30,11 @@ const docLabel = (ref: string | null) => (!ref ? null : /^SJ-/i.test(ref) ? `Sur
 
 type Row = {
   orderId: string; orderNumber: string; date: string; requestedDate: string | null; externalRef: string | null; paymentStatus: string | null; isInternal: number;
-  contactName: string; phone: string | null; address: string; mapsUrl: string; deliveryId: string | null; deliveryNumber: string | null; status: string | null;
+  contactId: string; proofCount: number; contactName: string; phone: string | null; address: string; mapsUrl: string; deliveryId: string | null; deliveryNumber: string | null; status: string | null;
   deliveryDate: string | null; driver: string | null; plate: string | null; vehicleName: string | null; orderStatus: string;
 };
 
-export async function OfficeHome({ db, canOrders, canShip, canLoad, tab }: { db: DB; canOrders: boolean; canShip: boolean; canLoad: boolean; tab: "aktif" | "batal" | "hapus" }) {
+export async function OfficeHome({ db, canOrders, canShip, canLoad, canComplete, tab }: { db: DB; canOrders: boolean; canShip: boolean; canLoad: boolean; canComplete: boolean; tab: "aktif" | "batal" | "hapus" }) {
   const now = today();
   const [stats, notices, alerts, waiting, rows, deleted, trucks, drivers, vehicles] = await Promise.all([
     db.get<{ total: number; road: number; done: number; drivers: number; cancelled: number; removed: number; active: number }>(sql`
@@ -56,7 +57,8 @@ export async function OfficeHome({ db, canOrders, canShip, canLoad, tab }: { db:
       ? Promise.resolve([] as Row[])
       : db.all<Row>(sql`
       select o.id orderId, o.number orderNumber, o.date, o.requested_date requestedDate, o.external_ref externalRef, o.payment_status paymentStatus, o.is_internal isInternal,
-             c.name contactName, c.phone, o.address, o.maps_url mapsUrl, o.status orderStatus,
+             c.id contactId, c.name contactName, c.phone, o.address,
+             (select count(*) from ops_delivery_proofs p where p.delivery_id = d.id) proofCount, o.maps_url mapsUrl, o.status orderStatus,
              d.id deliveryId, d.number deliveryNumber, d.status, d.date deliveryDate, dr.name driver, v.plate, v.name vehicleName
         from ops_orders o join fin_contacts c on c.id = o.contact_id
         left join ops_deliveries d on d.id = (select id from ops_deliveries where order_id = o.id order by created_at desc limit 1)
@@ -228,11 +230,7 @@ export async function OfficeHome({ db, canOrders, canShip, canLoad, tab }: { db:
                       <td>{st ? <span className={`ohome-status ${st.tone}`}>{r.status === "dijadwalkan" && !assigned ? "Belum ditugaskan" : st.label}</span> : <span className="ohome-status st-wait">{r.orderStatus === "batal" ? "Dibatalkan" : "Belum dijadwalkan"}</span>}</td>
                       <td>{r.driver ? <><b>{r.driver}</b><div className="small muted">{r.plate}{r.vehicleName ? ` (${r.vehicleName})` : ""}</div></> : <span className="small muted">Belum ditugaskan</span>}</td>
                       <td>
-                        <div className="ohome-row-actions">
-                          {r.deliveryId ? <Link href={`/operasional/pengiriman/${r.deliveryId}`} className="btn btn-ghost btn-sm">{r.status === "terkirim" ? "Lihat" : "Kelola"}</Link> : canShip && r.orderStatus !== "batal" && <Link href={`/operasional/pengiriman/baru?pesanan=${r.orderId}`} className="btn btn-blue btn-sm">Tugaskan</Link>}
-                          {r.deliveryId && r.status === "dijadwalkan" && assigned && (canShip || canLoad) && <LoadButton id={r.deliveryId} label="Sudah dimuat" className="btn btn-primary btn-sm" />}
-                          {canOrders && <Link href={`/operasional/pesanan/${r.orderId}`} className="btn btn-ghost btn-sm">Ubah tamu</Link>}
-                        </div>
+                        <OrderActions r={{ orderId: r.orderId, orderStatus: r.orderStatus, contactId: r.contactId, mapsUrl: r.mapsUrl, deliveryId: r.deliveryId, status: r.status, hasDriver: assigned, proofCount: Number(r.proofCount) }} canOrders={canOrders} canShip={canShip} canLoad={canLoad} canComplete={canComplete} back={tab === "aktif" ? "/operasional" : `/operasional?po=${tab}`} />
                       </td>
                     </tr>
                   );

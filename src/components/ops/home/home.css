@@ -35,3 +35,13 @@
 .ohome-head > div:first-child { flex: 1 1 280px; min-width: 0; }
 .ohome-actions { min-width: 0; }
 .ohome-list li { flex-wrap: wrap; } .ohome-list li > div { min-width: 0; flex: 1 1 220px; }
+
+.btn-teal { background: #1f6b72; color: #fff; border-color: #1f6b72; }
+.ohome-warn { color: #b45309; border-color: #fde68a; }
+.ohome-danger { color: #e11d48; border-color: #fecdd3; }
+/* Halaman detail PO / surat jalan dengan latar & kartu app lama */
+.odetail { gap: 14px; }
+.odetail .ohome-kicker { margin-bottom: -10px; }
+.odetail .admin-card, .odetail .admin-table { border-radius: 18px; border-color: transparent; box-shadow: 0 1px 3px rgba(31, 52, 65, .06); }
+.odetail-actions { display: grid; gap: 8px; }
+.odetail [id] { scroll-margin-top: 90px; }
