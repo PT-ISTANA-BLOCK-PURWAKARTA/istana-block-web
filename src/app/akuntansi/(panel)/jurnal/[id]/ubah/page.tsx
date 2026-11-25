@@ -21,7 +21,7 @@ export default async function UbahJurnal({ params }: { params: Promise<{ id: str
     <>
       <BackLink href={`/akuntansi/jurnal/${id}`}>{j.number}</BackLink>
       <PageHead title={`Ubah ${j.number}`} />
-      <JournalForm head={{ id: j.id, date: j.date, memo: j.memo }} lines={lines.map((l) => ({ accountId: l.accountId, memo: l.memo, debit: l.debit ? String(l.debit) : "", credit: l.credit ? String(l.credit) : "" }))} accounts={lists.pick()} />
+      <JournalForm head={{ id: j.id, number: j.number, date: j.date, memo: j.memo }} lines={lines.map((l) => ({ accountId: l.accountId, memo: l.memo, debit: l.debit ? String(l.debit) : "", credit: l.credit ? String(l.credit) : "" }))} accounts={lists.pick()} />
     </>
   );
 }

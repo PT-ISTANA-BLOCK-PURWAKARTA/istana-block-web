@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { ActionForm } from "@/components/admin/ActionForm";
-import { SubmitButton } from "@/components/admin/SubmitButton";
 import { savePayment } from "@/app/akuntansi/actions/purchases";
 import { saveReceipt } from "@/app/akuntansi/actions/sales";
 import { formatAmount, parseRupiah, tgl } from "@/lib/erp/util";
 import { DateField, Select } from "@/components/ui";
+import { ZahirWindow } from "./ZahirWindow";
 
 export type OpenDoc = { id: string; number: string; date: string; dueDate: string; total: number; /** sisa yang masih bisa dialokasikan (termasuk alokasi dokumen ini sendiri saat diubah) */ left: number; alloc: number };
 
@@ -14,6 +14,7 @@ export type OpenDoc = { id: string; number: string; date: string; dueDate: strin
 export function SettleForm({
   kind,
   id,
+  number,
   contactId,
   contactName,
   date,
@@ -27,6 +28,7 @@ export function SettleForm({
 }: {
   kind: "receipt" | "payment";
   id?: string;
+  number?: string;
   contactId: string;
   contactName: string;
   date: string;
@@ -60,16 +62,25 @@ export function SettleForm({
   };
 
   return (
-    <ActionForm action={receipt ? saveReceipt : savePayment} className="stack" style={{ gap: 20 }}>
+    <ActionForm action={receipt ? saveReceipt : savePayment}>
+      <ZahirWindow
+        title={receipt ? "Penerimaan Penjualan" : "Pembayaran Pembelian"}
+        icon={receipt ? "receive" : "pay"}
+        number={number}
+        newHref={receipt ? "/akuntansi/penerimaan/baru" : "/akuntansi/pembayaran/baru"}
+        closeHref={id ? `/akuntansi/${receipt ? "penerimaan" : "pembayaran"}/${id}` : `/akuntansi/${receipt ? "penerimaan" : "pembayaran"}`}
+        printHref={id ? `/akuntansi/${receipt ? "penerimaan" : "pembayaran"}/${id}` : null}
+        status={receipt ? "Sisa yang tidak dialokasikan ke faktur dicatat sebagai uang muka pelanggan." : "Sisa yang tidak dialokasikan ke faktur dicatat sebagai uang muka ke pemasok."}
+      >
       {id && <input type="hidden" name="id" value={id} />}
       <input type="hidden" name="contactId" value={contactId} />
       <input type="hidden" name="allocs" value={JSON.stringify(docs.map((d) => ({ docId: d.id, amount: parseRupiah(allocs[d.id]) })).filter((a) => a.amount > 0))} />
-      <section className="form-section">
-        <div className="form-grid cols-4">
+      <section className="zw-head">
+        <div className="zw-fields">
           <div className="field span-2"><span className="label">{receipt ? "Pelanggan" : "Pemasok"}</span><p style={{ margin: "10px 0", fontWeight: 700 }}>{contactName}</p></div>
           <div className="field"><label htmlFor="st-date">Tanggal</label><DateField id="st-date" name="date" defaultValue={date} required /></div>
           <div className="field">
-            <label htmlFor="st-acc">{receipt ? "Masuk ke" : "Dibayar dari"}</label>
+            <label htmlFor="st-acc">{receipt ? "Kas/Bank Penerima" : "Kas/Bank Pembayar"}</label>
             <Select
               id="st-acc"
               name="accountId"
@@ -85,21 +96,21 @@ export function SettleForm({
             />
           </div>
           <div className="field">
-            <label htmlFor="st-amount">Jumlah {receipt ? "diterima" : "dibayar"}</label>
+            <label htmlFor="st-amount">{receipt ? "Jumlah Penerimaan" : "Jumlah Pembayaran"}</label>
             <input id="st-amount" name="amount" className="num" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} required />
           </div>
           <div className="field span-3"><label htmlFor="st-memo">Keterangan</label><input id="st-memo" name="memo" defaultValue={memo} placeholder={receipt ? "mis. transfer BCA / DP pesanan" : "mis. transfer ke rekening pemasok"} /></div>
         </div>
       </section>
-      <section className="form-section">
+      <section className="zw-grid">
         <div className="card-head">
-          <h2>Alokasi ke faktur</h2>
+          <h2 className="zw-grid-title">Faktur Belum Lunas</h2>
           {docs.length > 0 && <button type="button" className="btn btn-ghost btn-sm" onClick={autoFill}>Bagi otomatis (jatuh tempo terlama dulu)</button>}
         </div>
         {docs.length ? (
           <div className="admin-table">
             <table className="compact">
-              <thead><tr><th>Faktur</th><th>Tanggal</th><th>Jatuh tempo</th><th className="num">Total</th><th className="num">Sisa</th><th className="num">Dialokasikan</th></tr></thead>
+              <thead><tr><th>No. Faktur</th><th>Tanggal</th><th>Jatuh Tempo</th><th className="num">Total Faktur</th><th className="num">Sisa Tagihan</th><th className="num">{receipt ? "Diterima" : "Dibayar"}</th></tr></thead>
               <tbody>
                 {docs.map((d) => (
                   <tr key={d.id}>
@@ -126,7 +137,7 @@ export function SettleForm({
         </dl>
         {useDeposit && rest !== 0 && <p className="small text-bahaya">Saat memakai uang muka, jumlah harus sama dengan total alokasi.</p>}
       </section>
-      <div className="form-actions"><SubmitButton>{id ? "Simpan perubahan" : receipt ? "Simpan penerimaan" : "Simpan pembayaran"}</SubmitButton></div>
+      </ZahirWindow>
     </ActionForm>
   );
 }

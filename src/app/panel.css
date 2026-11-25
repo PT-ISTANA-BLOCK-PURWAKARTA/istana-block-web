@@ -862,3 +862,43 @@ a.kpi:hover .k-label { color: var(--biru); }
   .zh-step-icon { width: 40px; height: 40px; }
   .zh-mod { padding: 12px; }
 }
+
+/* ---------- Form transaksi gaya jendela Zahir Accounting 6 ---------- */
+.admin-main:has(.zw) .admin-head { display: none; }
+.zw { border: 1px solid #9fb3c8; border-radius: 6px; background: #f3f6fa; box-shadow: 0 4px 14px rgba(31, 52, 65, .12); overflow: hidden; }
+.zw-title { display: flex; align-items: center; gap: 12px; padding: 7px 10px 7px 14px; background: linear-gradient(#2d5c8a, #1f4468); color: #fff; font-weight: 700; font-size: 14px; }
+.zw-title-text { display: inline-flex; align-items: center; gap: 8px; flex: 1 1 auto; }
+.zw-no { font-weight: 500; font-size: 13px; opacity: .95; }
+.zw-no b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.zw-x { color: #fff; text-decoration: none; font-size: 20px; line-height: 1; padding: 0 6px; border-radius: 4px; }
+.zw-x:hover { background: #c42b1c; }
+.zw-toolbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 2px; padding: 4px 6px; background: linear-gradient(#fdfdfd, #e6ebf1); border-bottom: 1px solid #b8c6d6; }
+.zw-tool { display: inline-grid; justify-items: center; gap: 2px; min-width: 64px; padding: 5px 8px; border: 1px solid transparent; border-radius: 4px; background: none; color: #1f3441; font: 600 12px var(--font-isi, inherit); text-decoration: none; cursor: pointer; }
+.zw-tool:hover { border-color: #9fb3c8; background: #fff; }
+.zw-tool .icon { color: #2d5c8a; opacity: 1; }
+.zw-save .icon { color: #047857; }
+.zw-tool.is-off { opacity: .45; cursor: default; }
+.zw-tool[disabled] { opacity: .6; }
+.zw-body { display: grid; gap: 12px; padding: 12px; }
+.zw-head, .zw-grid { background: #fff; border: 1px solid #c9d5e2; border-radius: 4px; padding: 12px; }
+.zw-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 28px; }
+.zw-fields > .field { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 10px; margin: 0; }
+.zw-fields > .field > label, .zw-fields > .field > .label { font-size: 13px; font-weight: 600; color: #334155; margin: 0; }
+.zw-fields > .field.span-3, .zw-fields > .field.span-4 { grid-column: 1 / -1; }
+.zw-fields > .field p { margin: 0 !important; }
+.zw-grid .lines-head { background: linear-gradient(#f4f7fa, #dfe6ee); border: 1px solid #b8c6d6; border-radius: 3px 3px 0 0; padding: 6px 9px; color: #1f3441; font-size: 12.5px; }
+.zw-grid .lines-table { gap: 0; }
+.zw-grid .lines-row { border-radius: 0; border-top: 0; background: #fff; padding: 4px 8px; }
+.zw-grid .lines-row:nth-child(odd) { background: #f8fafc; }
+.zw-grid .lines-row input, .zw-grid .lines-row select { min-height: 34px; border-radius: 3px; font-size: 14px; }
+.zw-grid .totals { background: #f3f6fa; border: 1px solid #c9d5e2; border-radius: 4px; padding: 10px 12px; }
+.zw-grid .totals .grand { color: #1f4468; }
+.zw-grid table.compact thead th { background: linear-gradient(#f4f7fa, #dfe6ee); color: #1f3441; }
+.zw-grid-title { font-size: 14px !important; color: #1f4468; }
+.zw-status { padding: 6px 12px; border-top: 1px solid #c9d5e2; background: #e9eef4; font-size: 12.5px; color: #475569; }
+@media (max-width: 760px) {
+  .zw-fields { grid-template-columns: minmax(0, 1fr); }
+  .zw-fields > .field { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .zw-body { padding: 8px; }
+  .zw-tool { min-width: 56px; }
+}

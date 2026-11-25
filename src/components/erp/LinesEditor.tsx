@@ -37,6 +37,7 @@ export function LinesEditor({
   initialTaxable = false,
   taxRate,
   showOngkir = mode !== "purchase",
+  zahir = false,
 }: {
   mode: Mode;
   items: PickItem[];
@@ -47,6 +48,8 @@ export function LinesEditor({
   initialTaxable?: boolean;
   taxRate: number;
   showOngkir?: boolean;
+  /** Judul kolom & total seperti Zahir (Produk, Kuantitas, Harga Satuan, Sub Total, Biaya Kirim, Total Faktur). */
+  zahir?: boolean;
 }) {
   const blank = (): EditorLine => ({ ref: "", description: "", qty: "1", unit: "", price: "" });
   const [rows, setRows] = useState<EditorLine[]>(initial.length ? initial : [blank()]);
@@ -116,12 +119,12 @@ export function LinesEditor({
       <input type="hidden" name="lines" value={json} />
       <div className="lines-table" role="table" aria-label="Rincian barang">
         <div className="lines-head" role="row">
-          <span role="columnheader">{mode === "purchase" ? "Barang / akun biaya" : "Barang / jasa"}</span>
+          <span role="columnheader">{zahir ? (mode === "purchase" ? "Produk / Rekening Biaya" : "Produk") : mode === "purchase" ? "Barang / akun biaya" : "Barang / jasa"}</span>
           <span role="columnheader">Keterangan</span>
-          <span role="columnheader" className="num">Qty</span>
+          <span role="columnheader" className="num">{zahir ? "Kuantitas" : "Qty"}</span>
           <span role="columnheader">Satuan</span>
-          <span role="columnheader" className="num">Harga</span>
-          <span role="columnheader" className="num">Jumlah</span>
+          <span role="columnheader" className="num">{zahir ? "Harga Satuan" : "Harga"}</span>
+          <span role="columnheader" className="num">{zahir ? "Total" : "Jumlah"}</span>
           <span role="columnheader" aria-label="Hapus" />
         </div>
         {rows.map((r, i) => {
@@ -148,7 +151,7 @@ export function LinesEditor({
       <div className="lines-foot">
         <div className="stack" style={{ gap: 8 }}>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRows((rs) => [...rs, blank()])}>
-            + Tambah baris
+            + {zahir ? "Tambah Baris" : "Tambah baris"}
           </button>
           {mode === "sales" && groups.jasa.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
@@ -168,13 +171,13 @@ export function LinesEditor({
           )}
         </div>
         <dl className="totals">
-          <dt>Subtotal</dt>
+          <dt>{zahir ? "Sub Total" : "Subtotal"}</dt>
           <dd className="tabular">{formatAmount(t.subtotal)}</dd>
           <dt><label htmlFor="le-discount">Diskon</label></dt>
           <dd><input id="le-discount" name="discount" className="num" inputMode="numeric" value={discount} placeholder="0" onChange={(e) => setDiscount(e.target.value)} /></dd>
           {showOngkir && (
             <>
-              <dt><label htmlFor="le-ongkir">Ongkos kirim</label></dt>
+              <dt><label htmlFor="le-ongkir">{zahir ? "Biaya Kirim" : "Ongkos kirim"}</label></dt>
               <dd><input id="le-ongkir" name="ongkir" className="num" inputMode="numeric" value={ongkir} placeholder="0" onChange={(e) => setOngkir(e.target.value)} /></dd>
             </>
           )}
@@ -185,7 +188,7 @@ export function LinesEditor({
             </label>
           </dt>
           <dd className="tabular">{formatAmount(t.tax)}</dd>
-          <dt className="grand">Total</dt>
+          <dt className="grand">{zahir ? (mode === "purchase" ? "Total Pembelian" : "Total Faktur") : "Total"}</dt>
           <dd className="grand tabular">Rp{formatAmount(t.total)}</dd>
         </dl>
       </div>

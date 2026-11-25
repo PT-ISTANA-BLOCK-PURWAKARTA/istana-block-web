@@ -25,7 +25,7 @@ export default async function UbahKas({ params }: { params: Promise<{ id: string
       <PageHead title={`Ubah ${c.number}`} />
       <CashForm
         kind={c.kind}
-        head={{ id: c.id, date: c.date, accountId: c.accountId, toAccountId: c.toAccountId, contactId: c.contactId, amount: c.amount, memo: c.memo }}
+        head={{ id: c.id, number: c.number, date: c.date, accountId: c.accountId, toAccountId: c.toAccountId, contactId: c.contactId, amount: c.amount, memo: c.memo }}
         lines={lines.map((l) => ({ accountId: l.accountId, memo: l.memo, amount: String(l.amount) }))}
         cashAccounts={lists.pick((a) => a.group === "kas_bank")}
         otherAccounts={lists.pick((a) => a.group !== "kas_bank")}

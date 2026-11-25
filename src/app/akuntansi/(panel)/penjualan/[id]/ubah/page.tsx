@@ -27,7 +27,7 @@ export default async function UbahFaktur({ params }: { params: Promise<{ id: str
       <PageHead title={`Ubah ${inv.number}`} sub="Jurnal faktur ini dibuat ulang saat disimpan." />
       <InvoiceForm
         kind="sales"
-        head={{ id: inv.id, contactId: inv.contactId, date: inv.date, dueDate: inv.dueDate, note: inv.note, orderId: inv.orderId, discount: inv.discount, ongkir: inv.ongkir, taxable: inv.taxable }}
+        head={{ id: inv.id, number: inv.number, contactId: inv.contactId, date: inv.date, dueDate: inv.dueDate, note: inv.note, orderId: inv.orderId, discount: inv.discount, ongkir: inv.ongkir, taxable: inv.taxable }}
         lines={lines.map((l) => ({ ref: l.itemId ? `item:${l.itemId}` : "", description: l.description, qty: String(l.qty).replace(".", ","), unit: l.unit, price: String(l.price), orderLineId: l.orderLineId }))}
         contacts={contacts}
         items={lists.items}
