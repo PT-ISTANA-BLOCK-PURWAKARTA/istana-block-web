@@ -851,3 +851,14 @@ a.kpi:hover .k-label { color: var(--biru); }
 .zh-sum .zh-strong td { font-weight: 800; background: #f8fafc; }
 .zh-sum .zh-split td { border-top: 2px solid #cbd5e1; }
 .zh-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+/* Beranda Keuangan: jangan melebihi lebar layar (tabel ringkasan menggulung di dalam kartunya). */
+.zh { grid-template-columns: minmax(0, 1fr); }
+.zh > *, .zh-modules > * { min-width: 0; }
+.zh .admin-card { overflow: hidden; }
+@media (max-width: 640px) {
+  .zh-flow { gap: 6px 16px; }
+  .zh-flow li + li::before { left: -13px; }
+  .zh-step { width: 78px; font-size: 11.5px; }
+  .zh-step-icon { width: 40px; height: 40px; }
+  .zh-mod { padding: 12px; }
+}
