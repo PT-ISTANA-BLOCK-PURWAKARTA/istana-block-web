@@ -895,11 +895,18 @@ html:has(.ib-lightbox[open]) { overflow: hidden; }
     gap: 24px;
   }
 }
-.landing-footer-bottom {
-  margin-top: 32px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+.landing-footer .landing-footer-bottom {
+  display: block;
+  margin-top: 8px;
+  padding-top: 20px;
+  padding-bottom: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
   text-align: center;
+  color: rgba(235, 241, 252, 0.88);
+}
+.landing-footer .landing-footer-bottom p {
+  margin: 0;
+  color: inherit;
 }
 .landing-sticky-bar {
   display: none;

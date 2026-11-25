@@ -87,7 +87,7 @@ export function LandingFooter({ s }: { s: Settings }) {
           </div>
         </div>
         <div className="wrap landing-footer-bottom">
-          <p className="small muted">
+          <p className="small">
             © {year} {s.legal_name}. Seluruh hak cipta dilindungi undang-undang. Penawaran harga resmi berlaku sesuai dokumen tertulis dari pabrik.
           </p>
         </div>
