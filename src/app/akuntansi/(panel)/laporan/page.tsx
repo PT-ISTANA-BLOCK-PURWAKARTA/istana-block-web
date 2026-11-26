@@ -7,12 +7,17 @@ import { periodLabel } from "@/lib/erp/periods";
 import { aging, balanceSheet, cashBalances, profitLoss, salesSummary } from "@/lib/erp/reports";
 import { loadAccounts } from "@/lib/erp/server";
 import { formatAmount, monthStart, today } from "@/lib/erp/util";
+import { REPORT_CATS } from "@/lib/erp/zahirMenu";
 
 export const metadata = { title: "Laporan" };
 
 type Card = { href: string; q: string; name: string; icon: IconName; value?: string; sub?: string; tone?: "warn" | "bad" };
 
-export default async function Laporan() {
+export default async function Laporan({ searchParams }: { searchParams: Promise<{ k?: string; t?: string }> }) {
+  const sp = await searchParams;
+  const cat = REPORT_CATS.find((c) => c.key === sp.k) ?? REPORT_CATS[0];
+  const tabIdx = Math.min(Math.max(Number(sp.t) || 0, 0), cat.tabs.length - 1);
+  const tab = cat.tabs[tabIdx];
   await requireModule("keuangan");
   const db = await getDb();
   const acc = await loadAccounts(db);
@@ -49,7 +54,29 @@ export default async function Laporan() {
   ];
   return (
     <>
-      <PageHead title="Laporan" sub="Pilih pertanyaan yang ingin dijawab. Semua laporan bisa dicetak dengan kop perusahaan, disimpan PDF, atau diunduh untuk Excel." />
+      <PageHead title="Laporan" sub="Pusat laporan susunan Zahir: pilih kelompok di kiri, lalu tab dan nama laporan. Yang bertanda Segera belum tersedia di web." />
+      <div className="zr">
+        <nav className="zr-cats" aria-label="Kelompok laporan">
+          {REPORT_CATS.map((c) => (
+            <Link key={c.key} href={`/akuntansi/laporan?k=${c.key}`} className={`zr-cat zt-${c.color}`} aria-current={c.key === cat.key ? "page" : undefined}>
+              <Icon name={c.icon} size={26} stroke={1.5} /><span>{c.label}</span>
+            </Link>
+          ))}
+        </nav>
+        <section className="zr-body">
+          <div className="zr-tabs" role="tablist">
+            {cat.tabs.map((t, i) => (
+              <Link key={t.name} role="tab" aria-selected={i === tabIdx} href={`/akuntansi/laporan?k=${cat.key}&t=${i}`} className="zr-tab">{t.name}</Link>
+            ))}
+          </div>
+          <ul className="zr-list">
+            {tab.items.map((r) => (
+              <li key={r.label}>{r.href ? <Link href={r.href}>{r.label}</Link> : <span className="is-locked">{r.label} <em>Segera</em></span>}</li>
+            ))}
+          </ul>
+        </section>
+      </div>
+      <h2 className="hub-h2">Ringkasan cepat</h2>
       <div className="report-hub">
         {main.map((c) => (
           <Link key={c.href} href={c.href} className={`hub-card${c.tone ? ` is-${c.tone}` : ""}`}>
