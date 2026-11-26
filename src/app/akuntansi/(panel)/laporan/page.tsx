@@ -69,7 +69,7 @@ export default async function Laporan({ searchParams }: { searchParams: Promise<
               <Link key={t.name} role="tab" aria-selected={i === tabIdx} href={`/akuntansi/laporan?k=${cat.key}&t=${i}`} className="zr-tab">{t.name}</Link>
             ))}
           </div>
-          <ul className="zr-list">
+          <ul className="zr-list" style={{ "--rows": Math.max(1, Math.ceil(tab.items.length / 2)) } as React.CSSProperties}>
             {tab.items.map((r) => (
               <li key={r.label}>{r.href ? <Link href={r.href}>{r.label}</Link> : <span className="is-locked">{r.label} <em>Segera</em></span>}</li>
             ))}

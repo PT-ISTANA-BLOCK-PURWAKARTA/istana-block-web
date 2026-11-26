@@ -1083,8 +1083,13 @@ a.zt:focus-visible { outline: 3px solid #0f2a4a; outline-offset: 2px; }
 .zr-tab { padding: 8px 16px; border-radius: 8px 8px 0 0; color: #475569; font-weight: 600; font-size: 14px; text-decoration: none; }
 .zr-tab:hover { background: #f1f5fb; color: var(--zo-dark); }
 .zr-tab[aria-selected="true"] { background: #1f2d3d; color: #fff; }
-.zr-list { list-style: none; margin: 0; padding: 8px 12px; columns: 2 300px; column-gap: 24px; }
-.zr-list li { break-inside: avoid; }
+/* Daftar laporan rapat: kolom selebar nama terpanjang, kolom kedua langsung di sebelahnya (tanpa ruang kosong di tengah). */
+.zr-list { list-style: none; margin: 0; padding: 8px 12px; display: grid; grid-auto-flow: column; grid-template-rows: repeat(var(--rows, 8), auto); grid-auto-columns: max-content; column-gap: 28px; justify-content: start; }
+.zr-list li { min-width: 0; }
+@media (max-width: 640px) { .zr-list { grid-auto-flow: row; grid-template-rows: none; grid-template-columns: minmax(0, 1fr); } }
+.bb-chart-title { font-size: 14px; font-weight: 700; color: #1e3a5f; margin: 10px 0 2px; }
+.bb-chart-title span { font-weight: 400; color: #64748b; font-size: 12.5px; margin-left: 6px; }
+@media print { .balance-chart { break-inside: avoid; } }
 .zr-list a, .zr-list .is-locked { display: block; padding: 7px 10px; border-radius: 7px; font-size: 14px; color: #1e3a5f; text-decoration: none; }
 .zr-list a:hover { background: #eef4fd; color: var(--zo-dark); }
 .zr-list .is-locked { color: #94a3b8; cursor: not-allowed; }
