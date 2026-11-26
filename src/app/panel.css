@@ -1161,3 +1161,61 @@ dl.kv dd { margin: 0; }
 .chg.is-bad { color: #b91c1c; }
 tr.r-note td { font-size: 12px; color: #475569; border-top: 1px dashed #e2e8f0; }
 .mb .btn.is-on { background: #e3edfb; border-color: #bcd3f2; color: var(--zo-dark, #0d47a1); }
+
+/* ===== Surat penawaran (format surat Istana Block, sama seperti app lama) ===== */
+.qhead { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+.qtitle { margin: 10px 0 6px; font-size: 17px; text-decoration: underline; letter-spacing: .03em; }
+table.qmeta { width: auto; border: none; }
+table.qmeta td { border: none; padding: 1px 4px; font-size: 12.5px; vertical-align: top; }
+table.qmeta td.k { font-weight: 700; white-space: nowrap; }
+table.qitems { width: 100%; border-collapse: collapse; }
+table.qitems th, table.qitems td { border: 1px solid #333; padding: 5px 6px; font-size: 12.5px; vertical-align: top; }
+table.qitems th { background: #eef2fa; text-align: center; }
+table.qitems td.c { text-align: center; } table.qitems td.r { text-align: right; white-space: nowrap; }
+table.qitems tr.total td { font-weight: 700; background: #f3f4f6; }
+.qnote { font-weight: 700; margin: 4px 0 0; font-size: 12.5px; }
+table.qterms td { font-size: 12px; }
+.qsigns { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: center; font-size: 12.5px; }
+.qsigns .sign-title { font-weight: 700; min-height: 3em; }
+.qsigns .sign-img { height: 72px; display: flex; align-items: center; justify-content: center; }
+.qsigns .sign-img img { max-height: 70px; max-width: 180px; }
+.qsigns .sign-name { font-weight: 700; text-decoration: underline; }
+
+/* ===== Invoice / faktur penjualan (UTAMA biru, COPY abu-abu) ===== */
+.inv-page { --doc: #2f5fae; gap: 10px; margin-bottom: 18px; } .inv-copy { --doc: #4a4a4a; }
+.ihead { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+.ibox { border: 1.2px solid var(--doc); width: 300px; } .ititle { background: var(--doc); color: #fff; text-align: center; font-weight: 700; letter-spacing: 1px; padding: 2px 6px; margin-bottom: 2px; }
+table.imeta { width: auto; border: none; } table.imeta td { border: none; padding: 0 4px; font-size: 12px; vertical-align: top; } table.imeta td.k { white-space: nowrap; }
+.ibox table.imeta { margin: 0 6px 3px; }
+table.iitems { width: 100%; border-collapse: collapse; border: 1px solid var(--doc); }
+table.iitems th { background: var(--doc); color: #fff; border: 1px solid var(--doc); font-size: 12px; padding: 4px 6px; }
+table.iitems td { border-left: 1px solid var(--doc); border-right: 1px solid var(--doc); font-size: 12px; padding: 4px 6px; }
+table.iitems tbody tr:last-child td { border-bottom: 1px solid var(--doc); } table.iitems tr.empty td { height: 18px; }
+table.iitems td.c { text-align: center; } table.iitems td.r, table.itotal td.r { text-align: right; white-space: nowrap; }
+.ifoot { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.inote { font-weight: 700; font-style: italic; color: var(--doc); margin: 0 0 4px; } .itext { margin: 0 0 6px; font-size: 12px; }
+.iframe { border: 1.5px solid var(--doc); padding: 3px 6px; text-align: center; font-size: 11.5px; margin-bottom: 5px; line-height: 1.35; }
+.itotalwrap { position: relative; } table.itotal { width: 100%; border: none; } table.itotal td { border: none; padding: 1px 6px; font-size: 12.5px; }
+table.itotal tr.strong td { font-weight: 700; border-top: 1px solid var(--doc); color: var(--doc); }
+.istamp { position: absolute; left: 30%; top: 50%; transform: translateY(-50%) rotate(-14deg); border: 3px double #d32f2f; color: #d32f2f; border-radius: 6px; padding: 1px 12px 2px; text-align: center; opacity: .8; pointer-events: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.istamp b { display: block; font-size: 26px; letter-spacing: 4px; line-height: 1.1; } .istamp small { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.iiso { margin: 0; font-size: 10px; color: #333; }
+.inv-page table.iitems th, .inv-page .ititle { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+@media print { .inv-page { min-height: auto; margin-bottom: 0; } .inv-copy { break-before: page; } }
+
+/* ===== Surat jalan format Zahir (LEMBAR ASLI biru, LEMBAR COPY abu) ===== */
+.sj-page { --doc: #2f5fae; gap: 6px; margin-bottom: 18px; font-size: 12px; } .sj-copy { --doc: #4a4a4a; }
+.sj-kop { display: flex; gap: 10px; align-items: center; border-bottom: 2px solid var(--doc); padding-bottom: 6px; }
+.sj-kop img { height: 48px; width: auto; } .sj-kop b { font-size: 16px; display: block; } .sj-kop div div { font-size: 10.5px; }
+.sjtitle { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 2px; } .sjtitle span { font-size: 17px; font-weight: 700; text-decoration: underline; letter-spacing: .5px; }
+.sjtitle b { border: 1.5px solid #000; padding: 2px 14px; font-size: 11px; letter-spacing: 1px; } .sjint { font-style: normal; border: 1.5px solid #000; padding: 0 6px; margin-left: 6px; font-size: 11px; }
+table.sj { width: 100%; border-collapse: collapse; } table.sj th { background: var(--doc); color: #fff; font-size: 11px; padding: 3px 5px; border: 1px solid var(--doc); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+table.sj td { border: 1px solid var(--doc); padding: 3px 5px; font-size: 12px; vertical-align: top; } table.sj td.c { text-align: center; } table.sj td.tall { height: 54px; }
+.sjgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+table.sj.items tbody td { border-top: none; border-bottom: none; } table.sj.items tbody tr:last-child td { border-bottom: 1px solid var(--doc); } table.sj.items tr.empty td { height: 18px; }
+.sjitemswrap { position: relative; }
+.sjnote { border: 1px solid var(--doc); padding: 3px 6px; font-size: 10.5px; line-height: 1.35; }
+table.signs6 th { width: 16.66%; } table.signs6 td { height: 70px; text-align: center; vertical-align: bottom; }
+table.signs6 img { max-height: 44px; max-width: 100%; display: block; margin: 0 auto; }
+.sjprinted { font-size: 9.5px; margin: 0; }
+@media print { .sj-page { min-height: auto; margin-bottom: 0; } .sj-copy { break-before: page; } }
