@@ -34,7 +34,8 @@ for (const j of J.values()) {
   }
   const memoCount = new Map();
   for (const l of j.lines) memoCount.set(l.desc, (memoCount.get(l.desc) ?? 0) + 1);
-  j.memo = [...memoCount.entries()].sort((x, y) => y[1] - x[1])[0][0];
+  const pref = j.lines.find((l) => /^(Penjualan|Pembelian|Retur Penjualan|Retur Pembelian|Potongan Penjualan|Uang Muka Penjualan|Uang Muka Pembelian|Pengiriman)\s*,/i.test(l.desc));
+  j.memo = pref ? pref.desc : [...memoCount.entries()].sort((x, y) => y[1] - x[1])[0][0];
 }
 const num = (j) => (/^\d+$/.test(j.ref) ? `${j.tp}/${j.ref}` : j.ref);
 
@@ -65,13 +66,13 @@ out.push(`DELETE FROM fin_journal_lines WHERE journal_id IN (SELECT id FROM fin_
 out.push(`DELETE FROM fin_journals WHERE number IN ('JU/2605/0001','JU/2606/0001','JU/2607/0001','JU/2608/0001','JU/2609/0001','JU/2610/0001') AND source = 'manual';`);
 const journalRows = [], lineRows = [];
 const addJournal = (id, number, date, memo, lines) => {
-  journalRows.push(`(${q(id)}, ${q(number)}, ${q(date)}, ${q(memo.slice(0, 500))}, 'zahir', NULL, ${BY}, ${now})`);
+  journalRows.push(`(${q(id)}, ${q(number)}, ${q(date)}, ${q(memo.slice(0, 500))}, 'zahir', NULL, ${BY}, ${now}, ${now})`);
   lines.forEach((l, i) => lineRows.push(`(${q(`${id}_${i}`)}, ${q(id)}, ${q(date)}, ${q(l.code)}, ${l.d}, ${l.c}, ${q((l.memo ?? "").slice(0, 500))}, ${i})`));
 };
 addJournal("zj_saldo_awal", "SA/ZAHIR/0001", "2026-05-31", "Saldo awal dari Zahir sebelum mutasi Juni 2026 (aset tetap, modal, saldo lama)", opening.sort((a, b) => a.code.localeCompare(b.code)).map((l) => ({ ...l, memo: "Saldo awal" })));
 const sorted = [...J.values()].sort((a, b) => a.date.localeCompare(b.date) || num(a).localeCompare(num(b)));
 for (const j of sorted) addJournal(`zj_${j.tp}_${j.ref}`, num(j), j.date, j.memo, j.lines.map((l) => ({ code: l.code, d: l.d, c: l.c, memo: l.desc2 || (l.desc !== j.memo ? l.desc : "") })));
-for (let i = 0; i < journalRows.length; i += 200) out.push(`INSERT INTO fin_journals (id, number, date, memo, source, source_id, created_by, created_at) VALUES\n${journalRows.slice(i, i + 200).join(",\n")};`);
+for (let i = 0; i < journalRows.length; i += 200) out.push(`INSERT INTO fin_journals (id, number, date, memo, source, source_id, created_by, created_at, updated_at) VALUES\n${journalRows.slice(i, i + 200).join(",\n")};`);
 for (let i = 0; i < lineRows.length; i += 200)
   out.push(`INSERT INTO fin_journal_lines (id, journal_id, date, account_id, debit, credit, memo, sort) SELECT v.column1, v.column2, v.column3, a.id, v.column5, v.column6, v.column7, v.column8 FROM (VALUES\n${lineRows.slice(i, i + 200).join(",\n")}) v JOIN fin_accounts a ON a.code = v.column4;`);
 fs.writeFileSync(new URL("impor-zahir-rinci.sql", dir), out.join("\n") + "\n");

@@ -1121,3 +1121,4 @@ a.zt:focus-visible { outline: 3px solid #0f2a4a; outline-offset: 2px; }
   .zf-acc { break-inside: auto; }
   .zf-acc-head { break-after: avoid; }
 }
+.zf-h3 { margin: 20px 0 6px; font-size: 13px; color: #1e3a8a; }

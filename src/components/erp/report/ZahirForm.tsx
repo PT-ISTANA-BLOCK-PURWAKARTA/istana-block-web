@@ -26,3 +26,11 @@ export function ZahirForm({ company, title, period, children }: { company: strin
     </article>
   );
 }
+
+/** Angka gaya Zahir: 1,234,567.00 (kosong bila 0 kecuali `zero`). */
+export const zn = (v: number, zero = false) => (v ? v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : zero ? "0.00" : "");
+/** Saldo gaya Zahir: negatif dalam kurung. */
+export const zb = (v: number) => (v < 0 ? `(${zn(-v)})` : zn(v, true));
+export const zDate = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
+export const zLongDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" });
+export const zPeriod = (from: string, to: string) => `${zLongDate(from)} - ${zLongDate(to)}`;
