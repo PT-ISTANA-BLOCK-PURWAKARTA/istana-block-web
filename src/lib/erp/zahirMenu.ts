@@ -20,7 +20,6 @@ export const HUBS: Hub[] = [
       { label: "Satuan Pengukuran", href: "/akuntansi/data/satuan", icon: "adjust", color: "lime" },
       { label: "Data Pajak", href: "/akuntansi/data/pajak", icon: "doc", color: "purple" },
       { label: "Data Departemen", href: "/akuntansi/data/departemen", icon: "id", color: "salmon" },
-      { label: "Data Gudang", href: "/operasional/stok", icon: "stack", color: "brown" },
       { label: "Data Harta Tetap", href: "/akuntansi/harta-tetap", icon: "factory", color: "cyan" },
     ],
   },
@@ -46,9 +45,10 @@ export const HUBS: Hub[] = [
     title: "Penjualan",
     sub: "Dari penawaran harga sampai pembayaran piutang.",
     tiles: [
-      { label: "Penawaran Harga", href: "/operasional/penawaran", icon: "mail", color: "blue" },
-      { label: "Order Penjualan", href: "/operasional/pesanan", icon: "clipboard", color: "navy" },
-      { label: "Pengiriman Barang (Penjualan)", href: "/operasional/pengiriman", icon: "truck", color: "red", w: 2 },
+      { label: "Penawaran Harga", href: "/akuntansi/ops/penawaran", icon: "mail", color: "blue" },
+      { label: "Order Penjualan", href: "/akuntansi/ops/order", icon: "clipboard", color: "navy" },
+      { label: "Pengiriman Barang (Penjualan)", href: "/akuntansi/ops/pengiriman", icon: "truck", color: "red", w: 2 },
+      { label: "Invoice Penjualan (Operasional)", href: "/akuntansi/ops/invoice", icon: "doc", color: "orange" },
       { label: "Invoice Penjualan", href: "/akuntansi/penjualan", icon: "invoice", color: "lime", w: 2 },
       { label: "Piutang Usaha", href: "/akuntansi/laporan/piutang", icon: "book", color: "crimson" },
       { label: "Pembayaran Piutang Usaha", href: "/akuntansi/penerimaan", icon: "receive", color: "purple" },
@@ -65,7 +65,7 @@ export const HUBS: Hub[] = [
     tiles: [
       { label: "Permintaan Penawaran", href: "/akuntansi/pesanan-pembelian?jenis=rfq", icon: "mail", color: "blue" },
       { label: "Pesanan Pembelian", href: "/akuntansi/pesanan-pembelian", icon: "clipboard", color: "navy" },
-      { label: "Penerimaan Barang Pembelian", href: "/operasional/barang-masuk", icon: "truck", color: "navy" },
+      { label: "Penerimaan Barang Pembelian", href: "/akuntansi/ops/barang-masuk", icon: "truck", color: "navy" },
       { label: "Invoice Pembelian", href: "/akuntansi/pembelian", icon: "cart", color: "lime", w: 2 },
       { label: "Hutang Usaha", href: "/akuntansi/laporan/hutang", icon: "book", color: "crimson" },
       { label: "Pembayaran Hutang Usaha", href: "/akuntansi/pembayaran", icon: "pay", color: "purple" },
@@ -95,15 +95,10 @@ export const HUBS: Hub[] = [
     sub: "Produk, stok per gudang, opname, pindah barang dan produksi.",
     tiles: [
       { label: "Data Produk", href: "/akuntansi/barang", icon: "box", color: "red" },
-      { label: "Pemakaian / Penyesuaian Barang", href: "/operasional/stok", icon: "stack", color: "green" },
-      { label: "Pindah Barang", href: "/operasional/transfer-stok", icon: "truckGo", color: "purple" },
-      { label: "Rencana Pesanan", href: "/operasional/rencana-pesanan", icon: "calendar", color: "lime" },
-      { label: "Stock Opname", href: "/operasional/stok", icon: "checkCheck", color: "orange" },
-      { label: "Produksi", href: "/operasional/produksi", icon: "factory", color: "blue" },
+      { label: "Rencana Pesanan", href: "/akuntansi/ops/rencana", icon: "calendar", color: "lime" },
       
       
-      { label: "Barang Masuk", href: "/operasional/barang-masuk", icon: "inbox", color: "orange" },
-      { label: "Target Produksi", href: "/operasional/target-produksi", icon: "award", color: "cyan" },
+      { label: "Barang Masuk", href: "/akuntansi/ops/barang-masuk", icon: "inbox", color: "orange" },
       
       
     ],
@@ -193,16 +188,18 @@ export const REPORT_CATS: ReportCat[] = [
         items: [
           { label: "eFaktur Penjualan", href: "/akuntansi/laporan/efaktur" },
           { label: "Jurnal - Penjualan", href: "/akuntansi/penjualan" },
-          { label: "Penawaran Harga - Rangkuman", href: "/operasional/penawaran" },
-          { label: "Pengiriman Barang - Rangkuman", href: "/operasional/pengiriman" },
-          { label: "Pengiriman Barang - Status", href: "/operasional/muatan" },
+          { label: "Penawaran Harga - Rangkuman", href: "/akuntansi/ops/penawaran" },
+          { label: "Order Penjualan (PO) - Rangkuman", href: "/akuntansi/ops/order" },
+          { label: "Invoice Penjualan Operasional (IB/IBN)", href: "/akuntansi/ops/invoice" },
+          { label: "Pengiriman Barang - Rangkuman", href: "/akuntansi/ops/pengiriman" },
+          { label: "Pengiriman Barang - Status", href: "/akuntansi/ops/pengiriman?status=berangkat" },
           { label: "Penjualan - Rangkuman", href: "/akuntansi/laporan/penjualan" },
           { label: "Penjualan Per Pelanggan - Rangkuman", href: "/akuntansi/laporan/per-kontak?jenis=penjualan" },
           { label: "Penjualan Per Pelanggan - Rincian", href: "/akuntansi/laporan/per-kontak?jenis=penjualan&rinci=1" },
           { label: "Penjualan Per Barang", href: "/akuntansi/laporan/penjualan" },
           
           { label: "Retur Penjualan - Rangkuman", href: "/akuntansi/retur" },
-          { label: "Rekap Pelanggan", href: "/operasional/rekap-pelanggan" },
+          { label: "Rekap Pelanggan", href: "/akuntansi/laporan/per-kontak?jenis=penjualan" },
         ],
       },
       {
@@ -231,7 +228,7 @@ export const REPORT_CATS: ReportCat[] = [
           { label: "Pembelian - Rangkuman", href: "/akuntansi/pembelian" },
           { label: "Pembelian per Pemasok - Rangkuman", href: "/akuntansi/laporan/per-kontak?jenis=pembelian" },
           { label: "Pembelian per Pemasok - Rincian", href: "/akuntansi/laporan/per-kontak?jenis=pembelian&rinci=1" },
-          { label: "Penerimaan Barang Pembelian", href: "/operasional/barang-masuk" },
+          { label: "Penerimaan Barang Pembelian", href: "/akuntansi/ops/barang-masuk" },
           { label: "Pesanan Pembelian - Rangkuman", href: "/akuntansi/pesanan-pembelian" },
           { label: "Permintaan Penawaran - Rangkuman", href: "/akuntansi/pesanan-pembelian?jenis=rfq" },
           { label: "Retur Pembelian - Rangkuman", href: "/akuntansi/retur?jenis=pembelian" },
@@ -261,13 +258,10 @@ export const REPORT_CATS: ReportCat[] = [
         items: [
           { label: "Barang Terjual", href: "/akuntansi/laporan/penjualan" },
           { label: "Daftar Barang - Umum", href: "/akuntansi/barang" },
-          { label: "Daftar Barang Per Gudang", href: "/operasional/stok" },
           { label: "Daftar Harga Jual Barang", href: "/akuntansi/barang" },
-          { label: "Formulir Stok Opname", href: "/operasional/stok" },
           
-          { label: "Mutasi Barang Per Gudang", href: "/operasional/transfer-stok" },
-          { label: "Transaksi Persediaan - Produksi", href: "/operasional/produksi" },
-          { label: "Barang Keluar (Muatan)", href: "/operasional/muatan" },
+          { label: "Barang Keluar (Pengiriman)", href: "/akuntansi/ops/pengiriman" },
+          { label: "Barang Masuk (Penerimaan)", href: "/akuntansi/ops/barang-masuk" },
         ],
       },
       {
@@ -275,7 +269,7 @@ export const REPORT_CATS: ReportCat[] = [
         items: [
           { label: "Barang Paling Laris", href: "/akuntansi/laporan/penjualan" },
           
-          { label: "Penjualan Per Pelanggan Per Barang", href: "/operasional/rekap-pelanggan" },
+          { label: "Penjualan Per Pelanggan", href: "/akuntansi/laporan/per-kontak?jenis=penjualan&rinci=1" },
           
         ],
       },
