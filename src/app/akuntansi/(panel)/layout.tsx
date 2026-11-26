@@ -48,6 +48,7 @@ const ITEMS: ShellItem[] = [
   { href: "/akuntansi/laporan/neraca-12", label: "Neraca - 12 Bulan", group: "Laporan", icon: "ledger" },
   { href: "/akuntansi/laporan/kartu?jenis=piutang", label: "Kartu Piutang / Hutang", group: "Laporan", icon: "book" },
   { href: "/akuntansi/laporan/laba-rugi-12", label: "Laba Rugi - 12 Bulan", group: "Laporan", icon: "report" },
+  { href: "/akuntansi/menu/lainnya", label: "Semua menu Lainnya", group: "Lainnya", icon: "menu" },
   { href: "/akuntansi/gaji", label: "Gaji & slip gaji", group: "Lainnya", icon: "report" },
   { href: "/akuntansi/kasbon", label: "Kasbon karyawan", group: "Lainnya", icon: "cash" },
   { href: "/akuntansi/pengaturan", label: "Pengaturan", group: "Lainnya", icon: "gear" },

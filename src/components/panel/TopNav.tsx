@@ -53,12 +53,6 @@ export function TopNav({ items, modules, current, user, homeHref, logout }: { it
   }
   const fab = Object.entries(FAB).find(([p]) => path === p)?.[1];
   const toggle = (name: string) => setOpen((o) => (o === name ? null : name));
-  const link = (i: NavItem) => (
-    <Link key={i.href} href={i.href} aria-current={i === best ? "page" : undefined} className="tn-item">
-      <Icon name={i.icon as IconName} size={16} /> <span>{i.label}</span>
-      {i.badge ? <span className="nav-badge">{i.badge}</span> : null}
-    </Link>
-  );
 
   return (
     <>
@@ -76,15 +70,12 @@ export function TopNav({ items, modules, current, user, homeHref, logout }: { it
               <Link key={i.href} href={i.href} className="tn-top" aria-current={i === best ? "page" : undefined}><Icon name={i.icon as IconName} size={16} /> {i.label}</Link>
             ))}
             {groups.map((g) => {
+              // Seperti Zahir: klik nama modul langsung membuka halaman menu ubinnya (item pertama grup), tanpa dropdown.
               const active = g.items.includes(best as NavItem);
-              const isOpen = open === g.name;
               return (
-                <div key={g.name} className={`tn-group${isOpen ? " is-open" : ""}`}>
-                  <button type="button" className={`tn-top${active ? " is-active" : ""}`} aria-expanded={isOpen} onClick={(e) => { e.stopPropagation(); toggle(g.name); }}>
-                    {g.name} <span className="tn-caret" aria-hidden="true">▾</span>
-                  </button>
-                  <div className="tn-drop" hidden={!isOpen}>{g.items.map(link)}</div>
-                </div>
+                <Link key={g.name} href={g.items[0].href} className={`tn-top${active ? " is-active" : ""}`} aria-current={active ? "page" : undefined}>
+                  {g.name}
+                </Link>
               );
             })}
           </nav>

@@ -101,12 +101,25 @@ export const HUBS: Hub[] = [
       { label: "Rencana Pesanan", href: "/operasional/rencana-pesanan", icon: "calendar", color: "lime" },
       { label: "Stock Opname", href: "/operasional/stok", icon: "checkCheck", color: "orange" },
       { label: "Produksi", href: "/operasional/produksi", icon: "factory", color: "blue" },
-      { label: "Perakitan", icon: "packageCheck", color: "cyan" },
-      { label: "Penguraian", icon: "box", color: "brown" },
+      
+      
       { label: "Barang Masuk", href: "/operasional/barang-masuk", icon: "inbox", color: "orange" },
       { label: "Target Produksi", href: "/operasional/target-produksi", icon: "award", color: "cyan" },
-      { label: "Penentuan Harga Jual", icon: "pencil", color: "blue" },
-      { label: "Manajemen Persediaan", icon: "chart", color: "green" },
+      
+      
+    ],
+  },
+  {
+    slug: "lainnya",
+    title: "Lainnya",
+    sub: "Gaji, kasbon karyawan, pengaturan keuangan dan akun.",
+    tiles: [
+      { label: "Gaji & Slip Gaji", href: "/akuntansi/gaji", icon: "report", color: "blue", w: 2 },
+      { label: "Kasbon Karyawan", href: "/akuntansi/kasbon", icon: "cash", color: "orange" },
+      { label: "Pengaturan Keuangan", href: "/akuntansi/pengaturan", icon: "gear", color: "navy" },
+      { label: "Anggaran", href: "/akuntansi/anggaran", icon: "chart", color: "salmon" },
+      { label: "Harta Tetap", href: "/akuntansi/harta-tetap", icon: "factory", color: "cyan" },
+      { label: "Akun Saya", href: "/akuntansi/profil", icon: "user", color: "purple" },
     ],
   },
 ];
