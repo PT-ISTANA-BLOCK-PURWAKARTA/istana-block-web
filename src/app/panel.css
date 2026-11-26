@@ -1152,3 +1152,12 @@ a.zt:focus-visible { outline: 3px solid #0f2a4a; outline-offset: 2px; }
 dl.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
 dl.kv dt { color: #64748b; }
 dl.kv dd { margin: 0; }
+/* Laporan bersekat per bulan */
+.lr-wide { overflow-x: auto; }
+.lr-wide table { min-width: 760px; }
+.lr-wide th.num, .lr-wide td.num { white-space: nowrap; }
+.chg { font-weight: 600; white-space: nowrap; }
+.chg.is-ok { color: #15803d; }
+.chg.is-bad { color: #b91c1c; }
+tr.r-note td { font-size: 12px; color: #475569; border-top: 1px dashed #e2e8f0; }
+.mb .btn.is-on { background: #e3edfb; border-color: #bcd3f2; color: var(--zo-dark, #0d47a1); }

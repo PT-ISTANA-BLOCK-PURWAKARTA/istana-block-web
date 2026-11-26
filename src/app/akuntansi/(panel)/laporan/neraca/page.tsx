@@ -1,143 +1,106 @@
+// Neraca per akhir bulan (bersekat: satu kolom per bulan) dan Perbandingan 2 Kolom (akhir bulan vs akhir bulan).
 import Link from "next/link";
 import { Fragment } from "react";
+import type { Account } from "@/db/erp";
 import { PrintButton } from "@/components/erp/PrintButton";
-import { PeriodBar } from "@/components/erp/report/PeriodBar";
+import { MonthBar } from "@/components/erp/report/MonthBar";
 import { ReadingNote, ReportSheet } from "@/components/erp/report/ReportSheet";
 import { StackBar } from "@/components/erp/report/StackBar";
 import { BackLink, Kpis, PageHead } from "@/components/erp/ui";
 import { GROUP_LABEL } from "@/lib/erp/accounting";
-import { asOfPresets } from "@/lib/erp/periods";
+import { isYm, monthRange, monthlyBS, readMonths, ymAdd, ymLabel } from "@/lib/erp/monthly";
 import { reportContext } from "@/lib/erp/reportctx";
-import { balanceSheet, type Row } from "@/lib/erp/reports";
-import { addDays, formatAmount, isDate, monthStart, tgl, tglPanjang, today } from "@/lib/erp/util";
+import { formatAmount, today } from "@/lib/erp/util";
 
 export const metadata = { title: "Neraca" };
 
-// Palet kategori yang sudah diuji (beda jelas juga bagi buta warna); urutan tetap.
 const C = ["#3d63c4", "#dd6a2c", "#1baf7a", "#eda100", "#6250d6"];
+const A = ({ n, strong }: { n: number; strong?: boolean }) => <span className={`tabular${n < 0 ? " text-bahaya" : ""}`}>{strong ? <b>{formatAmount(n)}</b> : formatAmount(n, { blankZero: true })}</span>;
+const chg = (a: number, b: number) => (!b ? <span className="muted">–</span> : <span className={`chg ${a >= b ? "is-ok" : "is-bad"}`}>{a >= b ? "▲" : "▼"} {Math.abs(((a - b) / Math.abs(b)) * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%</span>);
+type R = { account: Account; values: number[] };
 
-const shown = (r: Row) => (r.account.group === "akum_penyusutan" ? -r.balance : r.balance);
-
-function Lines({ rows, prev }: { rows: Row[]; prev: Map<string, number> }) {
-  let last = "";
-  return (
-    <>
-      {rows.map((r) => {
-        const head = r.account.group !== last ? GROUP_LABEL[r.account.group] : null;
-        last = r.account.group;
-        return (
-          <Fragment key={r.account.id}>
-            {head && <tr className="r-sub-head"><td colSpan={3}>{head}</td></tr>}
-            <tr>
-              <td className="r-indent"><Link href={`/akuntansi/laporan/buku-besar?akun=${r.account.id}`}><span className="tabular muted">{r.account.code}</span> {r.account.name}</Link></td>
-              <td className="num tabular">{formatAmount(shown(r))}</td>
-              <td className="num tabular muted">{formatAmount(prev.get(r.account.id) ?? 0, { blankZero: true })}</td>
-            </tr>
-          </Fragment>
-        );
-      })}
-    </>
-  );
-}
-
-export default async function Neraca({ searchParams }: { searchParams: Promise<{ to?: string }> }) {
+export default async function Neraca({ searchParams }: { searchParams: Promise<{ mode?: string; dari?: string; sampai?: string; a?: string; b?: string; to?: string }> }) {
   const { me, db, acc, site, npwp } = await reportContext();
   const sp = await searchParams;
-  const to = isDate(sp.to) ? sp.to : today();
-  // Pembanding: akhir bulan sebelumnya.
-  const prevTo = addDays(monthStart(to), -1);
-  const [bs, pb] = await Promise.all([balanceSheet(db, acc.rows, to), balanceSheet(db, acc.rows, prevTo)]);
-  const prev = new Map([...pb.assets, ...pb.liabilities, ...pb.equity].map((r) => [r.account.id, shown(r)]));
-  const sum = (rows: Row[], groups: string[]) => rows.filter((r) => groups.includes(r.account.group)).reduce((a, r) => a + shown(r), 0);
-  const cash = sum(bs.assets, ["kas_bank"]);
-  const recv = sum(bs.assets, ["piutang"]);
-  const stock = sum(bs.assets, ["persediaan"]);
-  const otherCur = sum(bs.assets, ["aset_lancar_lain"]);
-  const fixed = sum(bs.assets, ["aset_tetap", "akum_penyusutan"]);
-  const curLiab = sum(bs.liabilities, ["hutang_usaha", "hutang_lain"]);
+  const mode = sp.mode === "banding" ? "banding" : "bulanan";
+  const now = today().slice(0, 7);
+  const { dari, sampai } = readMonths({ dari: sp.dari, sampai: sp.sampai, to: sp.to }, 3);
+  const ma = isYm(sp.a) ? sp.a : now;
+  const mb = isYm(sp.b) ? sp.b : ymAdd(ma, -1);
+  const months = mode === "bulanan" ? monthRange(dari, sampai) : [...monthRange(ma, ma), ...monthRange(mb, mb)];
+  const bs = await monthlyBS(db, acc.rows, months);
+  const banding = mode === "banding";
+  const last = bs.per[banding ? 0 : months.length - 1];
+  const sumG = (groups: string[]) => last.assets.filter((r) => groups.includes(r.account.group)).reduce((a, r) => a + (r.account.group === "akum_penyusutan" ? -r.balance : r.balance), 0);
+  const cash = sumG(["kas_bank"]), recv = sumG(["piutang"]), stock = sumG(["persediaan"]), otherCur = sumG(["aset_lancar_lain"]), fixed = sumG(["aset_tetap", "akum_penyusutan"]);
+  const curLiab = last.liabilities.filter((r) => ["hutang_usaha", "hutang_lain"].includes(r.account.group)).reduce((a, r) => a + r.balance, 0);
   const currentRatio = curLiab > 0 ? (cash + recv + stock + otherCur) / curLiab : null;
-  const prevLabel = `Per ${tgl(prevTo)}`;
+  const link = (a: Account) => <Link href={`/akuntansi/laporan/buku-besar?akun=${a.id}`}><span className="tabular muted">{a.code}</span> {a.name}</Link>;
+  const cols = banding ? 5 : months.length + 1;
+  const period = banding ? `Akhir ${ymLabel(ma)} dibanding akhir ${ymLabel(mb)}` : months.length > 1 ? `Akhir bulan, ${months[0].label} – ${months[months.length - 1].label}` : `Per akhir ${months[0].label}`;
+
+  const cells = (vals: number[], strong?: boolean) => banding
+    ? <><td className="num"><A n={vals[0]} strong={strong} /></td><td className="num"><A n={vals[1]} strong={strong} /></td><td className="num"><A n={vals[0] - vals[1]} strong={strong} /></td><td className="num small">{chg(vals[0], vals[1])}</td></>
+    : vals.map((v, i) => <td key={i} className="num"><A n={v} strong={strong} /></td>);
+  const lines = (rows: R[]) => {
+    let lastG = "";
+    return rows.map((r) => {
+      const head = r.account.group !== lastG ? GROUP_LABEL[r.account.group] : null;
+      lastG = r.account.group;
+      return <Fragment key={r.account.id}>{head && <tr className="r-sub-head"><td colSpan={cols}>{head}</td></tr>}<tr><td className="r-indent">{link(r.account)}</td>{cells(r.values)}</tr></Fragment>;
+    });
+  };
+  const tot = (f: (b: (typeof bs.per)[number]) => number) => bs.per.map(f);
 
   return (
     <>
       <div className="no-print">
         <BackLink href="/akuntansi/laporan">Laporan</BackLink>
-        <PageHead title="Neraca" sub="Apa yang dimiliki usaha, dan dari mana asalnya, pada satu tanggal.">
-          <a className="btn btn-ghost btn-sm" href={`/akuntansi/ekspor/neraca?to=${to}`}>Unduh CSV (Excel)</a>
+        <PageHead title="Neraca" sub="Apa yang dimiliki usaha dan dari mana asalnya, per akhir bulan. Pilih per bulan (bersekat) atau perbandingan dua bulan.">
           <PrintButton label="Cetak / PDF" />
         </PageHead>
-        <PeriodBar path="/akuntansi/laporan/neraca" presets={asOfPresets()} to={to} single />
+        <MonthBar path="/akuntansi/laporan/neraca" mode={mode} dari={dari} sampai={sampai} a={ma} b={mb} now={now} />
       </div>
 
-      <ReportSheet site={site} npwp={npwp} title="Neraca" period={`Per ${tglPanjang(to)}`} printedBy={me.name} sign>
-        {!bs.balanced ? (
-          <p className="alert alert-error">Neraca tidak seimbang. Periksa neraca saldo.</p>
-        ) : (
-          <p className="balance-ok"><span aria-hidden="true">✓</span> Seimbang: total aset sama dengan kewajiban + modal ({formatAmount(bs.assetTotal)}).</p>
-        )}
+      <ReportSheet site={site} npwp={npwp} title={banding ? "Neraca - Perbandingan 2 Kolom" : "Neraca per Akhir Bulan"} period={period} printedBy={me.name} sign>
+        {!last.balanced ? <p className="alert alert-error">Neraca tidak seimbang. Periksa neraca saldo.</p> : <p className="balance-ok"><span aria-hidden="true">✓</span> Seimbang: total aset = kewajiban + modal ({formatAmount(last.assetTotal)}).</p>}
         <Kpis
           items={[
-            { label: "Total aset", value: formatAmount(bs.assetTotal), sub: `akhir bulan lalu ${formatAmount(pb.assetTotal)}` },
+            { label: "Total aset", value: formatAmount(last.assetTotal), sub: banding ? <>vs {months[1].short} {chg(bs.per[0].assetTotal, bs.per[1].assetTotal)}</> : `akhir ${months[months.length - 1].short}` },
             { label: "Kas & bank", value: formatAmount(cash), sub: "uang yang siap dipakai" },
             { label: "Piutang", value: formatAmount(recv), sub: "tagihan ke pelanggan" },
-            { label: "Kewajiban", value: formatAmount(bs.liabTotal), sub: `modal pemilik ${formatAmount(bs.equityTotal)}` },
-            currentRatio != null
-              ? { label: "Kemampuan bayar jangka pendek", value: `${currentRatio.toLocaleString("id-ID", { maximumFractionDigits: 1 })}×`, sub: "aset lancar ÷ kewajiban lancar; makin besar makin longgar" }
-              : { label: "Modal pemilik", value: formatAmount(bs.equityTotal), sub: `termasuk laba tahun ini ${formatAmount(bs.currentYear)}` },
+            { label: "Kewajiban", value: formatAmount(last.liabTotal), sub: `modal ${formatAmount(last.equityTotal)}` },
+            currentRatio != null ? { label: "Kemampuan bayar jangka pendek", value: `${currentRatio.toLocaleString("id-ID", { maximumFractionDigits: 1 })}×`, sub: "aset lancar ÷ kewajiban lancar" } : { label: "Modal", value: formatAmount(last.equityTotal) },
           ]}
         />
         <div className="report-two composition">
-          <StackBar
-            title="Aset dimiliki dalam bentuk"
-            label="Komposisi aset"
-            segments={[
-              { label: "Kas & bank", value: cash, color: C[0] },
-              { label: "Piutang", value: recv, color: C[1] },
-              { label: "Persediaan", value: stock, color: C[2] },
-              { label: "Aset tetap (setelah penyusutan)", value: fixed, color: C[3] },
-              { label: "Aset lancar lain", value: otherCur, color: C[4] },
-            ]}
-          />
-          <StackBar
-            title="Dibiayai oleh"
-            label="Sumber dana"
-            segments={[
-              { label: "Kewajiban (hutang)", value: bs.liabTotal, color: C[1] },
-              { label: "Modal pemilik", value: bs.equityTotal, color: C[0] },
-            ]}
-          />
+          <StackBar title="Aset dimiliki dalam bentuk" label="Komposisi aset" segments={[
+            { label: "Kas & bank", value: cash, color: C[0] }, { label: "Piutang", value: recv, color: C[1] }, { label: "Persediaan", value: stock, color: C[2] },
+            { label: "Aset tetap (setelah penyusutan)", value: fixed, color: C[3] }, { label: "Aset lancar lain", value: otherCur, color: C[4] },
+          ]} />
+          <StackBar title="Dibiayai oleh" label="Sumber dana" segments={[{ label: "Kewajiban (hutang)", value: last.liabTotal, color: C[1] }, { label: "Modal pemilik", value: last.equityTotal, color: C[0] }]} />
         </div>
-
-        <div className="report-two">
-          <div className="admin-table report">
-            <table>
-              <thead><tr><th>Aset</th><th className="num">{tgl(to)}</th><th className="num">{prevLabel}</th></tr></thead>
-              <tbody>
-                <Lines rows={bs.assets} prev={prev} />
-                <tr className="r-grand"><td>Total aset</td><td className="num"><b className="tabular">{formatAmount(bs.assetTotal)}</b></td><td className="num tabular">{formatAmount(pb.assetTotal)}</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div className="admin-table report">
-            <table>
-              <thead><tr><th>Kewajiban &amp; modal</th><th className="num">{tgl(to)}</th><th className="num">{prevLabel}</th></tr></thead>
-              <tbody>
-                <tr className="r-group"><th colSpan={3}>Kewajiban</th></tr>
-                <Lines rows={bs.liabilities} prev={prev} />
-                <tr className="r-sub"><td>Total kewajiban</td><td className="num"><b className="tabular">{formatAmount(bs.liabTotal)}</b></td><td className="num tabular">{formatAmount(pb.liabTotal)}</td></tr>
-                <tr className="r-group"><th colSpan={3}>Modal</th></tr>
-                <Lines rows={bs.equity} prev={prev} />
-                <tr><td className="r-indent">Laba ditahan tahun-tahun lalu</td><td className="num tabular">{formatAmount(bs.priorYears)}</td><td className="num tabular muted">{formatAmount(pb.priorYears)}</td></tr>
-                <tr><td className="r-indent">Laba tahun berjalan</td><td className="num tabular">{formatAmount(bs.currentYear)}</td><td className="num tabular muted">{formatAmount(pb.currentYear)}</td></tr>
-                <tr className="r-sub"><td>Total modal</td><td className="num"><b className="tabular">{formatAmount(bs.equityTotal)}</b></td><td className="num tabular">{formatAmount(pb.equityTotal)}</td></tr>
-                <tr className="r-grand"><td>Total kewajiban &amp; modal</td><td className="num"><b className="tabular">{formatAmount(bs.liabTotal + bs.equityTotal)}</b></td><td className="num tabular">{formatAmount(pb.liabTotal + pb.equityTotal)}</td></tr>
-              </tbody>
-            </table>
-          </div>
+        <div className="admin-table report lr-wide">
+          <table>
+            <thead><tr><th>Akun</th>{banding ? <><th className="num">Akhir {months[0].short}</th><th className="num">Akhir {months[1].short}</th><th className="num">Selisih</th><th className="num">Perubahan</th></> : months.map((m) => <th key={m.ym} className="num">{m.short}{m.partial ? "*" : ""}</th>)}</tr></thead>
+            <tbody>
+              <tr className="r-group"><th colSpan={cols}>ASET</th></tr>
+              {lines(bs.assets)}
+              <tr className="r-grand"><td>Total aset</td>{cells(tot((b) => b.assetTotal), true)}</tr>
+              <tr className="r-group"><th colSpan={cols}>KEWAJIBAN</th></tr>
+              {lines(bs.liabilities)}
+              <tr className="r-sub"><td>Total kewajiban</td>{cells(tot((b) => b.liabTotal), true)}</tr>
+              <tr className="r-group"><th colSpan={cols}>MODAL</th></tr>
+              {lines(bs.equity)}
+              <tr><td className="r-indent">Laba ditahan tahun-tahun lalu</td>{cells(tot((b) => b.priorYears))}</tr>
+              <tr><td className="r-indent">Laba tahun berjalan</td>{cells(tot((b) => b.currentYear))}</tr>
+              <tr className="r-sub"><td>Total modal</td>{cells(tot((b) => b.equityTotal), true)}</tr>
+              <tr className="r-grand"><td>Total kewajiban &amp; modal</td>{cells(tot((b) => b.liabTotal + b.equityTotal), true)}</tr>
+            </tbody>
+          </table>
         </div>
         <ReadingNote>
-          Kiri: semua yang dimiliki usaha. Kanan: dari mana asalnya, yaitu hutang ke pihak lain dan modal pemilik (termasuk laba yang belum dibagi). Kedua sisi
-          selalu sama besar. Klik nama akun untuk melihat rinciannya.
+          Satu kolom = saldo per akhir bulan itu. {months.some((m) => m.partial) && "* bulan berjalan: saldo sampai hari ini. "}Aset selalu sama dengan kewajiban + modal. Klik nama akun untuk melihat rinciannya.
         </ReadingNote>
       </ReportSheet>
     </>
