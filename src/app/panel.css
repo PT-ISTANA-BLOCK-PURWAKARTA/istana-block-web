@@ -1095,3 +1095,29 @@ a.zt:focus-visible { outline: 3px solid #0f2a4a; outline-offset: 2px; }
   .zr-cat { min-height: 86px; }
 }
 .report-title .sheet-excel { align-self: center; margin-top: 6px; }
+
+/* ---------- Formulir laporan gaya Zahir ---------- */
+.zf { font-family: Arial, "Helvetica Neue", sans-serif; color: #111; }
+.zf-stamp { display: flex; gap: 60px; font-size: 11px; font-weight: 700; }
+.zf-head { text-align: center; display: grid; gap: 2px; margin: 8px 0 14px; }
+.zf-head b { font-size: 15px; letter-spacing: .02em; }
+.zf-head h2 { margin: 0; font-size: 19px; color: #1e6fd0; font-weight: 700; }
+.zf-head p { margin: 0; font-size: 11px; font-weight: 700; }
+.zf-head .sheet-excel { justify-self: center; margin-top: 6px; }
+.zf-table { width: 100%; border-collapse: collapse; font-size: 11.5px; table-layout: fixed; }
+.zf-c-date { width: 82px; } .zf-c-tp { width: 34px; } .zf-c-ref { width: 92px; } .zf-c-num { width: 112px; }
+.zf-table thead th { text-align: left; font-weight: 700; padding: 4px 6px; border-bottom: 1px solid #111; }
+.zf-table th.num, .zf-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.zf-table td { padding: 3px 6px; vertical-align: top; border: 0; }
+.zf-table td a { color: inherit; text-decoration: none; }
+.zf-table td a:hover { text-decoration: underline; color: #1e6fd0; }
+.zf-sub { display: block; font-style: italic; font-weight: 600; }
+.zf-acc-head td { padding-top: 12px; font-weight: 700; color: #1e3a8a; }
+.zf-open td { font-weight: 600; }
+.zf-total td { font-weight: 700; border-top: 1px solid #111; padding-bottom: 8px; }
+.zf-foot { margin-top: 18px; padding-top: 6px; border-top: 2px solid #111; font-size: 12px; font-weight: 700; }
+@media print {
+  @page { @bottom-left { content: "Halaman : " counter(page); font: 700 9pt Arial, sans-serif; } }
+  .zf-acc { break-inside: auto; }
+  .zf-acc-head { break-after: avoid; }
+}

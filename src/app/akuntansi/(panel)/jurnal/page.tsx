@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, desc, eq, gte, like, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, like, lte, sql, or } from "drizzle-orm";
 import { Ok, PageHead, Rp } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { journalSources } from "@/db/erp";
@@ -16,12 +16,12 @@ export default async function Jurnal({ searchParams }: { searchParams: Promise<{
   const now = today();
   const from = isDate(sp.from) ? sp.from : monthStart(now);
   const to = isDate(sp.to) ? sp.to : now;
-  const source = (journalSources as readonly string[]).includes(sp.sumber ?? "") ? (sp.sumber as (typeof journalSources)[number]) : sp.semua ? undefined : "manual";
+  const source = (journalSources as readonly string[]).includes(sp.sumber ?? "") ? (sp.sumber as (typeof journalSources)[number]) : undefined;
   const db = await getDb();
   const rows = await db
     .select({ j: schema.journals, total: sql<number>`(select coalesce(sum(l.debit),0) from fin_journal_lines l where l.journal_id = fin_journals.id)` })
     .from(schema.journals)
-    .where(and(gte(schema.journals.date, from), lte(schema.journals.date, to), source ? eq(schema.journals.source, source) : undefined, sp.q ? like(schema.journals.memo, `%${sp.q}%`) : undefined))
+    .where(and(gte(schema.journals.date, from), lte(schema.journals.date, to), source ? eq(schema.journals.source, source) : undefined, sp.q ? or(like(schema.journals.memo, `%${sp.q}%`), like(schema.journals.number, `%${sp.q}%`)) : undefined))
     .orderBy(desc(schema.journals.date), desc(schema.journals.number))
     .limit(400);
   return (

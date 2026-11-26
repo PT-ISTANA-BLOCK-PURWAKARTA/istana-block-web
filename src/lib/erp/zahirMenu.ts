@@ -149,7 +149,7 @@ export const REPORT_CATS: ReportCat[] = [
         name: "Buku Besar",
         items: [
           { label: "Buku Besar - Standar", href: "/akuntansi/laporan/buku-besar" },
-          { label: "Buku Besar - Mutasi" },
+          { label: "Buku Besar - Mutasi", href: "/akuntansi/laporan/buku-besar-mutasi" },
           { label: "Daftar Jurnal - Semua Transaksi", href: "/akuntansi/jurnal" },
           { label: "Daftar Rekening", href: "/akuntansi/akun" },
           { label: "Jejak Audit - Rangkuman" },

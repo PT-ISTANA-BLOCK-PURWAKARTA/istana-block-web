@@ -110,7 +110,7 @@ export const items = sqliteTable(
 
 /* ---------------------------------------------------------------- Jurnal */
 
-export const journalSources = ["manual", "faktur", "penerimaan", "pembelian", "pembayaran", "kas", "pengiriman", "produksi", "penyesuaian"] as const;
+export const journalSources = ["manual", "faktur", "penerimaan", "pembelian", "pembayaran", "kas", "pengiriman", "produksi", "penyesuaian", "zahir"] as const;
 export type JournalSource = (typeof journalSources)[number];
 
 export const journals = sqliteTable(

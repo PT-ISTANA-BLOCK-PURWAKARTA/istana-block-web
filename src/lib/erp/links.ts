@@ -9,6 +9,7 @@ export const SOURCE_LABEL: Record<string, string> = {
   pengiriman: "Surat jalan",
   produksi: "Hasil produksi",
   penyesuaian: "Penyesuaian stok",
+  zahir: "Impor Zahir",
 };
 
 export function sourceHref(source: string, sourceId: string | null, journalId: string) {
