@@ -1122,3 +1122,25 @@ a.zt:focus-visible { outline: 3px solid #0f2a4a; outline-offset: 2px; }
   .zf-acc-head { break-after: avoid; }
 }
 .zf-h3 { margin: 20px 0 6px; font-size: 13px; color: #1e3a8a; }
+.text-ok { color: var(--sukses); }
+.action-btn { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.form-h { font-size: 16px; margin: 0 0 10px; }
+/* Isian anggaran */
+.bg-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 8px; }
+.bg-fill { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; }
+.bg-fill input { width: 56px; padding: 4px 6px; }
+.bg-save { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; }
+.bg-wrap { overflow-x: auto; }
+.bg-table { min-width: 1500px; font-size: 12.5px; }
+.bg-table th, .bg-table td { padding: 4px 4px; vertical-align: top; }
+.bg-table .bg-acc { position: sticky; left: 0; background: #fff; min-width: 230px; max-width: 260px; z-index: 1; }
+.bg-table thead .bg-acc { background: #f6f9fc; }
+.bg-table td input { width: 92px; padding: 4px 6px; text-align: right; font-variant-numeric: tabular-nums; border: 1px solid #dfe6ee; border-radius: 6px; font-size: 12.5px; }
+.bg-table td.is-dirty input { border-color: var(--zo, #1565c0); background: #eef5ff; }
+.bg-table small { display: block; text-align: right; color: #94a3b8; font-size: 11px; margin-top: 1px; }
+.bg-sec td { background: #f1f5fb; font-weight: 700; color: #1e3a8a; }
+.zf-body { overflow-x: auto; }
+.zf-table { min-width: 720px; }
+.zf-table th.num, .zf-table td.num { white-space: nowrap; padding-left: 12px; }
+.zf-c-num { width: 132px; }
+@media print { .zf-body { overflow: visible; } .zf-table { min-width: 0; } }

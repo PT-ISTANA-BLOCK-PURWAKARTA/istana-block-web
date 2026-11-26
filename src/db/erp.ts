@@ -110,7 +110,7 @@ export const items = sqliteTable(
 
 /* ---------------------------------------------------------------- Jurnal */
 
-export const journalSources = ["manual", "faktur", "penerimaan", "pembelian", "pembayaran", "kas", "pengiriman", "produksi", "penyesuaian", "zahir"] as const;
+export const journalSources = ["manual", "faktur", "penerimaan", "pembelian", "pembayaran", "kas", "pengiriman", "produksi", "penyesuaian", "zahir", "penyusutan"] as const;
 export type JournalSource = (typeof journalSources)[number];
 
 export const journals = sqliteTable(
@@ -1869,4 +1869,71 @@ export const bankRecons = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
   (t) => [uniqueIndex("fin_bank_recons_uq").on(t.accountId, t.periodEnd)],
+);
+
+/* ---------------------------------------------------------------- Harta tetap & anggaran */
+
+export const assetCategories = ["tanah", "bangunan", "mesin", "kendaraan", "inventaris", "lain"] as const;
+export type AssetCategory = (typeof assetCategories)[number];
+export const depreciationMethods = ["garis_lurus", "saldo_menurun", "tidak_disusutkan"] as const;
+export type DepreciationMethod = (typeof depreciationMethods)[number];
+
+export const fixedAssets = sqliteTable(
+  "fin_fixed_assets",
+  {
+    id: id(),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    category: text("category").$type<AssetCategory>().notNull(),
+    assetAccountId: text("asset_account_id").notNull(),
+    accumAccountId: text("accum_account_id"),
+    expenseAccountId: text("expense_account_id"),
+    acquiredDate: text("acquired_date").notNull(),
+    /** Bulan pertama disusutkan (yyyy-mm-01). */
+    startDate: text("start_date").notNull(),
+    cost: integer("cost").notNull(),
+    salvage: integer("salvage").notNull().default(0),
+    lifeMonths: integer("life_months").notNull().default(0),
+    method: text("method").$type<DepreciationMethod>().notNull().default("garis_lurus"),
+    /** Akumulasi penyusutan yang sudah terjadi sebelum dicatat di web (mis. dari Zahir), per opening_date. */
+    openingAccum: integer("opening_accum").notNull().default(0),
+    openingDate: text("opening_date"),
+    location: text("location").notNull().default(""),
+    disposedDate: text("disposed_date"),
+    disposalNote: text("disposal_note").notNull().default(""),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [uniqueIndex("fin_fixed_assets_code_uq").on(t.code)],
+);
+export type FixedAsset = typeof fixedAssets.$inferSelect;
+
+export const depreciationLines = sqliteTable(
+  "fin_depreciation_lines",
+  {
+    id: id(),
+    /** yyyy-mm */
+    period: text("period").notNull(),
+    assetId: text("asset_id").notNull(),
+    journalId: text("journal_id").notNull(),
+    amount: integer("amount").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [uniqueIndex("fin_depr_asset_period_uq").on(t.assetId, t.period), index("fin_depr_period_idx").on(t.period)],
+);
+
+export const budgets = sqliteTable(
+  "fin_budgets",
+  {
+    id: id(),
+    accountId: text("account_id").notNull(),
+    /** yyyy-mm */
+    period: text("period").notNull(),
+    /** Nilai menurut saldo normal akun (pendapatan & beban positif). */
+    amount: integer("amount").notNull(),
+    updatedBy: integer("updated_by"),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [uniqueIndex("fin_budgets_acc_period_uq").on(t.accountId, t.period), index("fin_budgets_period_idx").on(t.period)],
 );
