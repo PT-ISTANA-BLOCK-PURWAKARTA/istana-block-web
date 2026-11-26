@@ -155,6 +155,8 @@ export async function deleteBill(id: string): Promise<FormState> {
     assertOpen(b.date, fin.lockDate, "Faktur pembelian");
     const alloc = await db.select().from(schema.paymentAllocations).where(eq(schema.paymentAllocations.billId, id)).limit(1);
     if (alloc.length) throw new UserError("Faktur pembelian sudah dibayar. Hapus pembayarannya dulu.");
+    const ret = await db.select().from(schema.returns).where(eq(schema.returns.billId, id)).limit(1);
+    if (ret.length) throw new UserError("Faktur pembelian sudah punya retur. Hapus returnya dulu.");
     await runBatch(db, [
       db.delete(schema.billLines).where(eq(schema.billLines.billId, id)),
       db.delete(schema.stockMoves).where(and(eq(schema.stockMoves.source, "pembelian"), eq(schema.stockMoves.sourceId, id))),
@@ -173,7 +175,7 @@ function recalcBillPaid(db: DB, ids: string[]) {
   return chunk(Array.from(new Set(ids))).map((part) =>
     db
       .update(schema.bills)
-      .set({ paid: sql`(select coalesce(sum(a.amount),0) from fin_payment_allocations a where a.bill_id = ${schema.bills.id})` })
+      .set({ paid: sql`(select coalesce(sum(a.amount),0) from fin_payment_allocations a where a.bill_id = ${schema.bills.id}) + (select coalesce(sum(r.total),0) from fin_returns r where r.bill_id = ${schema.bills.id} and r.settlement = 'potong_tagihan')` })
       .where(inArray(schema.bills.id, part)),
   );
 }
@@ -185,6 +187,7 @@ export async function savePayment(_prev: FormState, form: FormData): Promise<For
     const id = String(form.get("id") ?? "");
     const existing = id ? await db.query.payments.findFirst({ where: eq(schema.payments.id, id) }) : undefined;
     if (id && !existing) throw new UserError("Pembayaran tidak ditemukan.");
+    if (id && (await db.all(sql`select 1 x from fin_giros where doc_id = ${id}`)).length) throw new UserError("Pembayaran ini dibuat dari menu Giro. Ubah/tolak lewat Kas & Bank → Giro.");
     const fin = await getFinSettings(db);
     const date = requireDate(form.get("date"));
     assertOpen(date, fin.lockDate, "Pembayaran");
@@ -259,6 +262,7 @@ export async function deletePayment(id: string): Promise<FormState> {
     const db = await getDb();
     const p = await db.query.payments.findFirst({ where: eq(schema.payments.id, id) });
     if (!p) return { ok: "" };
+    if ((await db.all(sql`select 1 x from fin_giros where doc_id = ${id}`)).length) throw new UserError("Pembayaran ini dibuat dari menu Giro. Tolak/batalkan lewat Kas & Bank → Giro.");
     const fin = await getFinSettings(db);
     assertOpen(p.date, fin.lockDate, "Pembayaran");
     const acc = await loadAccounts(db);

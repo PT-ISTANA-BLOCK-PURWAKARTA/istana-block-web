@@ -110,7 +110,7 @@ export const items = sqliteTable(
 
 /* ---------------------------------------------------------------- Jurnal */
 
-export const journalSources = ["manual", "faktur", "penerimaan", "pembelian", "pembayaran", "kas", "pengiriman", "produksi", "penyesuaian", "zahir", "penyusutan"] as const;
+export const journalSources = ["manual", "faktur", "penerimaan", "pembelian", "pembayaran", "kas", "pengiriman", "produksi", "penyesuaian", "zahir", "penyusutan", "retur", "giro"] as const;
 export type JournalSource = (typeof journalSources)[number];
 
 export const journals = sqliteTable(
@@ -1937,3 +1937,82 @@ export const budgets = sqliteTable(
   },
   (t) => [uniqueIndex("fin_budgets_acc_period_uq").on(t.accountId, t.period), index("fin_budgets_period_idx").on(t.period)],
 );
+
+/* ---------------------------------------------------------------- Retur & giro */
+
+export const returnKinds = ["penjualan", "pembelian"] as const;
+export type ReturnKind = (typeof returnKinds)[number];
+/** potong_tagihan = mengurangi sisa faktur; uang_muka = jadi saldo uang muka kontak; tunai = dikembalikan lewat kas/bank. */
+export const returnSettlements = ["potong_tagihan", "uang_muka", "tunai"] as const;
+export type ReturnSettlement = (typeof returnSettlements)[number];
+
+export const returns = sqliteTable(
+  "fin_returns",
+  {
+    id: id(),
+    kind: text("kind").$type<ReturnKind>().notNull(),
+    number: text("number").notNull(),
+    date: text("date").notNull(),
+    contactId: text("contact_id").notNull(),
+    invoiceId: text("invoice_id"),
+    billId: text("bill_id"),
+    settlement: text("settlement").$type<ReturnSettlement>().notNull(),
+    cashAccountId: text("cash_account_id"),
+    subtotal: integer("subtotal").notNull().default(0),
+    tax: integer("tax").notNull().default(0),
+    total: integer("total").notNull().default(0),
+    /** Retur penjualan: nilai pokok barang yang kembali ke gudang (Dr persediaan, Cr HPP). */
+    costBack: integer("cost_back").notNull().default(0),
+    memo: text("memo").notNull().default(""),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [uniqueIndex("fin_returns_number_uq").on(t.number), index("fin_returns_invoice_idx").on(t.invoiceId), index("fin_returns_bill_idx").on(t.billId), index("fin_returns_contact_idx").on(t.contactId)],
+);
+export type Return = typeof returns.$inferSelect;
+
+export const returnLines = sqliteTable(
+  "fin_return_lines",
+  {
+    id: id(),
+    returnId: text("return_id").notNull(),
+    description: text("description").notNull().default(""),
+    qty: real("qty").notNull().default(1),
+    unit: text("unit").notNull().default(""),
+    price: integer("price").notNull().default(0),
+    amount: integer("amount").notNull().default(0),
+    /** Retur pembelian: rekening yang dikredit (persediaan/beban). */
+    accountId: text("account_id"),
+    sort: integer("sort").notNull().default(0),
+  },
+  (t) => [index("fin_return_lines_ret_idx").on(t.returnId)],
+);
+
+export const giroKinds = ["masuk", "keluar"] as const;
+export type GiroKind = (typeof giroKinds)[number];
+export const giroStatuses = ["beredar", "cair", "tolak"] as const;
+export type GiroStatus = (typeof giroStatuses)[number];
+
+export const giros = sqliteTable(
+  "fin_giros",
+  {
+    id: id(),
+    kind: text("kind").$type<GiroKind>().notNull(),
+    giroNo: text("giro_no").notNull(),
+    bank: text("bank").notNull().default(""),
+    contactId: text("contact_id").notNull(),
+    amount: integer("amount").notNull(),
+    issueDate: text("issue_date").notNull(),
+    dueDate: text("due_date").notNull(),
+    status: text("status").$type<GiroStatus>().notNull().default("beredar"),
+    /** Penerimaan (giro masuk) / pembayaran (giro keluar) yang dibuat saat giro dicatat. */
+    docId: text("doc_id"),
+    clearedDate: text("cleared_date"),
+    clearedAccountId: text("cleared_account_id"),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [index("fin_giros_kind_status_idx").on(t.kind, t.status, t.dueDate)],
+);
+export type Giro = typeof giros.$inferSelect;

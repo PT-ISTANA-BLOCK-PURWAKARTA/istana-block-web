@@ -24,8 +24,8 @@ export default async function Kartu({ searchParams }: { searchParams: Promise<{ 
   const card = contact ? await contactCard(db, kind, from, to, contact.id) : null;
   const Name = kind === "piutang" ? "Piutang" : "Hutang";
   const who = kind === "piutang" ? "Pelanggan" : "Pemasok";
-  const docHref = (k: "doc" | "pay", id: string) =>
-    kind === "piutang" ? (k === "doc" ? `/akuntansi/penjualan/${id}` : `/akuntansi/penerimaan/${id}`) : k === "doc" ? `/akuntansi/pembelian/${id}` : `/akuntansi/pembayaran/${id}`;
+  const docHref = (k: "doc" | "pay" | "ret", id: string) =>
+    k === "ret" ? `/akuntansi/retur/${id}` : kind === "piutang" ? (k === "doc" ? `/akuntansi/penjualan/${id}` : `/akuntansi/penerimaan/${id}`) : k === "doc" ? `/akuntansi/pembelian/${id}` : `/akuntansi/pembayaran/${id}`;
   const path = "/akuntansi/laporan/kartu";
   const keep: Record<string, string> = { jenis: kind, ...(contact ? { kontak: contact.id } : {}) };
   const tot = all.summary.reduce((a, c) => ({ opening: a.opening + c.opening, up: a.up + c.up, down: a.down + c.down, closing: a.closing + c.closing }), { opening: 0, up: 0, down: 0, closing: 0 });
@@ -76,7 +76,7 @@ export default async function Kartu({ searchParams }: { searchParams: Promise<{ 
                     <tr key={`${r.kind}${r.id}`}>
                       <td className="nowrap">{tgl(r.date)}</td>
                       <td><Link href={docHref(r.kind, r.id)}>{r.number}</Link></td>
-                      <td className="small">{r.kind === "doc" ? `Faktur ${kind === "piutang" ? "penjualan" : "pembelian"}` : kind === "piutang" ? "Penerimaan" : "Pembayaran"}</td>
+                      <td className="small">{r.kind === "doc" ? `Faktur ${kind === "piutang" ? "penjualan" : "pembelian"}` : r.kind === "ret" ? "Retur" : kind === "piutang" ? "Penerimaan" : "Pembayaran"}</td>
                       <td className="num tabular">{formatAmount(r.up, { blankZero: true })}</td>
                       <td className="num tabular">{formatAmount(r.down, { blankZero: true })}</td>
                       <td className="num tabular">{formatAmount(r.balance)}</td>

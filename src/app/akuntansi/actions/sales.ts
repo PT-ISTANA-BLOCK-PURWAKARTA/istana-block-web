@@ -167,6 +167,8 @@ export async function deleteInvoice(id: string): Promise<FormState> {
     assertOpen(inv.date, fin.lockDate, "Faktur");
     const alloc = await db.select().from(schema.receiptAllocations).where(eq(schema.receiptAllocations.invoiceId, id)).limit(1);
     if (alloc.length) throw new UserError("Faktur sudah punya penerimaan. Hapus penerimaannya dulu.");
+    const ret = await db.select().from(schema.returns).where(eq(schema.returns.invoiceId, id)).limit(1);
+    if (ret.length) throw new UserError("Faktur sudah punya retur. Hapus returnya dulu.");
     await runBatch(db, [db.delete(schema.invoiceLines).where(eq(schema.invoiceLines.invoiceId, id)), ...deleteJournalOps(db, "faktur", id), db.delete(schema.invoices).where(eq(schema.invoices.id, id))]);
     return { ok: "deleted" };
   });
@@ -196,6 +198,7 @@ export async function saveReceipt(_prev: FormState, form: FormData): Promise<For
     const id = String(form.get("id") ?? "");
     const existing = id ? await db.query.receipts.findFirst({ where: eq(schema.receipts.id, id) }) : undefined;
     if (id && !existing) throw new UserError("Penerimaan tidak ditemukan.");
+    if (id && (await db.all(sql`select 1 x from fin_giros where doc_id = ${id}`)).length) throw new UserError("Penerimaan ini dibuat dari menu Giro. Ubah/tolak lewat Kas & Bank → Giro.");
     const fin = await getFinSettings(db);
     const date = requireDate(form.get("date"));
     assertOpen(date, fin.lockDate, "Penerimaan");
@@ -264,7 +267,7 @@ function recalcInvoicePaid(db: DB, ids: string[]) {
   return chunk(Array.from(new Set(ids))).map((part) =>
     db
       .update(schema.invoices)
-      .set({ paid: sql`(select coalesce(sum(a.amount),0) from fin_receipt_allocations a where a.invoice_id = ${schema.invoices.id})` })
+      .set({ paid: sql`(select coalesce(sum(a.amount),0) from fin_receipt_allocations a where a.invoice_id = ${schema.invoices.id}) + (select coalesce(sum(r.total),0) from fin_returns r where r.invoice_id = ${schema.invoices.id} and r.settlement = 'potong_tagihan')` })
       .where(inArray(schema.invoices.id, part)),
   );
 }
@@ -275,6 +278,7 @@ export async function deleteReceipt(id: string): Promise<FormState> {
     const db = await getDb();
     const r = await db.query.receipts.findFirst({ where: eq(schema.receipts.id, id) });
     if (!r) return { ok: "" };
+    if ((await db.all(sql`select 1 x from fin_giros where doc_id = ${id}`)).length) throw new UserError("Penerimaan ini dibuat dari menu Giro. Tolak/batalkan lewat Kas & Bank → Giro.");
     const fin = await getFinSettings(db);
     assertOpen(r.date, fin.lockDate, "Penerimaan");
     const acc = await loadAccounts(db);

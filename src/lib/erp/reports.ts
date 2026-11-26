@@ -109,12 +109,14 @@ export async function aging(db: DB, kind: "piutang" | "hutang", asOf: string) {
     kind === "piutang"
       ? await db.all<AgingDoc>(sql`
           select i.id, i.number, i.date, i.due_date as dueDate, i.contact_id as contactId, c.name as contactName, i.total,
-            coalesce((select sum(a.amount) from fin_receipt_allocations a join fin_receipts r on r.id = a.receipt_id where a.invoice_id = i.id and r.date <= ${asOf}),0) as paid
+            coalesce((select sum(a.amount) from fin_receipt_allocations a join fin_receipts r on r.id = a.receipt_id where a.invoice_id = i.id and r.date <= ${asOf}),0)
+              + coalesce((select sum(rt.total) from fin_returns rt where rt.invoice_id = i.id and rt.settlement = 'potong_tagihan' and rt.date <= ${asOf}),0) as paid
           from fin_invoices i join fin_contacts c on c.id = i.contact_id
           where i.date <= ${asOf} and i.void = 0`)
       : await db.all<AgingDoc>(sql`
           select b.id, b.number, b.date, b.due_date as dueDate, b.contact_id as contactId, c.name as contactName, b.total,
-            coalesce((select sum(a.amount) from fin_payment_allocations a join fin_payments p on p.id = a.payment_id where a.bill_id = b.id and p.date <= ${asOf}),0) as paid
+            coalesce((select sum(a.amount) from fin_payment_allocations a join fin_payments p on p.id = a.payment_id where a.bill_id = b.id and p.date <= ${asOf}),0)
+              + coalesce((select sum(rt.total) from fin_returns rt where rt.bill_id = b.id and rt.settlement = 'potong_tagihan' and rt.date <= ${asOf}),0) as paid
           from fin_bills b join fin_contacts c on c.id = b.contact_id
           where b.date <= ${asOf} and b.void = 0`);
   const open = docs
@@ -249,7 +251,7 @@ export async function monthlySales(db: DB, months: { from: string; to: string; l
   return months.map((m) => ({ ...m, amount: rows.filter((r) => r.date >= m.from && r.date <= m.to).reduce((a, r) => a + Number(r.amount), 0) }));
 }
 
-export type CardRow = { date: string; number: string; kind: "doc" | "pay"; id: string; contactId: string; contactName: string; up: number; down: number };
+export type CardRow = { date: string; number: string; kind: "doc" | "pay" | "ret"; id: string; contactId: string; contactName: string; up: number; down: number };
 
 /**
  * Kartu & mutasi piutang/hutang per kontak (berdasarkan dokumen): faktur menambah, alokasi pembayaran mengurangi.
@@ -267,7 +269,11 @@ export async function contactCard(db: DB, kind: "piutang" | "hutang", from: stri
           select r.date, r.number, 'pay', r.id, i.contact_id, ct.name, 0, sum(a.amount)
             from fin_receipt_allocations a join fin_receipts r on r.id = a.receipt_id join fin_invoices i on i.id = a.invoice_id join fin_contacts ct on ct.id = i.contact_id
            where i.void = 0 and r.date <= ${to} and (${c} is null or i.contact_id = ${c})
-           group by r.id, i.contact_id`)
+           group by r.id, i.contact_id
+          union all
+          select rt.date, rt.number, 'ret', rt.id, rt.contact_id, ct.name, 0, rt.total
+            from fin_returns rt join fin_contacts ct on ct.id = rt.contact_id
+           where rt.kind = 'penjualan' and rt.settlement = 'potong_tagihan' and rt.date <= ${to} and (${c} is null or rt.contact_id = ${c})`)
       : await db.all<CardRow>(sql`
           select b.date, b.number, 'doc' kind, b.id, b.contact_id contactId, ct.name contactName, b.total up, 0 down
             from fin_bills b join fin_contacts ct on ct.id = b.contact_id
@@ -276,7 +282,11 @@ export async function contactCard(db: DB, kind: "piutang" | "hutang", from: stri
           select p.date, p.number, 'pay', p.id, b.contact_id, ct.name, 0, sum(a.amount)
             from fin_payment_allocations a join fin_payments p on p.id = a.payment_id join fin_bills b on b.id = a.bill_id join fin_contacts ct on ct.id = b.contact_id
            where b.void = 0 and p.date <= ${to} and (${c} is null or b.contact_id = ${c})
-           group by p.id, b.contact_id`);
+           group by p.id, b.contact_id
+          union all
+          select rt.date, rt.number, 'ret', rt.id, rt.contact_id, ct.name, 0, rt.total
+            from fin_returns rt join fin_contacts ct on ct.id = rt.contact_id
+           where rt.kind = 'pembelian' and rt.settlement = 'potong_tagihan' and rt.date <= ${to} and (${c} is null or rt.contact_id = ${c})`);
   const all = rows
     .map((r) => ({ ...r, up: Number(r.up), down: Number(r.down) }))
     .sort((a, b) => a.date.localeCompare(b.date) || (a.kind === b.kind ? a.number.localeCompare(b.number) : a.kind === "doc" ? -1 : 1));

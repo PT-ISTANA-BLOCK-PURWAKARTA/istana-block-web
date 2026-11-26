@@ -1144,3 +1144,6 @@ a.zt:focus-visible { outline: 3px solid #0f2a4a; outline-offset: 2px; }
 .zf-table th.num, .zf-table td.num { white-space: nowrap; padding-left: 12px; }
 .zf-c-num { width: 132px; }
 @media print { .zf-body { overflow: visible; } .zf-table { min-width: 0; } }
+dl.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
+dl.kv dt { color: #64748b; }
+dl.kv dd { margin: 0; }
