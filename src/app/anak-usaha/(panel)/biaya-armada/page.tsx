@@ -17,8 +17,8 @@ export default async function BiayaArmadaPage({
   const [{ user }, sp] = await Promise.all([opsAccess(), searchParams]);
   const todayDate = today();
 
-  const defaultFrom =
-    monthStart(todayDate) < FLEET_START_DATE ? FLEET_START_DATE : monthStart(todayDate);
+  // Default: semua data sejak awal pencatatan (seperti app lama), bukan hanya bulan berjalan.
+  const defaultFrom = FLEET_START_DATE;
   const rawFrom = sp.from && isDate(sp.from) ? sp.from : defaultFrom;
   const from = rawFrom < FLEET_START_DATE ? FLEET_START_DATE : rawFrom;
   const to = sp.to && isDate(sp.to) ? sp.to : todayDate;

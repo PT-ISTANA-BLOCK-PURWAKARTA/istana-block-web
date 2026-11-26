@@ -28,8 +28,8 @@ export default async function AnakUsaha() {
         {uditch && (
           <article className="admin-card">
             <h3 style={{ marginTop: 0 }}>Proyek U-Ditch</h3>
-            <p className="muted small">Cashflow U-Ditch per sumber dana, PIC transfer, dan impor Excel.</p>
-            <div className="qc-row-actions"><Link href="/anak-usaha/uditch" className="btn btn-primary btn-sm">Cashflow U-Ditch</Link></div>
+            <p className="muted small">Operational U-Ditch per sumber dana, PIC transfer, dan impor Excel.</p>
+            <div className="qc-row-actions"><Link href="/anak-usaha/uditch" className="btn btn-primary btn-sm">Operational U-Ditch</Link></div>
           </article>
         )}
       </div>

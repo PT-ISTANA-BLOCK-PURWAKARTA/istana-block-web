@@ -12,7 +12,8 @@ const ITEMS: ShellItem[] = [
   { href: "/anak-usaha/dana-cepi", label: "Dana Cepi", group: "Ekspedisi Istana Block", icon: "pay", perm: ["ekspedisi", "keuangan"] },
   { href: "/anak-usaha/piutang-cepi", label: "Piutang Cepi", group: "Ekspedisi Istana Block", icon: "ledger", perm: ["ekspedisi", "keuangan"] },
   { href: "/anak-usaha/kasbon-sopir", label: "Kasbon sopir", group: "Ekspedisi Istana Block", icon: "cash", perm: ["ekspedisi", "keuangan"] },
-  { href: "/anak-usaha/uditch", label: "Cashflow U-Ditch", group: "Proyek U-Ditch", icon: "invoice", perm: ["keuangan"] },
+  { href: "/anak-usaha/uditch", label: "Operational U-Ditch", group: "Proyek U-Ditch", icon: "invoice", perm: ["keuangan"] },
+  { href: "/anak-usaha/surat-jalan-ibn", label: "Surat Jalan IBN", group: "Proyek U-Ditch", icon: "truck", perm: ["keuangan"] },
 ];
 
 export default async function AnakUsahaLayout({ children }: { children: React.ReactNode }) {
