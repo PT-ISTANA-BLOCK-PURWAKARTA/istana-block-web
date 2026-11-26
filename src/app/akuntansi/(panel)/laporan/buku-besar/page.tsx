@@ -11,8 +11,28 @@ import { ledger } from "@/lib/erp/reports";
 import { formatAmount, isDate, monthStart, tgl, today } from "@/lib/erp/util";
 import { accountGroups } from "@/db/erp";
 import { Select } from "@/components/ui";
+import { BalanceChart } from "@/components/erp/BalanceChart";
 
 export const metadata = { title: "Buku besar" };
+
+/** Saldo akhir per hari dari saldo awal + baris buku besar (tanggal tanpa transaksi = saldo hari sebelumnya). */
+function dailyBalances(from: string, to: string, opening: number, rows: { date: string; balance: number }[]) {
+  const end = new Map<string, number>();
+  for (const r of rows) end.set(r.date, r.balance);
+  const out: { date: string; balance: number }[] = [];
+  let bal = opening;
+  const d = new Date(`${from}T00:00:00Z`), last = new Date(`${to}T00:00:00Z`);
+  // Periode sangat panjang: batasi 400 hari terakhir agar grafik tetap terbaca.
+  if ((last.getTime() - d.getTime()) / 864e5 > 400) d.setTime(last.getTime() - 400 * 864e5);
+  for (const r of rows) if (r.date < d.toISOString().slice(0, 10)) bal = r.balance;
+  for (; d <= last; d.setUTCDate(d.getUTCDate() + 1)) {
+    const key = d.toISOString().slice(0, 10);
+    if (end.has(key)) bal = end.get(key)!;
+    out.push({ date: key, balance: bal });
+  }
+  return out;
+}
+
 
 export default async function BukuBesar({ searchParams }: { searchParams: Promise<{ akun?: string; from?: string; to?: string }> }) {
   const { me, db, acc, site, npwp } = await reportContext();
@@ -58,6 +78,8 @@ export default async function BukuBesar({ searchParams }: { searchParams: Promis
             { label: "Saldo akhir", value: formatAmount(lg.closing), sub: `${lg.rows.length} transaksi`, tone: lg.closing < 0 ? "bad" : undefined },
           ]}
         />
+        <h3 className="bb-chart-title">Grafik saldo berjalan <span>{periodLabel(from, to)}</span></h3>
+        <BalanceChart points={dailyBalances(from, to, lg.opening, lg.rows)} label={`Saldo berjalan ${account.name} per hari, ${periodLabel(from, to)}`} />
         <div className="admin-table report">
           <table>
             <thead><tr><th>Tanggal</th><th>Nomor</th><th>Keterangan</th><th className="num">Debit</th><th className="num">Kredit</th><th className="num">Saldo</th></tr></thead>

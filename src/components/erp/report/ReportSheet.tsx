@@ -1,4 +1,5 @@
 import type { Settings } from "@/lib/settings";
+import { SheetExcel } from "./SheetExcel";
 
 /**
  * Lembar laporan dengan kop perusahaan (logo, nama badan usaha, alamat, kontak, NPWP).
@@ -43,6 +44,7 @@ export function ReportSheet({
         <h2>{title}</h2>
         <p>{period}</p>
         {unit && <p className="report-unit">({unit})</p>}
+        <SheetExcel title={title} period={period} />
       </div>
       <div className="report-body">{children}</div>
       {sign && (

@@ -9,6 +9,10 @@ export const SOURCE_LABEL: Record<string, string> = {
   pengiriman: "Surat jalan",
   produksi: "Hasil produksi",
   penyesuaian: "Penyesuaian stok",
+  zahir: "Impor Zahir",
+  penyusutan: "Penyusutan harta tetap",
+  retur: "Retur",
+  giro: "Giro",
 };
 
 export function sourceHref(source: string, sourceId: string | null, journalId: string) {
@@ -28,6 +32,12 @@ export function sourceHref(source: string, sourceId: string | null, journalId: s
       return `/operasional/pengiriman/${sourceId}`;
     case "produksi":
       return `/operasional/produksi/${sourceId}`;
+    case "retur":
+      return `/akuntansi/retur/${sourceId}`;
+    case "giro":
+      return `/akuntansi/giro/${sourceId}`;
+    case "penyusutan":
+      return `/akuntansi/harta-tetap/penyusutan?periode=${sourceId}`;
     case "penyesuaian":
       return `/operasional/stok/penyesuaian/${sourceId}`;
     default:

@@ -110,7 +110,7 @@ export const items = sqliteTable(
 
 /* ---------------------------------------------------------------- Jurnal */
 
-export const journalSources = ["manual", "faktur", "penerimaan", "pembelian", "pembayaran", "kas", "pengiriman", "produksi", "penyesuaian"] as const;
+export const journalSources = ["manual", "faktur", "penerimaan", "pembelian", "pembayaran", "kas", "pengiriman", "produksi", "penyesuaian", "zahir", "penyusutan", "retur", "giro"] as const;
 export type JournalSource = (typeof journalSources)[number];
 
 export const journals = sqliteTable(
@@ -140,6 +140,8 @@ export const journalLines = sqliteTable(
     memo: text("memo").notNull().default(""),
     contactId: text("contact_id"),
     sort: integer("sort").notNull().default(0),
+    projectId: text("project_id"),
+    departmentId: text("department_id"),
   },
   (t) => [index("fin_jl_journal_idx").on(t.journalId), index("fin_jl_account_idx").on(t.accountId, t.date)],
 );
@@ -1869,4 +1871,225 @@ export const bankRecons = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
   (t) => [uniqueIndex("fin_bank_recons_uq").on(t.accountId, t.periodEnd)],
+);
+
+/* ---------------------------------------------------------------- Harta tetap & anggaran */
+
+export const assetCategories = ["tanah", "bangunan", "mesin", "kendaraan", "inventaris", "lain"] as const;
+export type AssetCategory = (typeof assetCategories)[number];
+export const depreciationMethods = ["garis_lurus", "saldo_menurun", "tidak_disusutkan"] as const;
+export type DepreciationMethod = (typeof depreciationMethods)[number];
+
+export const fixedAssets = sqliteTable(
+  "fin_fixed_assets",
+  {
+    id: id(),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    category: text("category").$type<AssetCategory>().notNull(),
+    assetAccountId: text("asset_account_id").notNull(),
+    accumAccountId: text("accum_account_id"),
+    expenseAccountId: text("expense_account_id"),
+    acquiredDate: text("acquired_date").notNull(),
+    /** Bulan pertama disusutkan (yyyy-mm-01). */
+    startDate: text("start_date").notNull(),
+    cost: integer("cost").notNull(),
+    salvage: integer("salvage").notNull().default(0),
+    lifeMonths: integer("life_months").notNull().default(0),
+    method: text("method").$type<DepreciationMethod>().notNull().default("garis_lurus"),
+    /** Akumulasi penyusutan yang sudah terjadi sebelum dicatat di web (mis. dari Zahir), per opening_date. */
+    openingAccum: integer("opening_accum").notNull().default(0),
+    openingDate: text("opening_date"),
+    location: text("location").notNull().default(""),
+    disposedDate: text("disposed_date"),
+    disposalNote: text("disposal_note").notNull().default(""),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [uniqueIndex("fin_fixed_assets_code_uq").on(t.code)],
+);
+export type FixedAsset = typeof fixedAssets.$inferSelect;
+
+export const depreciationLines = sqliteTable(
+  "fin_depreciation_lines",
+  {
+    id: id(),
+    /** yyyy-mm */
+    period: text("period").notNull(),
+    assetId: text("asset_id").notNull(),
+    journalId: text("journal_id").notNull(),
+    amount: integer("amount").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [uniqueIndex("fin_depr_asset_period_uq").on(t.assetId, t.period), index("fin_depr_period_idx").on(t.period)],
+);
+
+export const budgets = sqliteTable(
+  "fin_budgets",
+  {
+    id: id(),
+    accountId: text("account_id").notNull(),
+    /** yyyy-mm */
+    period: text("period").notNull(),
+    /** Nilai menurut saldo normal akun (pendapatan & beban positif). */
+    amount: integer("amount").notNull(),
+    updatedBy: integer("updated_by"),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [uniqueIndex("fin_budgets_acc_period_uq").on(t.accountId, t.period), index("fin_budgets_period_idx").on(t.period)],
+);
+
+/* ---------------------------------------------------------------- Retur & giro */
+
+export const returnKinds = ["penjualan", "pembelian"] as const;
+export type ReturnKind = (typeof returnKinds)[number];
+/** potong_tagihan = mengurangi sisa faktur; uang_muka = jadi saldo uang muka kontak; tunai = dikembalikan lewat kas/bank. */
+export const returnSettlements = ["potong_tagihan", "uang_muka", "tunai"] as const;
+export type ReturnSettlement = (typeof returnSettlements)[number];
+
+export const returns = sqliteTable(
+  "fin_returns",
+  {
+    id: id(),
+    kind: text("kind").$type<ReturnKind>().notNull(),
+    number: text("number").notNull(),
+    date: text("date").notNull(),
+    contactId: text("contact_id").notNull(),
+    invoiceId: text("invoice_id"),
+    billId: text("bill_id"),
+    settlement: text("settlement").$type<ReturnSettlement>().notNull(),
+    cashAccountId: text("cash_account_id"),
+    subtotal: integer("subtotal").notNull().default(0),
+    tax: integer("tax").notNull().default(0),
+    total: integer("total").notNull().default(0),
+    /** Retur penjualan: nilai pokok barang yang kembali ke gudang (Dr persediaan, Cr HPP). */
+    costBack: integer("cost_back").notNull().default(0),
+    memo: text("memo").notNull().default(""),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [uniqueIndex("fin_returns_number_uq").on(t.number), index("fin_returns_invoice_idx").on(t.invoiceId), index("fin_returns_bill_idx").on(t.billId), index("fin_returns_contact_idx").on(t.contactId)],
+);
+export type Return = typeof returns.$inferSelect;
+
+export const returnLines = sqliteTable(
+  "fin_return_lines",
+  {
+    id: id(),
+    returnId: text("return_id").notNull(),
+    description: text("description").notNull().default(""),
+    qty: real("qty").notNull().default(1),
+    unit: text("unit").notNull().default(""),
+    price: integer("price").notNull().default(0),
+    amount: integer("amount").notNull().default(0),
+    /** Retur pembelian: rekening yang dikredit (persediaan/beban). */
+    accountId: text("account_id"),
+    sort: integer("sort").notNull().default(0),
+  },
+  (t) => [index("fin_return_lines_ret_idx").on(t.returnId)],
+);
+
+export const giroKinds = ["masuk", "keluar"] as const;
+export type GiroKind = (typeof giroKinds)[number];
+export const giroStatuses = ["beredar", "cair", "tolak"] as const;
+export type GiroStatus = (typeof giroStatuses)[number];
+
+export const giros = sqliteTable(
+  "fin_giros",
+  {
+    id: id(),
+    kind: text("kind").$type<GiroKind>().notNull(),
+    giroNo: text("giro_no").notNull(),
+    bank: text("bank").notNull().default(""),
+    contactId: text("contact_id").notNull(),
+    amount: integer("amount").notNull(),
+    issueDate: text("issue_date").notNull(),
+    dueDate: text("due_date").notNull(),
+    status: text("status").$type<GiroStatus>().notNull().default("beredar"),
+    /** Penerimaan (giro masuk) / pembayaran (giro keluar) yang dibuat saat giro dicatat. */
+    docId: text("doc_id"),
+    clearedDate: text("cleared_date"),
+    clearedAccountId: text("cleared_account_id"),
+    note: text("note").notNull().default(""),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [index("fin_giros_kind_status_idx").on(t.kind, t.status, t.dueDate)],
+);
+export type Giro = typeof giros.$inferSelect;
+
+/* ---------------------------------------------------------------- Data induk Zahir & pembelian */
+
+const masterCols = {
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  note: text("note").notNull().default(""),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+};
+
+export const units = sqliteTable("fin_units", { id: id(), ...masterCols, ...created }, (t) => [uniqueIndex("fin_units_code_uq").on(t.code)]);
+export const departments = sqliteTable("fin_departments", { id: id(), ...masterCols, ...created }, (t) => [uniqueIndex("fin_departments_code_uq").on(t.code)]);
+export const taxes = sqliteTable(
+  "fin_taxes",
+  { id: id(), ...masterCols, rate: real("rate").notNull().default(0), salesAccountId: text("sales_account_id"), purchaseAccountId: text("purchase_account_id"), ...created },
+  (t) => [uniqueIndex("fin_taxes_code_uq").on(t.code)],
+);
+export const projectStatuses = ["aktif", "selesai", "batal"] as const;
+export const projects = sqliteTable(
+  "fin_projects",
+  {
+    id: id(),
+    ...masterCols,
+    contactId: text("contact_id"),
+    location: text("location").notNull().default(""),
+    startDate: text("start_date"),
+    endDate: text("end_date"),
+    budget: integer("budget").notNull().default(0),
+    status: text("status").$type<(typeof projectStatuses)[number]>().notNull().default("aktif"),
+    ...created,
+  },
+  (t) => [uniqueIndex("fin_projects_code_uq").on(t.code)],
+);
+
+export const purchaseOrderKinds = ["rfq", "po"] as const;
+export type PurchaseOrderKind = (typeof purchaseOrderKinds)[number];
+export const purchaseOrderStatuses = ["draft", "dikirim", "diterima", "selesai", "batal"] as const;
+export const purchaseOrders = sqliteTable(
+  "fin_purchase_orders",
+  {
+    id: id(),
+    kind: text("kind").$type<PurchaseOrderKind>().notNull(),
+    number: text("number").notNull(),
+    date: text("date").notNull(),
+    contactId: text("contact_id").notNull(),
+    expectedDate: text("expected_date"),
+    status: text("status").$type<(typeof purchaseOrderStatuses)[number]>().notNull().default("draft"),
+    subtotal: integer("subtotal").notNull().default(0),
+    tax: integer("tax").notNull().default(0),
+    total: integer("total").notNull().default(0),
+    memo: text("memo").notNull().default(""),
+    /** PO yang dibuat dari permintaan penawaran (id RFQ). */
+    sourceId: text("source_id"),
+    /** Faktur pembelian hasil PO ini. */
+    billId: text("bill_id"),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [uniqueIndex("fin_purchase_orders_number_uq").on(t.number), index("fin_purchase_orders_contact_idx").on(t.contactId)],
+);
+export const purchaseOrderLines = sqliteTable(
+  "fin_purchase_order_lines",
+  {
+    id: id(),
+    orderId: text("order_id").notNull(),
+    itemId: text("item_id"),
+    description: text("description").notNull().default(""),
+    qty: real("qty").notNull().default(1),
+    unit: text("unit").notNull().default(""),
+    price: integer("price").notNull().default(0),
+    amount: integer("amount").notNull().default(0),
+    sort: integer("sort").notNull().default(0),
+  },
+  (t) => [index("fin_pol_order_idx").on(t.orderId)],
 );

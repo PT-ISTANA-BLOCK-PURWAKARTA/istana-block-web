@@ -87,7 +87,7 @@ export async function saveCash(_prev: FormState, form: FormData): Promise<FormSt
         ? [db.update(schema.cashTxns).set(header).where(eq(schema.cashTxns.id, cashId)), db.delete(schema.cashLines).where(eq(schema.cashLines.cashId, cashId)), ...deleteJournalOps(db, "kas", cashId)]
         : db.insert(schema.cashTxns).values({ id: cashId, ...header, createdBy: me.id }),
       ...insertMany(db, schema.cashLines, lines.map((l, sort) => ({ ...l, cashId, sort }))),
-      ...journalOps(db, { number, date, memo: memo || `Kas ${kind} ${number}`, source: "kas", sourceId: cashId, createdBy: me.id, lines: jl }),
+      ...journalOps(db, { number, date, memo: memo || `Kas ${kind} ${number}`, source: "kas", sourceId: cashId, createdBy: me.id, lines: tagLines(jl, form) }),
     ]);
     return { id: cashId, number };
   });
@@ -139,7 +139,7 @@ export async function saveJournal(_prev: FormState, form: FormData): Promise<For
     const number = existing?.number ?? (await nextNumber(db, "JU", date));
     await runBatch(db, [
       existing ? deleteJournalOps(db, "manual", journalId) : null,
-      ...journalOps(db, { id: journalId, number, date, memo, source: "manual", sourceId: journalId, createdBy: me.id, lines }),
+      ...journalOps(db, { id: journalId, number, date, memo, source: "manual", sourceId: journalId, createdBy: me.id, lines: tagLines(lines, form) }),
     ]);
     return { id: journalId, number };
   });
@@ -161,4 +161,11 @@ export async function deleteJournal(id: string): Promise<FormState> {
   });
   if ("error" in res) return res;
   redirect("/akuntansi/jurnal?ok=dihapus");
+}
+
+/** Tag proyek/departemen (opsional, dari form) ke semua baris jurnal. */
+function tagLines(lines: JLine[], form: FormData): JLine[] {
+  const projectId = String(form.get("projectId") ?? "") || null;
+  const departmentId = String(form.get("departmentId") ?? "") || null;
+  return projectId || departmentId ? lines.map((l) => ({ ...l, projectId, departmentId })) : lines;
 }
