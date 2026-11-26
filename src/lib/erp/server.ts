@@ -85,7 +85,7 @@ export function isStockItem(item: Pick<Item, "kind" | "trackStock">) {
 
 /* ------------------------------------------------------------ jurnal */
 
-export type JLine = { accountId: string; debit?: number; credit?: number; memo?: string; contactId?: string | null };
+export type JLine = { accountId: string; debit?: number; credit?: number; memo?: string; contactId?: string | null; projectId?: string | null; departmentId?: string | null };
 
 /** Susun perintah insert jurnal. Melempar UserError bila debit ≠ kredit. */
 export function journalOps(
@@ -112,7 +112,7 @@ export function journalOps(
     ...insertMany(
       db,
       schema.journalLines,
-      lines.map((l, i) => ({ journalId, date: j.date, accountId: l.accountId, debit: l.debit, credit: l.credit, memo: l.memo ?? "", contactId: l.contactId ?? null, sort: i })),
+      lines.map((l, i) => ({ journalId, date: j.date, accountId: l.accountId, debit: l.debit, credit: l.credit, memo: l.memo ?? "", contactId: l.contactId ?? null, projectId: l.projectId ?? null, departmentId: l.departmentId ?? null, sort: i })),
     ),
   ];
 }

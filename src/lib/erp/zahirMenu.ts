@@ -14,12 +14,12 @@ export const HUBS: Hub[] = [
     tiles: [
       { label: "Data Nama Alamat", href: "/akuntansi/kontak", icon: "users", color: "blue", w: 2 },
       { label: "Data Rekening", href: "/akuntansi/akun", icon: "list", color: "red" },
-      { label: "Data Mata Uang", icon: "cash", color: "navy", note: "Rupiah saja" },
-      { label: "Data Proyek", icon: "clipboard", color: "green" },
+      { label: "Data Mata Uang", href: "/akuntansi/data/mata-uang", icon: "cash", color: "navy" },
+      { label: "Data Proyek", href: "/akuntansi/data/proyek", icon: "clipboard", color: "green" },
       { label: "Data Produk", href: "/akuntansi/barang", icon: "box", color: "crimson", h: 2 },
-      { label: "Satuan Pengukuran", icon: "adjust", color: "lime" },
-      { label: "Data Pajak", icon: "doc", color: "purple" },
-      { label: "Data Departemen", icon: "id", color: "salmon" },
+      { label: "Satuan Pengukuran", href: "/akuntansi/data/satuan", icon: "adjust", color: "lime" },
+      { label: "Data Pajak", href: "/akuntansi/data/pajak", icon: "doc", color: "purple" },
+      { label: "Data Departemen", href: "/akuntansi/data/departemen", icon: "id", color: "salmon" },
       { label: "Data Gudang", href: "/operasional/stok", icon: "stack", color: "brown" },
       { label: "Data Harta Tetap", href: "/akuntansi/harta-tetap", icon: "factory", color: "cyan" },
     ],
@@ -63,9 +63,8 @@ export const HUBS: Hub[] = [
     title: "Pembelian",
     sub: "Penerimaan barang, faktur pemasok dan pembayaran hutang.",
     tiles: [
-      { label: "Permintaan Penawaran", icon: "mail", color: "blue" },
-      { label: "Pesanan Pembelian", icon: "clipboard", color: "navy" },
-      { label: "Order Pembelian", icon: "cart", color: "red" },
+      { label: "Permintaan Penawaran", href: "/akuntansi/pesanan-pembelian?jenis=rfq", icon: "mail", color: "blue" },
+      { label: "Pesanan Pembelian", href: "/akuntansi/pesanan-pembelian", icon: "clipboard", color: "navy" },
       { label: "Penerimaan Barang Pembelian", href: "/operasional/barang-masuk", icon: "truck", color: "navy" },
       { label: "Invoice Pembelian", href: "/akuntansi/pembelian", icon: "cart", color: "lime", w: 2 },
       { label: "Hutang Usaha", href: "/akuntansi/laporan/hutang", icon: "book", color: "crimson" },
@@ -190,7 +189,7 @@ export const REPORT_CATS: ReportCat[] = [
       {
         name: "Penjualan",
         items: [
-          { label: "eFaktur Penjualan" },
+          { label: "eFaktur Penjualan", href: "/akuntansi/laporan/efaktur" },
           { label: "Jurnal - Penjualan", href: "/akuntansi/penjualan" },
           { label: "Penawaran Harga - Rangkuman", href: "/operasional/penawaran" },
           { label: "Pengiriman Barang - Rangkuman", href: "/operasional/pengiriman" },
@@ -199,7 +198,7 @@ export const REPORT_CATS: ReportCat[] = [
           { label: "Penjualan Per Pelanggan - Rangkuman", href: "/akuntansi/laporan/per-kontak?jenis=penjualan" },
           { label: "Penjualan Per Pelanggan - Rincian", href: "/akuntansi/laporan/per-kontak?jenis=penjualan&rinci=1" },
           { label: "Penjualan Per Barang", href: "/akuntansi/laporan/penjualan" },
-          { label: "Penjualan Per Salesman" },
+          
           { label: "Retur Penjualan - Rangkuman", href: "/akuntansi/retur" },
           { label: "Rekap Pelanggan", href: "/operasional/rekap-pelanggan" },
         ],
@@ -211,8 +210,8 @@ export const REPORT_CATS: ReportCat[] = [
           { label: "Mutasi Piutang - Mata Uang Dasar", href: "/akuntansi/laporan/kartu?jenis=piutang&mode=mutasi" },
           { label: "Pembayaran Pelanggan - Mata Uang Dasar", href: "/akuntansi/penerimaan" },
           { label: "Piutang Usaha Per Pelanggan - Rincian", href: "/akuntansi/laporan/piutang" },
-          { label: "Piutang Usaha Per Salesman" },
-          { label: "Surat Tagihan Untuk Pelanggan" },
+          
+          { label: "Surat Tagihan Untuk Pelanggan", href: "/akuntansi/laporan/surat-tagihan" },
         ],
       },
     ],
@@ -231,7 +230,8 @@ export const REPORT_CATS: ReportCat[] = [
           { label: "Pembelian per Pemasok - Rangkuman", href: "/akuntansi/laporan/per-kontak?jenis=pembelian" },
           { label: "Pembelian per Pemasok - Rincian", href: "/akuntansi/laporan/per-kontak?jenis=pembelian&rinci=1" },
           { label: "Penerimaan Barang Pembelian", href: "/operasional/barang-masuk" },
-          { label: "Pesanan Pembelian - Rangkuman" },
+          { label: "Pesanan Pembelian - Rangkuman", href: "/akuntansi/pesanan-pembelian" },
+          { label: "Permintaan Penawaran - Rangkuman", href: "/akuntansi/pesanan-pembelian?jenis=rfq" },
           { label: "Retur Pembelian - Rangkuman", href: "/akuntansi/retur?jenis=pembelian" },
           { label: "Uang Muka Pemasok", href: "/akuntansi/uang-muka?jenis=pembelian" },
         ],
@@ -262,7 +262,7 @@ export const REPORT_CATS: ReportCat[] = [
           { label: "Daftar Barang Per Gudang", href: "/operasional/stok" },
           { label: "Daftar Harga Jual Barang", href: "/akuntansi/barang" },
           { label: "Formulir Stok Opname", href: "/operasional/stok" },
-          { label: "Kartu Stok - Umum" },
+          
           { label: "Mutasi Barang Per Gudang", href: "/operasional/transfer-stok" },
           { label: "Transaksi Persediaan - Produksi", href: "/operasional/produksi" },
           { label: "Barang Keluar (Muatan)", href: "/operasional/muatan" },
@@ -272,9 +272,9 @@ export const REPORT_CATS: ReportCat[] = [
         name: "Analisa Produk",
         items: [
           { label: "Barang Paling Laris", href: "/akuntansi/laporan/penjualan" },
-          { label: "Laba Rugi Barang - Rincian" },
+          
           { label: "Penjualan Per Pelanggan Per Barang", href: "/operasional/rekap-pelanggan" },
-          { label: "Perputaran Barang Paling Cepat" },
+          
         ],
       },
     ],
@@ -285,7 +285,7 @@ export const REPORT_CATS: ReportCat[] = [
     icon: "report",
     color: "lime",
     tabs: [
-      { name: "Proyek", items: [{ label: "Daftar Proyek" }, { label: "Laba Rugi Proyek" }] },
+      { name: "Proyek", items: [{ label: "Daftar Proyek", href: "/akuntansi/data/proyek" }, { label: "Laba Rugi Proyek", href: "/akuntansi/laporan/proyek" }, { label: "Laba Rugi Departemen", href: "/akuntansi/laporan/proyek?jenis=departemen" }] },
       { name: "Harta Tetap", items: [{ label: "Analisa Penyusutan Harta Tetap", href: "/akuntansi/laporan/harta-tetap?mode=analisa" }, { label: "Analisa Penyusutan Per Kelompok Harta Tetap", href: "/akuntansi/laporan/harta-tetap?mode=kelompok" }, { label: "Daftar Harta Tetap", href: "/akuntansi/laporan/harta-tetap" }, { label: "Kode Rekening Harta Tetap", href: "/akuntansi/laporan/harta-tetap?mode=rekening" }] },
       { name: "Nama Dan Alamat", items: [{ label: "Daftar Nama Alamat", href: "/akuntansi/kontak" }] },
       { name: "Karyawan", items: [{ label: "Gaji & Slip Gaji", href: "/akuntansi/gaji" }, { label: "Kasbon Karyawan", href: "/akuntansi/kasbon" }] },

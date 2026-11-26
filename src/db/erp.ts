@@ -140,6 +140,8 @@ export const journalLines = sqliteTable(
     memo: text("memo").notNull().default(""),
     contactId: text("contact_id"),
     sort: integer("sort").notNull().default(0),
+    projectId: text("project_id"),
+    departmentId: text("department_id"),
   },
   (t) => [index("fin_jl_journal_idx").on(t.journalId), index("fin_jl_account_idx").on(t.accountId, t.date)],
 );
@@ -2016,3 +2018,78 @@ export const giros = sqliteTable(
   (t) => [index("fin_giros_kind_status_idx").on(t.kind, t.status, t.dueDate)],
 );
 export type Giro = typeof giros.$inferSelect;
+
+/* ---------------------------------------------------------------- Data induk Zahir & pembelian */
+
+const masterCols = {
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  note: text("note").notNull().default(""),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+};
+
+export const units = sqliteTable("fin_units", { id: id(), ...masterCols, ...created }, (t) => [uniqueIndex("fin_units_code_uq").on(t.code)]);
+export const departments = sqliteTable("fin_departments", { id: id(), ...masterCols, ...created }, (t) => [uniqueIndex("fin_departments_code_uq").on(t.code)]);
+export const taxes = sqliteTable(
+  "fin_taxes",
+  { id: id(), ...masterCols, rate: real("rate").notNull().default(0), salesAccountId: text("sales_account_id"), purchaseAccountId: text("purchase_account_id"), ...created },
+  (t) => [uniqueIndex("fin_taxes_code_uq").on(t.code)],
+);
+export const projectStatuses = ["aktif", "selesai", "batal"] as const;
+export const projects = sqliteTable(
+  "fin_projects",
+  {
+    id: id(),
+    ...masterCols,
+    contactId: text("contact_id"),
+    location: text("location").notNull().default(""),
+    startDate: text("start_date"),
+    endDate: text("end_date"),
+    budget: integer("budget").notNull().default(0),
+    status: text("status").$type<(typeof projectStatuses)[number]>().notNull().default("aktif"),
+    ...created,
+  },
+  (t) => [uniqueIndex("fin_projects_code_uq").on(t.code)],
+);
+
+export const purchaseOrderKinds = ["rfq", "po"] as const;
+export type PurchaseOrderKind = (typeof purchaseOrderKinds)[number];
+export const purchaseOrderStatuses = ["draft", "dikirim", "diterima", "selesai", "batal"] as const;
+export const purchaseOrders = sqliteTable(
+  "fin_purchase_orders",
+  {
+    id: id(),
+    kind: text("kind").$type<PurchaseOrderKind>().notNull(),
+    number: text("number").notNull(),
+    date: text("date").notNull(),
+    contactId: text("contact_id").notNull(),
+    expectedDate: text("expected_date"),
+    status: text("status").$type<(typeof purchaseOrderStatuses)[number]>().notNull().default("draft"),
+    subtotal: integer("subtotal").notNull().default(0),
+    tax: integer("tax").notNull().default(0),
+    total: integer("total").notNull().default(0),
+    memo: text("memo").notNull().default(""),
+    /** PO yang dibuat dari permintaan penawaran (id RFQ). */
+    sourceId: text("source_id"),
+    /** Faktur pembelian hasil PO ini. */
+    billId: text("bill_id"),
+    createdBy: createdBy(),
+    ...created,
+  },
+  (t) => [uniqueIndex("fin_purchase_orders_number_uq").on(t.number), index("fin_purchase_orders_contact_idx").on(t.contactId)],
+);
+export const purchaseOrderLines = sqliteTable(
+  "fin_purchase_order_lines",
+  {
+    id: id(),
+    orderId: text("order_id").notNull(),
+    itemId: text("item_id"),
+    description: text("description").notNull().default(""),
+    qty: real("qty").notNull().default(1),
+    unit: text("unit").notNull().default(""),
+    price: integer("price").notNull().default(0),
+    amount: integer("amount").notNull().default(0),
+    sort: integer("sort").notNull().default(0),
+  },
+  (t) => [index("fin_pol_order_idx").on(t.orderId)],
+);

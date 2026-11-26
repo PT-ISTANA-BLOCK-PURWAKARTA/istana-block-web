@@ -5,6 +5,7 @@ import { BackLink, PageHead } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { requireModule } from "@/lib/auth";
 import { pickLists } from "@/lib/erp/server";
+import { loadTags } from "@/lib/erp/tags";
 import { today } from "@/lib/erp/util";
 
 export const metadata = { title: "Transaksi kas" };
@@ -16,7 +17,7 @@ export default async function KasBaru({ searchParams }: { searchParams: Promise<
   const sp = await searchParams;
   const kind = sp.jenis === "masuk" || sp.jenis === "transfer" ? sp.jenis : "keluar";
   const db = await getDb();
-  const [lists, contacts] = await Promise.all([pickLists(db), db.select({ id: schema.contacts.id, name: schema.contacts.name }).from(schema.contacts).where(eq(schema.contacts.active, true)).orderBy(asc(schema.contacts.name))]);
+  const [lists, tags, contacts] = await Promise.all([pickLists(db), loadTags(db),db.select({ id: schema.contacts.id, name: schema.contacts.name }).from(schema.contacts).where(eq(schema.contacts.active, true)).orderBy(asc(schema.contacts.name))]);
   return (
     <>
       <BackLink href="/akuntansi/kas">Kas &amp; bank</BackLink>
@@ -34,6 +35,7 @@ export default async function KasBaru({ searchParams }: { searchParams: Promise<
         cashAccounts={lists.pick((a) => a.group === "kas_bank")}
         otherAccounts={lists.pick((a) => a.group !== "kas_bank")}
         contacts={contacts}
+        tags={tags}
       />
     </>
   );

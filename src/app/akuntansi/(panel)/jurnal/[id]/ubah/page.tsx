@@ -5,6 +5,7 @@ import { BackLink, PageHead } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { requireModule } from "@/lib/auth";
 import { pickLists } from "@/lib/erp/server";
+import { loadTags } from "@/lib/erp/tags";
 
 export const metadata = { title: "Ubah jurnal" };
 
@@ -16,12 +17,12 @@ export default async function UbahJurnal({ params }: { params: Promise<{ id: str
   if (!j) notFound();
   if (j.source !== "manual") redirect(`/akuntansi/jurnal/${id}`);
   const lines = await db.select().from(schema.journalLines).where(eq(schema.journalLines.journalId, id)).orderBy(asc(schema.journalLines.sort));
-  const lists = await pickLists(db, lines.map((l) => l.accountId));
+  const [lists, tags] = await Promise.all([pickLists(db, lines.map((l) => l.accountId)), loadTags(db, { source: "manual", sourceId: id })]);
   return (
     <>
       <BackLink href={`/akuntansi/jurnal/${id}`}>{j.number}</BackLink>
       <PageHead title={`Ubah ${j.number}`} />
-      <JournalForm head={{ id: j.id, number: j.number, date: j.date, memo: j.memo }} lines={lines.map((l) => ({ accountId: l.accountId, memo: l.memo, debit: l.debit ? String(l.debit) : "", credit: l.credit ? String(l.credit) : "" }))} accounts={lists.pick()} />
+      <JournalForm head={{ id: j.id, number: j.number, date: j.date, memo: j.memo }} lines={lines.map((l) => ({ accountId: l.accountId, memo: l.memo, debit: l.debit ? String(l.debit) : "", credit: l.credit ? String(l.credit) : "" }))} accounts={lists.pick()} tags={tags} />
     </>
   );
 }

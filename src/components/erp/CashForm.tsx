@@ -6,6 +6,7 @@ import { CashEditor, type CRow } from "./CashEditor";
 import type { PickAccount } from "./LinesEditor";
 import { DateField, Select } from "@/components/ui";
 import { ZahirWindow } from "./ZahirWindow";
+import { TagFields, type TagOptions } from "./TagFields";
 
 export function CashForm({
   kind,
@@ -14,6 +15,7 @@ export function CashForm({
   cashAccounts,
   otherAccounts,
   contacts,
+  tags,
 }: {
   kind: "masuk" | "keluar" | "transfer";
   head: { id?: string; number?: string; date: string; accountId?: string; toAccountId?: string | null; contactId?: string | null; amount?: number; memo?: string };
@@ -21,6 +23,7 @@ export function CashForm({
   cashAccounts: PickAccount[];
   otherAccounts: PickAccount[];
   contacts: { id: string; name: string }[];
+  tags?: TagOptions;
 }) {
   const cashOptions = cashAccounts.map((a) => ({ value: a.id, label: `${a.code} · ${a.name}` }));
   return (
@@ -39,6 +42,7 @@ export function CashForm({
       <section className="zw-head">
         <div className="zw-fields">
           <div className="field"><label htmlFor="cs-date">Tanggal</label><DateField id="cs-date" name="date" defaultValue={head.date} required /></div>
+          <TagFields tags={tags} idPrefix="cs" />
           <div className="field">
             <label htmlFor="cs-acc">{kind === "masuk" ? "Kas/Bank Penerima" : kind === "keluar" ? "Kas/Bank Pembayar" : "Dari Kas/Bank"}</label>
             <Select id="cs-acc" name="accountId" defaultValue={head.accountId ?? cashAccounts[0]?.id} required options={cashOptions} />
