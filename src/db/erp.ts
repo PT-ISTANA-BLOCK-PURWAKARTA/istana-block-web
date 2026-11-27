@@ -54,7 +54,8 @@ export const accounts = sqliteTable(
 
 /* ---------------------------------------------------------------- Kontak & barang */
 
-export const contactKinds = ["pelanggan", "pemasok", "keduanya", "karyawan"] as const;
+/** karyawan = Employee (EMPL-…), lainnya = Other/rekanan (OTHR-…) di "Data Nama" Zahir. */
+export const contactKinds = ["pelanggan", "pemasok", "keduanya", "karyawan", "lainnya"] as const;
 export type ContactKind = (typeof contactKinds)[number];
 
 export const contacts = sqliteTable(

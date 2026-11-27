@@ -47,6 +47,8 @@ export async function saveCash(_prev: FormState, form: FormData): Promise<FormSt
     const projectId = String(form.get("projectId") ?? "") || null;
     // "Rekam Draft" = simpan tanpa jurnal; "Rekam" = simpan + jurnal.
     const status: "rekam" | "draft" = form.get("mode") === "draft" ? "draft" : "rekam";
+    // Yang sudah masuk jurnal tidak boleh kembali menjadi draft (jurnalnya akan hilang dari buku besar).
+    if (status === "draft" && existing && existing.status !== "draft") throw new UserError("Transaksi yang sudah direkam tidak bisa dijadikan draft lagi. Ubah isinya lalu tekan Rekam.");
 
     let lines: { accountId: string; amount: number; memo: string; projectId: string | null }[] = [];
     let toAccountId: string | null = null;
@@ -101,6 +103,8 @@ export async function saveCash(_prev: FormState, form: FormData): Promise<FormSt
     return { id: cashId, number, kind, status };
   });
   if ("error" in res) return res;
+  // Centang "Cetak" + Rekam → langsung ke Bukti Kas (draft tidak dicetak).
+  if (res.status === "rekam" && form.get("cetak") === "on") redirect(`/akuntansi/cetak/kas/${res.id}`);
   // Seperti Zahir: setelah Rekam langsung siap transaksi baru (kas masuk/keluar); transfer tetap ke halaman bukti.
   if (res.kind === "transfer") redirect(`/akuntansi/kas/${res.id}?ok=${encodeURIComponent(res.number)}`);
   redirect(`/akuntansi/kas/baru?jenis=${res.kind}&ok=${encodeURIComponent(`${res.number}${res.status === "draft" ? " (draft)" : ""}`)}&last=${res.id}`);

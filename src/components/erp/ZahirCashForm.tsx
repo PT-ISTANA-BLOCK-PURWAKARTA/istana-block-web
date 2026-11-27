@@ -160,8 +160,10 @@ export function ZahirCashForm({
         <div className="zk-foot">
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRows((rs) => { const n = rs.filter((_, j) => j !== cur); return n.length && !(n[n.length - 1].accountId || n[n.length - 1].amount) ? n : [...n, blank()]; })}>Hapus Baris</button>
           <span className="zk-total">Total <b>Rp{formatAmount(total)}</b></span>
+          <label className="zk-check" title="Setelah Rekam langsung buka Bukti Kas untuk dicetak"><input type="checkbox" name="cetak" /> Cetak</label>
           <Link href={`/akuntansi/kas?jenis=${kind}`} className="btn btn-ghost btn-sm">Batal</Link>
-          <SubmitButton className="btn btn-ghost btn-sm" name="mode" value="draft" pendingText="Menyimpan…">Rekam Draft</SubmitButton>
+          {/* Transaksi yang sudah direkam tidak bisa kembali menjadi draft. */}
+          {!(head.id && head.status !== "draft") && <SubmitButton className="btn btn-ghost btn-sm" name="mode" value="draft" pendingText="Menyimpan…">Rekam Draft</SubmitButton>}
           <SubmitButton className="btn btn-blue btn-sm" name="mode" value="rekam" pendingText="Merekam…">Rekam</SubmitButton>
         </div>
       </div>
@@ -180,7 +182,7 @@ export function ZahirCashForm({
             <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nama baru…" aria-label="Nama baru"
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (newName.trim()) addContact(); } }} />
             <select value={newKind} onChange={(e) => setNewKind(e.target.value as ZContact["kind"])} aria-label="Tipe nama baru">
-              <option value="pelanggan">Customer</option><option value="pemasok">Vendor</option><option value="karyawan">Employee</option>
+              <option value="pelanggan">Customer</option><option value="pemasok">Vendor</option><option value="karyawan">Employee</option><option value="lainnya">Other</option>
             </select>
             <button type="button" className="btn btn-ghost btn-sm" disabled={adding || newName.trim().length < 2} onClick={addContact}>{adding ? "…" : "Baru"}</button>
             {addErr && <span className="text-bahaya small">{addErr}</span>}

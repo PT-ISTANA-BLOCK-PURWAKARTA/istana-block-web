@@ -82,7 +82,19 @@ export function CashDaftar({ kind, rows, total, q, from, to }: { kind: keyof typ
         {err && <span className="small text-bahaya" role="alert">{err}</span>}
         <span className="zd-total">Total <b>Rp{formatAmount(total)}</b></span>
         <button type="button" className="btn btn-ghost btn-sm" disabled={!cur} onClick={() => cur && router.push(cur.href)}>Perincian</button>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => window.print()}>Cetak</button>
+        {/* Baris terpilih → Bukti Kas (termasuk histori impor Zahir); tanpa pilihan → cetak daftar. */}
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          title={cur ? `Cetak bukti ${cur.number}` : "Cetak daftar"}
+          onClick={() => {
+            if (!cur) return window.print();
+            if (cur.draft) return setErr(`${cur.number} masih draft. Rekam dulu sebelum mencetak bukti kas.`);
+            window.open(`/akuntansi/cetak/kas/${cur.id}`, "_blank");
+          }}
+        >
+          Cetak
+        </button>
         <Link href="/akuntansi/menu/kas-bank" className="btn btn-ghost btn-sm">Tutup</Link>
       </div>
     </div>

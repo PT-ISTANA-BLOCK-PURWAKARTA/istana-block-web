@@ -69,11 +69,13 @@ export async function nextCashNumber(db: DB, kind: keyof typeof CASH_NUMBER_PREF
 /* ------------------------------------------------------------ kontak */
 
 /** Nomor ID kontak terakhir yang sudah ada di Zahir (dari laporan Zahir 27/11/2026); ID baru melanjutkan setelahnya agar tidak bentrok. */
-const ZAHIR_CODE_FLOOR: Record<string, number> = { CUST: 1087, VNDR: 117, EMPL: 99 };
+// Angka tertinggi yang terlihat di data Zahir 27/11/2026: CUST-1092 (rincian piutang), VNDR-939 (daftar pemasok, ada VNDR-333 & VNDR-939),
+// EMPL-200 (Daftar Karyawan Lengkap), OTHR-171 (Daftar Rekanan Lengkap). Setelah impor Data Nama, angka terbesar di data ikut dipakai.
+const ZAHIR_CODE_FLOOR: Record<string, number> = { CUST: 1092, VNDR: 939, EMPL: 200, OTHR: 171 };
 
 /** ID kontak berikutnya: CUST-/VNDR-/EMPL-<angka>, melanjutkan angka terbesar di data & di Zahir. */
 export async function nextContactCode(db: DB, kind: string) {
-  const prefix = kind === "pemasok" ? "VNDR" : kind === "karyawan" ? "EMPL" : "CUST";
+  const prefix = kind === "pemasok" ? "VNDR" : kind === "karyawan" ? "EMPL" : kind === "lainnya" ? "OTHR" : "CUST";
   const r = await db.get<{ n: number | null }>(sql`select max(cast(substr(code, ${prefix.length + 2}) as integer)) n from fin_contacts where code like ${prefix + "-%"}`);
   return `${prefix}-${Math.max(Number(r?.n ?? 0), ZAHIR_CODE_FLOOR[prefix] ?? 0) + 1}`;
 }

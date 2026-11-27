@@ -12,7 +12,7 @@ export function ContactList({ rows, balances, base, q, jenis, nonaktif, showJeni
         {showJenis && (
           <div className="field">
             <label htmlFor="jenis">Jenis</label>
-            <Select id="jenis" name="jenis" defaultValue={jenis ?? ""} options={[{ value: "", label: "Semua" }, { value: "pelanggan", label: "Pelanggan" }, { value: "pemasok", label: "Pemasok" }, { value: "karyawan", label: "Karyawan / rekan" }]} />
+            <Select id="jenis" name="jenis" defaultValue={jenis ?? ""} options={[{ value: "", label: "Semua" }, { value: "pelanggan", label: "Pelanggan" }, { value: "pemasok", label: "Pemasok" }, { value: "karyawan", label: "Karyawan" }, { value: "lainnya", label: "Rekanan lain" }]} />
           </div>
         )}
         <label className="check"><input type="checkbox" name="nonaktif" value="1" defaultChecked={nonaktif} /> Tampilkan nonaktif</label>

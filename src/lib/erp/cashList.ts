@@ -58,7 +58,7 @@ export async function cashPickers(db: DB, keepContactId?: string | null) {
        where p.active = 1 order by p.code`),
   ]);
   return {
-    contacts: contacts.map((c) => ({ ...c, kind: c.kind as "pelanggan" | "pemasok" | "keduanya" | "karyawan" })),
+    contacts: contacts.map((c) => ({ ...c, kind: c.kind as "pelanggan" | "pemasok" | "keduanya" | "karyawan" | "lainnya" })),
     projects: projects.map((p) => ({ ...p, customer: p.customer ?? "" })),
   };
 }
