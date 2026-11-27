@@ -12,7 +12,7 @@ export const OPS: Record<OpsKind, { title: string; sub: string; party: string; v
   pengiriman: { title: "Pengiriman Barang", sub: "Surat jalan / pengiriman per PO: sopir, armada dan status.", party: "Pelanggan", valueLabel: null, extra: ["Sopir", "Armada", "Selesai"], statuses: { dijadwalkan: "Dijadwalkan", dimuat: "Dimuat", berangkat: "Berangkat", tiba: "Tiba", terkirim: "Terkirim", batal: "Batal" } },
   invoice: { title: "Invoice Penjualan (Operasional)", sub: "Invoice/nota penjualan IB & IBN yang dibuat di Operasional (app lama).", party: "Pelanggan", valueLabel: "Nilai invoice", extra: ["Penerbit", "Dibayar", "Sisa"], statuses: { draft: "Draft", dp: "DP", lunas: "Lunas", batal: "Batal" } },
   "barang-masuk": { title: "Penerimaan Barang", sub: "Barang/bahan baku yang datang ke pabrik (dicatat satpam & gudang).", party: "Pemasok", valueLabel: null, extra: ["Kategori", "Kendaraan", "Mutu (tier)"], statuses: { diterima: "Diterima", ditolak: "Ditolak", menunggu: "Menunggu" } },
-  rencana: { title: "Rencana Pesanan", sub: "Pesanan mendatang / proyek yang belum menjadi PO.", party: "Pelanggan", valueLabel: "Perkiraan nilai", extra: ["Proyek", "Dibuat oleh"], statuses: { rencana: "Rencana", jadi_po: "Sudah jadi PO", batal: "Batal" } },
+  rencana: { title: "Rencana Pesanan", sub: "Pesanan mendatang / proyek yang belum menjadi PO.", party: "Pelanggan", valueLabel: "Perkiraan nilai", extra: ["Proyek", "Dibuat oleh"], statuses: { rencana: "Rencana", aktif: "Aktif", jadi_po: "Sudah jadi PO", selesai: "Selesai", batal: "Batal" } },
 };
 export const isOpsKind = (s: string): s is OpsKind => s in OPS;
 
@@ -71,7 +71,7 @@ export async function loadOps(db: DB, kind: OpsKind, from: string, to: string): 
       select id, received_at d, item_name, tag, supplier, quarry, quantity, unit, status, category, vehicle_plate, tier, delivery_note_no from ops_goods_receipts where received_at >= ${f} and received_at < ${t} order by received_at desc`);
     return rows.map((r) => ({ id: r.id, date: day(r.d), number: r.delivery_note_no || `BM-${r.id}`, party: r.supplier || r.quarry || "-", items: [r.item_name, r.tag].filter(Boolean).join(" · "), qty: Number(r.quantity ?? 0), unit: r.unit ?? "", value: 0, status: r.status, extra: [r.category.replace(/_/g, " "), r.vehicle_plate ?? "-", r.tier ? `Tier ${r.tier}` : "-"] }));
   }
-  const rows = await db.all<{ id: string; customer_name: string; project: string | null; expected_date: string; items: string; status: string; created_by_name: string | null }>(sql`
-    select id, customer_name, project, expected_date, items, status, created_by_name from ops_planned_orders where expected_date >= ${from} and expected_date <= ${to} order by expected_date`);
-  return rows.map((r) => { const it = parseItems(r.items); return { id: r.id, date: r.expected_date, number: `RP-${r.id.slice(0, 6)}`, party: r.customer_name, items: itemsText(it), qty: 0, unit: "", value: itemsValue(it), status: r.status, extra: [r.project ?? "-", r.created_by_name ?? "-"] }; });
+  const rows = await db.all<{ id: string; customer_name: string; project: string | null; expected_date: number; items: string; status: string; created_by_name: string | null }>(sql`
+    select id, customer_name, project, expected_date, items, status, created_by_name from ops_planned_orders where expected_date >= ${f} and expected_date < ${t} order by expected_date`);
+  return rows.map((r) => { const it = parseItems(r.items); return { id: r.id, date: day(Number(r.expected_date)), number: r.project && /^SO\d/.test(r.project) ? r.project : `RP-${r.id.slice(0, 6)}`, party: r.customer_name, items: itemsText(it), qty: 0, unit: "", value: itemsValue(it), status: r.status, extra: [r.project ?? "-", r.created_by_name ?? "-"] }; });
 }

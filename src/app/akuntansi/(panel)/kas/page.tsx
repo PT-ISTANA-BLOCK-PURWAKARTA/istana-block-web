@@ -8,6 +8,8 @@ import { cashBalances } from "@/lib/erp/reports";
 import { loadAccounts } from "@/lib/erp/server";
 import { formatAmount, isDate, monthStart, tgl, today } from "@/lib/erp/util";
 import { DateField, Select } from "@/components/ui";
+import { CashDaftar } from "@/components/erp/CashDaftar";
+import { cashList } from "@/lib/erp/cashList";
 
 export const metadata = { title: "Kas & bank" };
 
@@ -20,6 +22,16 @@ export default async function Kas({ searchParams }: { searchParams: Promise<{ ok
   const from = isDate(sp.from) ? sp.from : monthStart(now);
   const to = isDate(sp.to) ? sp.to : now;
   const db = await getDb();
+  // Kas Keluar / Kas Masuk / Transfer: daftar histori gaya Zahir (termasuk histori impor Zahir).
+  if (sp.jenis === "keluar" || sp.jenis === "masuk" || sp.jenis === "transfer") {
+    const { rows, total } = await cashList(db, sp.jenis, from, to, (sp.q ?? "").trim());
+    return (
+      <>
+        <Ok ok={sp.ok} />
+        <CashDaftar kind={sp.jenis} rows={rows} total={total} q={sp.q ?? ""} from={from} to={to} />
+      </>
+    );
+  }
   const acc = await loadAccounts(db);
   const kind = (cashKinds as readonly string[]).includes(sp.jenis ?? "") ? (sp.jenis as (typeof cashKinds)[number]) : undefined;
   const [rows, balances] = await Promise.all([

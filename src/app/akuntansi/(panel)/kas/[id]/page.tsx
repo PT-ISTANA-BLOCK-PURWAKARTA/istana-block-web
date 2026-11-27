@@ -23,8 +23,8 @@ export default async function KasDetail({ params, searchParams }: { params: Prom
   const [journal, contact] = await Promise.all([journalFor(db, "kas", id), c.contactId ? db.query.contacts.findFirst({ where: eq(schema.contacts.id, c.contactId) }) : undefined]);
   return (
     <>
-      <BackLink href="/akuntansi/kas">Kas &amp; bank</BackLink>
-      <PageHead title={c.number} sub={KIND[c.kind]}>
+      <BackLink href={`/akuntansi/kas?jenis=${c.kind}`}>Daftar {KIND[c.kind]}</BackLink>
+      <PageHead title={c.number} sub={c.status === "draft" ? `${KIND[c.kind]} · DRAFT (belum masuk jurnal — buka Ubah lalu Rekam)` : KIND[c.kind]}>
         <Link href={`/akuntansi/kas/${c.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>
       </PageHead>
       <Ok ok={ok} />

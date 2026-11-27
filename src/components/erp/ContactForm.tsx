@@ -19,7 +19,11 @@ export function ContactForm({ c, back, defaultKind = "pelanggan" }: { c?: Contac
           </div>
           <div className="field">
             <label htmlFor="ct-kind">Jenis</label>
-            <Select id="ct-kind" name="kind" defaultValue={c?.kind ?? defaultKind} options={[{ value: "pelanggan", label: "Pelanggan", hint: "Membeli dari kita" }, { value: "pemasok", label: "Pemasok", hint: "Kita membeli darinya" }, { value: "keduanya", label: "Pelanggan & pemasok" }]} />
+            <Select id="ct-kind" name="kind" defaultValue={c?.kind ?? defaultKind} options={[{ value: "pelanggan", label: "Pelanggan", hint: "Membeli dari kita" }, { value: "pemasok", label: "Pemasok", hint: "Kita membeli darinya" }, { value: "keduanya", label: "Pelanggan & pemasok" }, { value: "karyawan", label: "Karyawan / rekan", hint: "Employee di Zahir (penerima kas keluar)" }]} />
+          </div>
+          <div className="field">
+            <label htmlFor="ct-code">ID <span className="help">kosongkan = otomatis (CUST-/VNDR-/EMPL-…)</span></label>
+            <input id="ct-code" name="code" defaultValue={c?.code} maxLength={30} placeholder="mis. CUST-1054" />
           </div>
           <div className="field"><label htmlFor="ct-company">Perusahaan / instansi <span className="help">opsional</span></label><input id="ct-company" name="company" defaultValue={c?.company} /></div>
           <div className="field"><label htmlFor="ct-phone">Telepon / WhatsApp</label><input id="ct-phone" name="phone" type="tel" defaultValue={c?.phone} /></div>
