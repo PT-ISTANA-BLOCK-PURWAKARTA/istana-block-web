@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
 import { cashKinds, type CashKind } from "@/db/erp";
@@ -14,6 +14,7 @@ import {
   insertMany,
   journalOps,
   loadAccounts,
+  nextCashNumber,
   nextNumber,
   parseRows,
   requireDate,
@@ -24,8 +25,6 @@ import {
 import { parseRupiah } from "@/lib/erp/util";
 
 /* ============================================================ Kas & bank */
-
-const CASH_PREFIX: Record<CashKind, string> = { masuk: "KM", keluar: "KK", transfer: "TRF" };
 
 export async function saveCash(_prev: FormState, form: FormData): Promise<FormState> {
   const me = await requireModule("keuangan");
@@ -45,8 +44,11 @@ export async function saveCash(_prev: FormState, form: FormData): Promise<FormSt
     if (!cash || cash.group !== "kas_bank") throw new UserError("Pilih akun kas/bank.");
     const contactId = String(form.get("contactId") ?? "") || null;
     const memo = String(form.get("memo") ?? "").slice(0, 500);
+    const projectId = String(form.get("projectId") ?? "") || null;
+    // "Rekam Draft" = simpan tanpa jurnal; "Rekam" = simpan + jurnal.
+    const status: "rekam" | "draft" = form.get("mode") === "draft" ? "draft" : "rekam";
 
-    let lines: { accountId: string; amount: number; memo: string }[] = [];
+    let lines: { accountId: string; amount: number; memo: string; projectId: string | null }[] = [];
     let toAccountId: string | null = null;
     let amount = 0;
     if (kind === "transfer") {
@@ -57,7 +59,7 @@ export async function saveCash(_prev: FormState, form: FormData): Promise<FormSt
       if (amount <= 0) throw new UserError("Jumlah transfer harus lebih dari 0.");
     } else {
       lines = parseRows(form.get("lines"))
-        .map((r) => ({ accountId: String(r.accountId ?? ""), amount: parseRupiah(r.amount), memo: String(r.memo ?? "").slice(0, 300) }))
+        .map((r) => ({ accountId: String(r.accountId ?? ""), amount: parseRupiah(r.amount), memo: String(r.memo ?? "").slice(0, 300), projectId: String(r.projectId ?? "") || null }))
         .filter((l) => l.accountId || l.amount);
       if (!lines.length) throw new UserError("Isi minimal satu rincian.");
       for (const [i, l] of lines.entries()) {
@@ -70,8 +72,15 @@ export async function saveCash(_prev: FormState, form: FormData): Promise<FormSt
     }
 
     const cashId = existing?.id ?? crypto.randomUUID();
-    const number = existing?.number ?? (await nextNumber(db, CASH_PREFIX[kind], date));
-    const header = { number, date, kind, accountId: cash.id, toAccountId, contactId, amount, memo, updatedAt: new Date() };
+    // Cek No. gaya Zahir (CD…/CR…/TR…), boleh diketik sendiri; kosong = lanjut nomor terakhir.
+    const typed = String(form.get("number") ?? "").trim().toUpperCase();
+    if (typed && !/^[A-Z0-9][A-Z0-9/.-]{2,29}$/.test(typed)) throw new UserError("Cek No. hanya huruf, angka, / . - (3–30 karakter).");
+    const number = typed || existing?.number || (await nextCashNumber(db, kind));
+    if (number !== existing?.number) {
+      const dup = await db.get<{ n: number }>(sql`select (select count(*) from fin_cash_txns where number = ${number} and id <> ${existing?.id ?? ""}) + (select count(*) from fin_journals where number = ${number} and not (source = 'kas' and source_id = ${existing?.id ?? ""})) n`);
+      if (Number(dup?.n ?? 0) > 0) throw new UserError(`Cek No. ${number} sudah dipakai. Kosongkan agar dibuat otomatis.`);
+    }
+    const header = { number, date, kind, accountId: cash.id, toAccountId, contactId, amount, memo, projectId, status, updatedAt: new Date() };
     const jl: JLine[] =
       kind === "transfer"
         ? [
@@ -79,20 +88,22 @@ export async function saveCash(_prev: FormState, form: FormData): Promise<FormSt
             { accountId: cash.id, credit: amount, memo },
           ]
         : kind === "masuk"
-          ? [{ accountId: cash.id, debit: amount, memo, contactId }, ...lines.map((l) => ({ accountId: l.accountId, credit: l.amount, memo: l.memo || memo, contactId }))]
-          : [...lines.map((l) => ({ accountId: l.accountId, debit: l.amount, memo: l.memo || memo, contactId })), { accountId: cash.id, credit: amount, memo, contactId }];
+          ? [{ accountId: cash.id, debit: amount, memo, contactId }, ...lines.map((l) => ({ accountId: l.accountId, credit: l.amount, memo: l.memo || memo, contactId, projectId: l.projectId }))]
+          : [...lines.map((l) => ({ accountId: l.accountId, debit: l.amount, memo: l.memo || memo, contactId, projectId: l.projectId })), { accountId: cash.id, credit: amount, memo, contactId }];
 
     await runBatch(db, [
       existing
         ? [db.update(schema.cashTxns).set(header).where(eq(schema.cashTxns.id, cashId)), db.delete(schema.cashLines).where(eq(schema.cashLines.cashId, cashId)), ...deleteJournalOps(db, "kas", cashId)]
         : db.insert(schema.cashTxns).values({ id: cashId, ...header, createdBy: me.id }),
       ...insertMany(db, schema.cashLines, lines.map((l, sort) => ({ ...l, cashId, sort }))),
-      ...journalOps(db, { number, date, memo: memo || `Kas ${kind} ${number}`, source: "kas", sourceId: cashId, createdBy: me.id, lines: tagLines(jl, form) }),
+      ...(status === "draft" ? [] : journalOps(db, { number, date, memo: memo || `Kas ${kind} ${number}`, source: "kas", sourceId: cashId, createdBy: me.id, lines: tagLines(jl, form) })),
     ]);
-    return { id: cashId, number };
+    return { id: cashId, number, kind, status };
   });
   if ("error" in res) return res;
-  redirect(`/akuntansi/kas/${res.id}?ok=${encodeURIComponent(res.number)}`);
+  // Seperti Zahir: setelah Rekam langsung siap transaksi baru (kas masuk/keluar); transfer tetap ke halaman bukti.
+  if (res.kind === "transfer") redirect(`/akuntansi/kas/${res.id}?ok=${encodeURIComponent(res.number)}`);
+  redirect(`/akuntansi/kas/baru?jenis=${res.kind}&ok=${encodeURIComponent(`${res.number}${res.status === "draft" ? " (draft)" : ""}`)}&last=${res.id}`);
 }
 
 export async function deleteCash(id: string): Promise<FormState> {
@@ -104,10 +115,11 @@ export async function deleteCash(id: string): Promise<FormState> {
     const fin = await getFinSettings(db);
     assertOpen(c.date, fin.lockDate, "Transaksi kas");
     await runBatch(db, [db.delete(schema.cashLines).where(eq(schema.cashLines.cashId, id)), ...deleteJournalOps(db, "kas", id), db.delete(schema.cashTxns).where(eq(schema.cashTxns.id, id))]);
-    return { ok: "deleted" };
+    return { ok: "deleted", kind: c.kind as string, number: c.number };
   });
   if ("error" in res) return res;
-  redirect("/akuntansi/kas?ok=dihapus");
+  if (!("kind" in res)) redirect("/akuntansi/kas");
+  redirect(`/akuntansi/kas?jenis=${res.kind}&ok=${encodeURIComponent(`${res.number} dihapus`)}`);
 }
 
 /* ============================================================ Jurnal umum (manual) */
@@ -167,5 +179,6 @@ export async function deleteJournal(id: string): Promise<FormState> {
 function tagLines(lines: JLine[], form: FormData): JLine[] {
   const projectId = String(form.get("projectId") ?? "") || null;
   const departmentId = String(form.get("departmentId") ?? "") || null;
-  return projectId || departmentId ? lines.map((l) => ({ ...l, projectId, departmentId })) : lines;
+  // Job per baris (bila ada) didahulukan dari proyek di kepala transaksi.
+  return projectId || departmentId ? lines.map((l) => ({ ...l, projectId: l.projectId ?? projectId, departmentId })) : lines;
 }

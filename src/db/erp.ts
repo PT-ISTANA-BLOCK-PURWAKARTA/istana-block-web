@@ -54,7 +54,7 @@ export const accounts = sqliteTable(
 
 /* ---------------------------------------------------------------- Kontak & barang */
 
-export const contactKinds = ["pelanggan", "pemasok", "keduanya"] as const;
+export const contactKinds = ["pelanggan", "pemasok", "keduanya", "karyawan"] as const;
 export type ContactKind = (typeof contactKinds)[number];
 
 export const contacts = sqliteTable(
@@ -62,6 +62,8 @@ export const contacts = sqliteTable(
   {
     id: id(),
     kind: text("kind").$type<ContactKind>().notNull().default("pelanggan"),
+    /** ID gaya Zahir: CUST-… (pelanggan), VNDR-… (pemasok), EMPL-… (karyawan/rekan). Kosong = belum punya ID. */
+    code: text("code").notNull().default(""),
     name: text("name").notNull(),
     company: text("company").notNull().default(""),
     phone: text("phone").notNull().default(""),
@@ -599,6 +601,10 @@ export const cashTxns = sqliteTable(
     contactId: text("contact_id"),
     amount: integer("amount").notNull().default(0),
     memo: text("memo").notNull().default(""),
+    /** Proyek di kepala transaksi (Zahir: "Proyek"). */
+    projectId: text("project_id"),
+    /** "rekam" = sudah dijurnal; "draft" = Rekam Draft (belum masuk jurnal). */
+    status: text("status").$type<"rekam" | "draft">().notNull().default("rekam"),
     createdBy: createdBy(),
     ...created,
   },
@@ -613,6 +619,8 @@ export const cashLines = sqliteTable(
     accountId: text("account_id").notNull(),
     amount: integer("amount").notNull(),
     memo: text("memo").notNull().default(""),
+    /** Job (proyek) per baris alokasi dana; kosong = ikut proyek kepala. */
+    projectId: text("project_id"),
     sort: integer("sort").notNull().default(0),
   },
   (t) => [index("fin_cl_cash_idx").on(t.cashId)],

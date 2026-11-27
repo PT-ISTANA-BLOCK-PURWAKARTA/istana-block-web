@@ -12,8 +12,8 @@ export default async function Kontak({ searchParams }: { searchParams: Promise<{
   const { ok, q, jenis, nonaktif } = await searchParams;
   const db = await getDb();
   const where = and(
-    q ? or(like(schema.contacts.name, `%${q}%`), like(schema.contacts.company, `%${q}%`), like(schema.contacts.phone, `%${q}%`)) : undefined,
-    jenis === "pelanggan" || jenis === "pemasok" ? or(eq(schema.contacts.kind, jenis), eq(schema.contacts.kind, "keduanya")) : undefined,
+    q ? or(like(schema.contacts.code, `%${q}%`), like(schema.contacts.name, `%${q}%`), like(schema.contacts.company, `%${q}%`), like(schema.contacts.phone, `%${q}%`)) : undefined,
+    jenis === "pelanggan" || jenis === "pemasok" ? or(eq(schema.contacts.kind, jenis), eq(schema.contacts.kind, "keduanya")) : jenis === "karyawan" ? eq(schema.contacts.kind, "karyawan") : undefined,
     nonaktif ? undefined : eq(schema.contacts.active, true),
   );
   const rows = await db.select().from(schema.contacts).where(where).orderBy(asc(schema.contacts.name));
@@ -25,7 +25,7 @@ export default async function Kontak({ searchParams }: { searchParams: Promise<{
   const balances = new Map(bal.map((b) => [b.id, { ar: Number(b.ar), ap: Number(b.ap) }]));
   return (
     <>
-      <PageHead title="Kontak" sub="Pelanggan dan pemasok. Data ini juga dipakai modul operasional.">
+      <PageHead title="Kontak" sub="Pelanggan, pemasok, dan karyawan/rekan (Data Nama Zahir). Data ini juga dipakai modul operasional.">
         <Link href="/akuntansi/kontak/baru" className="btn btn-primary btn-sm">+ Kontak</Link>
       </PageHead>
       <Ok ok={ok} />
