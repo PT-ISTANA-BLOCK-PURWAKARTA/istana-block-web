@@ -21,7 +21,8 @@ import { MAX_DELIVERY_PROOFS } from "@/db/erp";
 import { isArchive } from "@/lib/erp/archive";
 import { deliveryItems, opsAccess } from "@/lib/erp/ops";
 import { journalFor } from "@/lib/erp/server";
-import { formatQty, tgl } from "@/lib/erp/util";
+import { formatAmount, formatQty, tgl } from "@/lib/erp/util";
+import { canSeeInvoiceValue, linkedInvoices } from "@/lib/erp/orderInvoices";
 import { deliveryHistoryRows, deliveryProofKeys, proofRowCount, trackingSummary } from "@/lib/ops/deliveries";
 
 export const metadata = { title: "Surat jalan" };
@@ -59,6 +60,8 @@ export default async function PengirimanDetail({ params, searchParams }: { param
   const corrector = canCorrect && d.arrivalCorrectedBy ? await db.query.users.findFirst({ where: eq(schema.users.id, d.arrivalCorrectedBy) }) : undefined;
   const wa = driver?.phone ? `https://wa.me/${driver.phone.replace(/\D/g, "").replace(/^0/, "62")}` : null;
   const lines = items.get(id) ?? [];
+  const links = canSeeInvoiceValue(perms) ? await linkedInvoices(db) : null;
+  const docInvoices = links ? (links.byDelivery.get(id) ?? links.byOrder.get(d.orderId) ?? []) : null;
   // Teks bagikan untuk pelanggan: tanpa harga dan tanpa nomor telepon.
   const summary = [
     "Pengiriman Istana Block Purwakarta",
@@ -94,6 +97,17 @@ export default async function PengirimanDetail({ params, searchParams }: { param
             {d.arrivedAt && <div className="small">tiba {stamp(d.arrivedAt)}{d.arrivalCorrectedAt ? ` (dikoreksi ke ${stamp(d.arrivalCorrectedAt)})` : ""}</div>}
             {d.deliveredAt && <div className="small">terkirim {stamp(d.deliveredAt)}</div>}
           </div>
+          {docInvoices && (
+            <div>
+              <span className="muted small">Nilai invoice</span>
+              {docInvoices.length ? docInvoices.map((iv) => (
+                <div key={iv.id}>
+                  <b>Rp {formatAmount(iv.grandTotal)}</b>
+                  <div className="small">{canFinance ? <Link href={`/akuntansi/dokumen/invoice/${iv.id}`}>{iv.number}</Link> : iv.number} · {iv.statusLabel}{iv.remaining > 0 ? ` · sisa Rp ${formatAmount(iv.remaining)}` : ""}</div>
+                </div>
+              )) : <b className="muted">—</b>}
+            </div>
+          )}
           <div><span className="muted small">Armada</span><b>{vehicle?.plate ?? "—"}</b>{vehicle?.name && <div className="small">{vehicle.name}</div>}</div>
           <div><span className="muted small">Sopir</span><b>{driver?.name ?? "—"}</b>{wa && <a className="small" href={wa} target="_blank" rel="noopener noreferrer">WhatsApp ↗</a>}</div>
           <div style={{ maxWidth: 380 }}>

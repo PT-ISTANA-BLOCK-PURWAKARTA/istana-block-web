@@ -17,6 +17,8 @@ import { docTotals } from "@/lib/erp/docs";
 import { overdueByContact, stockPosition } from "@/lib/erp/insights";
 import { deliveryItems, opsAccess } from "@/lib/erp/ops";
 import { orderProgress } from "@/lib/erp/orders";
+import { canSeeInvoiceValue, linkedInvoices } from "@/lib/erp/orderInvoices";
+import { wibDay } from "@/lib/erp/salesInvoice";
 import { depositBalance, getFinSettings, loadAccounts } from "@/lib/erp/server";
 import { formatAmount, formatQty, tgl, today } from "@/lib/erp/util";
 import { formatDateTime } from "@/lib/ops/shared/format";
@@ -55,6 +57,7 @@ export default async function PesananDetail({ params, searchParams }: { params: 
   const whoIds = [o.paymentConfirmedBy, o.cancelledBy].filter((x): x is number => x != null);
   const who = new Map((whoIds.length ? await db.select({ id: schema.users.id, name: schema.users.name }).from(schema.users).where(inArray(schema.users.id, whoIds)) : []).map((u) => [u.id, u.name]));
   const free = new Map(stock.map((s) => [s.id, s.free]));
+  const docInvoices = canSeeInvoiceValue(perms) ? ((await linkedInvoices(db)).byOrder.get(id) ?? []) : null;
   const late = overdue.get(o.contactId);
   const deposit = canFinance ? await depositBalance(db, acc.sys("uang_muka_pelanggan"), o.contactId, "credit") : 0;
   const t = docTotals(prog, { discount: o.discount, ongkir: o.ongkir, taxable: o.taxable, taxRate: fin.ppnRate });
@@ -201,6 +204,28 @@ export default async function PesananDetail({ params, searchParams }: { params: 
             </tbody>
           </table>
         </section>
+
+        {docInvoices && (
+          <section className="admin-table">
+            <table className="compact">
+              <caption>Invoice (dibuat Keuangan)</caption>
+              <thead><tr><th>Nomor</th><th>Tanggal</th><th>Status</th><th className="num">Nilai invoice</th><th className="num">Dibayar</th><th className="num">Sisa</th></tr></thead>
+              <tbody>
+                {docInvoices.map((iv) => (
+                  <tr key={iv.id}>
+                    <td>{canFinance ? <Link href={`/akuntansi/dokumen/invoice/${iv.id}`}><b>{iv.number}</b></Link> : <b>{iv.number}</b>}</td>
+                    <td>{tgl(wibDay(iv.date))}</td>
+                    <td><span className={`badge badge-${iv.status}`}>{iv.statusLabel}</span></td>
+                    <td className="num"><Rp n={iv.grandTotal} /></td>
+                    <td className="num">{iv.paid ? formatAmount(iv.paid) : "—"}</td>
+                    <td className="num">{formatAmount(iv.remaining)}</td>
+                  </tr>
+                ))}
+                {docInvoices.length === 0 && <tr><td colSpan={6} className="muted">Belum ada invoice untuk PO ini.</td></tr>}
+              </tbody>
+            </table>
+          </section>
+        )}
 
         {canFinance && (
           <section className="admin-table">

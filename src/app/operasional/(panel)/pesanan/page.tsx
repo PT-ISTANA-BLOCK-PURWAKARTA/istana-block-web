@@ -4,6 +4,7 @@ import { Ok, PageHead, Rp, Status } from "@/components/erp/ui";
 import { PaymentBadge } from "@/components/ops/order/PaymentBadge";
 import { getDb } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
+import { canSeeInvoiceValue, linkedInvoices, sumInvoices, type LinkedInvoice } from "@/lib/erp/orderInvoices";
 import { tgl } from "@/lib/erp/util";
 import { recentOrderDeletions } from "@/lib/ops/orders";
 import { formatDateTime } from "@/lib/ops/shared/format";
@@ -39,7 +40,8 @@ type Row = {
 };
 
 export default async function Pesanan({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; ok?: string }> }) {
-  const { canOrders: canEdit, canFinance } = await opsAccess();
+  const { canOrders: canEdit, canFinance, perms } = await opsAccess();
+  const canInv = canSeeInvoiceValue(perms);
   // Nilai PO terlihat oleh keuangan dan peran yang mengisi harga di form PO (izin pesanan).
   const canPrice = canFinance || canEdit;
   const sp = await searchParams;
@@ -112,6 +114,7 @@ export default async function Pesanan({ searchParams }: { searchParams: Promise<
     from ops_orders o join fin_contacts c on c.id = o.contact_id
     where ${statusSql} ${q ? sql`and (o.number like ${like} or c.name like ${like} or c.company like ${like} or o.customer_ref like ${like} or o.external_ref like ${like} or o.project like ${like})` : sql``}
     order by o.date desc, o.number desc limit 300`);
+  const inv = canInv ? (await linkedInvoices(db)).byOrder : new Map<string, LinkedInvoice[]>();
   return (
     <>
       {head}
@@ -119,7 +122,7 @@ export default async function Pesanan({ searchParams }: { searchParams: Promise<
       {tabs}
       <div className="admin-table">
         <table>
-          <thead><tr><th>Pesanan</th><th>Pelanggan</th><th>Minta kirim</th><th>Status</th>{canPrice && <th className="num">Nilai</th>}<th className="num">Terkirim</th>{canFinance && <th className="num">Difaktur</th>}</tr></thead>
+          <thead><tr><th>Pesanan</th><th>Pelanggan</th><th>Minta kirim</th><th>Status</th>{canPrice && <th className="num">Nilai</th>}<th className="num">Terkirim</th>{canInv && <th className="num">Nilai invoice</th>}{canFinance && <th className="num">Difaktur</th>}</tr></thead>
           <tbody>
             {rows.map((r) => {
               const pct = r.gross > 0 ? Math.min(100, Math.round((Number(r.deliveredValue) / Number(r.gross)) * 100)) : 0;
@@ -139,11 +142,12 @@ export default async function Pesanan({ searchParams }: { searchParams: Promise<
                   </td>
                   {canPrice && <td className="num"><Rp n={Number(r.value)} /></td>}
                   <td className="num"><span className="progress" aria-label={`${pct}% terkirim`}><span style={{ width: `${pct}%` }} /></span><div className="small muted">{pct}%</div></td>
+                  {canInv && <td className="num small">{(() => { const list = inv.get(r.id) ?? []; const s = sumInvoices(list); return list.length ? <><Rp n={s.total} /><div className="muted">{list.map((i) => i.number).join(", ")}</div>{s.remaining > 0 && <div className="text-warn">sisa <Rp n={s.remaining} /></div>}</> : <span className="muted">—</span>; })()}</td>}
                   {canFinance && <td className="num small">{Number(r.invoiced) ? <Rp n={Number(r.invoiced)} /> : <span className="muted">—</span>}</td>}
                 </tr>
               );
             })}
-            {rows.length === 0 && <tr><td colSpan={7} className="muted" style={{ padding: 24 }}>{q ? "Tidak ada pesanan yang cocok." : "Belum ada pesanan di kelompok ini."}</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={8} className="muted" style={{ padding: 24 }}>{q ? "Tidak ada pesanan yang cocok." : "Belum ada pesanan di kelompok ini."}</td></tr>}
           </tbody>
         </table>
       </div>
