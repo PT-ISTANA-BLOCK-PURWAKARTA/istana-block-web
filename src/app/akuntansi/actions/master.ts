@@ -8,7 +8,7 @@ import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
 import { accountGroups, contactKinds, itemKinds, productLines, productionMethods } from "@/db/erp";
 import { requireModule, requirePerm } from "@/lib/auth";
-import { FIN_DEFAULTS, guard, UserError } from "@/lib/erp/server";
+import { FIN_DEFAULTS, guard, nextContactCode, UserError } from "@/lib/erp/server";
 import { parseQty, parseRupiah } from "@/lib/erp/util";
 
 const str = (max: number) => z.string().trim().max(max).default("");
@@ -17,6 +17,7 @@ const str = (max: number) => z.string().trim().max(max).default("");
 
 const ContactInput = z.object({
   kind: z.enum(contactKinds),
+  code: z.string().trim().toUpperCase().max(30).default(""),
   name: z.string().trim().min(2, "Nama minimal 2 huruf.").max(120),
   company: str(120),
   phone: str(40),
@@ -35,6 +36,9 @@ export async function saveContact(back: string, _prev: FormState, form: FormData
   const db = await getDb();
   // Kotak centang yang tidak dicentang tidak terkirim; penanda active_field memastikan "Aktif" bisa dimatikan.
   const values = { ...p.data, active: form.get("active_field") ? form.get("active") === "on" : true, updatedAt: new Date() };
+  if (!values.code) values.code = await nextContactCode(db, values.kind);
+  const dup = await db.get<{ id: string }>(sql`select id from fin_contacts where code = ${values.code} and id <> ${id}`);
+  if (dup) return { error: `ID ${values.code} sudah dipakai kontak lain.` };
   if (id) await db.update(schema.contacts).set(values).where(eq(schema.contacts.id, id));
   else await db.insert(schema.contacts).values(values);
   redirect(`${back}?ok=${encodeURIComponent(p.data.name)}`);
@@ -214,4 +218,19 @@ export async function saveFinSettings(_prev: FormState, form: FormData): Promise
     return { ok: "Pengaturan keuangan tersimpan." };
   });
   return r;
+}
+
+/** "Baru" di jendela Data Nama (form kas): tambah kontak cepat, ID otomatis CUST-/VNDR-/EMPL-. */
+export async function quickContact(name: string, kind: string): Promise<{ error: string } | { id: string; code: string; name: string; kind: string }> {
+  await requireModule("keuangan");
+  const n = String(name ?? "").trim().replace(/\s+/g, " ").toUpperCase();
+  if (n.length < 2 || n.length > 120) return { error: "Nama minimal 2 huruf." };
+  if (!(contactKinds as readonly string[]).includes(kind)) return { error: "Tipe tidak valid." };
+  const db = await getDb();
+  const same = await db.get<{ id: string; code: string; name: string; kind: string }>(sql`select id, code, name, kind from fin_contacts where upper(name) = ${n} and kind = ${kind} and active = 1`);
+  if (same) return same;
+  const code = await nextContactCode(db, kind);
+  const id = crypto.randomUUID();
+  await db.insert(schema.contacts).values({ id, code, name: n, kind: kind as (typeof contactKinds)[number] });
+  return { id, code, name: n, kind };
 }

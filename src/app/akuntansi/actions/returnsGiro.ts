@@ -9,7 +9,7 @@ import { getDb, schema } from "@/db";
 import type { ReturnKind, ReturnSettlement } from "@/db/erp";
 import { requireModule } from "@/lib/auth";
 import {
-  assertOpen, chunk, deleteJournalOps, depositBalance, getFinSettings, guard, insertMany, journalOps, loadAccounts, nextNumber, parseRows, requireDate, runBatch, UserError,
+  assertOpen, chunk, deleteJournalOps, depositBalance, getFinSettings, guard, insertMany, journalOps, loadAccounts, nextCashNumber, nextNumber, parseRows, requireDate, runBatch, UserError,
   type DB, type JLine,
 } from "@/lib/erp/server";
 import { isDate, parseQty, parseRupiah } from "@/lib/erp/util";
@@ -182,7 +182,7 @@ export async function refundDeposit(_prev: FormState, form: FormData): Promise<F
     const memo = (String(form.get("memo") ?? "").trim() || (kind === "penjualan" ? `Pengembalian kelebihan uang muka ke ${contact.name}` : `Penerimaan kembalian uang muka dari ${contact.name}`)).slice(0, 500);
     const cashId = crypto.randomUUID();
     const ck = kind === "penjualan" ? "keluar" : "masuk";
-    const number = await nextNumber(db, ck === "masuk" ? "KM" : "KK", date);
+    const number = await nextCashNumber(db, ck);
     const jl: JLine[] = ck === "keluar"
       ? [{ accountId: deposit, debit: amount, memo, contactId: contact.id }, { accountId: cash.id, credit: amount, memo, contactId: contact.id }]
       : [{ accountId: cash.id, debit: amount, memo, contactId: contact.id }, { accountId: deposit, credit: amount, memo, contactId: contact.id }];

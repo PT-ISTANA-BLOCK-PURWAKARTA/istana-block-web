@@ -8,11 +8,11 @@ export function ContactList({ rows, balances, base, q, jenis, nonaktif, showJeni
   return (
     <>
       <form className="filter-bar" method="get">
-        <div className="field grow"><label htmlFor="q">Cari</label><input id="q" name="q" defaultValue={q} placeholder="nama, perusahaan, atau telepon" /></div>
+        <div className="field grow"><label htmlFor="q">Cari</label><input id="q" name="q" defaultValue={q} placeholder="ID, nama, perusahaan, atau telepon" /></div>
         {showJenis && (
           <div className="field">
             <label htmlFor="jenis">Jenis</label>
-            <Select id="jenis" name="jenis" defaultValue={jenis ?? ""} options={[{ value: "", label: "Semua" }, { value: "pelanggan", label: "Pelanggan" }, { value: "pemasok", label: "Pemasok" }]} />
+            <Select id="jenis" name="jenis" defaultValue={jenis ?? ""} options={[{ value: "", label: "Semua" }, { value: "pelanggan", label: "Pelanggan" }, { value: "pemasok", label: "Pemasok" }, { value: "karyawan", label: "Karyawan" }, { value: "lainnya", label: "Rekanan lain" }]} />
           </div>
         )}
         <label className="check"><input type="checkbox" name="nonaktif" value="1" defaultChecked={nonaktif} /> Tampilkan nonaktif</label>
@@ -21,13 +21,14 @@ export function ContactList({ rows, balances, base, q, jenis, nonaktif, showJeni
       <div className="admin-table">
         <table>
           <thead>
-            <tr><th>Nama</th>{showJenis && <th>Jenis</th>}<th>Telepon</th><th>Alamat</th>{balances && <><th className="num">Piutang</th><th className="num">Hutang</th></>}</tr>
+            <tr><th>ID</th><th>Nama</th>{showJenis && <th>Jenis</th>}<th>Telepon</th><th>Alamat</th>{balances && <><th className="num">Piutang</th><th className="num">Hutang</th></>}</tr>
           </thead>
           <tbody>
             {rows.map((c) => {
               const b = balances?.get(c.id);
               return (
                 <tr key={c.id} className={c.active ? "" : "row-muted"}>
+                  <td className="small muted">{c.code}</td>
                   <td><Link href={`${base}/${c.id}`}><b>{c.name}</b></Link>{c.company && <div className="small muted">{c.company}</div>}</td>
                   {showJenis && <td>{CONTACT_KIND_LABEL[c.kind]}</td>}
                   <td>{c.phone}</td>

@@ -83,9 +83,9 @@ export const HUBS: Hub[] = [
     title: "Kas & Bank",
     sub: "Kas masuk, kas keluar, transfer dan rekonsiliasi bank.",
     tiles: [
-      { label: "Kas Keluar", href: "/akuntansi/kas/baru?jenis=keluar", icon: "pay", color: "blue", h: 2 },
-      { label: "Kas Masuk", href: "/akuntansi/kas/baru?jenis=masuk", icon: "receive", color: "navy", h: 2 },
-      { label: "Transfer Kas", href: "/akuntansi/kas/baru?jenis=transfer", icon: "adjust", color: "purple", w: 2 },
+      { label: "Kas Keluar", href: "/akuntansi/kas?jenis=keluar", icon: "pay", color: "blue", h: 2 },
+      { label: "Kas Masuk", href: "/akuntansi/kas?jenis=masuk", icon: "receive", color: "navy", h: 2 },
+      { label: "Transfer Kas", href: "/akuntansi/kas?jenis=transfer", icon: "adjust", color: "purple", w: 2 },
       { label: "Giro Masuk", href: "/akuntansi/giro", icon: "doc", color: "lime" },
       { label: "Giro Keluar", href: "/akuntansi/giro?jenis=keluar", icon: "doc", color: "crimson" },
       { label: "Rekonsiliasi Bank", href: "/akuntansi/kas/rekonsiliasi", icon: "checkCheck", color: "salmon", w: 2 },

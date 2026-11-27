@@ -74,7 +74,11 @@ export const GROUP_ORDER: AccountGroup[] = [
 ];
 
 export const ITEM_KIND_LABEL = { barang_jadi: "Barang jadi", bahan_baku: "Bahan baku", jasa: "Jasa", lainnya: "Lain-lain" } as const;
-export const CONTACT_KIND_LABEL = { pelanggan: "Pelanggan", pemasok: "Pemasok", keduanya: "Pelanggan & pemasok" } as const;
+export const CONTACT_KIND_LABEL = { pelanggan: "Pelanggan", pemasok: "Pemasok", keduanya: "Pelanggan & pemasok", karyawan: "Karyawan", lainnya: "Rekanan lain" } as const;
+/** Tipe kontak seperti di "Data Nama" Zahir. */
+export const CONTACT_ZAHIR_TYPE = { pelanggan: "Customer", pemasok: "Vendor", keduanya: "Customer / Vendor", karyawan: "Employee", lainnya: "Other" } as const;
+/** Awalan ID kontak gaya Zahir. */
+export const CONTACT_CODE_PREFIX = { pelanggan: "CUST", pemasok: "VNDR", keduanya: "CUST", karyawan: "EMPL", lainnya: "OTHR" } as const;
 
 /** Golongan akun yang boleh dipakai sebagai baris biaya di faktur pembelian. */
 export const EXPENSE_GROUPS: string[] = ["beban", "beban_lain", "hpp", "aset_tetap", "aset_lancar_lain", "persediaan"];

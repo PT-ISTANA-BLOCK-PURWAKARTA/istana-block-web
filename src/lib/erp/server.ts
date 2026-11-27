@@ -52,6 +52,34 @@ export async function nextNumber(db: DB, prefix: string, date: string) {
   return `${key}/${String(r[0]?.value ?? 1).padStart(4, "0")}`;
 }
 
+/* ------------------------------------------------------------ nomor kas gaya Zahir */
+
+export const CASH_NUMBER_PREFIX = { keluar: "CD", masuk: "CR", transfer: "TR" } as const;
+
+/** Cek No. berikutnya melanjutkan nomor Zahir: CD005522 → CD005523 (kas keluar), CR… (kas masuk), TR… (transfer). */
+export async function nextCashNumber(db: DB, kind: keyof typeof CASH_NUMBER_PREFIX) {
+  const p = CASH_NUMBER_PREFIX[kind];
+  const pat = `${p}[0-9][0-9][0-9][0-9][0-9][0-9]`;
+  const r = await db.get<{ n: number | null }>(sql`select max(n) n from (
+      select cast(substr(number, 3) as integer) n from fin_journals where number glob ${pat}
+      union all select cast(substr(number, 3) as integer) n from fin_cash_txns where number glob ${pat})`);
+  return `${p}${String(Number(r?.n ?? 0) + 1).padStart(6, "0")}`;
+}
+
+/* ------------------------------------------------------------ kontak */
+
+/** Nomor ID kontak terakhir yang sudah ada di Zahir (dari laporan Zahir 27/11/2026); ID baru melanjutkan setelahnya agar tidak bentrok. */
+// Angka tertinggi yang terlihat di data Zahir 27/11/2026: CUST-1092 (rincian piutang), VNDR-939 (daftar pemasok, ada VNDR-333 & VNDR-939),
+// EMPL-200 (Daftar Karyawan Lengkap), OTHR-171 (Daftar Rekanan Lengkap). Setelah impor Data Nama, angka terbesar di data ikut dipakai.
+const ZAHIR_CODE_FLOOR: Record<string, number> = { CUST: 1092, VNDR: 939, EMPL: 200, OTHR: 171 };
+
+/** ID kontak berikutnya: CUST-/VNDR-/EMPL-<angka>, melanjutkan angka terbesar di data & di Zahir. */
+export async function nextContactCode(db: DB, kind: string) {
+  const prefix = kind === "pemasok" ? "VNDR" : kind === "karyawan" ? "EMPL" : kind === "lainnya" ? "OTHR" : "CUST";
+  const r = await db.get<{ n: number | null }>(sql`select max(cast(substr(code, ${prefix.length + 2}) as integer)) n from fin_contacts where code like ${prefix + "-%"}`);
+  return `${prefix}-${Math.max(Number(r?.n ?? 0), ZAHIR_CODE_FLOOR[prefix] ?? 0) + 1}`;
+}
+
 /* ------------------------------------------------------------ akun */
 
 export async function loadAccounts(db: DB) {

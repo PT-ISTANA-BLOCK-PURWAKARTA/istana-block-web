@@ -8,7 +8,7 @@ import { getDb, schema } from "@/db";
 import { requireModule } from "@/lib/auth";
 import { fingerprints, type StatementLine } from "@/lib/erp/bankStatement";
 import { bookBalance, proposeMatches } from "@/lib/erp/bankRecon";
-import { assertOpen, getFinSettings, guard, journalOps, loadAccounts, nextNumber, runBatch, UserError, type JLine } from "@/lib/erp/server";
+import { assertOpen, getFinSettings, guard, journalOps, loadAccounts, nextCashNumber, runBatch, UserError, type JLine } from "@/lib/erp/server";
 import { isDate } from "@/lib/erp/util";
 
 const BASE = "/akuntansi/kas/rekonsiliasi";
@@ -136,7 +136,8 @@ export async function bookFromBank(bankLineId: string, counterAccountId: string,
     const amount = Math.abs(b.amount);
     const text = (memo.trim() || b.description).slice(0, 500);
     const cashId = crypto.randomUUID();
-    const number = await nextNumber(db, kind === "masuk" ? "KM" : "KK", b.date);
+    // Nomor kas gaya Zahir (CR… kas masuk / CD… kas keluar), sama dengan form Kas Masuk/Keluar.
+    const number = await nextCashNumber(db, kind);
     const jl: JLine[] = kind === "masuk"
       ? [{ accountId: bank.id, debit: amount, memo: text }, { accountId: counter.id, credit: amount, memo: text }]
       : [{ accountId: counter.id, debit: amount, memo: text }, { accountId: bank.id, credit: amount, memo: text }];
