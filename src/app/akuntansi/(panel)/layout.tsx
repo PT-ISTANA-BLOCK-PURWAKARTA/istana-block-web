@@ -62,6 +62,7 @@ const ITEMS: ShellItem[] = [
   { href: "/akuntansi/menu/lainnya", label: "Semua menu Lainnya", group: "Lainnya", icon: "menu" },
   { href: "/akuntansi/gaji", label: "Gaji & slip gaji", group: "Lainnya", icon: "report" },
   { href: "/akuntansi/kasbon", label: "Kasbon karyawan", group: "Lainnya", icon: "cash" },
+  { href: "/akuntansi/tutup-buku", label: "Tutup Buku & Audit", group: "Lainnya", icon: "check" },
   { href: "/akuntansi/pengaturan", label: "Pengaturan", group: "Lainnya", icon: "gear" },
 ];
 

@@ -179,7 +179,7 @@ export async function getFinSettings(db: DB) {
 
 /** Tolak perubahan transaksi pada periode yang sudah ditutup. */
 export function assertOpen(date: string, lockDate: string, label = "Transaksi") {
-  if (lockDate && date <= lockDate) throw new UserError(`${label} bertanggal ${date} berada di periode yang sudah ditutup (s.d. ${lockDate}). Ubah tanggal tutup buku di Pengaturan keuangan bila memang perlu.`);
+  if (lockDate && date <= lockDate) throw new UserError(`${label} bertanggal ${date} berada di periode yang sudah ditutup (s.d. ${lockDate}). Bila memang perlu, periode bisa dibuka kembali lewat menu Tutup Buku oleh pemilik/peran Tutup Buku.`);
 }
 
 export function requireDate(v: unknown, label = "Tanggal") {

@@ -114,6 +114,7 @@ export const HUBS: Hub[] = [
       { label: "Gaji & Slip Gaji", href: "/akuntansi/gaji", icon: "report", color: "blue", w: 2 },
       { label: "Kasbon Karyawan", href: "/akuntansi/kasbon", icon: "cash", color: "orange" },
       { label: "Pengaturan Keuangan", href: "/akuntansi/pengaturan", icon: "gear", color: "navy" },
+      { label: "Tutup Buku & Audit", href: "/akuntansi/tutup-buku", icon: "checkCheck", color: "green", w: 2 },
       { label: "Anggaran", href: "/akuntansi/anggaran", icon: "chart", color: "salmon" },
       { label: "Harta Tetap", href: "/akuntansi/harta-tetap", icon: "factory", color: "cyan" },
       { label: "Akun Saya", href: "/akuntansi/profil", icon: "user", color: "purple" },

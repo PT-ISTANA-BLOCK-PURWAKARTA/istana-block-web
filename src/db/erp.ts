@@ -1839,6 +1839,42 @@ export type Bill = typeof bills.$inferSelect;
 export type Journal = typeof journals.$inferSelect;
 export type JournalLine = typeof journalLines.$inferSelect;
 
+/* ---------------------------------------------------------------- Tutup buku (migrasi 0027) */
+
+/**
+ * Catatan tutup buku per periode (bulan). Kunci transaksi tetap memakai pengaturan fin_lock_date; tabel ini menyimpan
+ * siapa/kapan/alasan, hasil analisa, dan potret angka saat ditutup (untuk audit). Buka kembali tidak menghapus baris:
+ * status menjadi 'dibuka' beserta alasannya; menutup ulang membuat baris baru (versi berikutnya).
+ */
+export const periodCloses = sqliteTable(
+  "fin_period_closes",
+  {
+    id: id(),
+    /** yyyy-mm */
+    period: text("period").notNull(),
+    periodStart: text("period_start").notNull(),
+    periodEnd: text("period_end").notNull(),
+    status: text("status").$type<"ditutup" | "dibuka">().notNull().default("ditutup"),
+    /** Tanggal kunci sebelum ditutup (dipulihkan saat dibuka kembali). */
+    lockBefore: text("lock_before").notNull().default(""),
+    issues: integer("issues").notNull().default(0),
+    warnings: integer("warnings").notNull().default(0),
+    /** Catatan / alasan tetap menutup walau ada masalah. */
+    note: text("note").notNull().default(""),
+    /** Potret JSON: ringkasan, hasil analisa, neraca saldo, stok, umur piutang/hutang. */
+    snapshot: text("snapshot").notNull().default("{}"),
+    closedBy: integer("closed_by"),
+    closedByName: text("closed_by_name").notNull().default(""),
+    closedAt: integer("closed_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+    reopenedBy: integer("reopened_by"),
+    reopenedByName: text("reopened_by_name"),
+    reopenedAt: integer("reopened_at", { mode: "timestamp" }),
+    reopenReason: text("reopen_reason"),
+  },
+  (t) => [index("fin_period_closes_period_idx").on(t.period, t.closedAt)],
+);
+export type PeriodClose = typeof periodCloses.$inferSelect;
+
 /* ---------------------------------------------------------------- Rekonsiliasi bank (migrasi 0019) */
 
 /** Baris mutasi rekening koran (impor BCA/CSV/Excel). amount: + masuk (kredit di bank), − keluar. */

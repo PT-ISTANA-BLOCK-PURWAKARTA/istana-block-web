@@ -8,7 +8,7 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { getDb, schema } from "@/db";
 import { requireModule } from "@/lib/auth";
 import { normName, openingNumber, openingTotal, readOpeningTable, type OpeningKind, type OpeningRow } from "@/lib/erp/openingImport";
-import { chunk, guard, insertMany, loadAccounts, runBatch, UserError, type DB } from "@/lib/erp/server";
+import { assertOpen, chunk, getFinSettings, guard, insertMany, loadAccounts, runBatch, UserError, type DB } from "@/lib/erp/server";
 import { isDate } from "@/lib/erp/util";
 import { logActivity } from "@/lib/ops/activity";
 
@@ -87,6 +87,7 @@ export async function commitOpening(p: Payload & { mapping: Record<string, strin
   const me = await requireModule("keuangan");
   const res = await guard(async () => {
     const db = await getDb();
+    assertOpen(p.asOf, (await getFinSettings(db)).lockDate, "Impor saldo awal");
     const pv = await build(db, p, p.mapping ?? {});
     if (pv.errors.length) throw new UserError(`Perbaiki file dulu: ${pv.errors[0]}${pv.errors.length > 1 ? ` (+${pv.errors.length - 1} lagi)` : ""}`);
     if (!pv.rows.length) throw new UserError("Tidak ada faktur terbuka di file.");
@@ -142,6 +143,7 @@ export async function cancelOpeningBatch(batchId: string): Promise<{ ok?: string
     const db = await getDb();
     const b = await db.query.openingBatches.findFirst({ where: and(eq(schema.openingBatches.id, batchId), isNull(schema.openingBatches.cancelledAt)) });
     if (!b) throw new UserError("Batch tidak ditemukan atau sudah dibatalkan.");
+    assertOpen(b.asOf, (await getFinSettings(db)).lockDate, "Pembatalan impor saldo awal");
     const used = b.kind === "piutang"
       ? await db.get<{ n: number }>(sql`select count(*) n from fin_invoices i where i.opening_batch_id = ${batchId} and (exists (select 1 from fin_receipt_allocations a where a.invoice_id = i.id) or exists (select 1 from fin_returns r where r.invoice_id = i.id))`)
       : await db.get<{ n: number }>(sql`select count(*) n from fin_bills b where b.opening_batch_id = ${batchId} and (exists (select 1 from fin_payment_allocations a where a.bill_id = b.id) or exists (select 1 from fin_returns r where r.bill_id = b.id))`);

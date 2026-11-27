@@ -3,7 +3,8 @@
 import { ActionForm } from "@/components/admin/ActionForm";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { saveFinSettings } from "@/app/akuntansi/actions/master";
-import { DateField } from "@/components/ui";
+import Link from "next/link";
+import { tgl } from "@/lib/erp/util";
 
 export function FinSettingsForm({ values }: { values: Record<string, string> }) {
   return (
@@ -39,11 +40,8 @@ export function FinSettingsForm({ values }: { values: Record<string, string> }) 
       </section>
       <section className="form-section">
         <h2>Tutup buku</h2>
-        <div className="field" style={{ maxWidth: 320 }}>
-          <label htmlFor="fs-lock">Kunci transaksi sampai tanggal <span className="help">kosongkan bila belum</span></label>
-          <DateField id="fs-lock" name="fin_lock_date" defaultValue={values.fin_lock_date} />
-        </div>
-        <p className="small muted">Transaksi pada atau sebelum tanggal ini tidak bisa dibuat, diubah, atau dihapus, termasuk pengiriman dan produksi yang menghasilkan jurnal.</p>
+        <p style={{ margin: 0 }}>Transaksi terkunci s.d. <b>{values.fin_lock_date ? tgl(values.fin_lock_date) : "belum ada"}</b>.</p>
+        <p className="small muted">Transaksi pada atau sebelum tanggal ini tidak bisa dibuat, diubah, atau dihapus, termasuk pengiriman dan produksi yang menghasilkan jurnal. Kunci diubah lewat <Link href="/akuntansi/tutup-buku">Tutup Buku &amp; Audit</Link> (analisa dulu, khusus pemilik &amp; peran Tutup Buku, tercatat di jejak audit).</p>
       </section>
       <div className="form-actions"><SubmitButton>Simpan pengaturan</SubmitButton></div>
     </ActionForm>

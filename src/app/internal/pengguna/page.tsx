@@ -46,11 +46,12 @@ const MATRIX: [string, Partial<Record<Role, Cell>>][] = [
   ["Biaya armada: mencatat pengeluaran mobil (PIC Kendaraan)", { owner: "ya", operasional: "ya", keuangan: "ya", ekspedisi: "ya" }],
   ["Melihat hasil & target produksi", { owner: "ya", operasional: "ya", gudang: "ya", keuangan: "ya", mandor: "ya", qc: "ya", absensi: "ya", qcbeton: "ya" }],
   ["QC Beton: mix desain & uji mutu beton, waktu terbuang", { owner: "ya", operasional: "ya", qcbeton: "ya", manajer_qc: "lihat", pimpinan: "lihat" }],
+  ["Tutup buku & buka kembali periode akuntansi (kunci transaksi)", { owner: "ya", tutup_buku: "ya" }],
   ["Mengelola pengguna & peran", { owner: "ya" }],
 ];
 const HOW: Record<Role, string> = { owner: "email / user", web: "email / user", keuangan: "email / user", operasional: "email / user / HP", gudang: "HP & PIN", sopir: "HP & PIN",
   qc: "HP & PIN / user", mandor: "HP & PIN", satpam: "HP & PIN", manajer_qc: "email / user", pimpinan: "email / user",
-  ekspedisi: "email / user", absensi: "HP & PIN / user", qcbeton: "HP & PIN / user",
+  ekspedisi: "email / user", absensi: "HP & PIN / user", qcbeton: "HP & PIN / user", tutup_buku: "email / user",
 };
 
 export default async function Pengguna() {

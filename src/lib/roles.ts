@@ -1,6 +1,6 @@
 /** Peran pengguna, izin per aksi, dan aplikasi yang boleh dibuka. Dipakai di server dan klien (tanpa import server). */
 
-export const ROLES = ["owner", "web", "keuangan", "operasional", "gudang", "sopir", "qc", "mandor", "satpam", "manajer_qc", "pimpinan", "ekspedisi", "absensi", "qcbeton"] as const;
+export const ROLES = ["owner", "web", "keuangan", "operasional", "gudang", "sopir", "qc", "mandor", "satpam", "manajer_qc", "pimpinan", "ekspedisi", "absensi", "qcbeton", "tutup_buku"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_SHORT: Record<Role, string> = {
@@ -18,6 +18,7 @@ export const ROLE_SHORT: Record<Role, string> = {
   ekspedisi: "PIC Kendaraan",
   absensi: "Absensi",
   qcbeton: "QC Beton",
+  tutup_buku: "Tutup Buku",
 };
 
 /** Penjelasan singkat di halaman pengguna. */
@@ -36,6 +37,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   ekspedisi: "PIC Kendaraan (Ekspedisi): catat biaya armada, lihat armada, sopir, jadwal sopir, Dana & Piutang Cepi",
   absensi: "Absensi: PIC absensi pekerja, lihat hasil produksi & stok",
   qcbeton: "QC Beton: mix desain & uji mutu beton, waktu terbuang, hasil produksi precast, stok opname, kalender, form ISO",
+  tutup_buku: "Tutup Buku: menutup & membuka kembali periode akuntansi (beri hanya ke beberapa orang; gabungkan dengan peran Keuangan)",
 };
 
 /**
@@ -84,12 +86,13 @@ export function needsShift(roles: readonly Role[]) {
  * - lihat_produksi: melihat hasil & target produksi tanpa mengisi (peran absensi app live)
  * - insiden: Lapor Insiden (F-IB-18) dari HP; absensi_pekerja: absensi pekerja harian (PIC absensi & kantor)
  * - qc_beton: halaman QC Beton (mix desain & uji mutu beton precast/genteng, waktu terbuang); pemilik & operasional ikut
+ * - tutup_buku: menutup & membuka kembali periode akuntansi (kunci transaksi). Hanya pemilik & pengguna yang diberi peran Tutup Buku.
  */
 export const PERMS = [
   "web", "keuangan", "lihat_ops", "pesanan", "pengiriman", "muat", "stok", "lacak", "antar",
   "qc", "setujui_qc", "ttd_pimpinan", "uji_pasir", "lihat_uji_pasir", "barang_masuk", "lihat_barang_masuk",
   "nilai_mutu", "nilai_kirim", "nilai_harga", "produksi_lapangan", "kalender", "kalender_kelola", "laporan", "iso", "piket", "selesaikan", "keamanan",
-  "rekap_pelanggan", "opname", "cat_genteng", "spesifikasi_produk", "ttd_sekretaris", "ekspedisi", "lihat_produksi", "qc_beton", "insiden", "absensi_pekerja",
+  "rekap_pelanggan", "opname", "cat_genteng", "spesifikasi_produk", "ttd_sekretaris", "ekspedisi", "lihat_produksi", "qc_beton", "insiden", "absensi_pekerja", "tutup_buku",
 ] as const;
 export type Perm = (typeof PERMS)[number];
 
@@ -108,6 +111,7 @@ const ROLE_PERMS: Record<Role, readonly Perm[]> = {
   ekspedisi: ["lihat_ops", "ekspedisi", "insiden"],
   absensi: ["lihat_ops", "lihat_produksi", "absensi_pekerja"],
   qcbeton: ["lihat_ops", "qc_beton", "insiden", "produksi_lapangan", "lihat_produksi", "opname", "kalender", "iso"],
+  tutup_buku: ["tutup_buku"],
 };
 
 export function permsOf(roles: readonly Role[]): Set<Perm> {

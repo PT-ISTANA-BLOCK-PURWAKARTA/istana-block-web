@@ -9,7 +9,7 @@ import { getDb, schema } from "@/db";
 import { accountGroups, contactKinds, itemKinds, productLines, productionMethods } from "@/db/erp";
 import { requireModule, requirePerm } from "@/lib/auth";
 import { FIN_DEFAULTS, guard, UserError } from "@/lib/erp/server";
-import { isDate, parseQty, parseRupiah } from "@/lib/erp/util";
+import { parseQty, parseRupiah } from "@/lib/erp/util";
 
 const str = (max: number) => z.string().trim().max(max).default("");
 
@@ -200,11 +200,11 @@ export async function saveFinSettings(_prev: FormState, form: FormData): Promise
   await requireModule("keuangan");
   const r = await guard(async () => {
     const vals: Record<string, string> = {};
-    for (const k of Object.keys(FIN_DEFAULTS)) vals[k] = String(form.get(k) ?? "").trim();
+    // fin_lock_date TIDAK diubah di sini: hanya lewat Tutup Buku (izin tutup_buku, tercatat & beralasan).
+    for (const k of Object.keys(FIN_DEFAULTS)) if (k !== "fin_lock_date") vals[k] = String(form.get(k) ?? "").trim();
     const rate = Number(vals.fin_ppn_rate.replace(",", "."));
     if (!Number.isFinite(rate) || rate < 0 || rate > 100) throw new UserError("Tarif PPN harus angka 0–100.");
     vals.fin_ppn_rate = String(rate);
-    if (vals.fin_lock_date && !isDate(vals.fin_lock_date)) throw new UserError("Tanggal tutup buku tidak valid.");
     const term = Number(vals.fin_term_days);
     if (!Number.isInteger(term) || term < 0 || term > 365) throw new UserError("Termin bayar 0–365 hari.");
     const db = await getDb();
