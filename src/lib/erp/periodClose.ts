@@ -12,6 +12,7 @@ import { getFinSettings, loadAccounts, type DB } from "./server";
 import { formatAmount, formatQty, today } from "./util";
 
 const rp = (n: number) => `Rp${formatAmount(Math.round(n))}`;
+const EMPTY_CARD_HINT = "Sampai kartu stok web dipakai, lampirkan berita acara stok opname fisik per akhir bulan beserta nilainya, lalu cocokkan dengan saldo akun ini.";
 const MAX_ROWS = 40;
 /** Detik epoch awal & akhir periode (WIB) untuk kolom bertipe waktu. */
 const wibTs = (day: string, end = false) => Math.floor(Date.parse(`${day}T${end ? "23:59:59" : "00:00:00"}+07:00`) / 1000);
@@ -78,8 +79,8 @@ export async function analyzePeriod(db: DB, period: string): Promise<PeriodAnaly
     cashFlow(db, accounts, from, to),
     aging(db, "piutang", to),
     aging(db, "hutang", to),
-    db.all<{ kind: string; value: number; qty: number }>(sql`
-      select i.kind, coalesce(sum(m.value), 0) value, coalesce(sum(m.qty), 0) qty
+    db.all<{ kind: string; value: number; qty: number; n: number }>(sql`
+      select i.kind, coalesce(sum(m.value), 0) value, coalesce(sum(m.qty), 0) qty, count(*) n
         from inv_stock_moves m join fin_items i on i.id = m.item_id where m.date <= ${to} group by i.kind`),
   ]);
   const glBal = (id: string | null) => {
@@ -89,6 +90,8 @@ export async function analyzePeriod(db: DB, period: string): Promise<PeriodAnaly
     return a && s ? normalBalance(a.group, s.debit, s.credit) : 0;
   };
   const stockValue = (kind: string) => Number(stockByKind.find((s) => s.kind === kind)?.value ?? 0);
+  /** Banyaknya pergerakan di kartu stok web s.d. akhir periode; 0 = kartu stok belum dipakai untuk jenis ini. */
+  const stockMoves = (kind: string) => Number(stockByKind.find((s) => s.kind === kind)?.n ?? 0);
   const summary: PeriodSummary = {
     revenue: pl.revenue, cogs: pl.cogs, gross: pl.gross, opex: pl.opex, net: pl.net,
     assets: bs.assetTotal, liabilities: bs.liabTotal, equity: bs.equityTotal, balanced: bs.balanced,
@@ -250,9 +253,9 @@ export async function analyzePeriod(db: DB, period: string): Promise<PeriodAnaly
     /* ---------------- stok barang jadi */
     run("stok_nilai", "stok", "Nilai stok barang jadi = saldo akun Persediaan Barang Jadi", async () => {
       const diff = summary.glFinished - summary.stockFinished;
-      return Math.abs(diff) < 1000
-        ? { status: "ok", value: `Cocok: ${rp(summary.stockFinished)}.` }
-        : { status: "perhatian", value: `Kartu stok ${rp(summary.stockFinished)} vs akun persediaan ${rp(summary.glFinished)} (selisih ${rp(diff)}).`, hint: "Lakukan stok opname lalu jurnal penyesuaian supaya nilai buku = nilai stok.", href: "/operasional/stok" };
+      if (Math.abs(diff) < 1000) return { status: "ok", value: `Cocok: ${rp(summary.stockFinished)}.` };
+      if (!stockMoves("barang_jadi")) return { status: "perhatian", value: `Kartu stok web belum berisi pergerakan bernilai untuk barang jadi; saldo akun persediaan ${rp(summary.glFinished)} berasal dari jurnal (Zahir).`, hint: EMPTY_CARD_HINT };
+      return { status: "perhatian", value: `Kartu stok ${rp(summary.stockFinished)} vs akun persediaan ${rp(summary.glFinished)} (selisih ${rp(diff)}).`, hint: "Lakukan stok opname lalu jurnal penyesuaian supaya nilai buku = nilai stok.", href: "/operasional/stok" };
     }),
     run("stok_minus", "stok", "Tidak ada stok barang jadi minus", async () => {
       const rows = await negativeStock(db, to, "barang_jadi");
@@ -290,18 +293,34 @@ export async function analyzePeriod(db: DB, period: string): Promise<PeriodAnaly
       return n ? { status: "ok", value: `${n} dokumen opname (terakhir ${r?.last}).` } : { status: "perhatian", value: "Belum ada stok opname di periode ini.", hint: "Auditor biasanya meminta berita acara opname per akhir periode (barang jadi & bahan baku).", href: "/operasional/stok" };
     }),
     run("produksi", "stok", "Hasil produksi periode ini", async () => {
-      const r = await db.get<{ q: number; v: number; n: number }>(sql`
-        select coalesce(sum(m.qty), 0) q, coalesce(sum(m.value), 0) v, count(distinct m.item_id) n from inv_stock_moves m join fin_items i on i.id = m.item_id
-         where m.source = 'produksi' and m.qty > 0 and i.kind = 'barang_jadi' and m.date >= ${from} and m.date <= ${to}`);
-      return { status: "info", value: Number(r?.n ?? 0) ? `${Number(r?.n)} jenis barang jadi diproduksi, nilai ${rp(Number(r?.v ?? 0))}.` : "Tidak ada hasil produksi tercatat di stok." };
+      // Catatan produksi (inv_productions) bisa ada tanpa masuk kartu stok bernilai (inv_stock_moves).
+      const [r, v] = await Promise.all([
+        db.get<{ n: number; posted: number; items: number }>(sql`
+          select count(*) n,
+                 coalesce(sum(case when exists (select 1 from inv_stock_moves m where m.source = 'produksi' and m.source_id = p.id) then 1 else 0 end), 0) posted,
+                 (select count(distinct l.item_id) from inv_production_lines l join inv_productions q on q.id = l.production_id
+                   where l.role = 'hasil' and q.date >= ${from} and q.date <= ${to}) items
+            from inv_productions p where p.date >= ${from} and p.date <= ${to}`),
+        db.get<{ v: number }>(sql`
+          select coalesce(sum(m.value), 0) v from inv_stock_moves m join fin_items i on i.id = m.item_id
+           where m.source = 'produksi' and m.qty > 0 and i.kind = 'barang_jadi' and m.date >= ${from} and m.date <= ${to}`),
+      ]);
+      const n = Number(r?.n ?? 0);
+      const posted = Number(r?.posted ?? 0);
+      if (!n) return { status: "info", value: "Tidak ada catatan produksi di periode ini." };
+      return {
+        status: "info",
+        value: `${n} catatan produksi (${Number(r?.items ?? 0)} jenis barang); ${posted} sudah masuk kartu stok${posted ? ` senilai ${rp(Number(v?.v ?? 0))}` : ""}.`,
+        hint: posted < n ? "Produksi yang belum masuk kartu stok tidak menambah nilai persediaan di buku web; untuk audit, nilai persediaan diambil dari opname fisik dan saldo akun." : undefined,
+      };
     }),
 
     /* ---------------- bahan baku */
     run("bahan_nilai", "bahan_baku", "Nilai stok bahan baku = saldo akun Persediaan Bahan Baku", async () => {
       const diff = summary.glRaw - summary.stockRaw;
-      return Math.abs(diff) < 1000
-        ? { status: "ok", value: `Cocok: ${rp(summary.stockRaw)}.` }
-        : { status: "perhatian", value: `Kartu stok ${rp(summary.stockRaw)} vs akun persediaan bahan ${rp(summary.glRaw)} (selisih ${rp(diff)}).`, hint: "Pastikan pembelian bahan baku memakai barang bertipe Bahan baku, pemakaian produksi tercatat, lalu opname & sesuaikan." };
+      if (Math.abs(diff) < 1000) return { status: "ok", value: `Cocok: ${rp(summary.stockRaw)}.` };
+      if (!stockMoves("bahan_baku")) return { status: "perhatian", value: `Kartu stok web belum berisi pergerakan bernilai untuk bahan baku; saldo akun persediaan bahan ${rp(summary.glRaw)} berasal dari jurnal (Zahir).`, hint: EMPTY_CARD_HINT };
+      return { status: "perhatian", value: `Kartu stok ${rp(summary.stockRaw)} vs akun persediaan bahan ${rp(summary.glRaw)} (selisih ${rp(diff)}).`, hint: "Pastikan pembelian bahan baku memakai barang bertipe Bahan baku, pemakaian produksi tercatat, lalu opname & sesuaikan." };
     }),
     run("bahan_minus", "bahan_baku", "Tidak ada stok bahan baku minus", async () => {
       const rows = await negativeStock(db, to, "bahan_baku");
@@ -324,10 +343,18 @@ export async function analyzePeriod(db: DB, period: string): Promise<PeriodAnaly
       };
     }),
     run("bahan_pakai", "bahan_baku", "Pemakaian bahan baku untuk produksi", async () => {
-      const r = await db.get<{ v: number; n: number }>(sql`
-        select coalesce(sum(-m.value), 0) v, count(distinct m.item_id) n from inv_stock_moves m join fin_items i on i.id = m.item_id
-         where m.qty < 0 and i.kind = 'bahan_baku' and m.source in ('produksi', 'konversi') and m.date >= ${from} and m.date <= ${to}`);
-      return { status: "info", value: Number(r?.n ?? 0) ? `${Number(r?.n)} jenis bahan terpakai, nilai ${rp(Number(r?.v ?? 0))}.` : "Tidak ada pemakaian bahan baku tercatat di stok." };
+      const [r, l] = await Promise.all([
+        db.get<{ v: number; n: number }>(sql`
+          select coalesce(sum(-m.value), 0) v, count(distinct m.item_id) n from inv_stock_moves m join fin_items i on i.id = m.item_id
+           where m.qty < 0 and i.kind = 'bahan_baku' and m.source in ('produksi', 'konversi') and m.date >= ${from} and m.date <= ${to}`),
+        db.get<{ n: number; items: number }>(sql`
+          select count(*) n, count(distinct l.item_id) items from inv_production_lines l join inv_productions p on p.id = l.production_id
+           where l.role = 'bahan' and p.date >= ${from} and p.date <= ${to}`),
+      ]);
+      const inCard = Number(r?.n ?? 0);
+      const lines = Number(l?.n ?? 0);
+      if (inCard) return { status: "info", value: `${inCard} jenis bahan terpakai di kartu stok, nilai ${rp(Number(r?.v ?? 0))}.` };
+      return { status: "info", value: lines ? `${lines} baris pemakaian bahan (${Number(l?.items ?? 0)} jenis) di catatan produksi, belum masuk kartu stok bernilai.` : "Tidak ada pemakaian bahan baku tercatat." };
     }),
 
     /* ---------------- dokumen & pencatatan */
