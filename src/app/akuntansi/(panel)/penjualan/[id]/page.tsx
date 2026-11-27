@@ -37,7 +37,7 @@ export default async function FakturDetail({ params, searchParams }: { params: P
       <BackLink href="/akuntansi/penjualan">Faktur penjualan</BackLink>
       <PageHead title={inv.number} sub={<Status s={status} />}>
         <Link href={`/akuntansi/cetak/faktur/${inv.id}`} target="_blank" className="btn btn-ghost btn-sm">Cetak</Link>
-        <Link href={`/akuntansi/penjualan/${inv.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>
+        {inv.openingBatchId ? <Link href="/akuntansi/penjualan/impor-saldo-piutang" className="badge badge-warn">Saldo awal Zahir</Link> : <Link href={`/akuntansi/penjualan/${inv.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>}
         {inv.paid < inv.total && <Link href={`/akuntansi/penerimaan/baru?kontak=${inv.contactId}&faktur=${inv.id}`} className="btn btn-primary btn-sm">+ Terima pembayaran</Link>}
       </PageHead>
       <Ok ok={ok} />

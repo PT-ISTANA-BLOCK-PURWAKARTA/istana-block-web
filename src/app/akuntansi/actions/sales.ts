@@ -43,6 +43,7 @@ export async function saveInvoice(_prev: FormState, form: FormData): Promise<For
     const id = String(form.get("id") ?? "");
     const existing = id ? await db.query.invoices.findFirst({ where: eq(schema.invoices.id, id) }) : undefined;
     if (id && !existing) throw new UserError("Faktur tidak ditemukan.");
+    if (existing?.openingBatchId) throw new UserError("Faktur saldo awal Zahir tidak bisa diubah di sini. Batalkan batch impornya lalu impor ulang.");
     const fin = await getFinSettings(db);
     const date = requireDate(form.get("date"), "Tanggal faktur");
     assertOpen(date, fin.lockDate, "Faktur");
@@ -163,6 +164,7 @@ export async function deleteInvoice(id: string): Promise<FormState> {
     const db = await getDb();
     const inv = await db.query.invoices.findFirst({ where: eq(schema.invoices.id, id) });
     if (!inv) return { ok: "" };
+    if (inv.openingBatchId) throw new UserError("Faktur saldo awal Zahir dihapus lewat Impor Saldo Awal Piutang → Batalkan impor.");
     const fin = await getFinSettings(db);
     assertOpen(inv.date, fin.lockDate, "Faktur");
     const alloc = await db.select().from(schema.receiptAllocations).where(eq(schema.receiptAllocations.invoiceId, id)).limit(1);

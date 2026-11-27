@@ -176,7 +176,7 @@ export default async function KeuanganDashboard({ searchParams }: { searchParams
               {ar.totals.map((v, i) => <div key={i} className="zd-bar"><span>{agingLabels[i]}</span><i style={{ width: `${(v / agingMax) * 100}%`, background: i >= 3 ? "#dc2626" : i >= 1 ? "#f59e0b" : "#1565c0" }} /><b className="small">{formatAmount(v)}</b></div>)}
             </div>
           ) : (
-            <p className="zd-empty">Belum ada faktur penjualan terbuka di aplikasi ini. Piutang dari Zahir masih berupa saldo total ({rp(at(bs.piutang, li))}); rincian per faktur menyusul saat impor posisi 30 November.</p>
+            <p className="zd-empty">Belum ada faktur penjualan terbuka di aplikasi ini. Piutang dari Zahir masih berupa saldo total ({rp(at(bs.piutang, li))}); rincian per faktur diimpor di <Link href="/akuntansi/penjualan/impor-saldo-piutang">Impor Saldo Awal Piutang</Link>.</p>
           )}
         </section>
         <section className="zd-card">

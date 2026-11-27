@@ -43,6 +43,7 @@ export async function saveBill(_prev: FormState, form: FormData): Promise<FormSt
     const id = String(form.get("id") ?? "");
     const existing = id ? await db.query.bills.findFirst({ where: eq(schema.bills.id, id) }) : undefined;
     if (id && !existing) throw new UserError("Faktur pembelian tidak ditemukan.");
+    if (existing?.openingBatchId) throw new UserError("Faktur saldo awal Zahir tidak bisa diubah di sini. Batalkan batch impornya lalu impor ulang.");
     const fin = await getFinSettings(db);
     const date = requireDate(form.get("date"), "Tanggal");
     assertOpen(date, fin.lockDate, "Faktur pembelian");
@@ -151,6 +152,7 @@ export async function deleteBill(id: string): Promise<FormState> {
     const db = await getDb();
     const b = await db.query.bills.findFirst({ where: eq(schema.bills.id, id) });
     if (!b) return { ok: "" };
+    if (b.openingBatchId) throw new UserError("Faktur saldo awal Zahir dihapus lewat Impor Saldo Awal Hutang → Batalkan impor.");
     const fin = await getFinSettings(db);
     assertOpen(b.date, fin.lockDate, "Faktur pembelian");
     const alloc = await db.select().from(schema.paymentAllocations).where(eq(schema.paymentAllocations.billId, id)).limit(1);

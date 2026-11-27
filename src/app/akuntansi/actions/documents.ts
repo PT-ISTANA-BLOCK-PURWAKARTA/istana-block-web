@@ -151,7 +151,7 @@ export async function saveSalesInvoice(_prev: FormState, form: FormData): Promis
     }
     if (id) {
       await db.update(schema.salesInvoices).set({ ...values, ...(custom ? { number: custom } : {}) }).where(eq(schema.salesInvoices.id, id));
-      await logActivity(me, { action: "invoice.ubah", label: "Mengubah invoice", summary: custom ?? id });
+      await logActivity(me, { action: "keuangan.invoice.ubah", label: "Mengubah invoice", summary: custom ?? id });
       return { id };
     }
     const m = await db.get<{ s: number }>(sql`select coalesce(max(seq), 0) s from ops_sales_invoices where issuer = ${issuer}`);
@@ -159,7 +159,7 @@ export async function saveSalesInvoice(_prev: FormState, form: FormData): Promis
     const newId = crypto.randomUUID();
     const number = custom ?? invoiceNumber(seq, issuer);
     await db.insert(schema.salesInvoices).values({ id: newId, issuer, seq: custom ? 0 : seq, number, shipments: [], status: "draft", ...values, createdBy: me.id, createdByName: me.name });
-    await logActivity(me, { action: "invoice.buat", label: "Membuat invoice", summary: number });
+    await logActivity(me, { action: "keuangan.invoice.buat", label: "Membuat invoice", summary: number });
     return { id: newId };
   });
   if ("error" in res) return res;
@@ -183,7 +183,7 @@ export async function setSalesInvoiceStatus(id: string, status: string): Promise
         ? { paidAmount: null, paidAt: null, paidByName: null, paymentMethod: null, paymentNote: null }
         : {};
     await db.update(schema.salesInvoices).set({ status, ...payment, updatedAt: new Date() }).where(eq(schema.salesInvoices.id, id));
-    await logActivity(me, { action: "invoice.status", label: "Mengubah status invoice", summary: `${inv.number} → ${status}` });
+    await logActivity(me, { action: "keuangan.invoice.status", label: "Mengubah status invoice", summary: `${inv.number} → ${status}` });
     return { ok: "Status diubah." };
   });
   revalidatePath(`${invoiceBase(issuer)}/${id}`);
@@ -207,7 +207,7 @@ export async function recordSalesInvoicePayment(_prev: FormState, form: FormData
       paidAmount: amount || null, paidAt: amount ? wibMidnight(day) : null, paymentMethod: amount ? String(form.get("method") ?? "") || null : null,
       paymentNote: amount ? String(form.get("note") ?? "").trim() || null : null, paidByName: amount ? me.name : null, status, updatedAt: new Date(),
     }).where(eq(schema.salesInvoices.id, id));
-    await logActivity(me, { action: "invoice.bayar", label: "Mencatat pembayaran invoice", summary: `${inv.number} · Rp ${amount.toLocaleString("id-ID")}` });
+    await logActivity(me, { action: "keuangan.invoice.bayar", label: "Mencatat pembayaran invoice", summary: `${inv.number} · Rp ${amount.toLocaleString("id-ID")}` });
     return { ok: true };
   });
   if ("error" in res) return res;
@@ -224,7 +224,7 @@ export async function deleteSalesInvoice(id: string): Promise<{ ok?: string; err
     if (!inv) return { ok: "" };
     if (inv.status !== "draft") throw new UserError("Hanya invoice berstatus Draft yang bisa dihapus — ubah status ke Batal bila salah.");
     await db.delete(schema.salesInvoices).where(eq(schema.salesInvoices.id, id));
-    await logActivity(me, { action: "invoice.hapus", label: "Menghapus invoice", summary: inv.number });
+    await logActivity(me, { action: "keuangan.invoice.hapus", label: "Menghapus invoice", summary: inv.number });
     return { ok: "deleted" };
   });
   if ("error" in res) return res;
@@ -320,7 +320,7 @@ export async function createDeliveryFromInvoice(_prev: FormState, form: FormData
       db.update(schema.salesInvoices).set({ orderId: order!.id, orderPoNumber: order!.number, shipments, updatedAt: new Date() }).where(eq(schema.salesInvoices.id, inv.id)),
       notificationOp(db, "umum", deliveryId, "Surat jalan baru perlu ditugaskan sopir", `${sjNumber} · ${inv.customerName} · invoice ${inv.number}`),
     ]);
-    await logActivity(me, { action: "pengiriman.dari_invoice", label: "Membuat surat jalan dari invoice", summary: `${sjNumber} dari ${inv.number}` });
+    await logActivity(me, { action: "keuangan.surat_jalan_dari_invoice", label: "Membuat surat jalan dari invoice", summary: `${sjNumber} dari ${inv.number}` });
     return { id: deliveryId, number: sjNumber };
   });
   if ("error" in res) return res;

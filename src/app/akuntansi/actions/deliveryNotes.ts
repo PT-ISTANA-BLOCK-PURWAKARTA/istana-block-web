@@ -51,7 +51,7 @@ export async function saveDeliveryNote(_prev: FormState, form: FormData): Promis
     }
     if (id) {
       await db.update(schema.deliveryNotes).set({ ...values, ...(custom ? { number: custom } : {}) }).where(eq(schema.deliveryNotes.id, id));
-      await logActivity(me, { action: "surat_jalan.ubah", label: "Mengubah surat jalan manual", summary: custom ?? id });
+      await logActivity(me, { action: "keuangan.surat_jalan.ubah", label: "Mengubah surat jalan manual", summary: custom ?? id });
       return { id };
     }
     const m = await db.get<{ s: number }>(sql`select coalesce(max(seq), 0) s from ops_delivery_notes where issuer = ${issuer}`);
@@ -59,7 +59,7 @@ export async function saveDeliveryNote(_prev: FormState, form: FormData): Promis
     const newId = crypto.randomUUID();
     const number = custom ?? deliveryNoteNumber(seq, issuer);
     await db.insert(schema.deliveryNotes).values({ id: newId, issuer, seq: custom ? 0 : seq, number, ...values, createdBy: me.id, createdByName: me.name });
-    await logActivity(me, { action: "surat_jalan.buat", label: "Membuat surat jalan manual", summary: number });
+    await logActivity(me, { action: "keuangan.surat_jalan.buat", label: "Membuat surat jalan manual", summary: number });
     return { id: newId };
   });
   if ("error" in res) return res;
@@ -74,7 +74,7 @@ export async function deleteDeliveryNote(id: string): Promise<{ ok?: string; err
     const n = await db.query.deliveryNotes.findFirst({ where: eq(schema.deliveryNotes.id, id) });
     if (!n) return { ok: "" };
     await db.delete(schema.deliveryNotes).where(eq(schema.deliveryNotes.id, id));
-    await logActivity(me, { action: "surat_jalan.hapus", label: "Menghapus surat jalan manual", summary: n.number });
+    await logActivity(me, { action: "keuangan.surat_jalan.hapus", label: "Menghapus surat jalan manual", summary: n.number });
     revalidatePath(pathOf(n.issuer).split("?")[0]);
     return { ok: `Surat jalan ${n.number} dihapus.` };
   });

@@ -452,6 +452,9 @@ export const invoices = sqliteTable(
     paid: integer("paid").notNull().default(0),
     note: text("note").notNull().default(""),
     void: integer("void", { mode: "boolean" }).notNull().default(false),
+    /** Faktur saldo awal hasil impor Zahir (tanpa jurnal; saldo sudah di buku besar) dan nomor asli Zahir. */
+    openingBatchId: text("opening_batch_id"),
+    extRef: text("ext_ref"),
     createdBy: createdBy(),
     ...created,
   },
@@ -524,6 +527,9 @@ export const bills = sqliteTable(
     paid: integer("paid").notNull().default(0),
     note: text("note").notNull().default(""),
     void: integer("void", { mode: "boolean" }).notNull().default(false),
+    /** Faktur saldo awal hasil impor Zahir (tanpa jurnal; saldo sudah di buku besar) dan nomor asli Zahir. */
+    openingBatchId: text("opening_batch_id"),
+    extRef: text("ext_ref"),
     createdBy: createdBy(),
     ...created,
   },
@@ -2096,3 +2102,21 @@ export const purchaseOrderLines = sqliteTable(
   },
   (t) => [index("fin_pol_order_idx").on(t.orderId)],
 );
+
+/** Batch impor saldo awal piutang/hutang per faktur dari Zahir (bisa dibatalkan per batch). */
+export const openingBatches = sqliteTable("fin_opening_batches", {
+  id: id(),
+  kind: text("kind").$type<"piutang" | "hutang">().notNull(),
+  asOf: text("as_of").notNull(),
+  fileName: text("file_name").notNull().default(""),
+  rowCount: integer("row_count").notNull().default(0),
+  total: integer("total").notNull().default(0),
+  glBalance: integer("gl_balance").notNull().default(0),
+  difference: integer("difference").notNull().default(0),
+  reason: text("reason").notNull().default(""),
+  createdBy: createdBy(),
+  createdByName: text("created_by_name").notNull().default(""),
+  cancelledAt: integer("cancelled_at", { mode: "timestamp" }),
+  cancelledByName: text("cancelled_by_name"),
+  ...created,
+});

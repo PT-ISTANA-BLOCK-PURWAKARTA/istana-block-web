@@ -34,7 +34,7 @@ export default async function PembelianDetail({ params, searchParams }: { params
     <>
       <BackLink href="/akuntansi/pembelian">Faktur pembelian</BackLink>
       <PageHead title={b.number} sub={<Status s={payStatus(b)} />}>
-        <Link href={`/akuntansi/pembelian/${b.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>
+        {b.openingBatchId ? <Link href="/akuntansi/pembelian/impor-saldo-hutang" className="badge badge-warn">Saldo awal Zahir</Link> : <Link href={`/akuntansi/pembelian/${b.id}/ubah`} className="btn btn-ghost btn-sm">Ubah</Link>}
         {b.paid < b.total && <Link href={`/akuntansi/pembayaran/baru?kontak=${b.contactId}&tagihan=${b.id}`} className="btn btn-primary btn-sm">+ Bayar</Link>}
       </PageHead>
       <Ok ok={ok} />
