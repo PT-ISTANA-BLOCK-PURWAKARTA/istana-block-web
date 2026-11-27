@@ -11,7 +11,9 @@ const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI"
 export const purchaseLetterNumber = (seq: number, date: string) => `${String(seq).padStart(3, "0")}/SP-IBP/${ROMAN[Number(date.slice(5, 7)) - 1]}/${date.slice(0, 4)}`;
 
 /** Surat pesanan hanya dibuat kantor (pemilik / operasional). */
-export const canPurchaseLetters = (roles: readonly Role[]) => roles.includes("owner") || roles.includes("operasional");
+/** Membuat / mengubah surat pesanan: Keuangan (dan pemilik). Operasional hanya melihat & mencetak. */
+export const canPurchaseLetters = (roles: readonly Role[]) => roles.includes("owner") || roles.includes("keuangan");
+export const canViewPurchaseLetters = (roles: readonly Role[]) => canPurchaseLetters(roles) || roles.includes("operasional");
 
 export async function nextPurchaseLetterNumber(db: DB, date: string) {
   const t = schema.purchaseLetters;

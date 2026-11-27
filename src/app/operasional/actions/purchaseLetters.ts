@@ -6,13 +6,13 @@ import { eq } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
 import type { PurchaseLetterItem } from "@/db/erp";
-import { requirePerm } from "@/lib/auth";
+import { requireModule } from "@/lib/auth";
 import { guard, UserError } from "@/lib/erp/server";
 import { isDate } from "@/lib/erp/util";
 import { logActivity } from "@/lib/ops/activity";
 import { canPurchaseLetters, nextPurchaseLetterNumber } from "@/lib/ops/purchaseLetters";
 
-const BASE = "/operasional/surat-pesanan";
+const BASE = "/akuntansi/dokumen/surat-pesanan";
 const txt = (form: FormData, key: string, max = 300) => {
   const v = String(form.get(key) ?? "").trim();
   return v ? v.slice(0, max) : null;
@@ -24,8 +24,8 @@ const amount = (v: unknown) => {
 };
 
 async function requireOffice() {
-  const me = await requirePerm("iso", "pesanan");
-  if (!canPurchaseLetters(me.roles)) throw new UserError("Surat pesanan hanya dibuat kantor.");
+  const me = await requireModule("keuangan");
+  if (!canPurchaseLetters(me.roles)) throw new UserError("Surat pesanan hanya dibuat Keuangan.");
   return me;
 }
 

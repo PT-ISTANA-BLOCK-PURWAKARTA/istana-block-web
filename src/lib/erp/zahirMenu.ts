@@ -45,10 +45,10 @@ export const HUBS: Hub[] = [
     title: "Penjualan",
     sub: "Dari penawaran harga sampai pembayaran piutang.",
     tiles: [
-      { label: "Penawaran Harga", href: "/akuntansi/ops/penawaran", icon: "mail", color: "blue" },
+      { label: "Penawaran Harga", href: "/akuntansi/dokumen/penawaran", icon: "mail", color: "blue" },
       { label: "Order Penjualan", href: "/akuntansi/ops/order", icon: "clipboard", color: "navy" },
-      { label: "Pengiriman Barang (Penjualan)", href: "/akuntansi/ops/pengiriman", icon: "truck", color: "red", w: 2 },
-      { label: "Invoice Penjualan (Operasional)", href: "/akuntansi/ops/invoice", icon: "doc", color: "orange" },
+      { label: "Surat Jalan (Pengiriman Barang)", href: "/akuntansi/dokumen/surat-jalan", icon: "truck", color: "red", w: 2 },
+      { label: "Invoice (Surat Tagihan)", href: "/akuntansi/dokumen/invoice", icon: "doc", color: "orange" },
       { label: "Invoice Penjualan", href: "/akuntansi/penjualan", icon: "invoice", color: "lime", w: 2 },
       { label: "Piutang Usaha", href: "/akuntansi/laporan/piutang", icon: "book", color: "crimson" },
       { label: "Pembayaran Piutang Usaha", href: "/akuntansi/penerimaan", icon: "receive", color: "purple" },
@@ -65,6 +65,7 @@ export const HUBS: Hub[] = [
     tiles: [
       { label: "Permintaan Penawaran", href: "/akuntansi/pesanan-pembelian?jenis=rfq", icon: "mail", color: "blue" },
       { label: "Pesanan Pembelian", href: "/akuntansi/pesanan-pembelian", icon: "clipboard", color: "navy" },
+      { label: "Surat Pesanan Barang", href: "/akuntansi/dokumen/surat-pesanan", icon: "mail", color: "orange" },
       { label: "Penerimaan Barang Pembelian", href: "/akuntansi/ops/barang-masuk", icon: "truck", color: "navy" },
       { label: "Invoice Pembelian", href: "/akuntansi/pembelian", icon: "cart", color: "lime", w: 2 },
       { label: "Hutang Usaha", href: "/akuntansi/laporan/hutang", icon: "book", color: "crimson" },

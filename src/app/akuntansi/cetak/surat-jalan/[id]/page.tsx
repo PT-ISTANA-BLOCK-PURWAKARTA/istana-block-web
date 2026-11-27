@@ -1,60 +1,47 @@
+// Cetak surat jalan dari invoice (pengiriman ops_deliveries) format Zahir: Lembar Asli + Copy, tanpa harga.
+import { eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
-import { PrintDoc, Sign } from "@/components/erp/PrintDoc";
+import { SuratJalanSheet } from "@/components/erp/SuratJalanSheet";
 import { getDb, schema } from "@/db";
-import { deliveryItems } from "@/lib/erp/ops";
 import { requireModule } from "@/lib/auth";
-import { formatQty, tglPanjang } from "@/lib/erp/util";
+import { kopOf } from "@/lib/erp/deliveryNote";
+import { deliveryItems } from "@/lib/erp/ops";
+import { imageUrl } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
 
 export const metadata = { title: "Cetak surat jalan", robots: { index: false } };
+export const dynamic = "force-dynamic";
 
 export default async function CetakSuratJalan({ params }: { params: Promise<{ id: string }> }) {
-  await requireModule("keuangan");
+  const me = await requireModule("keuangan");
   const { id } = await params;
   const db = await getDb();
   const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, id) });
   if (!d) notFound();
   const order = await db.query.orders.findFirst({ where: eq(schema.orders.id, d.orderId) });
-  const [site, contact, vehicle, driver, items] = await Promise.all([
+  const [site, contact, vehicle, driver, items, inv] = await Promise.all([
     getSettings(),
     order ? db.query.contacts.findFirst({ where: eq(schema.contacts.id, order.contactId) }) : undefined,
     d.vehicleId ? db.query.vehicles.findFirst({ where: eq(schema.vehicles.id, d.vehicleId) }) : undefined,
     d.driverId ? db.query.drivers.findFirst({ where: eq(schema.drivers.id, d.driverId) }) : undefined,
     deliveryItems(db, [id]),
+    db.get<{ number: string; issuer: string; status: string; paid_amount: number | null; payment_method: string | null; signer_id: number | null; signer_name: string | null }>(sql`select number, issuer, status, paid_amount, payment_method, signer_id, signer_name from ops_sales_invoices where order_id = ${d.orderId} limit 1`),
   ]);
-  const lines = items.get(id) ?? [];
+  const signer = inv?.signer_id ? await db.query.users.findFirst({ where: eq(schema.users.id, inv.signer_id) }) : undefined;
+  const terms = !inv ? null : !inv.paid_amount ? "Belum bayar" : /tunai/i.test(inv.payment_method ?? "") ? "Cash/Tunai" : /transfer/i.test(inv.payment_method ?? "") ? "Transfer" : inv.status === "lunas" ? "Lunas" : "DP";
   return (
-    <PrintDoc site={site} title="SURAT JALAN" subtitle={d.number} back={`/akuntansi/dokumen/surat-jalan/${d.id}`}>
-      {d.status === "batal" && <p className="print-note" style={{ borderColor: "var(--bahaya)", color: "var(--bahaya)", fontWeight: 700 }}>DIBATALKAN — dokumen ini tidak berlaku.</p>}
-      <section className="print-meta">
-        <div>
-          <span className="pm-label">Kirim ke</span>
-          <b>{contact?.company || contact?.name}</b>
-          {contact?.company && contact.name !== contact.company && <div>u.p. {contact.name}</div>}
-          {order?.project && <div>Proyek: {order.project}</div>}
-          <div className="pre">{order?.address || contact?.address}</div>
-          {order?.siteContact ? <div>Kontak lokasi: {order.siteContact}</div> : contact?.phone && <div>Telp. {contact.phone}</div>}
-        </div>
-        <dl>
-          <dt>Tanggal</dt><dd>{tglPanjang(d.date)}</dd>
-          <dt>No. pesanan</dt><dd>{order?.number}</dd>
-          {order?.customerRef && (<><dt>No. PO pelanggan</dt><dd>{order.customerRef}</dd></>)}
-          <dt>Kendaraan</dt><dd>{vehicle ? `${vehicle.plate}${vehicle.name ? ` · ${vehicle.name}` : ""}` : "………………"}</dd>
-          <dt>Sopir</dt><dd>{driver?.name ?? "………………"}</dd>
-        </dl>
-      </section>
-      <table className="print-lines">
-        <thead><tr><th style={{ width: 32 }}>No</th><th>Nama barang</th><th className="num">Qty</th><th>Satuan</th><th>Keterangan</th></tr></thead>
-        <tbody>
-          {lines.map((l, i) => (
-            <tr key={i}><td>{i + 1}</td><td>{l.name}</td><td className="num"><b>{formatQty(l.qty)}</b></td><td>{l.unit}</td><td /></tr>
-          ))}
-        </tbody>
-      </table>
-      {(d.note || order?.note) && <p className="print-note pre">{[d.note, order?.note].filter(Boolean).join("\n")}</p>}
-      <p className="small" style={{ fontSize: 12, color: "#444" }}>Barang telah diterima dalam keadaan baik dan jumlah yang sesuai. Mohon periksa sebelum menandatangani.</p>
-      <Sign labels={["Hormat kami,", "Sopir,", "Penerima,"]} />
-    </PrintDoc>
+    <SuratJalanSheet
+      kop={kopOf(inv?.issuer ?? "ib", site)}
+      back={`/akuntansi/dokumen/surat-jalan/${d.id}`}
+      printedBy={me.name}
+      data={{
+        issuer: inv?.issuer ?? "ib", number: d.number, poNumber: order?.customerRef || order?.number || null, date: d.date, terms,
+        reference: inv ? { label: "No Faktur", value: inv.number } : null,
+        recipient: [contact?.company || contact?.name, order?.siteContact || contact?.phone, order?.address || contact?.address],
+        note: [d.status === "batal" ? "DIBATALKAN — dokumen ini tidak berlaku." : null, order ? `PO kirim: ${order.number}` : null, d.note || null].filter(Boolean).join("\n"),
+        lines: (items.get(id) ?? []).map((l) => ({ quantity: l.qty, unit: l.unit, name: l.name })),
+        driverName: driver?.name ?? null, plateNumber: vehicle?.plate ?? null, signerName: inv?.signer_name ?? null, signatureUrl: imageUrl(signer?.signatureKey), isInternal: order?.isInternal, paid: inv?.status === "lunas",
+      }}
+    />
   );
 }

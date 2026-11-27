@@ -77,7 +77,7 @@ export default async function DaftarSuratJalan({ searchParams }: { searchParams:
           <table>
             <thead><tr><th>Nomor</th><th>Tanggal</th><th>Pelanggan</th><th>No. PO</th><th>Sopir / plat</th><th>Catatan</th></tr></thead>
             <tbody>
-              {notes.map((n) => <tr key={n.id}><td>{n.number}</td><td>{n.note_date}</td><td>{n.customer_name}</td><td>{n.po_number || "-"}</td><td>{[n.driver_name, n.plate].filter(Boolean).join(" · ") || "-"}</td><td>{n.pickup ? "diambil sendiri" : n.issuer === "polos" ? "tanpa kop" : "-"}</td></tr>)}
+              {notes.map((n) => <tr key={n.id}><td><Link href={`/akuntansi/cetak/surat-jalan-manual/${n.id}`}>{n.number}</Link></td><td>{n.note_date}</td><td>{n.customer_name}</td><td>{n.po_number || "-"}</td><td>{[n.driver_name, n.plate].filter(Boolean).join(" · ") || "-"}</td><td>{n.pickup ? "diambil sendiri" : n.issuer === "polos" ? "tanpa kop" : "-"}</td></tr>)}
               {!notes.length && <tr><td colSpan={6} className="muted">Tidak ada surat jalan manual.</td></tr>}
             </tbody>
           </table>

@@ -17,6 +17,7 @@ export function SalesInvoiceForm({ initial, signers, products, nextNumber, issue
   const [f, setF] = useState(initial);
   const set = (patch: Partial<InvoiceFormValue>) => setF((x) => ({ ...x, ...patch }));
   const setItem = (i: number, patch: Partial<InvoiceFormValue["items"][number]>) => set({ items: f.items.map((it, j) => (j === i ? { ...it, ...patch } : it)) });
+  const fleet = f.issuer === "eib";
   const t = invoiceTotals(f.items.map((i) => ({ name: i.name, unit: i.unit, quantity: num(i.quantity) ?? 0, price: num(i.price) ?? 0 })), num(f.ppnPercent) ?? 0, f.dpMode === "persen" ? num(f.downPaymentPercent) : null, f.dpMode === "nominal" ? num(f.downPaymentAmount) : null);
   const field = (label: string, key: keyof InvoiceFormValue, placeholder?: string) => (
     <div className="field"><label htmlFor={`i-${key}`}>{label}</label><input id={`i-${key}`} value={String(f[key] ?? "")} onChange={(e) => set({ [key]: e.target.value } as Partial<InvoiceFormValue>)} placeholder={placeholder} /></div>
@@ -24,7 +25,7 @@ export function SalesInvoiceForm({ initial, signers, products, nextNumber, issue
   return (
     <ActionForm action={saveSalesInvoice} className="form-section">
       {f.id && <input type="hidden" name="id" value={f.id} />}
-      {(["number", "issuer", "invoiceDate", "quotationId", "customerName", "customerAddress", "customerPhone", "poNumber", "ppnPercent", "dpMode", "downPaymentPercent", "downPaymentAmount", "note", "bankName", "bankAccount", "signerId", "signerName"] as const).map((k) => <input key={k} type="hidden" name={k} value={String(f[k] ?? "")} />)}
+      {(["number", "issuer", "invoiceDate", "quotationId", "customerName", "customerAddress", "customerPhone", "poNumber", "ppnPercent", "dpMode", "downPaymentPercent", "downPaymentAmount", "note", "bankName", "bankAccount", "signerId", "signerName", "route", "shipDate"] as const).map((k) => <input key={k} type="hidden" name={k} value={String(f[k] ?? "")} />)}
       <input type="hidden" name="items" value={JSON.stringify(f.items)} />
       <div className="form-grid">
         <div className="field"><label htmlFor="i-iss">Penerbit</label>
@@ -36,20 +37,25 @@ export function SalesInvoiceForm({ initial, signers, products, nextNumber, issue
         <div className="field"><label htmlFor="i-addr">Alamat</label><textarea id="i-addr" rows={2} value={f.customerAddress} onChange={(e) => set({ customerAddress: e.target.value })} /></div>
         {field("No. telp", "customerPhone")}
         {field("No. PO pelanggan", "poNumber")}
+        {fleet && field("Rute", "route", "mis. Purwakarta – Bekasi")}
+        {fleet && <div className="field"><label htmlFor="i-ship">Tanggal kirim</label><input id="i-ship" type="date" value={f.shipDate ?? ""} onChange={(e) => set({ shipDate: e.target.value })} /></div>}
       </div>
 
       <h3 className="form-sub">Barang</h3>
       <datalist id="i-products">{products.map((p) => <option key={p} value={p} />)}</datalist>
       <div className="admin-table">
         <table>
-          <thead><tr><th style={{ width: 28 }}>No</th><th>Nama barang</th><th style={{ width: 100 }}>Banyaknya</th><th style={{ width: 80 }}>Satuan</th><th style={{ width: 140 }}>Harga satuan (Rp)</th><th className="num">Jumlah</th><th /></tr></thead>
+          <thead><tr><th style={{ width: 28 }}>No</th>{fleet && <th style={{ width: 120 }}>No. polisi</th>}{fleet && <th style={{ width: 120 }}>Sopir</th>}<th>{fleet ? "Uraian jasa (mis. Ongkos kirim Purwakarta–Bekasi)" : "Nama barang"}</th>{fleet && <th>Barang dibawa / qty</th>}<th style={{ width: 100 }}>Banyaknya</th><th style={{ width: 80 }}>Satuan</th><th style={{ width: 140 }}>Harga satuan (Rp)</th><th className="num">Jumlah</th><th /></tr></thead>
           <tbody>
             {f.items.map((it, i) => {
               const q = num(it.quantity), p = num(it.price);
               return (
                 <tr key={i}>
                   <td>{i + 1}</td>
+                  {fleet && <td><input value={it.plateNumber ?? ""} onChange={(e) => setItem(i, { plateNumber: e.target.value })} aria-label="No. polisi" /></td>}
+                  {fleet && <td><input value={it.driverName ?? ""} onChange={(e) => setItem(i, { driverName: e.target.value })} aria-label="Sopir" /></td>}
                   <td><input list="i-products" value={it.name} onChange={(e) => setItem(i, { name: e.target.value })} aria-label="Nama barang" style={{ minWidth: 220 }} /></td>
+                  {fleet && <td><input value={it.cargo ?? ""} onChange={(e) => setItem(i, { cargo: e.target.value })} aria-label="Barang dibawa" placeholder="U-Ditch 40×60 · 20 pcs" /></td>}
                   <td><input inputMode="decimal" value={it.quantity} onChange={(e) => setItem(i, { quantity: e.target.value })} aria-label="Banyaknya" /></td>
                   <td><input value={it.unit} onChange={(e) => setItem(i, { unit: e.target.value })} aria-label="Satuan" /></td>
                   <td><input inputMode="numeric" value={it.price} onChange={(e) => setItem(i, { price: e.target.value })} aria-label="Harga" /></td>
@@ -77,7 +83,7 @@ export function SalesInvoiceForm({ initial, signers, products, nextNumber, issue
           {t.downPayment !== null && <><dt>Uang muka</dt><dd className="num">{rp(t.downPayment)}</dd><dt><b>Sisa</b></dt><dd className="num"><b>{rp(t.remaining ?? 0)}</b></dd></>}
         </dl>
         <div className="field full"><label htmlFor="i-note">Catatan</label><textarea id="i-note" rows={2} value={f.note} onChange={(e) => set({ note: e.target.value })} /></div>
-        {f.issuer !== "eib" && <BankPicker name={f.bankName} account={f.bankAccount} onChange={(bankName, bankAccount) => set({ bankName, bankAccount })} />}
+        {fleet ? <p className="field full small muted">Rekening invoice angkutan: BCA A/N CEPI SEPTIAN KUSUMAH 2313318109 (otomatis).</p> : <BankPicker name={f.bankName} account={f.bankAccount} onChange={(bankName, bankAccount) => set({ bankName, bankAccount })} />}
         <div className="field"><label htmlFor="i-signer">Ditandatangani oleh</label>
           <select id="i-signer" value={f.signerId} onChange={(e) => { const p = signers.find((s) => String(s.id) === e.target.value); set({ signerId: e.target.value, signerName: p?.name ?? f.signerName }); }}>
             <option value="">— Pilih akun (TTD otomatis) —</option>

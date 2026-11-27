@@ -5,7 +5,7 @@ import { SignBlock } from "@/components/ops/qc/SignBlock";
 import { getDb } from "@/db";
 import { requirePerm } from "@/lib/auth";
 import { tglPanjang } from "@/lib/erp/util";
-import { canPurchaseLetters, getPurchaseLetter } from "@/lib/ops/purchaseLetters";
+import { canViewPurchaseLetters, getPurchaseLetter } from "@/lib/ops/purchaseLetters";
 import { getSettings } from "@/lib/settings";
 
 export const metadata = { title: "Cetak surat pesanan", robots: { index: false } };
@@ -16,7 +16,7 @@ const dayLong = (d: string | null) => (d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? new 
 
 export default async function CetakSuratPesanan({ params }: { params: Promise<{ id: string }> }) {
   const me = await requirePerm("iso", "pesanan");
-  if (!canPurchaseLetters(me.roles)) redirect("/operasional");
+  if (!canViewPurchaseLetters(me.roles)) redirect("/operasional");
   const { id } = await params;
   const db = await getDb();
   const [l, site] = await Promise.all([getPurchaseLetter(db, id), getSettings()]);

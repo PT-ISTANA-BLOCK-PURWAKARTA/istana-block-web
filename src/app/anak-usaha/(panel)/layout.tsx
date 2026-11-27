@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 const ITEMS: ShellItem[] = [
   { href: "/anak-usaha", label: "Ringkasan", icon: "home" },
   { href: "/anak-usaha/biaya-armada", label: "Biaya armada", group: "Ekspedisi Istana Block", icon: "car", perm: ["ekspedisi", "keuangan"] },
+  { href: "/anak-usaha/invoice-angkutan", label: "Invoice angkutan", group: "Ekspedisi Istana Block", icon: "invoice", perm: ["ekspedisi", "keuangan"] },
   { href: "/anak-usaha/dana-cepi", label: "Dana Cepi", group: "Ekspedisi Istana Block", icon: "pay", perm: ["ekspedisi", "keuangan"] },
   { href: "/anak-usaha/piutang-cepi", label: "Piutang Cepi", group: "Ekspedisi Istana Block", icon: "ledger", perm: ["ekspedisi", "keuangan"] },
   { href: "/anak-usaha/kasbon-sopir", label: "Kasbon sopir", group: "Ekspedisi Istana Block", icon: "cash", perm: ["ekspedisi", "keuangan"] },

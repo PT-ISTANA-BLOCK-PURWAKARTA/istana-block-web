@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { eq, sql } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
-import { requireModule } from "@/lib/auth";
+import { requireAnyModule, requireModule } from "@/lib/auth";
+import { can } from "@/lib/roles";
 import { guard, insertMany, nextNumber, parseRows, requireDate, runBatch, UserError } from "@/lib/erp/server";
 import { orderProgress } from "@/lib/erp/orders";
 import { logActivity } from "@/lib/ops/activity";
@@ -92,29 +93,54 @@ export async function deleteQuotation(id: string): Promise<{ ok?: string; error?
 /* ---------------- Invoice penjualan ---------------- */
 const INVOICE_STATUSES = ["draft", "terkirim", "dp", "lunas", "batal"];
 const numOf = (v: unknown) => { const t = String(v ?? "").replace(/\./g, "").replace(",", ".").trim(); const n = Number(t); return t && Number.isFinite(n) ? n : null; };
+/** Halaman invoice: Ekspedisi Istana Block (angkutan) di Anak Perusahaan, lainnya di Keuangan. */
+const invoiceBase = (issuer: string) => (issuer === "eib" ? "/anak-usaha/invoice-angkutan" : "/akuntansi/dokumen/invoice");
+
+/**
+ * Invoice Istana Block dibuat Keuangan. Invoice angkutan Ekspedisi Istana Block (eib) dibuat PIC Kendaraan (Cepi) atau Keuangan,
+ * dan PIC Kendaraan hanya boleh menyentuh invoice Ekspedisi.
+ */
+async function invoiceEditor(issuer: string) {
+  if (issuer !== "eib") return requireModule("keuangan");
+  const me = await requireAnyModule("anak", "keuangan");
+  if (!can(me.roles, "keuangan") && !can(me.roles, "ekspedisi")) throw new UserError("Invoice angkutan hanya dibuat PIC Kendaraan atau Keuangan.");
+  return me;
+}
+async function issuerOfInvoice(id: string) {
+  const db = await getDb();
+  const r = await db.get<{ issuer: string }>(sql`select issuer from ops_sales_invoices where id = ${id}`);
+  return r?.issuer ?? "ib";
+}
 
 export async function saveSalesInvoice(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireModule("keuangan");
+  const id = String(form.get("id") ?? "");
+  const issuer = id ? await issuerOfInvoice(id) : ["ib", "eib"].includes(String(form.get("issuer"))) ? String(form.get("issuer")) : "ib";
   const res = await guard(async () => {
+    const me = await invoiceEditor(issuer);
     const db = await getDb();
-    const id = String(form.get("id") ?? "");
     const day = String(form.get("invoiceDate") ?? "");
     if (!isDate(day)) throw new UserError("Isi tanggal invoice.");
     const customerName = String(form.get("customerName") ?? "").trim();
     if (!customerName) throw new UserError("Isi nama pelanggan (Kepada).");
-    const items: InvoiceLine[] = parseRows(form.get("items")).map((r) => ({ name: String(r.name ?? "").trim(), unit: String(r.unit ?? "").trim() || "pcs", quantity: numOf(r.quantity) ?? 0, price: numOf(r.price) ?? 0 })).filter((i) => i.name);
-    if (!items.length) throw new UserError("Isi minimal satu barang.");
-    if (items.some((i) => !(i.quantity > 0))) throw new UserError("Isi banyaknya untuk setiap barang.");
+    const items: InvoiceLine[] = parseRows(form.get("items")).map((r) => ({
+      name: String(r.name ?? "").trim(), unit: String(r.unit ?? "").trim() || "pcs", quantity: numOf(r.quantity) ?? 0, price: numOf(r.price) ?? 0,
+      ...(String(r.plateNumber ?? "").trim() ? { plateNumber: String(r.plateNumber).trim() } : {}), ...(String(r.driverName ?? "").trim() ? { driverName: String(r.driverName).trim() } : {}),
+      ...(String(r.cargo ?? "").trim() ? { cargo: String(r.cargo).trim() } : {}),
+    })).filter((i) => i.name);
+    if (!items.length) throw new UserError("Isi minimal satu barang / jasa.");
+    if (items.some((i) => !(i.quantity > 0))) throw new UserError("Isi banyaknya untuk setiap baris.");
     const s = (k: string) => String(form.get(k) ?? "").trim() || null;
-    const issuer = String(form.get("issuer") ?? "ib");
     const dpMode = String(form.get("dpMode") ?? "none");
-    const signerId = Number(form.get("signerId")) || null;
+    // Invoice angkutan selalu ditandatangani PIC Kendaraan (akun ekspedisi) bila tidak dipilih lain.
+    let signerId = Number(form.get("signerId")) || null;
+    if (!signerId && issuer === "eib") signerId = (await db.get<{ id: number }>(sql`select id from users where roles like '%"ekspedisi"%' order by id limit 1`))?.id ?? null;
     const signer = signerId ? await db.query.users.findFirst({ where: eq(schema.users.id, signerId) }) : undefined;
     const values = {
       invoiceDate: wibMidnight(day), quotationId: s("quotationId"), customerName, customerAddress: s("customerAddress"), customerPhone: s("customerPhone"), poNumber: s("poNumber"),
       items, ppnPercent: numOf(form.get("ppnPercent")) ?? 0,
       downPaymentPercent: dpMode === "persen" ? numOf(form.get("downPaymentPercent")) : null, downPaymentAmount: dpMode === "nominal" ? numOf(form.get("downPaymentAmount")) : null,
       note: s("note"), bankName: issuer === "eib" ? EIB_BANK.name : s("bankName"), bankAccount: issuer === "eib" ? EIB_BANK.account : s("bankAccount"),
+      driverName: s("driverName"), plate: s("plate"), route: s("route"), shipDate: s("shipDate"),
       signerId: signer?.id ?? null, signerName: s("signerName") ?? signer?.name ?? null, updatedAt: new Date(),
     };
     // Nomor boleh diisi sendiri (mis. disamakan dengan faktur Zahir); harus unik.
@@ -124,25 +150,27 @@ export async function saveSalesInvoice(_prev: FormState, form: FormData): Promis
       if (taken && taken.id !== id) throw new UserError(`Nomor ${custom} sudah dipakai invoice lain.`);
     }
     if (id) {
-      const cur = await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, id) });
-      if (!cur) throw new UserError("Invoice tidak ditemukan.");
       await db.update(schema.salesInvoices).set({ ...values, ...(custom ? { number: custom } : {}) }).where(eq(schema.salesInvoices.id, id));
+      await logActivity(me, { action: "invoice.ubah", label: "Mengubah invoice", summary: custom ?? id });
       return { id };
     }
     const m = await db.get<{ s: number }>(sql`select coalesce(max(seq), 0) s from ops_sales_invoices where issuer = ${issuer}`);
     const seq = Math.max(issuer === "ib" ? LAST_MANUAL_INVOICE_SEQ : 0, Number(m?.s ?? 0)) + 1;
     const newId = crypto.randomUUID();
-    await db.insert(schema.salesInvoices).values({ id: newId, issuer, seq: custom ? 0 : seq, number: custom ?? invoiceNumber(seq, issuer), shipments: [], status: "draft", ...values, createdBy: me.id, createdByName: me.name });
+    const number = custom ?? invoiceNumber(seq, issuer);
+    await db.insert(schema.salesInvoices).values({ id: newId, issuer, seq: custom ? 0 : seq, number, shipments: [], status: "draft", ...values, createdBy: me.id, createdByName: me.name });
+    await logActivity(me, { action: "invoice.buat", label: "Membuat invoice", summary: number });
     return { id: newId };
   });
   if ("error" in res) return res;
-  revalidatePath("/akuntansi/dokumen/invoice");
-  redirect(`/akuntansi/dokumen/invoice/${res.id}?ok=1`);
+  revalidatePath(invoiceBase(issuer));
+  redirect(`${invoiceBase(issuer)}/${res.id}?ok=1`);
 }
 
 export async function setSalesInvoiceStatus(id: string, status: string): Promise<{ ok?: string; error?: string }> {
-  const me = await requireModule("keuangan");
+  const issuer = await issuerOfInvoice(id);
   const res = await guard(async () => {
+    const me = await invoiceEditor(issuer);
     if (!INVOICE_STATUSES.includes(status)) throw new UserError("Status tidak dikenal.");
     const db = await getDb();
     const inv = await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, id) });
@@ -155,16 +183,18 @@ export async function setSalesInvoiceStatus(id: string, status: string): Promise
         ? { paidAmount: null, paidAt: null, paidByName: null, paymentMethod: null, paymentNote: null }
         : {};
     await db.update(schema.salesInvoices).set({ status, ...payment, updatedAt: new Date() }).where(eq(schema.salesInvoices.id, id));
+    await logActivity(me, { action: "invoice.status", label: "Mengubah status invoice", summary: `${inv.number} → ${status}` });
     return { ok: "Status diubah." };
   });
-  revalidatePath(`/akuntansi/dokumen/invoice/${id}`);
+  revalidatePath(`${invoiceBase(issuer)}/${id}`);
   return res;
 }
 
 export async function recordSalesInvoicePayment(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireModule("keuangan");
   const id = String(form.get("id") ?? "");
+  const issuer = await issuerOfInvoice(id);
   const res = await guard(async () => {
+    const me = await invoiceEditor(issuer);
     const db = await getDb();
     const inv = await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, id) });
     if (!inv) throw new UserError("Invoice tidak ditemukan.");
@@ -177,25 +207,28 @@ export async function recordSalesInvoicePayment(_prev: FormState, form: FormData
       paidAmount: amount || null, paidAt: amount ? wibMidnight(day) : null, paymentMethod: amount ? String(form.get("method") ?? "") || null : null,
       paymentNote: amount ? String(form.get("note") ?? "").trim() || null : null, paidByName: amount ? me.name : null, status, updatedAt: new Date(),
     }).where(eq(schema.salesInvoices.id, id));
+    await logActivity(me, { action: "invoice.bayar", label: "Mencatat pembayaran invoice", summary: `${inv.number} · Rp ${amount.toLocaleString("id-ID")}` });
     return { ok: true };
   });
   if ("error" in res) return res;
-  revalidatePath(`/akuntansi/dokumen/invoice/${id}`);
-  redirect(`/akuntansi/dokumen/invoice/${id}?ok=bayar`);
+  revalidatePath(`${invoiceBase(issuer)}/${id}`);
+  redirect(`${invoiceBase(issuer)}/${id}?ok=bayar`);
 }
 
 export async function deleteSalesInvoice(id: string): Promise<{ ok?: string; error?: string }> {
-  await requireModule("keuangan");
+  const issuer = await issuerOfInvoice(id);
   const res = await guard(async () => {
+    const me = await invoiceEditor(issuer);
     const db = await getDb();
     const inv = await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, id) });
     if (!inv) return { ok: "" };
     if (inv.status !== "draft") throw new UserError("Hanya invoice berstatus Draft yang bisa dihapus — ubah status ke Batal bila salah.");
     await db.delete(schema.salesInvoices).where(eq(schema.salesInvoices.id, id));
+    await logActivity(me, { action: "invoice.hapus", label: "Menghapus invoice", summary: inv.number });
     return { ok: "deleted" };
   });
   if ("error" in res) return res;
-  redirect("/akuntansi/dokumen/invoice");
+  redirect(invoiceBase(issuer));
 }
 
 /* ---------------- Surat jalan dari invoice (alur: invoice → surat jalan → penugasan sopir di Operasional) ---------------- */

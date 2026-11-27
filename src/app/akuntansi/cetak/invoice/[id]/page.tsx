@@ -28,19 +28,20 @@ export default async function CetakInvoice({ params, searchParams }: { params: P
   const issuer = issuerOf(inv.issuer);
   const eib = inv.issuer === "eib";
   const cars = eib && items.some((i) => i.plateNumber || i.driverName);
+  const cargo = eib && items.some((i) => i.cargo);
   const bankName = eib ? EIB_BANK.name : inv.bankName, bankAccount = eib ? EIB_BANK.account : inv.bankAccount;
   const sig = imageUrl(signer?.signatureKey);
   const totals: [string, number][] = [["Total", t.total], ...(inv.ppnPercent ? [[`PPN ${pct(inv.ppnPercent)}`, t.ppn] as [string, number]] : []), ["Grand Total", t.grandTotal],
     ...(t.downPayment !== null ? [[inv.downPaymentAmount || !inv.downPaymentPercent ? "Uang Muka" : `Uang Muka ${pct(inv.downPaymentPercent)}`, t.downPayment] as [string, number], ["Sisa", t.remaining ?? 0] as [string, number]] : [])];
-  const back = sp.dari === "ops" ? "/operasional/faktur-jual" : `/akuntansi/dokumen/invoice/${inv.id}`;
-  const company = inv.issuer === "ibn" ? "CV. ISTANA BANGUN NUSANTARA" : eib ? "EKSPEDISI IB" : site.legal_name || site.company_name || "PT. Istana Block Purwakarta";
+  const back = sp.dari === "ops" ? "/operasional/faktur-jual" : eib ? `/anak-usaha/invoice-angkutan/${inv.id}` : `/akuntansi/dokumen/invoice/${inv.id}`;
+  const company = inv.issuer === "ibn" ? "CV. ISTANA BANGUN NUSANTARA" : eib ? "EKSPEDISI ISTANA BLOCK" : site.legal_name || site.company_name || "PT. Istana Block Purwakarta";
   const page = (label: string, copy: boolean) => (
     <article key={label} className={`print-page inv-page${copy ? " inv-copy" : ""}`}>
       {inv.issuer !== "polos" && (
         <header className="print-head">
           <div className="print-brand">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {inv.issuer === "ib" && <img src="/brand/logo-istana-block.webp" alt="" width={147} height={44} />}
+            <img src={inv.issuer === "ibn" ? "/brand/logo-ibn.png" : eib ? "/brand/logo-ekspedisi.png" : "/brand/logo-istana-block.webp"} alt="" height={44} style={{ width: "auto" }} />
             <div><b>{company}</b>{site.address && <div>Office : {site.address}</div>}{(site.phone_office || site.phone) && <div>Phone : {[site.phone_office, site.phone || site.whatsapp].filter(Boolean).join(" · ")}</div>}</div>
           </div>
         </header>
@@ -64,10 +65,10 @@ export default async function CetakInvoice({ params, searchParams }: { params: P
         </div>
       </div>
       <table className="iitems">
-        <thead><tr><th style={{ width: 70 }}>Banyaknya</th><th style={{ width: 60 }}>Satuan</th>{cars && <th style={{ width: 130 }}>Mobil / Sopir</th>}<th>{eib ? "Uraian Jasa" : "Nama Barang"}</th><th style={{ width: 120 }}>Harga Satuan (Rp)</th><th style={{ width: 130 }}>Jumlah (Rp)</th></tr></thead>
+        <thead><tr><th style={{ width: 70 }}>Banyaknya</th><th style={{ width: 60 }}>Satuan</th>{cars && <th style={{ width: 130 }}>Mobil / Sopir</th>}<th>{eib ? "Uraian Jasa" : "Nama Barang"}</th>{cargo && <th style={{ width: 150 }}>Barang Dibawa / Qty</th>}<th style={{ width: 120 }}>Harga Satuan (Rp)</th><th style={{ width: 130 }}>Jumlah (Rp)</th></tr></thead>
         <tbody>
-          {items.map((it, i) => <tr key={i}><td className="c">{Number(it.quantity).toLocaleString("id-ID")}</td><td className="c">{it.unit}</td>{cars && <td>{[it.plateNumber, it.driverName].filter(Boolean).join(" · ")}</td>}<td>{it.name}</td><td className="r">{rp(it.price)}</td><td className="r">{rp(it.quantity * it.price)}</td></tr>)}
-          {Array.from({ length: Math.max(0, 3 - items.length) }, (_, i) => <tr key={`e${i}`} className="empty"><td /><td />{cars && <td />}<td /><td /><td /></tr>)}
+          {items.map((it, i) => <tr key={i}><td className="c">{Number(it.quantity).toLocaleString("id-ID")}</td><td className="c">{it.unit}</td>{cars && <td>{[it.plateNumber, it.driverName].filter(Boolean).join(" · ")}</td>}<td>{it.name}</td>{cargo && <td>{it.cargo ?? ""}</td>}<td className="r">{rp(it.price)}</td><td className="r">{rp(it.quantity * it.price)}</td></tr>)}
+          {Array.from({ length: Math.max(0, 3 - items.length) }, (_, i) => <tr key={`e${i}`} className="empty"><td /><td />{cars && <td />}<td />{cargo && <td />}<td /><td /></tr>)}
         </tbody>
       </table>
       <div className="ifoot">
