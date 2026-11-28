@@ -73,6 +73,7 @@
     "@types/react-dom": "^19.2.2",
     "@types/three": "^0.187.0",
     "drizzle-kit": "^0.31.5",
+    "exceljs": "^4.4.0",
     "sharp": "^0.35.5",
     "typescript": "^5.9.3",
     "vitest": "^5.1.0",

@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { formatAmount, tgl } from "@/lib/erp/util";
+import type { Cell, Column } from "@/lib/styledExcel";
 import { BackButton } from "./BackButton";
 import { BalanceChart } from "./BalanceChart";
 import { CashFilter } from "./CashFilter";
@@ -55,6 +56,43 @@ export function BukuBesarView({
   const sum = useMemo(() => rows.reduce((s, r) => ({ d: s.d + r.debit, c: s.c + r.credit }), { d: 0, c: 0 }), [rows]);
   const mutasi = debitUp ? sum.d - sum.c : sum.c - sum.d;
   const range = `from=${from}&to=${to}`;
+  const [xl, setXl] = useState("");
+
+  // Unduh Excel rapi (kop perusahaan, garis tebal, angka berformat) dari baris yang sedang tampil.
+  const unduhExcel = async () => {
+    setXl("busy");
+    try {
+      const X = await import("@/lib/styledExcel");
+      const wb = await X.newWorkbook();
+      const ws = X.addSheet(wb, "Buku Besar");
+      const cols: Column[] = [
+        { header: "No", width: 5, align: "center" },
+        { header: "Tanggal", width: 11, align: "center" },
+        { header: "Tp", width: 5, align: "center" },
+        { header: "No Referensi", width: 15 },
+        { header: "Catatan", width: 50 },
+        { header: "Nama", width: 22 },
+        { header: "Debit", width: 15, numFmt: X.RP },
+        { header: "Kredit", width: 15, numFmt: X.RP },
+        { header: "Saldo", width: 16, numFmt: X.RP },
+        { header: "Job", width: 10 },
+      ];
+      const head = await X.addLetterhead(wb, ws, cols.length, "Buku Besar", `${account.name} (${account.code}) · ${longDay(from)} – ${longDay(to)}${q ? ` · cari "${q}"` : ""}`);
+      const b = (value: number | string | null): Cell => ({ value, bold: true });
+      const data: Cell[][] = [
+        [null, null, null, null, b("Saldo Awal"), null, null, null, b(opening), null],
+        ...rows.map((r, i): Cell[] => [i + 1, X.excelDay(r.date), r.tp, r.number, r.memo, r.contact, r.debit || null, r.credit || null, r.balance, r.job]),
+        [null, null, null, null, b(q ? "Jumlah (hasil cari)" : "Jumlah"), null, b(sum.d), b(sum.c), q ? null : b(closing), null],
+      ];
+      const end = X.addTable(ws, head, cols, data, { dateFormat: "dd/mm/yyyy" });
+      X.addSummary(ws, end + 1, 7, 9, [["Saldo Awal", opening], ["Saldo Akhir", closing], ["Mutasi", mutasi]]);
+      ws.pageSetup.printTitlesRow = `${head}:${head}`;
+      await X.saveWorkbook(wb, `Buku Besar ${account.code} ${account.name} ${from} sd ${to}.xlsx`);
+      setXl("");
+    } catch (e) {
+      setXl(e instanceof Error ? e.message : "Gagal membuat Excel.");
+    }
+  };
 
   return (
     <div className={`zd bb${chart ? " has-chart" : ""}`}>
@@ -151,7 +189,10 @@ export function BukuBesarView({
         </section>
       )}
       <div className="zd-foot">
-        <a className="btn btn-ghost btn-sm" href={`/akuntansi/ekspor/buku-besar?akun=${account.id}&${range}`}>Unduh Excel (CSV)</a>
+        <button type="button" className="btn btn-ghost btn-sm" disabled={xl === "busy"} onClick={unduhExcel} title="Unduh Excel berkop perusahaan dari baris yang tampil">
+          {xl === "busy" ? "Menyiapkan…" : "Unduh Excel"}
+        </button>
+        {xl && xl !== "busy" && <span className="small text-bahaya" role="alert">{xl}</span>}
         <span className="zd-total" aria-hidden />
         <a className="btn btn-blue btn-sm" href={`/akuntansi/laporan/buku-besar-mutasi?akun=${account.id}&${range}`} target="_blank" rel="noopener" title="Cetak format Zahir (Buku Besar - Mutasi)">Cetak</a>
         <button type="button" className="btn btn-ghost btn-sm" disabled={!cur} onClick={() => cur && router.push(cur.href)}>Perincian</button>
