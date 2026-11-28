@@ -16,7 +16,7 @@ import { findCustomerByPhone, normPhone } from "@/lib/ops/orders";
 import { hidePrices } from "@/lib/ops/shared/prices";
 import { isDate, parseQty } from "@/lib/erp/util";
 import { LAST_MANUAL_QUOTATION_SEQ as LAST_MANUAL_SEQ, quotationNumber } from "@/lib/erp/quotation";
-import { EIB_BANK, invoiceNumber, invoiceTotals, LAST_MANUAL_INVOICE_SEQ, type InvoiceLine } from "@/lib/erp/salesInvoice";
+import { EIB_BANK, invoiceNumber, invoiceTotals, issuerOf, LAST_MANUAL_INVOICE_SEQ, type InvoiceLine } from "@/lib/erp/salesInvoice";
 import { syncUditchIncome } from "@/lib/ops/uditchIncome";
 
 /* ---------------- Surat penawaran ---------------- */
@@ -158,7 +158,7 @@ export async function saveSalesInvoice(_prev: FormState, form: FormData): Promis
       await logActivity(me, { action: "keuangan.invoice.ubah", label: "Mengubah invoice", summary: custom ?? id });
       return { id };
     }
-    const m = await db.get<{ s: number }>(sql`select coalesce(max(seq), 0) s from ops_sales_invoices where issuer = ${issuer}`);
+    const m = await db.get<{ s: number }>(sql`select coalesce(max(seq), 0) s from ops_sales_invoices where issuer = ${issuer} and number like ${`${issuerOf(issuer).prefix}%`}`);
     const seq = Math.max(issuer === "ib" ? LAST_MANUAL_INVOICE_SEQ : 0, Number(m?.s ?? 0)) + 1;
     const newId = crypto.randomUUID();
     const number = custom ?? invoiceNumber(seq, issuer);

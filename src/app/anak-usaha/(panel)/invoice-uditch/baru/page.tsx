@@ -25,7 +25,7 @@ export default async function InvoiceUditchBaru({ searchParams }: { searchParams
     documentSigners(db),
     productNames(db),
     db.get<{ id: number; name: string; signature_key: string | null }>(sql`select id, name, signature_key from users where roles like '%"uditch"%' order by id limit 1`),
-    db.get<{ s: number }>(sql`select coalesce(max(seq), 0) s from ops_sales_invoices where issuer = 'ud'`),
+    db.get<{ s: number }>(sql`select coalesce(max(seq), 0) s from ops_sales_invoices where issuer = 'ud' and number like 'IN-UD-%'`),
     db.get<{ bank_name: string | null; bank_account: string | null }>(sql`select bank_name, bank_account from ops_sales_invoices where issuer = 'ud' and coalesce(bank_account, '') <> '' order by created_at desc limit 1`),
   ]);
   const allSigners = pic && !signers.some((s) => s.id === pic.id) ? [{ id: pic.id, name: pic.name, title: "PIC U-Ditch", hasSignature: Boolean(pic.signature_key) }, ...signers] : signers;

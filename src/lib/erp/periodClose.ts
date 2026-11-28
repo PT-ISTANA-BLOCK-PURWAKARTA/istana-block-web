@@ -361,7 +361,7 @@ export async function analyzePeriod(db: DB, period: string): Promise<PeriodAnaly
     /* ---------------- dokumen & pencatatan */
     run("invoice_draft", "dokumen", "Invoice penjualan masih draft", async () => {
       const rows = await db.all<{ number: string; name: string }>(sql`
-        select number, customer_name name from ops_sales_invoices where status = 'draft' and issuer <> 'ud' and invoice_date >= ${fromTs} and invoice_date <= ${toTs} order by invoice_date`);
+        select number, customer_name name from ops_sales_invoices where status = 'draft' and issuer not in ('ud', 'eib') and invoice_date >= ${fromTs} and invoice_date <= ${toTs} order by invoice_date`);
       return rows.length ? { status: "perhatian", value: `${rows.length} invoice periode ini masih draft.`, href: "/akuntansi/dokumen/invoice?status=draft", table: table(["Invoice", "Pelanggan"], rows.map((r) => [r.number, r.name])) } : { status: "ok", value: "Tidak ada invoice draft." };
     }),
     run("kas_draft", "dokumen", "Kas masuk/keluar masih draft", async () => {

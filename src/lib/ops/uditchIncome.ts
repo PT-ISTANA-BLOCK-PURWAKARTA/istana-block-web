@@ -24,6 +24,8 @@ export async function syncUditchIncome(db: Db, invoiceId: string) {
     if (existing) await db.delete(schema.uditchEntries).where(eq(schema.uditchEntries.id, existing.id));
     return;
   }
+  // Pembayaran sebelum 19/11/2026 sudah dicatat manual oleh Lina (impor Excel) → tidak dibuat otomatis agar tidak dobel.
+  if (!existing && wibDay(inv.paidAt) < "2026-11-19") return;
   const items = inv.items as unknown as InvoiceLine[];
   const { grandTotal } = invoiceTotals(items, inv.ppnPercent, inv.downPaymentPercent, inv.downPaymentAmount);
   const cash = isCashPayment(inv.paymentMethod);
