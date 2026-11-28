@@ -5,6 +5,8 @@ export const INVOICE_ISSUERS = [
   { key: "ibn", label: "CV. Istana Bangun Nusantara", prefix: "IN-IBN-" },
   { key: "polos", label: "Tanpa kop (kosongan)", prefix: "IN-K-" },
   { key: "eib", label: "Ekspedisi Istana Block", prefix: "IN-EIB-" },
+  // Invoice U-Ditch: tetap PT. Istana Block (kop sama), dibedakan judul INVOICE U-DITCH & nomor sendiri; pembukuan terpisah dari IB.
+  { key: "ud", label: "PT. Istana Block · U-Ditch", prefix: "IN-UD-" },
 ] as const;
 export const issuerOf = (key: string | null | undefined) => INVOICE_ISSUERS.find((i) => i.key === key) ?? INVOICE_ISSUERS[0];
 /** Nomor invoice manual terakhir sebelum memakai aplikasi: IN-IB-0001256 (22 Sep 2026). */
@@ -16,7 +18,9 @@ export const PAYMENT_METHODS = ["Transfer BCA Istana Block", "Transfer BCA Hamad
 export const INVOICE_NOTE = "Barang yang sudah dibeli tidak dapat dikembalikan atau ditukar";
 export const EIB_BANK = { name: "BCA A/N CEPI SEPTIAN KUSUMAH", account: "2313318109" } as const;
 /** Cara bayar Invoice U-Ditch: masuk saldo Lina di Operational U-Ditch (tunai → Cash Lina, selain itu → TF Lina). */
-export const UDITCH_PAYMENT_METHODS = ["Transfer rekening U-Ditch (TF Lina)", "Tunai (Cash Lina)", "Lainnya"];
+export const UDITCH_PAYMENT_METHODS = ["Transfer BCA Muhamad Abdulah (TF Lina)", "Tunai (Cash Lina)", "Lainnya"];
+/** Rekening invoice U-Ditch (dipakai invoice U-Ditch IN-IB-0001273/1275/1283/1284 sebelumnya). */
+export const UDITCH_BANK = { name: "BCA A/N MUHAMAD ABDULAH", account: "231 330 3900" } as const;
 
 export type InvoiceLine = { name: string; unit: string; quantity: number; price: number; plateNumber?: string; driverName?: string; cargo?: string };
 

@@ -55,11 +55,13 @@ export async function postDeliveryOps(db: DB, acc: Accounts, d: Pick<Delivery, "
   const levels = await stockLevels(db, undefined, d.id);
   const moves: (typeof schema.stockMoves.$inferInsert)[] = [];
   const jl: JLine[] = [];
+  // U-Ditch (SJ-UD/…): stok keluar dari gudang, tetapi tanpa jurnal HPP di buku IB (pembukuan U-Ditch terpisah).
+  const uditch = d.number.startsWith("SJ-UD/");
   for (const { qty, item } of lines) {
     if (!isStockItem(item) || qty <= 0) continue;
     const value = Math.round(qty * unitCost(levels.get(item.id), item));
     moves.push({ itemId: item.id, date: d.date, qty: -qty, value: -value, source: "pengiriman", sourceId: d.id, note: d.number });
-    if (value) {
+    if (value && !uditch) {
       jl.push({ accountId: acc.sys("hpp"), debit: value, memo: item.name, contactId: order?.contactId ?? null });
       jl.push({ accountId: inventoryAccount(acc, item), credit: value, memo: item.name });
     }

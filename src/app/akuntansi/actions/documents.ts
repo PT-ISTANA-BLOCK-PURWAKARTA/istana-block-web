@@ -95,14 +95,14 @@ export async function deleteQuotation(id: string): Promise<{ ok?: string; error?
 const INVOICE_STATUSES = ["draft", "terkirim", "dp", "lunas", "batal"];
 const numOf = (v: unknown) => { const t = String(v ?? "").replace(/\./g, "").replace(",", ".").trim(); const n = Number(t); return t && Number.isFinite(n) ? n : null; };
 /** Halaman invoice: anak perusahaan (Ekspedisi Istana Block = angkutan, CV. Istana Bangun Nusantara = U-Ditch) di Anak Perusahaan, lainnya di Keuangan. */
-const invoiceBase = (issuer: string) => (issuer === "eib" ? "/anak-usaha/invoice-angkutan" : issuer === "ibn" ? "/anak-usaha/invoice-uditch" : "/akuntansi/dokumen/invoice");
+const invoiceBase = (issuer: string) => (issuer === "eib" ? "/anak-usaha/invoice-angkutan" : issuer === "ud" ? "/anak-usaha/invoice-uditch" : "/akuntansi/dokumen/invoice");
 
 /**
  * Invoice Istana Block dibuat Keuangan. Invoice angkutan Ekspedisi Istana Block (eib) dibuat PIC Kendaraan (Cepi) atau Keuangan;
- * Invoice U-Ditch CV. Istana Bangun Nusantara (ibn) dibuat PIC U-Ditch (Lina) atau Keuangan. Masing-masing hanya menyentuh invoice bagiannya.
+ * Invoice U-Ditch PT. Istana Block (ud) dibuat PIC U-Ditch (Lina) atau Keuangan. Masing-masing hanya menyentuh invoice bagiannya.
  */
 async function invoiceEditor(issuer: string) {
-  if (issuer !== "eib" && issuer !== "ibn") return requireModule("keuangan");
+  if (issuer !== "eib" && issuer !== "ud") return requireModule("keuangan");
   const me = await requireAnyModule("anak", "keuangan");
   if (!can(me.roles, "keuangan") && !can(me.roles, issuer === "eib" ? "ekspedisi" : "uditch"))
     throw new UserError(issuer === "eib" ? "Invoice angkutan hanya dibuat PIC Kendaraan atau Keuangan." : "Invoice U-Ditch hanya dibuat PIC U-Ditch (Lina) atau Keuangan.");
@@ -116,7 +116,7 @@ async function issuerOfInvoice(id: string) {
 
 export async function saveSalesInvoice(_prev: FormState, form: FormData): Promise<FormState> {
   const id = String(form.get("id") ?? "");
-  const issuer = id ? await issuerOfInvoice(id) : ["ib", "eib", "ibn"].includes(String(form.get("issuer"))) ? String(form.get("issuer")) : "ib";
+  const issuer = id ? await issuerOfInvoice(id) : ["ib", "eib", "ud"].includes(String(form.get("issuer"))) ? String(form.get("issuer")) : "ib";
   const res = await guard(async () => {
     const me = await invoiceEditor(issuer);
     const db = await getDb();
@@ -136,7 +136,7 @@ export async function saveSalesInvoice(_prev: FormState, form: FormData): Promis
     // Invoice angkutan ditandatangani PIC Kendaraan (akun ekspedisi), invoice U-Ditch oleh PIC U-Ditch (akun uditch), bila tidak dipilih lain.
     let signerId = Number(form.get("signerId")) || null;
     if (!signerId && issuer === "eib") signerId = (await db.get<{ id: number }>(sql`select id from users where roles like '%"ekspedisi"%' order by id limit 1`))?.id ?? null;
-    if (!signerId && issuer === "ibn") signerId = (await db.get<{ id: number }>(sql`select id from users where roles like '%"uditch"%' order by id limit 1`))?.id ?? null;
+    if (!signerId && issuer === "ud") signerId = (await db.get<{ id: number }>(sql`select id from users where roles like '%"uditch"%' order by id limit 1`))?.id ?? null;
     const signer = signerId ? await db.query.users.findFirst({ where: eq(schema.users.id, signerId) }) : undefined;
     const values = {
       invoiceDate: wibMidnight(day), quotationId: s("quotationId"), customerName, customerAddress: s("customerAddress"), customerPhone: s("customerPhone"), poNumber: s("poNumber"),
@@ -154,7 +154,7 @@ export async function saveSalesInvoice(_prev: FormState, form: FormData): Promis
     }
     if (id) {
       await db.update(schema.salesInvoices).set({ ...values, ...(custom ? { number: custom } : {}) }).where(eq(schema.salesInvoices.id, id));
-      if (issuer === "ibn") await syncUditchIncome(db, id);
+      if (issuer === "ud") await syncUditchIncome(db, id);
       await logActivity(me, { action: "keuangan.invoice.ubah", label: "Mengubah invoice", summary: custom ?? id });
       return { id };
     }
@@ -188,7 +188,7 @@ export async function setSalesInvoiceStatus(id: string, status: string): Promise
         : {};
     await db.update(schema.salesInvoices).set({ status, ...payment, updatedAt: new Date() }).where(eq(schema.salesInvoices.id, id));
     // U-Ditch: pendapatan ikut status (lunas → masuk saldo Lina, batal / kembali draft → dihapus).
-    if (issuer === "ibn") await syncUditchIncome(db, id);
+    if (issuer === "ud") await syncUditchIncome(db, id);
     await logActivity(me, { action: "keuangan.invoice.status", label: "Mengubah status invoice", summary: `${inv.number} → ${status}` });
     return { ok: "Status diubah." };
   });
@@ -214,7 +214,7 @@ export async function recordSalesInvoicePayment(_prev: FormState, form: FormData
       paymentNote: amount ? String(form.get("note") ?? "").trim() || null : null, paidByName: amount ? me.name : null, status, updatedAt: new Date(),
     }).where(eq(schema.salesInvoices.id, id));
     // U-Ditch: pembayaran masuk Operational U-Ditch (M03) → saldo TF Lina / Cash Lina bertambah.
-    if (issuer === "ibn") await syncUditchIncome(db, id);
+    if (issuer === "ud") await syncUditchIncome(db, id);
     await logActivity(me, { action: "keuangan.invoice.bayar", label: "Mencatat pembayaran invoice", summary: `${inv.number} · Rp ${amount.toLocaleString("id-ID")}` });
     return { ok: true };
   });
@@ -232,7 +232,7 @@ export async function deleteSalesInvoice(id: string): Promise<{ ok?: string; err
     if (!inv) return { ok: "" };
     if (inv.status !== "draft") throw new UserError("Hanya invoice berstatus Draft yang bisa dihapus — ubah status ke Batal bila salah.");
     await db.delete(schema.salesInvoices).where(eq(schema.salesInvoices.id, id));
-    if (issuer === "ibn") await syncUditchIncome(db, id);
+    if (issuer === "ud") await syncUditchIncome(db, id);
     await logActivity(me, { action: "keuangan.invoice.hapus", label: "Menghapus invoice", summary: inv.number });
     return { ok: "deleted" };
   });
@@ -247,15 +247,19 @@ export async function deleteSalesInvoice(id: string): Promise<{ ok?: string; err
  * Operasional menugaskan sopir. Stok keluar & jurnal HPP terposting per surat jalan saat truk berangkat (sama seperti alur lama).
  */
 export async function createDeliveryFromInvoice(_prev: FormState, form: FormData): Promise<FormState> {
-  const me = await requireModule("keuangan");
   const invoiceId = String(form.get("invoiceId") ?? "");
+  // Invoice IB oleh Keuangan; Invoice U-Ditch juga oleh PIC U-Ditch (surat jalan SJ-UD/…, terpisah dari IB).
+  const issuer = await issuerOfInvoice(invoiceId);
   const res = await guard(async () => {
+    const me = await invoiceEditor(issuer);
     const db = await getDb();
     const inv = await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, invoiceId) });
     if (!inv) throw new UserError("Invoice tidak ditemukan.");
     if (inv.status === "batal") throw new UserError("Invoice sudah dibatalkan.");
     // Anak perusahaan terpisah dari IB: surat jalan dari invoice memotong stok & menjurnal HPP IB, jadi tidak untuk invoice U-Ditch / angkutan.
-    if (inv.issuer === "ibn" || inv.issuer === "eib") throw new UserError(inv.issuer === "ibn" ? "Invoice U-Ditch terpisah dari IB — buat Surat Jalan IBN di Anak Perusahaan." : "Invoice angkutan tidak membuat surat jalan barang.");
+    // Invoice angkutan / CV. IBN tidak membuat surat jalan barang. U-Ditch: SJ-UD/… (stok keluar, tanpa jurnal HPP IB).
+    if (inv.issuer === "eib" || inv.issuer === "ibn") throw new UserError("Invoice angkutan tidak membuat surat jalan barang.");
+    const ud = inv.issuer === "ud";
     const items = inv.items as unknown as InvoiceLine[];
     const date = requireDate(form.get("date"), "Tanggal surat jalan");
     const address = String(form.get("address") ?? "").trim().slice(0, 500);
@@ -291,7 +295,7 @@ export async function createDeliveryFromInvoice(_prev: FormState, form: FormData
       let contactId = phone ? (await findCustomerByPhone(db, phone))?.id ?? null : null;
       if (!contactId) contactId = (await db.get<{ id: string }>(sql`select id from fin_contacts where active = 1 and kind <> 'pemasok' and lower(name) = ${inv.customerName.toLowerCase()} limit 1`))?.id ?? null;
       const newContactId = contactId ? null : crypto.randomUUID();
-      const number = await nextNumber(db, "PO", date);
+      const number = await nextNumber(db, ud ? "PO-UD" : "PO", date);
       const paymentStatus = paid >= grandTotal ? "lunas" as const : "belum_lunas" as const;
       ops.push(
         newContactId ? db.insert(schema.contacts).values({ id: newContactId, kind: "pelanggan", name: inv.customerName, phone, address: inv.customerAddress ?? address }) : null,
@@ -321,20 +325,24 @@ export async function createDeliveryFromInvoice(_prev: FormState, form: FormData
       shipped.push({ index: ol.sort, quantity: qty });
     }
     if (!dl.length) throw new UserError("Isi jumlah barang yang dikirim di surat jalan ini.");
-    const sjNumber = await nextNumber(db, "SJ", date);
+    const sjNumber = await nextNumber(db, ud ? "SJ-UD" : "SJ", date);
     const shipments = [...((inv.shipments ?? []) as unknown[]), { deliveryId, deliveryNumber: sjNumber, orderId: order!.id, poNumber: order!.number, date, createdAt: new Date().toISOString(), createdByName: me.name, items: shipped }];
     await runBatch(db, [
       ...ops,
       db.insert(schema.deliveries).values({ id: deliveryId, number: sjNumber, orderId: order!.id, date, status: "dijadwalkan", note, createdBy: me.id }),
       ...insertMany(db, schema.deliveryLines, dl),
-      db.insert(schema.deliveryHistory).values({ deliveryId, fromStatus: null, toStatus: "dijadwalkan", changedBy: me.id, note: `Surat jalan dibuat Keuangan dari invoice ${inv.number}` }),
+      db.insert(schema.deliveryHistory).values({ deliveryId, fromStatus: null, toStatus: "dijadwalkan", changedBy: me.id, note: `Surat jalan dibuat ${ud ? "U-Ditch" : "Keuangan"} dari invoice ${inv.number}` }),
       db.update(schema.salesInvoices).set({ orderId: order!.id, orderPoNumber: order!.number, shipments, updatedAt: new Date() }).where(eq(schema.salesInvoices.id, inv.id)),
-      notificationOp(db, "umum", deliveryId, "Surat jalan baru perlu ditugaskan sopir", `${sjNumber} · ${inv.customerName} · invoice ${inv.number}`),
+      notificationOp(db, "umum", deliveryId, ud ? "Surat jalan U-Ditch baru perlu ditugaskan sopir" : "Surat jalan baru perlu ditugaskan sopir", `${sjNumber} · ${inv.customerName} · invoice ${inv.number}`),
     ]);
     await logActivity(me, { action: "keuangan.surat_jalan_dari_invoice", label: "Membuat surat jalan dari invoice", summary: `${sjNumber} dari ${inv.number}` });
     return { id: deliveryId, number: sjNumber };
   });
   if ("error" in res) return res;
+  if (issuer === "ud") {
+    revalidatePath(`/anak-usaha/invoice-uditch/${invoiceId}`);
+    redirect(`/anak-usaha/surat-jalan-uditch?ok=${encodeURIComponent(res.number)}`);
+  }
   revalidatePath(`/akuntansi/dokumen/invoice/${invoiceId}`);
   redirect(`/akuntansi/dokumen/surat-jalan/${res.id}?ok=1`);
 }

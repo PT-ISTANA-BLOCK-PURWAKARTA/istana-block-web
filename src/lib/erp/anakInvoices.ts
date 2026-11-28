@@ -1,4 +1,4 @@
-// Daftar invoice anak perusahaan (Ekspedisi = eib, U-Ditch = ibn) untuk tampilan gaya Zahir: cari, rentang tanggal opsional.
+// Daftar invoice anak perusahaan (Ekspedisi = eib, U-Ditch = ud) untuk tampilan gaya Zahir: cari, rentang tanggal opsional.
 import { and, desc, eq, gte, like, lt, or, sql } from "drizzle-orm";
 import type { AnakInvoiceRow } from "@/components/erp/AnakInvoiceDaftar";
 import { getDb, schema } from "@/db";
@@ -7,7 +7,7 @@ import { isDate } from "@/lib/erp/util";
 
 const wibStart = (day: string) => new Date(`${day}T00:00:00+07:00`);
 
-export async function anakInvoiceRows(issuer: "eib" | "ibn", sp: { q?: string; from?: string; to?: string }) {
+export async function anakInvoiceRows(issuer: "eib" | "ud", sp: { q?: string; from?: string; to?: string }) {
   const db = await getDb();
   const q = (sp.q ?? "").trim();
   const from = isDate(sp.from) ? sp.from : "";

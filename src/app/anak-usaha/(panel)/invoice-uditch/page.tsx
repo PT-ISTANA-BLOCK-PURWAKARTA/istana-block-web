@@ -1,4 +1,4 @@
-// Invoice U-Ditch (CV. Istana Bangun Nusantara, IN-IBN-…): terpisah dari keuangan IB. Daftar gaya Zahir; pembayaran
+// Invoice U-Ditch (PT. Istana Block · U-Ditch, IN-UD-…): terpisah dari keuangan IB. Daftar gaya Zahir; pembayaran
 // otomatis masuk Operational U-Ditch (M03) sehingga saldo Lina (TF / Cash Lina) bertambah.
 import { AnakInvoiceDaftar } from "@/components/erp/AnakInvoiceDaftar";
 import { requireAnak } from "@/lib/auth";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function InvoiceUditch({ searchParams }: { searchParams: Promise<{ q?: string; from?: string; to?: string }> }) {
   const user = await requireAnak("uditch", "keuangan");
-  const { rows, q, from, to } = await anakInvoiceRows("ibn", await searchParams);
+  const { rows, q, from, to } = await anakInvoiceRows("ud", await searchParams);
   return (
     <AnakInvoiceDaftar
       key={`${q}|${from}|${to}`}

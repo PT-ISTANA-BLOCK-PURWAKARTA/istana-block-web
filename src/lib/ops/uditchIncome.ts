@@ -1,5 +1,5 @@
 // Pendapatan U-Ditch → saldo Lina (keputusan pemilik 28/11: "jika revenue U-Ditch bertambah, saldo Lina ikut bertambah").
-// Pembayaran Invoice U-Ditch (CV. Istana Bangun Nusantara, issuer "ibn") otomatis tercatat di Operational U-Ditch sebagai
+// Pembayaran Invoice U-Ditch (PT. Istana Block · U-Ditch, issuer "ud") otomatis tercatat di Operational U-Ditch sebagai
 // uang masuk M03 (Penjualan U-Ditch & Produk) di TF Lina, atau Cash Lina bila dibayar tunai. Satu baris per invoice
 // (source_key "invoice:<id>"), diperbarui saat pembayaran diubah, dihapus bila pembayaran dihapus / invoice dibatalkan /
 // invoice dihapus. U-Ditch terpisah dari keuangan IB: tidak ada jurnal di buku besar IB. Padanan syncUditchIncome app lama.
@@ -19,7 +19,7 @@ export async function syncUditchIncome(db: Db, invoiceId: string) {
     db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, invoiceId) }),
     db.query.uditchEntries.findFirst({ where: eq(schema.uditchEntries.sourceKey, key) }),
   ]);
-  const paid = inv && inv.issuer === "ibn" && inv.status !== "batal" ? Math.round(inv.paidAmount ?? 0) : 0;
+  const paid = inv && inv.issuer === "ud" && inv.status !== "batal" ? Math.round(inv.paidAmount ?? 0) : 0;
   if (!inv || paid <= 0 || !inv.paidAt) {
     if (existing) await db.delete(schema.uditchEntries).where(eq(schema.uditchEntries.id, existing.id));
     return;

@@ -3,7 +3,8 @@ import { eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { SuratJalanSheet } from "@/components/erp/SuratJalanSheet";
 import { getDb, schema } from "@/db";
-import { requireModule } from "@/lib/auth";
+import { requireAnyModule } from "@/lib/auth";
+import { can } from "@/lib/roles";
 import { kopOf } from "@/lib/erp/deliveryNote";
 import { deliveryItems } from "@/lib/erp/ops";
 import { imageUrl } from "@/lib/format";
@@ -13,11 +14,14 @@ export const metadata = { title: "Cetak surat jalan", robots: { index: false } }
 export const dynamic = "force-dynamic";
 
 export default async function CetakSuratJalan({ params }: { params: Promise<{ id: string }> }) {
-  const me = await requireModule("keuangan");
+  const me = await requireAnyModule("keuangan", "anak");
   const { id } = await params;
   const db = await getDb();
   const d = await db.query.deliveries.findFirst({ where: eq(schema.deliveries.id, id) });
   if (!d) notFound();
+  // Surat jalan U-Ditch (SJ-UD/…) boleh dicetak PIC U-Ditch; surat jalan IB hanya Keuangan.
+  const ud = d.number.startsWith("SJ-UD/");
+  if (!can(me.roles, "keuangan") && !(ud && can(me.roles, "uditch"))) notFound();
   const order = await db.query.orders.findFirst({ where: eq(schema.orders.id, d.orderId) });
   const [site, contact, vehicle, driver, items, inv] = await Promise.all([
     getSettings(),
@@ -32,7 +36,7 @@ export default async function CetakSuratJalan({ params }: { params: Promise<{ id
   return (
     <SuratJalanSheet
       kop={kopOf(inv?.issuer ?? "ib", site)}
-      back={`/akuntansi/dokumen/surat-jalan/${d.id}`}
+      back={ud ? "/anak-usaha/surat-jalan-uditch" : `/akuntansi/dokumen/surat-jalan/${d.id}`}
       printedBy={me.name}
       data={{
         issuer: inv?.issuer ?? "ib", number: d.number, poNumber: order?.customerRef || order?.number || null, date: d.date, terms,

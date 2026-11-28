@@ -1,5 +1,5 @@
 // Invoice penjualan (Keuangan): daftar per bulan + cari + status + penerbit. Dibuat hanya di Keuangan; Operasional melihat saja.
-// Invoice U-Ditch (CV. Istana Bangun Nusantara) terpisah dari keuangan IB → hanya di Anak Perusahaan › Invoice U-Ditch.
+// Invoice U-Ditch (PT. Istana Block · U-Ditch, IN-UD-…) terpisah dari keuangan IB → hanya di Anak Perusahaan › Invoice U-Ditch.
 import Link from "next/link";
 import { and, desc, eq, gte, like, lt, ne, or } from "drizzle-orm";
 import { PageHead } from "@/components/erp/ui";
@@ -24,7 +24,7 @@ export default async function DaftarInvoice({ searchParams }: { searchParams: Pr
   const all = await db.select().from(schema.salesInvoices).where(and(
     term ? or(like(schema.salesInvoices.number, `%${term}%`), like(schema.salesInvoices.customerName, `%${term}%`), like(schema.salesInvoices.poNumber, `%${term}%`), like(schema.salesInvoices.customerPhone, `%${term}%`)) : undefined,
     from ? gte(schema.salesInvoices.invoiceDate, from) : undefined, to ? lt(schema.salesInvoices.invoiceDate, to) : undefined,
-    ne(schema.salesInvoices.issuer, "ibn"),
+    ne(schema.salesInvoices.issuer, "ud"),
     sp.penerbit ? eq(schema.salesInvoices.issuer, sp.penerbit) : undefined,
   )).orderBy(desc(schema.salesInvoices.invoiceDate), desc(schema.salesInvoices.seq)).limit(1000);
   const rows = (sp.status ? all.filter((r) => r.status === sp.status) : all).map((r) => ({ ...r, t: invoiceTotals(r.items as unknown as InvoiceLine[], r.ppnPercent, r.downPaymentPercent, r.downPaymentAmount) }));
@@ -37,7 +37,7 @@ export default async function DaftarInvoice({ searchParams }: { searchParams: Pr
       <form className="filter-bar" method="get">
         <input name="q" defaultValue={sp.q} placeholder="Cari nomor, pelanggan, no. PO, telp" aria-label="Cari" />
         <input type="month" name="bulan" defaultValue={month} aria-label="Bulan" />
-        <select name="penerbit" defaultValue={sp.penerbit ?? ""} aria-label="Penerbit"><option value="">Semua penerbit</option>{INVOICE_ISSUERS.filter((i) => i.key !== "ibn").map((i) => <option key={i.key} value={i.key}>{i.label}</option>)}</select>
+        <select name="penerbit" defaultValue={sp.penerbit ?? ""} aria-label="Penerbit"><option value="">Semua penerbit</option>{INVOICE_ISSUERS.filter((i) => i.key !== "ud").map((i) => <option key={i.key} value={i.key}>{i.label}</option>)}</select>
         <select name="status" defaultValue={sp.status ?? ""} aria-label="Status"><option value="">Semua status</option>{Object.entries(INVOICE_STATUS_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
         <button className="btn btn-ghost btn-sm">Tampilkan</button>
       </form>

@@ -21,7 +21,7 @@ export default async function InvoiceBaru({ searchParams }: { searchParams: Prom
   const db = await getDb();
   const inv = sp.id ? await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, sp.id) }) : undefined;
   if (sp.id && !inv) notFound();
-  if (inv?.issuer === "ibn") redirect(`/anak-usaha/invoice-uditch/baru?id=${inv.id}`);
+  if (inv?.issuer === "ud") redirect(`/anak-usaha/invoice-uditch/baru?id=${inv.id}`);
   const q = !inv && sp.penawaran ? await db.query.quotations.findFirst({ where: eq(schema.quotations.id, sp.penawaran) }) : undefined;
   const [signers, products, seqs] = await Promise.all([documentSigners(db), productNames(db), db.all<{ issuer: string; s: number }>(sql`select issuer, max(seq) s from ops_sales_invoices group by issuer`)]);
   // Keuangan menerbitkan invoice PT. Istana Block; invoice angkutan (Ekspedisi IB) dibuat di Anak Perusahaan.

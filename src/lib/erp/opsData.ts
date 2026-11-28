@@ -63,7 +63,7 @@ export async function loadOps(db: DB, kind: OpsKind, from: string, to: string): 
   }
   if (kind === "invoice") {
     const rows = await db.all<{ id: string; number: string; d: number; customer_name: string; items: string; ppn_percent: number | null; status: string; paid_amount: number | null; issuer: string | null }>(sql`
-      select id, number, invoice_date d, customer_name, items, ppn_percent, status, paid_amount, issuer from ops_sales_invoices where issuer <> 'ibn' and invoice_date >= ${f} and invoice_date < ${t} order by invoice_date desc, seq desc`);
+      select id, number, invoice_date d, customer_name, items, ppn_percent, status, paid_amount, issuer from ops_sales_invoices where issuer <> 'ud' and invoice_date >= ${f} and invoice_date < ${t} order by invoice_date desc, seq desc`);
     return rows.map((r) => { const it = parseItems(r.items); const base = itemsValue(it); const value = Math.round(base * (1 + Number(r.ppn_percent ?? 0) / 100)); const paid = Number(r.paid_amount ?? 0); return { id: r.id, date: day(r.d), number: r.number, party: r.customer_name, items: itemsText(it), qty: 0, unit: "", value, status: r.status, extra: [(r.issuer ?? "ib").toUpperCase(), paid ? paid.toLocaleString("id-ID") : "-", r.status === "lunas" ? "0" : Math.max(0, value - paid).toLocaleString("id-ID")] }; });
   }
   if (kind === "barang-masuk") {

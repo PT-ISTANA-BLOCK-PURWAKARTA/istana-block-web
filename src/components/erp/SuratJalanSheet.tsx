@@ -23,7 +23,7 @@ export function SuratJalanSheet({ data, kop, back, printedBy }: { data: SuratJal
           <div><b>{kop.name}</b><div>Office : {kop.address}</div><div>Phone : {kop.phone}</div></div>
         </header>
       )}
-      <div className="sjtitle"><span>SURAT JALAN{data.isInternal && <i className="sjint">INTERNAL</i>}</span><b>{label}</b></div>
+      <div className="sjtitle"><span>SURAT JALAN{data.issuer === "ud" && " U-DITCH"}{data.isInternal && <i className="sjint">INTERNAL</i>}</span><b>{label}</b></div>
       <table className="sj">
         <thead><tr><th>No Surat Jalan</th><th>No PO</th><th>Tanggal</th><th>Terms</th>{data.reference && <th>{data.reference.label}</th>}</tr></thead>
         <tbody><tr><td className="c">{data.number}</td><td className="c">{data.poNumber ?? ""}</td><td className="c">{shortDate(data.date)}</td><td className="c">{data.terms ?? ""}</td>{data.reference && <td className="c">{data.reference.value}</td>}</tr></tbody>

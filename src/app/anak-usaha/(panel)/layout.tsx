@@ -21,6 +21,7 @@ const ITEMS: ShellItem[] = [
   { href: "/anak-usaha/menu/uditch", label: "Semua menu U-Ditch", group: "Proyek U-Ditch", icon: "menu", perm: UDITCH },
   { href: "/anak-usaha/uditch", label: "Operational U-Ditch", group: "Proyek U-Ditch", icon: "book", perm: UDITCH },
   { href: "/anak-usaha/invoice-uditch", label: "Invoice U-Ditch", group: "Proyek U-Ditch", icon: "invoice", perm: UDITCH },
+  { href: "/anak-usaha/surat-jalan-uditch", label: "Surat Jalan U-Ditch", group: "Proyek U-Ditch", icon: "truckGo", perm: UDITCH },
   { href: "/anak-usaha/surat-jalan-ibn", label: "Surat Jalan IBN", group: "Proyek U-Ditch", icon: "truck", perm: UDITCH },
 ];
 

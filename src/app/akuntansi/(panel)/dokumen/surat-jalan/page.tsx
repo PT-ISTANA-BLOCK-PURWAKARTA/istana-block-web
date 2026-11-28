@@ -25,7 +25,7 @@ export default async function DaftarSuratJalan({ searchParams }: { searchParams:
       (select group_concat(coalesce(i.name, ol.description) || ' ' || dl.qty || ' ' || ol.unit, ' · ') from ops_delivery_lines dl join ops_order_lines ol on ol.id = dl.order_line_id left join fin_items i on i.id = dl.item_id where dl.delivery_id = d.id) items
     from ops_deliveries d join ops_orders o on o.id = d.order_id left join fin_contacts c on c.id = o.contact_id
     left join ops_sales_invoices si on si.order_id = o.id left join ops_drivers dr on dr.id = d.driver_id left join ops_vehicles v on v.id = d.vehicle_id
-    where (${month} = '' or substr(d.date, 1, 7) = ${month}) and (${sp.status ?? ""} = '' or d.status = ${sp.status ?? ""})
+    where d.number not like 'SJ-UD/%' and (${month} = '' or substr(d.date, 1, 7) = ${month}) and (${sp.status ?? ""} = '' or d.status = ${sp.status ?? ""})
       and (d.number like ${term} or o.number like ${term} or coalesce(c.name, '') like ${term} or coalesce(si.number, '') like ${term} or coalesce(o.external_ref, '') like ${term})
     order by d.date desc, d.number desc limit 500`) : [];
   const notes = tab === "arsip" ? await db.all<Note>(sql`

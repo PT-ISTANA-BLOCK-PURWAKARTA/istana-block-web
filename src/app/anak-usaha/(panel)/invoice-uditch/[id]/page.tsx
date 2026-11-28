@@ -1,7 +1,9 @@
-// Detail Invoice U-Ditch (CV. Istana Bangun Nusantara): barang, status, pembayaran, cetak. Pembayaran otomatis tercatat
+// Detail Invoice U-Ditch (PT. Istana Block · U-Ditch): barang, status, pembayaran, cetak. Pembayaran otomatis tercatat
 // di Operational U-Ditch (M03 Penjualan U-Ditch) → saldo TF Lina / Cash Lina bertambah. Tidak masuk keuangan IB.
 import Link from "next/link";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
+import { STATUS_LABEL } from "@/components/ops/delivery/status";
+import type { DeliveryStatus } from "@/db/erp";
 import { notFound } from "next/navigation";
 import { ActionButton } from "@/components/erp/ActionButton";
 import { SalesInvoicePaymentForm } from "@/components/erp/SalesInvoiceForm";
@@ -26,13 +28,15 @@ export default async function InvoiceUditchDetail({ params, searchParams }: { pa
   const sp = await searchParams;
   const db = await getDb();
   const inv = await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, id) });
-  if (!inv || inv.issuer !== "ibn") notFound();
+  if (!inv || inv.issuer !== "ud") notFound();
+  const sj = inv.orderId ? await db.all<{ id: string; number: string; date: string; status: string; driver: string | null; plate: string | null }>(sql`select d.id, d.number, d.date, d.status, dr.name driver, v.plate from ops_deliveries d left join ops_drivers dr on dr.id = d.driver_id left join ops_vehicles v on v.id = d.vehicle_id where d.order_id = ${inv.orderId} order by d.date, d.number`) : [];
   const entry = await db.query.uditchEntries.findFirst({ where: eq(schema.uditchEntries.sourceKey, `invoice:${inv.id}`) });
   const items = inv.items as unknown as InvoiceLine[];
   const t = invoiceTotals(items, inv.ppnPercent, inv.downPaymentPercent, inv.downPaymentAmount);
   return (
-    <ZahirPage title={inv.number} sub={`CV. Istana Bangun Nusantara · ${inv.customerName} · ${tgl(wibDay(inv.invoiceDate))} · ${INVOICE_STATUS_LABEL[inv.status] ?? inv.status}`} hub="/anak-usaha/invoice-uditch" actions={<>
+    <ZahirPage title={inv.number} sub={`PT. Istana Block · Invoice U-Ditch · ${inv.customerName} · ${tgl(wibDay(inv.invoiceDate))} · ${INVOICE_STATUS_LABEL[inv.status] ?? inv.status}`} hub="/anak-usaha/invoice-uditch" actions={<>
         <Link href={`/akuntansi/cetak/invoice/${inv.id}`} className="btn btn-blue btn-sm">Cetak / PDF</Link>
+        {canEdit && inv.status !== "batal" && <Link href={`/anak-usaha/invoice-uditch/${inv.id}/kirim`} className="btn btn-blue btn-sm">Buat surat jalan</Link>}
         {canEdit && <Link href={`/anak-usaha/invoice-uditch/baru?id=${inv.id}`} className="btn btn-ghost btn-sm">Ubah</Link>}
         {canEdit && inv.status === "draft" && <ActionButton action={deleteSalesInvoice.bind(null, inv.id)} label="Hapus" confirmText={`Hapus invoice ${inv.number}?`} className="btn btn-ghost btn-sm" />}
       </>}>
@@ -56,6 +60,12 @@ export default async function InvoiceUditchDetail({ params, searchParams }: { pa
           </tfoot>
         </table>
       </div>
+      <h2 className="form-sub">Surat jalan U-Ditch</h2>
+      {sj.length ? (
+        <div className="admin-table"><table><thead><tr><th>No. SJ</th><th>Tanggal</th><th>Sopir / plat</th><th>Status</th><th /></tr></thead><tbody>
+          {sj.map((d) => <tr key={d.id}><td><b>{d.number}</b></td><td>{tgl(d.date)}</td><td>{[d.driver, d.plate].filter(Boolean).join(" · ") || "belum ditugaskan"}</td><td>{STATUS_LABEL[d.status as DeliveryStatus] ?? d.status}</td><td><Link href={`/akuntansi/cetak/surat-jalan/${d.id}`} target="_blank">Cetak</Link></td></tr>)}
+        </tbody></table></div>
+      ) : <p className="small muted">Belum ada surat jalan. Tekan <b>Buat surat jalan</b> untuk mengirim barang invoice ini.</p>}
       <h2 className="form-sub">Pembayaran diterima</h2>
       <p className="small muted">
         {inv.paidAmount ? `Tercatat ${rp(inv.paidAmount)}${inv.paidAt ? ` pada ${tgl(wibDay(inv.paidAt))}` : ""}${inv.paymentMethod ? ` · ${inv.paymentMethod}` : ""}${inv.paidByName ? ` · oleh ${inv.paidByName}` : ""}. Sisa ${rp(Math.max(0, t.grandTotal - inv.paidAmount))}.` : "Belum ada pembayaran tercatat."}

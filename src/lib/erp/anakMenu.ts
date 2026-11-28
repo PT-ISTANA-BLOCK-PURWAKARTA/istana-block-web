@@ -23,14 +23,14 @@ export const ANAK_HUBS: AnakHub[] = [
   {
     slug: "uditch",
     title: "Proyek U-Ditch",
-    sub: "CV. Istana Bangun Nusantara — terpisah dari keuangan IB. Pembayaran Invoice U-Ditch masuk saldo Lina di Operational U-Ditch.",
+    sub: "Invoice U-Ditch PT. Istana Block (IN-UD-…) & Surat Jalan U-Ditch (SJ-UD/…) — terpisah dari keuangan IB. Pembayaran masuk saldo Lina di Operational U-Ditch.",
     perms: ["uditch", "keuangan"],
     tiles: [
       { label: "Operational U-Ditch", href: "/anak-usaha/uditch", icon: "book", color: "blue", w: 2 },
       { label: "Invoice U-Ditch", href: "/anak-usaha/invoice-uditch", icon: "invoice", color: "crimson", h: 2 },
       { label: "Invoice U-Ditch Baru", href: "/anak-usaha/invoice-uditch/baru", icon: "pencil", color: "navy" },
-      { label: "Surat Jalan IBN", href: "/anak-usaha/surat-jalan-ibn", icon: "truck", color: "green" },
-      { label: "Surat Jalan IBN Baru", href: "/anak-usaha/surat-jalan-ibn?baru=1", icon: "truckGo", color: "lime" },
+      { label: "Surat Jalan U-Ditch", href: "/anak-usaha/surat-jalan-uditch", icon: "truckGo", color: "green" },
+      { label: "Surat Jalan IBN", href: "/anak-usaha/surat-jalan-ibn", icon: "truck", color: "lime" },
     ],
   },
 ];

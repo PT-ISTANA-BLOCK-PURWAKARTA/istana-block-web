@@ -23,8 +23,8 @@ export default async function CetakInvoice({ params, searchParams }: { params: P
   const db = await getDb();
   const inv = await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, id) });
   if (!inv) notFound();
-  // Tiap perusahaan terpisah: U-Ditch (ibn) hanya PIC U-Ditch, angkutan (eib) hanya PIC Kendaraan, invoice IB hanya Keuangan/Operasional.
-  const boleh = can(me.roles, "keuangan") || (inv.issuer === "ibn" ? can(me.roles, "uditch") : inv.issuer === "eib" ? can(me.roles, "ekspedisi") : canOpen(me.roles, "operasional"));
+  // Tiap perusahaan terpisah: U-Ditch (ud) hanya PIC U-Ditch, angkutan (eib) hanya PIC Kendaraan, invoice IB hanya Keuangan/Operasional.
+  const boleh = can(me.roles, "keuangan") || (inv.issuer === "ud" ? can(me.roles, "uditch") : inv.issuer === "eib" ? can(me.roles, "ekspedisi") : canOpen(me.roles, "operasional"));
   if (!boleh) notFound();
   const [site, signer] = await Promise.all([getSettings(), inv.signerId ? db.query.users.findFirst({ where: eq(schema.users.id, inv.signerId) }) : undefined]);
   const items = inv.items as unknown as InvoiceLine[];
@@ -37,7 +37,7 @@ export default async function CetakInvoice({ params, searchParams }: { params: P
   const sig = imageUrl(signer?.signatureKey);
   const totals: [string, number][] = [["Total", t.total], ...(inv.ppnPercent ? [[`PPN ${pct(inv.ppnPercent)}`, t.ppn] as [string, number]] : []), ["Grand Total", t.grandTotal],
     ...(t.downPayment !== null ? [[inv.downPaymentAmount || !inv.downPaymentPercent ? "Uang Muka" : `Uang Muka ${pct(inv.downPaymentPercent)}`, t.downPayment] as [string, number], ["Sisa", t.remaining ?? 0] as [string, number]] : [])];
-  const back = sp.dari === "ops" ? "/operasional/faktur-jual" : eib ? `/anak-usaha/invoice-angkutan/${inv.id}` : `/akuntansi/dokumen/invoice/${inv.id}`;
+  const back = sp.dari === "ops" ? "/operasional/faktur-jual" : eib ? `/anak-usaha/invoice-angkutan/${inv.id}` : inv.issuer === "ud" ? `/anak-usaha/invoice-uditch/${inv.id}` : `/akuntansi/dokumen/invoice/${inv.id}`;
   const company = inv.issuer === "ibn" ? "CV. ISTANA BANGUN NUSANTARA" : eib ? "EKSPEDISI ISTANA BLOCK" : site.legal_name || site.company_name || "PT. Istana Block Purwakarta";
   const page = (label: string, copy: boolean) => (
     <article key={label} className={`print-page inv-page${copy ? " inv-copy" : ""}`}>
@@ -59,7 +59,7 @@ export default async function CetakInvoice({ params, searchParams }: { params: P
           {inv.route && <tr><td className="k">Rute</td><td>:</td><td>{inv.route}</td></tr>}
         </tbody></table>
         <div className="ibox">
-          <div className="ititle">FAKTUR : {label}</div>
+          <div className="ititle">{inv.issuer === "ud" ? "INVOICE U-DITCH" : "FAKTUR"} : {label}</div>
           <table className="imeta"><tbody>
             <tr><td className="k">Tanggal</td><td>:</td><td>{longDate(inv.invoiceDate)}</td></tr>
             <tr><td className="k">Kepada</td><td>:</td><td>{inv.customerName}</td></tr>
@@ -92,7 +92,7 @@ export default async function CetakInvoice({ params, searchParams }: { params: P
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <div><div className="sign-title">Hormat Kami,</div><div className="sign-img">{sig && <img src={sig} alt="" />}</div><div className="sign-name">{inv.signerName || ""}</div></div>
       </div>
-      {inv.issuer === "ib" && <p className="iiso">ISO 9001:2015</p>}
+      {(inv.issuer === "ib" || inv.issuer === "ud") && <p className="iiso">ISO 9001:2015</p>}
     </article>
   );
   return (

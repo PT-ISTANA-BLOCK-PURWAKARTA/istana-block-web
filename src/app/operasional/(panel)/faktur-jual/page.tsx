@@ -12,8 +12,8 @@ const rupiah = (n: number | null) => (n == null ? "-" : "Rp " + Math.round(n).to
 export default async function FakturJual() {
   await opsAccess();
   const db = await getDb();
-  // Invoice U-Ditch (CV. Istana Bangun Nusantara) terpisah dari IB: hanya di Anak Perusahaan.
-  const rows = await db.select().from(schema.salesInvoices).where(ne(schema.salesInvoices.issuer, "ibn")).orderBy(desc(schema.salesInvoices.invoiceDate));
+  // Invoice U-Ditch (IN-UD-…) terpisah dari IB: hanya di Anak Perusahaan.
+  const rows = await db.select().from(schema.salesInvoices).where(ne(schema.salesInvoices.issuer, "ud")).orderBy(desc(schema.salesInvoices.invoiceDate));
   return (
     <>
       <PageHead title="Faktur penjualan" />

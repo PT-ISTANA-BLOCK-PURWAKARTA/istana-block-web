@@ -271,7 +271,8 @@ export async function analyzePeriod(db: DB, period: string): Promise<PeriodAnaly
            and exists (select 1 from ops_delivery_lines dl join fin_items i on i.id = dl.item_id where dl.delivery_id = d.id and i.track_stock = 1 and dl.qty > 0)
          order by d.date`);
       const noStock = rows.filter((r) => !Number(r.moves));
-      const noJournal = rows.filter((r) => Number(r.moves) && !Number(r.journal));
+      // Surat jalan U-Ditch (SJ-UD/…) memang tanpa jurnal HPP IB (pembukuan U-Ditch terpisah).
+      const noJournal = rows.filter((r) => Number(r.moves) && !Number(r.journal) && !r.number.startsWith("SJ-UD/"));
       if (noStock.length) return { status: "masalah", value: `${noStock.length} surat jalan berangkat belum mengurangi stok.`, hint: "Buka surat jalannya dan simpan ulang status berangkat/terkirim.", table: table(["Surat jalan", "Tanggal"], noStock.map((r) => [r.number, r.date])) };
       if (noJournal.length) return { status: "perhatian", value: `${noJournal.length} surat jalan tanpa jurnal HPP (harga pokok barang 0?).`, table: table(["Surat jalan", "Tanggal"], noJournal.map((r) => [r.number, r.date])) };
       return { status: "ok", value: rows.length ? `${rows.length} surat jalan berangkat sudah tercatat di stok & HPP.` : "Tidak ada surat jalan berangkat yang dicatat di aplikasi ini pada periode ini." };
@@ -360,7 +361,7 @@ export async function analyzePeriod(db: DB, period: string): Promise<PeriodAnaly
     /* ---------------- dokumen & pencatatan */
     run("invoice_draft", "dokumen", "Invoice penjualan masih draft", async () => {
       const rows = await db.all<{ number: string; name: string }>(sql`
-        select number, customer_name name from ops_sales_invoices where status = 'draft' and issuer <> 'ibn' and invoice_date >= ${fromTs} and invoice_date <= ${toTs} order by invoice_date`);
+        select number, customer_name name from ops_sales_invoices where status = 'draft' and issuer <> 'ud' and invoice_date >= ${fromTs} and invoice_date <= ${toTs} order by invoice_date`);
       return rows.length ? { status: "perhatian", value: `${rows.length} invoice periode ini masih draft.`, href: "/akuntansi/dokumen/invoice?status=draft", table: table(["Invoice", "Pelanggan"], rows.map((r) => [r.number, r.name])) } : { status: "ok", value: "Tidak ada invoice draft." };
     }),
     run("kas_draft", "dokumen", "Kas masuk/keluar masih draft", async () => {
