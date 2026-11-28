@@ -58,6 +58,8 @@ interface FleetWorkspaceProps {
   todayDate: string;
   canEdit: boolean;
   canApprove: boolean;
+  /** Halaman data armada (STNK/KIR); null = akun tidak boleh membuka Operasional → tombolnya disembunyikan. */
+  armadaHref?: string | null;
 }
 
 type TabKey = "notes" | "recap" | "subcategory" | "trips";
@@ -131,6 +133,7 @@ export function FleetWorkspace({
   todayDate,
   canEdit,
   canApprove,
+  armadaHref = "/operasional/armada",
 }: FleetWorkspaceProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -984,9 +987,11 @@ export function FleetWorkspace({
           <button type="button" className="admin-btn admin-btn-ghost" onClick={handleShareWa}>
             Bagikan WA
           </button>
-          <Link href="/operasional/armada" className="admin-btn admin-btn-ghost">
-            Surat &amp; Pajak STNK/KIR
-          </Link>
+          {armadaHref && (
+            <Link href={armadaHref} className="admin-btn admin-btn-ghost">
+              Surat &amp; Pajak STNK/KIR
+            </Link>
+          )}
         </div>
       </div>
 
@@ -1104,9 +1109,11 @@ export function FleetWorkspace({
         <div className="fl-banner is-warn">
           <div className="fl-banner-head">
             <h3 className="fl-banner-title">Pengingat Surat &amp; Servis Armada ({alerts.length})</h3>
-            <Link href="/operasional/armada" className="admin-btn admin-btn-ghost fl-btn-sm">
-              Kelola armada
-            </Link>
+            {armadaHref && (
+              <Link href={armadaHref} className="admin-btn admin-btn-ghost fl-btn-sm">
+                Kelola armada
+              </Link>
+            )}
           </div>
           <div className="fl-alert-pills">
             {alerts.map((a, idx) => (

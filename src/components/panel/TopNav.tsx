@@ -26,7 +26,7 @@ const FAB: Record<string, { href: string; label: string }> = {
 
 const matches = (path: string, href: string) => path === href || path.startsWith(`${href}/`);
 
-export function TopNav({ items, modules, current, user, homeHref, logout }: { items: NavItem[]; modules: Mod[]; current: string; user: { name: string; role: string }; homeHref: string; logout: (fd: FormData) => void }) {
+export function TopNav({ items, modules, current, user, homeHref, logout, tag = "Keuangan" }: { items: NavItem[]; modules: Mod[]; current: string; user: { name: string; role: string }; homeHref: string; logout: (fd: FormData) => void; tag?: string }) {
   const path = usePathname();
   const [open, setOpen] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
@@ -60,7 +60,7 @@ export function TopNav({ items, modules, current, user, homeHref, logout }: { it
         <div className="tn-bar">
           <Link href={homeHref} className="tn-brand">
             <img src="/brand/lambang-istana-block-putih.webp" alt="" width={129} height={150} />
-            <span>Istana Block <small>Keuangan</small></span>
+            <span>Istana Block <small>{tag}</small></span>
           </Link>
           <button type="button" className="tn-burger" aria-expanded={mobile} aria-controls="tn-menu" onClick={() => setMobile((v) => !v)}>
             <Icon name={mobile ? "close" : "menu"} size={20} /> <span>{best?.label ?? "Menu"}</span>

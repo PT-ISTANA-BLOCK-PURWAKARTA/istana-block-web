@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { eq, sql } from "drizzle-orm";
 import type { FormState } from "@/components/admin/FormMessage";
 import { getDb, schema } from "@/db";
-import { requireModule } from "@/lib/auth";
+import { requireAnak } from "@/lib/auth";
 import { guard, UserError } from "@/lib/erp/server";
 import { isDate, parseRupiah } from "@/lib/erp/util";
 import { ACCOUNT_BY_KEY, CATEGORY_BY_CODE, type UditchAccount, type UditchCategoryCode } from "@/lib/ops/uditch";
@@ -14,8 +14,8 @@ import { can } from "@/lib/roles";
 
 const PATH = "/anak-usaha/uditch";
 async function editor() {
-  const user = await requireModule("anak");
-  if (!can(user.roles, "keuangan")) throw new UserError("Hanya kantor/keuangan yang boleh mengubah buku kas U-Ditch.");
+  const user = await requireAnak("uditch", "keuangan");
+  if (!can(user.roles, "keuangan") && !can(user.roles, "uditch")) throw new UserError("Hanya PIC U-Ditch (Lina) atau Keuangan yang boleh mengubah buku kas U-Ditch.");
   return user;
 }
 const num = (v: FormDataEntryValue | null) => { const s = String(v ?? "").trim(); if (!s) return null; const n = Number(s.replace(/\./g, "").replace(",", ".")); return Number.isFinite(n) ? n : null; };

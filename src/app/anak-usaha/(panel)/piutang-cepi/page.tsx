@@ -1,9 +1,9 @@
 import { desc, sql } from "drizzle-orm";
-import { PageHead } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
-import { opsAccess } from "@/lib/erp/ops";
+import { requireAnak } from "@/lib/auth";
 import { can } from "@/lib/roles";
 import { tambahPiutangCepi, hapusPiutangCepi } from "./actions";
+import { ZahirPage } from "@/components/erp/ZahirPage";
 
 export const metadata = { title: "Piutang Cepi" };
 
@@ -12,7 +12,7 @@ const JENIS: Record<string, string> = { pinjam: "Pinjam dana", bayar: "Bayar piu
 const hariIni = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
 
 export default async function PiutangCepi() {
-  const { user } = await opsAccess();
+  const user = await requireAnak("ekspedisi", "keuangan");
   const boleh = can(user.roles, "keuangan");
   const db = await getDb();
   const [ringkas, rows] = await Promise.all([
@@ -25,8 +25,7 @@ export default async function PiutangCepi() {
   const r = ringkas[0] ?? { pinjam: 0, bayar: 0 };
   const sisa = r.pinjam - r.bayar;
   return (
-    <>
-      <PageHead title="Piutang Cepi" sub="Dana Istana Block yang dipinjam Cepi di luar dana operasional mobil, beserta cicilan / potongan gajinya." />
+    <ZahirPage title="Piutang Cepi" sub="Dana Istana Block yang dipinjam Cepi di luar dana operasional mobil, beserta cicilan / potongan gajinya." hub="/anak-usaha/menu/ekspedisi">
       <div className="card" style={{ padding: 16, marginBottom: 20, display: "grid", gap: 6 }}>
         <strong style={{ fontSize: 22 }}>{rupiah(sisa)}</strong>
         <p className="muted" style={{ margin: 0 }}>
@@ -85,6 +84,6 @@ export default async function PiutangCepi() {
           </tbody>
         </table>
       </div>
-    </>
+    </ZahirPage>
   );
 }

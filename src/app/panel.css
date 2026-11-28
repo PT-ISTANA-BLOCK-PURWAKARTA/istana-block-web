@@ -1359,3 +1359,43 @@ table.signs6 img { max-height: 44px; max-width: 100%; display: block; margin: 0 
 @media print {
   .bb .bb-table { max-height: none !important; overflow: visible; }
 }
+/* ===== Daftar invoice anak perusahaan gaya Zahir (.ai): Invoice Angkutan & Invoice U-Ditch ===== */
+.ai-row { grid-template-columns: 112px 150px minmax(120px, 1fr) minmax(0, 1.4fr) 130px 130px 90px; }
+.ai-st { font-size: 12.5px; font-weight: 600; }
+.ai-draft { color: #64748b; }
+.ai-terkirim { color: #1565c0; }
+.ai-dp { color: #c2410c; }
+.ai-lunas { color: #15803d; }
+.ai-batal { color: #b91c1c; text-decoration: line-through; }
+.zd-row.is-sel .ai-st { color: #fff; }
+.ai .zd-total { font-size: 13.5px; }
+@media (max-width: 760px) {
+  .ai-row { grid-template-columns: 100px minmax(0, 1fr) 120px; }
+  .ai-row > span { padding-left: 6px; padding-right: 6px; }
+  .ai-row > .ai-info, .ai-row > :nth-child(6) { display: none; }
+  .ai-row > :nth-child(1) { grid-area: 1 / 1; }
+  .ai-row > :nth-child(2) { display: block; grid-area: 1 / 2; }
+  .ai-row > :nth-child(5) { grid-area: 1 / 3; }
+  .ai-row > :nth-child(3) { grid-area: 2 / 1 / 3 / 3; white-space: normal; padding-top: 0; color: #64748b; }
+  .ai-row > :nth-child(7) { grid-area: 2 / 3; padding-top: 0; text-align: right; }
+  .ai-row.zd-th > :nth-child(3), .ai-row.zd-th > :nth-child(7) { display: none; }
+  .zd-row.is-sel.ai-row > :nth-child(3) { color: #fff; }
+}
+/* ===== Halaman bergaya jendela Zahir (.zpg, komponen ZahirPage) — Anak Perusahaan, seragam dengan Kas & Buku Besar ===== */
+.zpg .zd-top { flex-wrap: wrap; }
+.zpg-actions { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.zpg-sub { margin: 6px 0 12px; color: #64748b; font-size: 13.5px; }
+.zpg-body { display: grid; gap: 14px; min-width: 0; }
+.zpg-body > * { margin-top: 0; margin-bottom: 0; }
+.zpg .admin-table { border: 1px solid #dbe3ec; border-radius: 8px; overflow: auto; max-height: 64vh; box-shadow: none; }
+.zpg .admin-table thead th { position: sticky; top: 0; z-index: 1; background: #1e88e5; color: #fff; font-weight: 500; font-size: 13px; border-color: #1e88e5; }
+.zpg .admin-table tbody tr:hover td { background: #f3f8fe; }
+.zpg .card, .zpg .admin-card, .zpg .zd-card { background: #f8fafc; border: 1px solid #e3e9f1; box-shadow: none; border-radius: 8px; }
+.zpg .filter-bar { background: #f1f5f9; border: 1px solid #e3e9f1; border-radius: 8px; padding: 10px 12px; }
+/* Papan yang membawa judulnya sendiri (mis. Kasbon sopir): judul ganda disembunyikan, keterangan & tombol tetap. */
+.zpg-body .admin-head h1 { display: none; }
+@media print {
+  .zpg > .zd-top, .zpg > .zpg-sub, .zpg > .zd-foot { display: none !important; }
+  .zpg { border: 0; box-shadow: none; padding: 0; }
+  .zpg .admin-table { max-height: none; overflow: visible; border: 0; }
+}

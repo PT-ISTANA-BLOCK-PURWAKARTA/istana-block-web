@@ -1,10 +1,10 @@
-import { PageHead } from "@/components/erp/ui";
 import { FleetWorkspace } from "@/components/ops/fleet/FleetWorkspace";
-import { opsAccess } from "@/lib/erp/ops";
+import { requireAnak } from "@/lib/auth";
 import { isDate, monthStart, today } from "@/lib/erp/util";
 import { getFleetAlerts, listFleetExpenses, listFleetVehicles } from "@/lib/ops/fleet";
 import { FLEET_START_DATE } from "@/lib/ops/shared/fleet";
-import { can } from "@/lib/roles";
+import { can, canOpen } from "@/lib/roles";
+import { ZahirPage } from "@/components/erp/ZahirPage";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Biaya armada" };
@@ -14,7 +14,7 @@ export default async function BiayaArmadaPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
-  const [{ user }, sp] = await Promise.all([opsAccess(), searchParams]);
+  const [user, sp] = await Promise.all([requireAnak("ekspedisi", "keuangan"), searchParams]);
   const todayDate = today();
 
   // Default: semua data sejak awal pencatatan (seperti app lama), bukan hanya bulan berjalan.
@@ -37,11 +37,7 @@ export default async function BiayaArmadaPage({
     can(user.roles, "setujui_qc");
 
   return (
-    <>
-      <PageHead
-        title="Biaya armada"
-        sub="Catat biaya operasional, servis & suku cadang, sewa, pendapatan lain, perjalanan (trip), dan tagihan tempo armada."
-      />
+    <ZahirPage title="Biaya armada" sub="Catat biaya operasional, servis & suku cadang, sewa, pendapatan lain, perjalanan (trip), dan tagihan tempo armada." hub="/anak-usaha/menu/ekspedisi">
       <FleetWorkspace
         initialExpenses={expenses}
         vehicles={vehicles}
@@ -51,7 +47,8 @@ export default async function BiayaArmadaPage({
         todayDate={todayDate}
         canEdit={canEdit}
         canApprove={canApprove}
+        armadaHref={canOpen(user.roles, "operasional") ? "/operasional/armada" : null}
       />
-    </>
+    </ZahirPage>
   );
 }

@@ -2,19 +2,19 @@
 import { eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { SalesInvoiceForm } from "@/components/erp/SalesInvoiceForm";
-import { BackLink, PageHead } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
-import { requireModule } from "@/lib/auth";
+import { requireAnak } from "@/lib/auth";
 import { EIB_BANK, invoiceNumber, wibDay, type InvoiceFormValue, type InvoiceLine } from "@/lib/erp/salesInvoice";
 import { documentSigners } from "@/lib/erp/signers";
 import { today } from "@/lib/erp/util";
 import { can } from "@/lib/roles";
+import { ZahirPage } from "@/components/erp/ZahirPage";
 
 export const metadata = { title: "Invoice Angkutan" };
 export const dynamic = "force-dynamic";
 
 export default async function InvoiceAngkutanBaru({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
-  const user = await requireModule("anak");
+  const user = await requireAnak("ekspedisi", "keuangan");
   if (!can(user.roles, "keuangan") && !can(user.roles, "ekspedisi")) notFound();
   const sp = await searchParams;
   const db = await getDb();
@@ -41,10 +41,8 @@ export default async function InvoiceAngkutanBaru({ searchParams }: { searchPara
         signerId: pic ? String(pic.id) : "", signerName: pic?.name ?? "", route: "", shipDate: today(),
       };
   return (
-    <>
-      <BackLink href={inv ? `/anak-usaha/invoice-angkutan/${inv.id}` : "/anak-usaha/invoice-angkutan"}>Invoice Angkutan</BackLink>
-      <PageHead title={inv ? `Ubah ${inv.number}` : "Invoice angkutan baru"} sub="Ekspedisi Istana Block" />
+    <ZahirPage title={inv ? `Ubah ${inv.number}` : "Invoice angkutan baru"} sub="Ekspedisi Istana Block" hub={inv ? `/anak-usaha/invoice-angkutan/${inv.id}` : "/anak-usaha/invoice-angkutan"}>
       <SalesInvoiceForm initial={initial} signers={allSigners} products={["Ongkos kirim", "Jasa angkut", "Sewa truk", "Sewa crane", "Jasa bongkar"]} nextNumber={{ eib: invoiceNumber(Number(m?.s ?? 0) + 1, "eib") }} issuers={[{ key: "eib", label: "Ekspedisi Istana Block" }]} />
-    </>
+    </ZahirPage>
   );
 }

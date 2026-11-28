@@ -1,9 +1,9 @@
 import { desc, sql } from "drizzle-orm";
-import { PageHead } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
-import { opsAccess } from "@/lib/erp/ops";
+import { requireAnak } from "@/lib/auth";
 import { can } from "@/lib/roles";
 import { tambahDanaCepi, hapusDanaCepi } from "./actions";
+import { ZahirPage } from "@/components/erp/ZahirPage";
 
 export const metadata = { title: "Dana Cepi" };
 
@@ -11,7 +11,7 @@ const rupiah = (n: number | null | undefined) => "Rp " + Math.round(n ?? 0).toLo
 const hariIni = () => new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
 
 export default async function DanaCepi() {
-  const { user } = await opsAccess();
+  const user = await requireAnak("ekspedisi", "keuangan");
   const boleh = can(user.roles, "keuangan");
   const db = await getDb();
   const [ringkas, rows] = await Promise.all([
@@ -32,8 +32,7 @@ export default async function DanaCepi() {
   const masuk = r.setoran + r.pendapatan;
   const saldo = masuk - r.keluar;
   return (
-    <>
-      <PageHead title="Dana Cepi" sub="Dana masuk dari kantor untuk operasional mobil, ditambah pendapatan lain yang diterima Cepi, dikurangi biaya mobil bersumber Dana Cepi." />
+    <ZahirPage title="Dana Cepi" sub="Dana masuk dari kantor untuk operasional mobil, ditambah pendapatan lain yang diterima Cepi, dikurangi biaya mobil bersumber Dana Cepi." hub="/anak-usaha/menu/ekspedisi">
       <div className="card" style={{ padding: 16, marginBottom: 20, display: "grid", gap: 6 }}>
         <strong style={{ fontSize: 22 }}>{rupiah(saldo)}</strong>
         <p className="muted" style={{ margin: 0 }}>
@@ -87,6 +86,6 @@ export default async function DanaCepi() {
           </tbody>
         </table>
       </div>
-    </>
+    </ZahirPage>
   );
 }

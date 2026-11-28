@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/db";
-import { opsAccess } from "@/lib/erp/ops";
+import { requireAnak } from "@/lib/auth";
 import { can } from "@/lib/roles";
 
 const TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
 
 async function boleh() {
-  const { user } = await opsAccess();
+  const user = await requireAnak("ekspedisi", "keuangan");
   if (!can(user.roles, "keuangan")) throw new Error("Tidak berhak mencatat dana Cepi.");
   return user;
 }

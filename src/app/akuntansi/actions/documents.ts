@@ -17,6 +17,7 @@ import { hidePrices } from "@/lib/ops/shared/prices";
 import { isDate, parseQty } from "@/lib/erp/util";
 import { LAST_MANUAL_QUOTATION_SEQ as LAST_MANUAL_SEQ, quotationNumber } from "@/lib/erp/quotation";
 import { EIB_BANK, invoiceNumber, invoiceTotals, LAST_MANUAL_INVOICE_SEQ, type InvoiceLine } from "@/lib/erp/salesInvoice";
+import { syncUditchIncome } from "@/lib/ops/uditchIncome";
 
 /* ---------------- Surat penawaran ---------------- */
 const wibMidnight = (day: string) => new Date(`${day}T00:00:00+07:00`);
@@ -93,17 +94,18 @@ export async function deleteQuotation(id: string): Promise<{ ok?: string; error?
 /* ---------------- Invoice penjualan ---------------- */
 const INVOICE_STATUSES = ["draft", "terkirim", "dp", "lunas", "batal"];
 const numOf = (v: unknown) => { const t = String(v ?? "").replace(/\./g, "").replace(",", ".").trim(); const n = Number(t); return t && Number.isFinite(n) ? n : null; };
-/** Halaman invoice: Ekspedisi Istana Block (angkutan) di Anak Perusahaan, lainnya di Keuangan. */
-const invoiceBase = (issuer: string) => (issuer === "eib" ? "/anak-usaha/invoice-angkutan" : "/akuntansi/dokumen/invoice");
+/** Halaman invoice: anak perusahaan (Ekspedisi Istana Block = angkutan, CV. Istana Bangun Nusantara = U-Ditch) di Anak Perusahaan, lainnya di Keuangan. */
+const invoiceBase = (issuer: string) => (issuer === "eib" ? "/anak-usaha/invoice-angkutan" : issuer === "ibn" ? "/anak-usaha/invoice-uditch" : "/akuntansi/dokumen/invoice");
 
 /**
- * Invoice Istana Block dibuat Keuangan. Invoice angkutan Ekspedisi Istana Block (eib) dibuat PIC Kendaraan (Cepi) atau Keuangan,
- * dan PIC Kendaraan hanya boleh menyentuh invoice Ekspedisi.
+ * Invoice Istana Block dibuat Keuangan. Invoice angkutan Ekspedisi Istana Block (eib) dibuat PIC Kendaraan (Cepi) atau Keuangan;
+ * Invoice U-Ditch CV. Istana Bangun Nusantara (ibn) dibuat PIC U-Ditch (Lina) atau Keuangan. Masing-masing hanya menyentuh invoice bagiannya.
  */
 async function invoiceEditor(issuer: string) {
-  if (issuer !== "eib") return requireModule("keuangan");
+  if (issuer !== "eib" && issuer !== "ibn") return requireModule("keuangan");
   const me = await requireAnyModule("anak", "keuangan");
-  if (!can(me.roles, "keuangan") && !can(me.roles, "ekspedisi")) throw new UserError("Invoice angkutan hanya dibuat PIC Kendaraan atau Keuangan.");
+  if (!can(me.roles, "keuangan") && !can(me.roles, issuer === "eib" ? "ekspedisi" : "uditch"))
+    throw new UserError(issuer === "eib" ? "Invoice angkutan hanya dibuat PIC Kendaraan atau Keuangan." : "Invoice U-Ditch hanya dibuat PIC U-Ditch (Lina) atau Keuangan.");
   return me;
 }
 async function issuerOfInvoice(id: string) {
@@ -114,7 +116,7 @@ async function issuerOfInvoice(id: string) {
 
 export async function saveSalesInvoice(_prev: FormState, form: FormData): Promise<FormState> {
   const id = String(form.get("id") ?? "");
-  const issuer = id ? await issuerOfInvoice(id) : ["ib", "eib"].includes(String(form.get("issuer"))) ? String(form.get("issuer")) : "ib";
+  const issuer = id ? await issuerOfInvoice(id) : ["ib", "eib", "ibn"].includes(String(form.get("issuer"))) ? String(form.get("issuer")) : "ib";
   const res = await guard(async () => {
     const me = await invoiceEditor(issuer);
     const db = await getDb();
@@ -131,9 +133,10 @@ export async function saveSalesInvoice(_prev: FormState, form: FormData): Promis
     if (items.some((i) => !(i.quantity > 0))) throw new UserError("Isi banyaknya untuk setiap baris.");
     const s = (k: string) => String(form.get(k) ?? "").trim() || null;
     const dpMode = String(form.get("dpMode") ?? "none");
-    // Invoice angkutan selalu ditandatangani PIC Kendaraan (akun ekspedisi) bila tidak dipilih lain.
+    // Invoice angkutan ditandatangani PIC Kendaraan (akun ekspedisi), invoice U-Ditch oleh PIC U-Ditch (akun uditch), bila tidak dipilih lain.
     let signerId = Number(form.get("signerId")) || null;
     if (!signerId && issuer === "eib") signerId = (await db.get<{ id: number }>(sql`select id from users where roles like '%"ekspedisi"%' order by id limit 1`))?.id ?? null;
+    if (!signerId && issuer === "ibn") signerId = (await db.get<{ id: number }>(sql`select id from users where roles like '%"uditch"%' order by id limit 1`))?.id ?? null;
     const signer = signerId ? await db.query.users.findFirst({ where: eq(schema.users.id, signerId) }) : undefined;
     const values = {
       invoiceDate: wibMidnight(day), quotationId: s("quotationId"), customerName, customerAddress: s("customerAddress"), customerPhone: s("customerPhone"), poNumber: s("poNumber"),
@@ -151,6 +154,7 @@ export async function saveSalesInvoice(_prev: FormState, form: FormData): Promis
     }
     if (id) {
       await db.update(schema.salesInvoices).set({ ...values, ...(custom ? { number: custom } : {}) }).where(eq(schema.salesInvoices.id, id));
+      if (issuer === "ibn") await syncUditchIncome(db, id);
       await logActivity(me, { action: "keuangan.invoice.ubah", label: "Mengubah invoice", summary: custom ?? id });
       return { id };
     }
@@ -183,6 +187,8 @@ export async function setSalesInvoiceStatus(id: string, status: string): Promise
         ? { paidAmount: null, paidAt: null, paidByName: null, paymentMethod: null, paymentNote: null }
         : {};
     await db.update(schema.salesInvoices).set({ status, ...payment, updatedAt: new Date() }).where(eq(schema.salesInvoices.id, id));
+    // U-Ditch: pendapatan ikut status (lunas → masuk saldo Lina, batal / kembali draft → dihapus).
+    if (issuer === "ibn") await syncUditchIncome(db, id);
     await logActivity(me, { action: "keuangan.invoice.status", label: "Mengubah status invoice", summary: `${inv.number} → ${status}` });
     return { ok: "Status diubah." };
   });
@@ -207,6 +213,8 @@ export async function recordSalesInvoicePayment(_prev: FormState, form: FormData
       paidAmount: amount || null, paidAt: amount ? wibMidnight(day) : null, paymentMethod: amount ? String(form.get("method") ?? "") || null : null,
       paymentNote: amount ? String(form.get("note") ?? "").trim() || null : null, paidByName: amount ? me.name : null, status, updatedAt: new Date(),
     }).where(eq(schema.salesInvoices.id, id));
+    // U-Ditch: pembayaran masuk Operational U-Ditch (M03) → saldo TF Lina / Cash Lina bertambah.
+    if (issuer === "ibn") await syncUditchIncome(db, id);
     await logActivity(me, { action: "keuangan.invoice.bayar", label: "Mencatat pembayaran invoice", summary: `${inv.number} · Rp ${amount.toLocaleString("id-ID")}` });
     return { ok: true };
   });
@@ -224,6 +232,7 @@ export async function deleteSalesInvoice(id: string): Promise<{ ok?: string; err
     if (!inv) return { ok: "" };
     if (inv.status !== "draft") throw new UserError("Hanya invoice berstatus Draft yang bisa dihapus — ubah status ke Batal bila salah.");
     await db.delete(schema.salesInvoices).where(eq(schema.salesInvoices.id, id));
+    if (issuer === "ibn") await syncUditchIncome(db, id);
     await logActivity(me, { action: "keuangan.invoice.hapus", label: "Menghapus invoice", summary: inv.number });
     return { ok: "deleted" };
   });
@@ -245,6 +254,8 @@ export async function createDeliveryFromInvoice(_prev: FormState, form: FormData
     const inv = await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, invoiceId) });
     if (!inv) throw new UserError("Invoice tidak ditemukan.");
     if (inv.status === "batal") throw new UserError("Invoice sudah dibatalkan.");
+    // Anak perusahaan terpisah dari IB: surat jalan dari invoice memotong stok & menjurnal HPP IB, jadi tidak untuk invoice U-Ditch / angkutan.
+    if (inv.issuer === "ibn" || inv.issuer === "eib") throw new UserError(inv.issuer === "ibn" ? "Invoice U-Ditch terpisah dari IB — buat Surat Jalan IBN di Anak Perusahaan." : "Invoice angkutan tidak membuat surat jalan barang.");
     const items = inv.items as unknown as InvoiceLine[];
     const date = requireDate(form.get("date"), "Tanggal surat jalan");
     const address = String(form.get("address") ?? "").trim().slice(0, 500);

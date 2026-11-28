@@ -7,6 +7,7 @@ import { requireAnyModule } from "@/lib/auth";
 import { imageUrl } from "@/lib/format";
 import { EIB_BANK, INVOICE_NOTE, invoiceTotals, issuerOf, type InvoiceLine } from "@/lib/erp/salesInvoice";
 import { getSettings } from "@/lib/settings";
+import { can, canOpen } from "@/lib/roles";
 
 export const metadata = { title: "Cetak invoice", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -16,12 +17,15 @@ const pct = (v: number) => `${v.toLocaleString("id-ID", { maximumFractionDigits:
 const longDate = (d: Date) => d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" });
 
 export default async function CetakInvoice({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ dari?: string }> }) {
-  await requireAnyModule("keuangan", "operasional", "anak");
+  const me = await requireAnyModule("keuangan", "operasional", "anak");
   const { id } = await params;
   const sp = await searchParams;
   const db = await getDb();
   const inv = await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, id) });
   if (!inv) notFound();
+  // Tiap perusahaan terpisah: U-Ditch (ibn) hanya PIC U-Ditch, angkutan (eib) hanya PIC Kendaraan, invoice IB hanya Keuangan/Operasional.
+  const boleh = can(me.roles, "keuangan") || (inv.issuer === "ibn" ? can(me.roles, "uditch") : inv.issuer === "eib" ? can(me.roles, "ekspedisi") : canOpen(me.roles, "operasional"));
+  if (!boleh) notFound();
   const [site, signer] = await Promise.all([getSettings(), inv.signerId ? db.query.users.findFirst({ where: eq(schema.users.id, inv.signerId) }) : undefined]);
   const items = inv.items as unknown as InvoiceLine[];
   const t = invoiceTotals(items, inv.ppnPercent, inv.downPaymentPercent, inv.downPaymentAmount);

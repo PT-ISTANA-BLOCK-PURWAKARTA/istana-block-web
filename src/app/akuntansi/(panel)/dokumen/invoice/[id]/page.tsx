@@ -3,7 +3,7 @@ import Link from "next/link";
 import { eq, sql } from "drizzle-orm";
 import { STATUS_LABEL } from "@/components/ops/delivery/status";
 import type { DeliveryStatus } from "@/db/erp";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ActionButton } from "@/components/erp/ActionButton";
 import { SalesInvoicePaymentForm } from "@/components/erp/SalesInvoiceForm";
 import { BackLink, PageHead } from "@/components/erp/ui";
@@ -26,6 +26,8 @@ export default async function InvoiceDetail({ params, searchParams }: { params: 
   const db = await getDb();
   const inv = await db.query.salesInvoices.findFirst({ where: eq(schema.salesInvoices.id, id) });
   if (!inv) notFound();
+  // Invoice U-Ditch terpisah dari keuangan IB: dibuka di Anak Perusahaan.
+  if (inv.issuer === "ibn") redirect(`/anak-usaha/invoice-uditch/${inv.id}`);
   const q = inv.quotationId ? await db.query.quotations.findFirst({ where: eq(schema.quotations.id, inv.quotationId) }) : undefined;
   const deliveries = inv.orderId ? await db.all<{ id: string; number: string; date: string; status: string; driver: string | null; plate: string | null }>(sql`
     select d.id, d.number, d.date, d.status, dr.name driver, v.plate from ops_deliveries d left join ops_drivers dr on dr.id = d.driver_id left join ops_vehicles v on v.id = d.vehicle_id

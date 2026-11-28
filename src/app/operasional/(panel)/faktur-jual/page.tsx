@@ -1,7 +1,7 @@
 import { PageHead } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
-import { desc } from "drizzle-orm";
+import { desc, ne } from "drizzle-orm";
 
 const tanggal = (d: Date | null) => (d ? d.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Jakarta" }) : "-");
 
@@ -12,7 +12,8 @@ const rupiah = (n: number | null) => (n == null ? "-" : "Rp " + Math.round(n).to
 export default async function FakturJual() {
   await opsAccess();
   const db = await getDb();
-  const rows = await db.select().from(schema.salesInvoices).orderBy(desc(schema.salesInvoices.invoiceDate));
+  // Invoice U-Ditch (CV. Istana Bangun Nusantara) terpisah dari IB: hanya di Anak Perusahaan.
+  const rows = await db.select().from(schema.salesInvoices).where(ne(schema.salesInvoices.issuer, "ibn")).orderBy(desc(schema.salesInvoices.invoiceDate));
   return (
     <>
       <PageHead title="Faktur penjualan" />

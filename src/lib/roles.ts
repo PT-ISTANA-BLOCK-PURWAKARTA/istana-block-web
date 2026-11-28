@@ -1,6 +1,6 @@
 /** Peran pengguna, izin per aksi, dan aplikasi yang boleh dibuka. Dipakai di server dan klien (tanpa import server). */
 
-export const ROLES = ["owner", "web", "keuangan", "operasional", "gudang", "sopir", "qc", "mandor", "satpam", "manajer_qc", "pimpinan", "ekspedisi", "absensi", "qcbeton", "tutup_buku"] as const;
+export const ROLES = ["owner", "web", "keuangan", "operasional", "gudang", "sopir", "qc", "mandor", "satpam", "manajer_qc", "pimpinan", "ekspedisi", "absensi", "qcbeton", "tutup_buku", "uditch"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const ROLE_SHORT: Record<Role, string> = {
@@ -19,6 +19,7 @@ export const ROLE_SHORT: Record<Role, string> = {
   absensi: "Absensi",
   qcbeton: "QC Beton",
   tutup_buku: "Tutup Buku",
+  uditch: "U-Ditch",
 };
 
 /** Penjelasan singkat di halaman pengguna. */
@@ -34,10 +35,11 @@ export const ROLE_LABEL: Record<Role, string> = {
   satpam: "Satpam: catat barang masuk, uji lumpur pasir, tandai sudah dimuat, absen piket",
   manajer_qc: "Manajer QC: ACC catatan & uji kuat tekan (tanda tangan Diperiksa), template mix desain",
   pimpinan: "Pimpinan: laporan harian/mingguan/bulanan, tanda tangan Mengetahui, nilai harga bahan",
-  ekspedisi: "PIC Kendaraan (Ekspedisi): catat biaya armada, lihat armada, sopir, jadwal sopir, Dana & Piutang Cepi",
+  ekspedisi: "PIC Kendaraan (Ekspedisi): hanya area Ekspedisi di Anak Perusahaan — biaya armada, invoice angkutan, Dana & Piutang Cepi, kasbon sopir",
   absensi: "Absensi: PIC absensi pekerja, lihat hasil produksi & stok",
   qcbeton: "QC Beton: mix desain & uji mutu beton, waktu terbuang, hasil produksi precast, stok opname, kalender, form ISO",
   tutup_buku: "Tutup Buku: menutup & membuka kembali periode akuntansi (beri hanya ke beberapa orang; gabungkan dengan peran Keuangan)",
+  uditch: "U-Ditch (Lina): hanya area Proyek U-Ditch di Anak Perusahaan — Operational U-Ditch, Invoice U-Ditch, Surat Jalan IBN; terpisah dari keuangan IB",
 };
 
 /**
@@ -87,12 +89,14 @@ export function needsShift(roles: readonly Role[]) {
  * - insiden: Lapor Insiden (F-IB-18) dari HP; absensi_pekerja: absensi pekerja harian (PIC absensi & kantor)
  * - qc_beton: halaman QC Beton (mix desain & uji mutu beton precast/genteng, waktu terbuang); pemilik & operasional ikut
  * - tutup_buku: menutup & membuka kembali periode akuntansi (kunci transaksi). Hanya pemilik & pengguna yang diberi peran Tutup Buku.
+ * - uditch: Proyek U-Ditch (CV. Istana Bangun Nusantara) di Anak Perusahaan: Operational U-Ditch, Invoice U-Ditch, Surat Jalan IBN.
+ *   Pembukuannya terpisah dari keuangan IB; peran U-Ditch (Lina) tidak bisa membuka aplikasi lain.
  */
 export const PERMS = [
   "web", "keuangan", "lihat_ops", "pesanan", "pengiriman", "muat", "stok", "lacak", "antar",
   "qc", "setujui_qc", "ttd_pimpinan", "uji_pasir", "lihat_uji_pasir", "barang_masuk", "lihat_barang_masuk",
   "nilai_mutu", "nilai_kirim", "nilai_harga", "produksi_lapangan", "kalender", "kalender_kelola", "laporan", "iso", "piket", "selesaikan", "keamanan",
-  "rekap_pelanggan", "opname", "cat_genteng", "spesifikasi_produk", "ttd_sekretaris", "ekspedisi", "lihat_produksi", "qc_beton", "insiden", "absensi_pekerja", "tutup_buku",
+  "rekap_pelanggan", "opname", "cat_genteng", "spesifikasi_produk", "ttd_sekretaris", "ekspedisi", "lihat_produksi", "qc_beton", "insiden", "absensi_pekerja", "tutup_buku", "uditch",
 ] as const;
 export type Perm = (typeof PERMS)[number];
 
@@ -108,10 +112,13 @@ const ROLE_PERMS: Record<Role, readonly Perm[]> = {
   satpam: ["lihat_ops", "muat", "barang_masuk", "lihat_barang_masuk", "uji_pasir", "piket", "insiden"],
   manajer_qc: ["lihat_ops", "qc", "setujui_qc", "lihat_uji_pasir", "lihat_barang_masuk", "iso", "kalender"],
   pimpinan: ["lihat_ops", "laporan", "ttd_pimpinan", "nilai_harga", "lihat_uji_pasir", "lihat_barang_masuk", "iso", "kalender"],
-  ekspedisi: ["lihat_ops", "ekspedisi", "insiden"],
+  // PIC Kendaraan (Cepi) hanya area Ekspedisi di Anak Perusahaan (keputusan pemilik 28/11), tanpa Operasional.
+  ekspedisi: ["ekspedisi"],
   absensi: ["lihat_ops", "lihat_produksi", "absensi_pekerja"],
   qcbeton: ["lihat_ops", "qc_beton", "insiden", "produksi_lapangan", "lihat_produksi", "opname", "kalender", "iso"],
   tutup_buku: ["tutup_buku"],
+  // Lina hanya area Proyek U-Ditch di Anak Perusahaan (keputusan pemilik 28/11).
+  uditch: ["uditch"],
 };
 
 export function permsOf(roles: readonly Role[]): Set<Perm> {
@@ -129,7 +136,7 @@ export const MODULES: { key: ModuleKey; href: string; login: string; label: stri
   { key: "web", href: "/situs", login: "/situs/masuk", label: "Situs", perms: ["web"], pin: false },
   { key: "operasional", href: "/operasional", login: "/operasional/masuk", label: "Operasional", perms: ["lihat_ops", "antar"], pin: true },
   { key: "keuangan", href: "/akuntansi", login: "/akuntansi/masuk", label: "Keuangan", perms: ["keuangan"], pin: false },
-  { key: "anak", href: "/anak-usaha", login: "/anak-usaha/masuk", label: "Anak Perusahaan", perms: ["ekspedisi", "keuangan"], pin: false },
+  { key: "anak", href: "/anak-usaha", login: "/anak-usaha/masuk", label: "Anak Perusahaan", perms: ["ekspedisi", "uditch", "keuangan"], pin: false },
 ];
 
 export const moduleOf = (key: ModuleKey) => MODULES.find((m) => m.key === key)!;

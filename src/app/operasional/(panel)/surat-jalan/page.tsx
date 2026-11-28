@@ -1,7 +1,7 @@
 // Arsip surat jalan manual (app lama) — Operasional hanya melihat. Surat jalan baru dibuat Keuangan dari invoice;
 // Operasional menugaskan sopir & armada di menu Pengiriman.
 import Link from "next/link";
-import { desc } from "drizzle-orm";
+import { desc, ne } from "drizzle-orm";
 import { PageHead } from "@/components/erp/ui";
 import { getDb, schema } from "@/db";
 import { opsAccess } from "@/lib/erp/ops";
@@ -12,7 +12,8 @@ export const metadata = { title: "Surat jalan" };
 export default async function SuratJalan() {
   await opsAccess();
   const db = await getDb();
-  const rows = await db.select().from(schema.deliveryNotes).orderBy(desc(schema.deliveryNotes.noteDate), desc(schema.deliveryNotes.number));
+  // Surat Jalan IBN (U-Ditch) terpisah dari IB: hanya di Anak Perusahaan.
+  const rows = await db.select().from(schema.deliveryNotes).where(ne(schema.deliveryNotes.issuer, "ibn")).orderBy(desc(schema.deliveryNotes.noteDate), desc(schema.deliveryNotes.number));
   return (
     <>
       <PageHead title="Surat jalan" sub="Lihat saja. Surat jalan dibuat Keuangan dari invoice; penugasan sopir & armada di menu Pengiriman.">

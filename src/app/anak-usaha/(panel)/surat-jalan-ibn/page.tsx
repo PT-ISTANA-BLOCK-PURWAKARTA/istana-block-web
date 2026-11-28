@@ -3,14 +3,14 @@ import Link from "next/link";
 import { eq, sql } from "drizzle-orm";
 import { ActionButton } from "@/components/erp/ActionButton";
 import { DeliveryNoteForm, type DeliveryNoteValue } from "@/components/erp/DeliveryNoteForm";
-import { PageHead } from "@/components/erp/ui";
 import { deleteDeliveryNote } from "@/app/akuntansi/actions/deliveryNotes";
 import { getDb, schema } from "@/db";
-import { requireModule } from "@/lib/auth";
+import { requireAnak } from "@/lib/auth";
 import { deliveryNoteNumber, noteLines } from "@/lib/erp/deliveryNote";
 import { documentSigners, productNames } from "@/lib/erp/signers";
 import { today } from "@/lib/erp/util";
 import { can } from "@/lib/roles";
+import { ZahirPage } from "@/components/erp/ZahirPage";
 
 export const metadata = { title: "Surat Jalan IBN" };
 export const dynamic = "force-dynamic";
@@ -18,8 +18,8 @@ export const dynamic = "force-dynamic";
 type Row = { id: string; number: string; note_date: string; customer_name: string; po_number: string | null; driver_name: string | null; plate: string | null; items: string; pickup: number; is_internal: number };
 
 export default async function SuratJalanIbn({ searchParams }: { searchParams: Promise<{ q?: string; bulan?: string; baru?: string; id?: string; ok?: string }> }) {
-  const user = await requireModule("anak");
-  const canEdit = can(user.roles, "keuangan");
+  const user = await requireAnak("uditch", "keuangan");
+  const canEdit = can(user.roles, "keuangan") || can(user.roles, "uditch");
   const sp = await searchParams;
   const db = await getDb();
   const month = /^\d{4}-\d{2}$/.test(sp.bulan ?? "") ? sp.bulan! : "";
@@ -40,10 +40,9 @@ export default async function SuratJalanIbn({ searchParams }: { searchParams: Pr
       }
     : { issuer: "ibn", number: "", noteDate: today(), poNumber: "", terms: "", customerName: "", customerPhone: "", address: "", note: "", items: [{ name: "", quantity: "", unit: "pcs", remark: "" }], driverName: "", plate: "", pickup: false, isInternal: false, signerId: "", signerName: "" };
   return (
-    <>
-      <PageHead title="Surat Jalan IBN" sub="CV. Istana Bangun Nusantara · proyek U-Ditch · tanpa harga, cetak Lembar Asli + Copy">
+    <ZahirPage title="Surat Jalan IBN" sub="CV. Istana Bangun Nusantara · proyek U-Ditch · tanpa harga, cetak Lembar Asli + Copy" hub="/anak-usaha/menu/uditch" actions={<>
         {canEdit && <Link href="/anak-usaha/surat-jalan-ibn?baru=1" className="btn btn-blue btn-sm">+ Surat jalan IBN</Link>}
-      </PageHead>
+      </>}>
       {sp.ok && <p className="alert alert-ok">Surat jalan tersimpan.</p>}
       {showForm && (
         <section className="zd-card" style={{ marginBottom: 16 }}>
@@ -82,6 +81,6 @@ export default async function SuratJalanIbn({ searchParams }: { searchParams: Pr
           </tbody>
         </table>
       </div>
-    </>
+    </ZahirPage>
   );
 }

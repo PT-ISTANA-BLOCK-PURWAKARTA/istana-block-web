@@ -14,20 +14,24 @@ import { isDate } from "@/lib/erp/util";
 import { logActivity } from "@/lib/ops/activity";
 import { can } from "@/lib/roles";
 
-async function editor() {
+/** Keuangan: semua surat jalan manual. PIC U-Ditch (Lina): hanya Surat Jalan IBN (proyek U-Ditch). */
+async function editor(issuer: string) {
   const me = await requireAnyModule("keuangan", "anak");
-  if (!can(me.roles, "keuangan")) throw new UserError("Hanya kantor/keuangan yang boleh membuat surat jalan.");
+  if (!can(me.roles, "keuangan") && !(issuer === "ibn" && can(me.roles, "uditch"))) throw new UserError(issuer === "ibn" ? "Surat Jalan IBN hanya dibuat PIC U-Ditch (Lina) atau Keuangan." : "Hanya kantor/keuangan yang boleh membuat surat jalan.");
   return me;
 }
 const pathOf = (issuer: string) => (issuer === "ibn" ? "/anak-usaha/surat-jalan-ibn" : "/akuntansi/dokumen/surat-jalan?tab=arsip");
 const num = (v: unknown) => { const t = String(v ?? "").replace(/\./g, "").replace(",", ".").trim(); const n = Number(t); return t && Number.isFinite(n) ? n : 0; };
 
 export async function saveDeliveryNote(_prev: FormState, form: FormData): Promise<FormState> {
-  const issuer = ["ib", "ibn", "polos"].includes(String(form.get("issuer"))) ? String(form.get("issuer")) : "ibn";
+  const formIssuer = ["ib", "ibn", "polos"].includes(String(form.get("issuer"))) ? String(form.get("issuer")) : "ibn";
+  let issuer = formIssuer;
   const res = await guard(async () => {
-    const me = await editor();
     const db = await getDb();
     const id = String(form.get("id") ?? "");
+    // Hak ubah mengikuti penerbit surat jalan yang tersimpan (bukan isian form).
+    issuer = id ? (await db.query.deliveryNotes.findFirst({ where: eq(schema.deliveryNotes.id, id) }))?.issuer ?? formIssuer : formIssuer;
+    const me = await editor(issuer);
     const noteDate = String(form.get("noteDate") ?? "");
     if (!isDate(noteDate)) throw new UserError("Isi tanggal surat jalan.");
     const customerName = String(form.get("customerName") ?? "").trim();
@@ -69,10 +73,10 @@ export async function saveDeliveryNote(_prev: FormState, form: FormData): Promis
 
 export async function deleteDeliveryNote(id: string): Promise<{ ok?: string; error?: string }> {
   const res = await guard(async () => {
-    const me = await editor();
     const db = await getDb();
     const n = await db.query.deliveryNotes.findFirst({ where: eq(schema.deliveryNotes.id, id) });
     if (!n) return { ok: "" };
+    const me = await editor(n.issuer);
     await db.delete(schema.deliveryNotes).where(eq(schema.deliveryNotes.id, id));
     await logActivity(me, { action: "keuangan.surat_jalan.hapus", label: "Menghapus surat jalan manual", summary: n.number });
     revalidatePath(pathOf(n.issuer).split("?")[0]);

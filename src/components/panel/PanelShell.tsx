@@ -26,6 +26,7 @@ export function PanelShell({ module, tag, items, user, children, layout = "side"
           user={{ name: user.name, role: user.roles.map((r) => ROLE_SHORT[r]).join(", ") || "Tanpa peran" }}
           homeHref={MODULES.find((m) => m.key === module)?.href ?? "/internal"}
           logout={logout}
+          tag={tag}
         />
         <main className="admin-main" id="konten">
           <div className="main-inner">{children}</div>

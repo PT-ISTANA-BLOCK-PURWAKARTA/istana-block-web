@@ -7,12 +7,24 @@ describe("peran ekspedisi, absensi, qcbeton (setara app live)", () => {
     expect(normalizeRoles(["ekspedisi", "absensi", "qcbeton", "x"])).toEqual(["ekspedisi", "absensi", "qcbeton"]);
   });
 
-  it("PIC Kendaraan boleh mencatat biaya armada tanpa akses keuangan/pengiriman", () => {
+  it("PIC Kendaraan hanya area Ekspedisi di Anak Perusahaan (keputusan pemilik 28/11)", () => {
     expect(can(["ekspedisi"], "ekspedisi")).toBe(true);
     expect(can(["ekspedisi"], "keuangan")).toBe(false);
     expect(can(["ekspedisi"], "pengiriman")).toBe(false);
-    expect(canOpen(["ekspedisi"], "operasional")).toBe(true);
+    expect(can(["ekspedisi"], "uditch")).toBe(false);
+    expect(canOpen(["ekspedisi"], "anak")).toBe(true);
+    expect(canOpen(["ekspedisi"], "operasional")).toBe(false);
     expect(canOpen(["ekspedisi"], "keuangan")).toBe(false);
+  });
+
+  it("PIC U-Ditch (Lina) hanya area Proyek U-Ditch di Anak Perusahaan, terpisah dari keuangan IB", () => {
+    expect(can(["uditch"], "uditch")).toBe(true);
+    expect(can(["uditch"], "ekspedisi")).toBe(false);
+    expect(can(["uditch"], "keuangan")).toBe(false);
+    expect(canOpen(["uditch"], "anak")).toBe(true);
+    expect(canOpen(["uditch"], "operasional")).toBe(false);
+    expect(canOpen(["uditch"], "keuangan")).toBe(false);
+    expect(canOpen(["uditch"], "web")).toBe(false);
   });
 
   it("absensi hanya melihat produksi", () => {

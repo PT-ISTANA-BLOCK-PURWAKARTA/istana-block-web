@@ -5,14 +5,15 @@ import { desc, sql } from "drizzle-orm";
 import { ActionButton } from "@/components/erp/ActionButton";
 import { PrintButton } from "@/components/erp/PrintButton";
 import { ZahirForm, zDate, zn } from "@/components/erp/report/ZahirForm";
-import { Kpis, PageHead } from "@/components/erp/ui";
+import { Kpis } from "@/components/erp/ui";
 import { KontrabonForm, UditchEntryForm } from "@/components/ops/UditchForms";
 import { getDb, schema } from "@/db";
-import { requireModule } from "@/lib/auth";
+import { requireAnak } from "@/lib/auth";
 import { isDate, today } from "@/lib/erp/util";
 import { ACCOUNT_BY_KEY, accountSummary, categoriesFor, categoryLabel, categoryMatrix, headline, monthlySummary, UDITCH_ACCOUNTS, UDITCH_GROUPS, UDITCH_PICS } from "@/lib/ops/uditch";
 import { can } from "@/lib/roles";
 import { deleteKontrabon, deleteUditchEntry } from "./actions";
+import { ZahirPage } from "@/components/erp/ZahirPage";
 
 export const metadata = { title: "Operational U-Ditch" };
 export const dynamic = "force-dynamic";
@@ -22,8 +23,8 @@ const TABS: [Tab, string][] = [["transaksi", "Transaksi"], ["kategori", "Per kat
 const monthText = (m: string) => new Date(`${m}-01T00:00:00`).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 
 export default async function OperationalUditch({ searchParams }: { searchParams: Promise<{ tab?: string; from?: string; to?: string; akun?: string; arah?: string; kategori?: string; q?: string; ubah?: string; baru?: string; kb?: string; ok?: string }> }) {
-  const user = await requireModule("anak");
-  const canEdit = can(user.roles, "keuangan");
+  const user = await requireAnak("uditch", "keuangan");
+  const canEdit = can(user.roles, "keuangan") || can(user.roles, "uditch");
   const sp = await searchParams;
   const tab: Tab = (TABS.map((x) => x[0]) as string[]).includes(sp.tab ?? "") ? (sp.tab as Tab) : "transaksi";
   const t = today();
@@ -57,12 +58,11 @@ export default async function OperationalUditch({ searchParams }: { searchParams
   const period = `${zDate(from)} – ${zDate(to > t ? t : to)}`;
 
   return (
-    <>
+    <ZahirPage title="Operational U-Ditch" sub="Buku kas proyek U-Ditch (PIC Lina): uang masuk & keluar per sumber dana dan kategori, kontrabon dengan Istana Block." hub="/anak-usaha/menu/uditch" actions={<>
+        {canEdit && tab === "transaksi" && <Link href={qs({ baru: "1" })} className="btn btn-primary btn-sm">+ Transaksi</Link>}
+        <PrintButton label="Cetak / PDF" />
+      </>}>
       <div className="no-print">
-        <PageHead title="Operational U-Ditch" sub="Buku kas proyek U-Ditch (PIC Lina): uang masuk & keluar per sumber dana dan kategori, kontrabon dengan Istana Block.">
-          {canEdit && tab === "transaksi" && <Link href={qs({ baru: "1" })} className="btn btn-primary btn-sm">+ Transaksi</Link>}
-          <PrintButton label="Cetak / PDF" />
-        </PageHead>
         {sp.ok && <p className="alert alert-ok">Tersimpan.</p>}
         <form method="get" className="filter-bar">
           <input type="hidden" name="tab" value={tab} />
@@ -176,6 +176,6 @@ export default async function OperationalUditch({ searchParams }: { searchParams
           </>
         )}
       </ZahirForm>
-    </>
+    </ZahirPage>
   );
 }

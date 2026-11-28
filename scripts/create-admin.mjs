@@ -24,7 +24,8 @@ const name = get("name") ?? "Admin";
 const password = get("password");
 const remote = args.includes("--remote");
 const config = get("config");
-const ROLES = ["owner", "web", "keuangan", "operasional", "gudang", "sopir", "qc", "mandor", "satpam", "manajer_qc", "pimpinan"];
+// Sama dengan ROLES di src/lib/roles.ts.
+const ROLES = ["owner", "web", "keuangan", "operasional", "gudang", "sopir", "qc", "mandor", "satpam", "manajer_qc", "pimpinan", "ekspedisi", "absensi", "qcbeton", "tutup_buku", "uditch"];
 const FIELD = ["operasional", "gudang", "sopir", "qc", "mandor", "satpam"];
 const phoneRaw = get("phone");
 const pin = get("pin");

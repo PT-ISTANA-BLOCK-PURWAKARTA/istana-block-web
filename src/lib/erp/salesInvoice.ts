@@ -15,6 +15,8 @@ export const INVOICE_STATUS_LABEL: Record<string, string> = { draft: "Draft", te
 export const PAYMENT_METHODS = ["Transfer BCA Istana Block", "Transfer BCA Hamad Salim Hilabi", "Transfer BCA Muhamad Abdulah", "Transfer BCA Cepi", "Tunai", "Lainnya"];
 export const INVOICE_NOTE = "Barang yang sudah dibeli tidak dapat dikembalikan atau ditukar";
 export const EIB_BANK = { name: "BCA A/N CEPI SEPTIAN KUSUMAH", account: "2313318109" } as const;
+/** Cara bayar Invoice U-Ditch: masuk saldo Lina di Operational U-Ditch (tunai → Cash Lina, selain itu → TF Lina). */
+export const UDITCH_PAYMENT_METHODS = ["Transfer rekening U-Ditch (TF Lina)", "Tunai (Cash Lina)", "Lainnya"];
 
 export type InvoiceLine = { name: string; unit: string; quantity: number; price: number; plateNumber?: string; driverName?: string; cargo?: string };
 

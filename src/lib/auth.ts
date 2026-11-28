@@ -108,6 +108,16 @@ export async function requirePerm(...perms: Perm[]) {
   return user;
 }
 
+/**
+ * Bagian Anak Perusahaan: boleh membuka aplikasinya DAN punya salah satu izin bagian itu
+ * (Ekspedisi: ekspedisi/keuangan; Proyek U-Ditch: uditch/keuangan). Dibuka lewat URL langsung pun tetap ditolak.
+ */
+export async function requireAnak(...perms: Perm[]) {
+  const user = await requireModule("anak");
+  if (!perms.some((p) => can(user.roles, p))) denied(user);
+  return user;
+}
+
 /** Label akun untuk tampilan: email atau nomor HP. */
 export function userHandle(u: { email: string | null; phone: string | null }) {
   if (u.email) return u.email;

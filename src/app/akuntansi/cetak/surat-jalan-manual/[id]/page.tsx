@@ -7,6 +7,7 @@ import { requireAnyModule } from "@/lib/auth";
 import { kopOf, noteLines } from "@/lib/erp/deliveryNote";
 import { imageUrl } from "@/lib/format";
 import { getSettings } from "@/lib/settings";
+import { can } from "@/lib/roles";
 
 export const metadata = { title: "Cetak surat jalan", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -17,6 +18,8 @@ export default async function CetakSuratJalanManual({ params }: { params: Promis
   const db = await getDb();
   const n = await db.query.deliveryNotes.findFirst({ where: eq(schema.deliveryNotes.id, id) });
   if (!n) notFound();
+  // Surat Jalan IBN (U-Ditch): Keuangan atau PIC U-Ditch; surat jalan IB: hanya Keuangan.
+  if (!can(me.roles, "keuangan") && !(n.issuer === "ibn" && can(me.roles, "uditch"))) notFound();
   const [site, signer] = await Promise.all([getSettings(), n.signerId ? db.query.users.findFirst({ where: eq(schema.users.id, n.signerId) }) : undefined]);
   return (
     <SuratJalanSheet

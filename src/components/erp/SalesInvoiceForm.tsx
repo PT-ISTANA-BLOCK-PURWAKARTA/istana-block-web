@@ -97,7 +97,7 @@ export function SalesInvoiceForm({ initial, signers, products, nextNumber, issue
   );
 }
 
-export function SalesInvoicePaymentForm({ id, grandTotal, value }: { id: string; grandTotal: number; value: { amount: number | null; paidAt: string; method: string | null; note: string | null } }) {
+export function SalesInvoicePaymentForm({ id, grandTotal, value, methods = PAYMENT_METHODS }: { id: string; grandTotal: number; value: { amount: number | null; paidAt: string; method: string | null; note: string | null }; methods?: readonly string[] }) {
   const [amount, setAmount] = useState(value.amount ? String(value.amount) : "");
   return (
     <ActionForm action={recordSalesInvoicePayment} className="form-section">
@@ -106,7 +106,7 @@ export function SalesInvoicePaymentForm({ id, grandTotal, value }: { id: string;
         <div className="field"><label htmlFor="p-amt">Sudah dibayar (Rp)</label><input id="p-amt" name="amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
           <span className="help"><button type="button" className="link-btn" onClick={() => setAmount(String(grandTotal))}>Isi lunas ({rp(grandTotal)})</button> · kosongkan / 0 untuk menghapus catatan bayar</span></div>
         <div className="field"><label htmlFor="p-date">Tanggal bayar</label><input id="p-date" type="date" name="paidAt" defaultValue={value.paidAt} /></div>
-        <div className="field"><label htmlFor="p-m">Cara bayar</label><select id="p-m" name="method" defaultValue={value.method ?? PAYMENT_METHODS[0]}>{PAYMENT_METHODS.map((m) => <option key={m}>{m}</option>)}</select></div>
+        <div className="field"><label htmlFor="p-m">Cara bayar</label><select id="p-m" name="method" defaultValue={value.method ?? methods[0]}>{(value.method && !methods.includes(value.method) ? [value.method, ...methods] : methods).map((m) => <option key={m}>{m}</option>)}</select></div>
         <div className="field"><label htmlFor="p-n">Catatan</label><input id="p-n" name="note" defaultValue={value.note ?? ""} /></div>
       </div>
       <div className="form-actions"><SubmitButton>Simpan pembayaran</SubmitButton></div>
