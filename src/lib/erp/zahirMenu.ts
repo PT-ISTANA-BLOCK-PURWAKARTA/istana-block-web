@@ -57,6 +57,8 @@ export const HUBS: Hub[] = [
       { label: "Kartu Piutang", href: "/akuntansi/laporan/kartu?jenis=piutang", icon: "ledger", color: "green" },
       { label: "Impor Saldo Awal Piutang", href: "/akuntansi/penjualan/impor-saldo-piutang", icon: "inbox", color: "navy" },
       { label: "Pengembalian Kelebihan (Kredit)", href: "/akuntansi/uang-muka#kembali", icon: "send", color: "cyan" },
+      { label: "Histori Penjualan Zahir", href: "/akuntansi/histori-zahir?jenis=penjualan", icon: "clock", color: "blue" },
+      { label: "Histori Pengiriman Zahir", href: "/akuntansi/histori-zahir?jenis=pengiriman", icon: "clock", color: "navy" },
     ],
   },
   {
@@ -76,6 +78,8 @@ export const HUBS: Hub[] = [
       { label: "Kartu Hutang", href: "/akuntansi/laporan/kartu?jenis=hutang", icon: "ledger", color: "green" },
       { label: "Impor Saldo Awal Hutang", href: "/akuntansi/pembelian/impor-saldo-hutang", icon: "inbox", color: "navy" },
       { label: "Penerimaan Kembalian (Debit)", href: "/akuntansi/uang-muka?jenis=pembelian#kembali", icon: "send", color: "cyan" },
+      { label: "Histori Pembelian Zahir", href: "/akuntansi/histori-zahir?jenis=pembelian", icon: "clock", color: "blue" },
+      { label: "Histori Penerimaan Barang Zahir", href: "/akuntansi/histori-zahir?jenis=penerimaan", icon: "clock", color: "navy" },
     ],
   },
   {
