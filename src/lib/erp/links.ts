@@ -44,3 +44,10 @@ export function sourceHref(source: string, sourceId: string | null, journalId: s
       return `/akuntansi/jurnal/${journalId}`;
   }
 }
+
+/** Kode tipe transaksi seperti kolom "Tp" Buku Besar Zahir: CD kas keluar, CR kas masuk, TR transfer, JU jurnal umum, SI faktur, dst. */
+export function txType(source: string, number: string) {
+  if (source === "zahir") return number.match(/^[A-Z]{2}/)?.[0] ?? "JU";
+  if (source === "kas") return number.match(/^(CR|CD|TR)/)?.[1] ?? (/^KM/i.test(number) ? "CR" : /^KK/i.test(number) ? "CD" : "CT");
+  return ({ manual: "JU", faktur: "SI", penerimaan: "SR", pembelian: "PI", pembayaran: "PP", pengiriman: "DO", produksi: "PR", penyesuaian: "IA" } as Record<string, string>)[source] ?? "JU";
+}

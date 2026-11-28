@@ -80,7 +80,7 @@ export async function balanceSheet(db: DB, accounts: Account[], asOf: string) {
   return { assets, liabilities, equity, assetTotal, liabTotal, equityTotal, priorYears, currentYear, balanced: assetTotal === liabTotal + equityTotal };
 }
 
-export type LedgerLine = { journalId: string; number: string; date: string; memo: string; lineMemo: string; source: string; sourceId: string | null; debit: number; credit: number; contactName: string | null };
+export type LedgerLine = { journalId: string; number: string; date: string; memo: string; lineMemo: string; source: string; sourceId: string | null; debit: number; credit: number; contactName: string | null; projectCode: string | null };
 
 /** Buku besar satu akun: saldo awal + mutasi + saldo berjalan (menurut saldo normal). */
 export async function ledger(db: DB, account: Account, from: string, to: string) {
@@ -88,8 +88,9 @@ export async function ledger(db: DB, account: Account, from: string, to: string)
   // Dalam satu hari diurutkan menurut waktu dicatat, supaya saldo berjalan mengikuti urutan kejadian
   // (bukan abjad awalan nomor: BYR sebelum TRF).
   const lines = await db.all<LedgerLine>(sql`
-    select j.id as journalId, j.number, l.date, j.memo, l.memo as lineMemo, j.source, j.source_id as sourceId, l.debit, l.credit, c.name as contactName
+    select j.id as journalId, j.number, l.date, j.memo, l.memo as lineMemo, j.source, j.source_id as sourceId, l.debit, l.credit, c.name as contactName, pr.code as projectCode
     from fin_journal_lines l join fin_journals j on j.id = l.journal_id left join fin_contacts c on c.id = l.contact_id
+    left join fin_projects pr on pr.id = l.project_id
     where l.account_id = ${account.id} and l.date >= ${from} and l.date <= ${to}
     order by l.date, j.created_at, j.number, l.sort`);
   const opening = normalBalance(account.group, Number(open?.d ?? 0), Number(open?.c ?? 0));

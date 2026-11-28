@@ -9,7 +9,7 @@ import { BackLink, PageHead } from "@/components/erp/ui";
 import { Select } from "@/components/ui";
 import { accountGroups } from "@/db/erp";
 import { GROUP_LABEL } from "@/lib/erp/accounting";
-import { sourceHref } from "@/lib/erp/links";
+import { sourceHref, txType } from "@/lib/erp/links";
 import { rangePresets } from "@/lib/erp/periods";
 import { reportContext } from "@/lib/erp/reportctx";
 import { ledger } from "@/lib/erp/reports";
@@ -17,12 +17,6 @@ import { isDate, monthStart, today } from "@/lib/erp/util";
 
 export const metadata = { title: "Buku Besar - Mutasi" };
 
-/** Kode tipe transaksi seperti kolom "Tp" di Zahir. */
-function tp(source: string, number: string) {
-  if (source === "zahir") return number.match(/^[A-Z]{2}/)?.[0] ?? "JU";
-  if (source === "kas") return /^KM/i.test(number) ? "CR" : /^KK/i.test(number) ? "CD" : "CT";
-  return ({ manual: "JU", faktur: "SI", penerimaan: "SR", pembelian: "PI", pembayaran: "PP", pengiriman: "DO", produksi: "PR", penyesuaian: "IA" } as Record<string, string>)[source] ?? "JU";
-}
 const n2 = (v: number) => (v ? v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "");
 const nb = (v: number) => (v < 0 ? `(${n2(-v)})` : v === 0 ? "0.00" : n2(v));
 const d8 = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
@@ -91,7 +85,7 @@ export default async function BukuBesarMutasi({ searchParams }: { searchParams: 
                 return (
                   <tr key={i}>
                     <td className="nowrap">{prev?.date === r.date ? "" : d8(r.date)}</td>
-                    <td>{tp(r.source, r.number)}</td>
+                    <td>{txType(r.source, r.number)}</td>
                     <td className="nowrap"><Link href={sourceHref(r.source, r.sourceId, r.journalId)}>{r.number}</Link></td>
                     <td>{head || sub}{head && sub && <em className="zf-sub">{sub}</em>}</td>
                     <td className="num">{n2(r.debit)}</td>

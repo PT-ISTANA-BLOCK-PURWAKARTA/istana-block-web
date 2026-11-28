@@ -1,17 +1,13 @@
-import Link from "next/link";
-import { PrintButton } from "@/components/erp/PrintButton";
-import { PeriodBar } from "@/components/erp/report/PeriodBar";
-import { ReadingNote, ReportSheet } from "@/components/erp/report/ReportSheet";
-import { BackLink, Kpis, PageHead } from "@/components/erp/ui";
+// Buku Besar gaya Zahir (permintaan pemilik 28/11): tabel histori transaksi satu akun di atas, ringkasan saldo,
+// "Grafik Buku Besar Saldo Berjalan" setengah layar di bawah. Grafik hanya untuk tampilan awal (bulan berjalan,
+// tanpa pencarian); filter tanggal atau pencarian → grafik disembunyikan. Tampilan lama (kartu angka + tabel laporan)
+// diganti; cetak format Zahir ada di Buku Besar - Mutasi, unduhan CSV tetap.
+import { BukuBesarView, type BukuBesarRow } from "@/components/erp/BukuBesarView";
 import { GROUP_LABEL, isDebitNormal } from "@/lib/erp/accounting";
-import { SOURCE_LABEL, sourceHref } from "@/lib/erp/links";
-import { periodLabel, rangePresets } from "@/lib/erp/periods";
+import { sourceHref, txType } from "@/lib/erp/links";
 import { reportContext } from "@/lib/erp/reportctx";
 import { ledger } from "@/lib/erp/reports";
-import { formatAmount, isDate, monthStart, tgl, today } from "@/lib/erp/util";
-import { accountGroups } from "@/db/erp";
-import { Select } from "@/components/ui";
-import { BalanceChart } from "@/components/erp/BalanceChart";
+import { isDate, monthStart, today } from "@/lib/erp/util";
 
 export const metadata = { title: "Buku besar" };
 
@@ -33,77 +29,51 @@ function dailyBalances(from: string, to: string, opening: number, rows: { date: 
   return out;
 }
 
-
-export default async function BukuBesar({ searchParams }: { searchParams: Promise<{ akun?: string; from?: string; to?: string }> }) {
-  const { me, db, acc, site, npwp } = await reportContext();
+export default async function BukuBesar({ searchParams }: { searchParams: Promise<{ akun?: string; from?: string; to?: string; q?: string }> }) {
+  const { db, acc } = await reportContext();
   const sp = await searchParams;
-  const to = isDate(sp.to) ? sp.to : today();
+  const now = today();
+  const to = isDate(sp.to) ? sp.to : now;
   const from = isDate(sp.from) && sp.from <= to ? sp.from : monthStart(to);
   const account = acc.byId.get(sp.akun ?? "") ?? acc.byId.get(acc.sys("kas"));
   if (!account) return null;
+  const q = (sp.q ?? "").trim();
+  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
   const lg = await ledger(db, account, from, to);
-  const debitUp = isDebitNormal(account.group);
-  const up = debitUp ? lg.totalDebit : lg.totalCredit;
-  const down = debitUp ? lg.totalCredit : lg.totalDebit;
-  const groups = accountGroups.map((g) => ({ g, list: acc.rows.filter((a) => a.group === g).sort((a, b) => a.code.localeCompare(b.code)) })).filter((x) => x.list.length);
+  const rows: BukuBesarRow[] = lg.rows
+    .map((r, i) => ({
+      key: `${r.journalId}:${i}`,
+      date: r.date,
+      tp: txType(r.source, r.number),
+      number: r.number,
+      // Seperti kolom Catatan Zahir: catatan transaksi; catatan baris (bila beda) ikut di tooltip.
+      memo: r.memo || r.lineMemo,
+      note: r.lineMemo && r.lineMemo !== r.memo ? r.lineMemo : "",
+      contact: r.contactName ?? "",
+      debit: r.debit,
+      credit: r.credit,
+      balance: r.balance,
+      job: r.projectCode ?? "",
+      href: sourceHref(r.source, r.sourceId, r.journalId),
+    }))
+    .filter((r) => !words.length || words.every((w) => `${r.tp} ${r.number} ${r.memo} ${r.note} ${r.contact} ${r.job}`.toLowerCase().includes(w)));
+  // Tampilan awal = bulan berjalan s.d. hari ini tanpa pencarian (pilihan "Bulan ini" di Filter juga dianggap awal).
+  const filtered = words.length > 0 || from !== monthStart(now) || to !== now;
+  const accounts = [...acc.rows].sort((a, b) => a.code.localeCompare(b.code)).map((a) => ({ id: a.id, cells: [a.code, a.name, GROUP_LABEL[a.group]] }));
   return (
-    <>
-      <div className="no-print">
-        <BackLink href="/akuntansi/laporan">Laporan</BackLink>
-        <PageHead title="Buku besar" sub="Semua transaksi satu akun dan saldonya dari hari ke hari.">
-          <a className="btn btn-ghost btn-sm" href={`/akuntansi/ekspor/buku-besar?akun=${account.id}&from=${from}&to=${to}`}>Unduh CSV (Excel)</a>
-          <PrintButton label="Cetak / PDF" />
-        </PageHead>
-        <PeriodBar
-          path="/akuntansi/laporan/buku-besar"
-          presets={rangePresets()}
-          from={from}
-          to={to}
-          keep={{ akun: account.id }}
-          keepInForm={false}
-          extra={
-            <label className="grow">
-              <span>Akun</span>
-              <Select name="akun" defaultValue={account.id} searchable menuWidth={320} options={groups.flatMap((x) => x.list.map((a) => ({ value: a.id, label: `${a.code} · ${a.name}`, group: GROUP_LABEL[x.g] })))} />
-            </label>
-          }
-        />
-      </div>
-      <ReportSheet site={site} npwp={npwp} title={`Buku Besar · ${account.code} ${account.name}`} period={`Periode ${periodLabel(from, to)} · ${GROUP_LABEL[account.group]}`} printedBy={me.name}>
-        <Kpis
-          items={[
-            { label: "Saldo awal", value: formatAmount(lg.opening), sub: `per ${tgl(from)}` },
-            { label: "Bertambah", value: formatAmount(up), sub: debitUp ? "sisi debit" : "sisi kredit" },
-            { label: "Berkurang", value: formatAmount(down), sub: debitUp ? "sisi kredit" : "sisi debit" },
-            { label: "Saldo akhir", value: formatAmount(lg.closing), sub: `${lg.rows.length} transaksi`, tone: lg.closing < 0 ? "bad" : undefined },
-          ]}
-        />
-        <h3 className="bb-chart-title">Grafik saldo berjalan <span>{periodLabel(from, to)}</span></h3>
-        <BalanceChart points={dailyBalances(from, to, lg.opening, lg.rows)} label={`Saldo berjalan ${account.name} per hari, ${periodLabel(from, to)}`} />
-        <div className="admin-table report">
-          <table>
-            <thead><tr><th>Tanggal</th><th>Nomor</th><th>Keterangan</th><th className="num">Debit</th><th className="num">Kredit</th><th className="num">Saldo</th></tr></thead>
-            <tbody>
-              <tr className="r-sub"><td colSpan={5}>Saldo awal</td><td className="num tabular">{formatAmount(lg.opening)}</td></tr>
-              {lg.rows.map((r, i) => (
-                <tr key={i}>
-                  <td className="nowrap">{tgl(r.date)}</td>
-                  <td><Link href={sourceHref(r.source, r.sourceId, r.journalId)}>{r.number}</Link><div className="small muted">{SOURCE_LABEL[r.source]}</div></td>
-                  <td className="small">{r.lineMemo || r.memo}{r.contactName && <div className="muted">{r.contactName}</div>}</td>
-                  <td className="num tabular">{formatAmount(r.debit, { blankZero: true })}</td>
-                  <td className="num tabular">{formatAmount(r.credit, { blankZero: true })}</td>
-                  <td className={`num tabular${r.balance < 0 ? " text-bahaya" : ""}`}>{formatAmount(r.balance)}</td>
-                </tr>
-              ))}
-              {lg.rows.length === 0 && <tr><td colSpan={6} className="muted">Tidak ada transaksi pada periode ini.</td></tr>}
-            </tbody>
-            <tfoot><tr><th colSpan={3}>Jumlah &amp; saldo akhir</th><th className="num">{formatAmount(lg.totalDebit)}</th><th className="num">{formatAmount(lg.totalCredit)}</th><th className="num">{formatAmount(lg.closing)}</th></tr></tfoot>
-          </table>
-        </div>
-        <ReadingNote>
-          {debitUp ? "Untuk akun ini, debit menambah saldo dan kredit mengurangi." : "Untuk akun ini, kredit menambah saldo dan debit mengurangi."} Klik nomor transaksi untuk membuka dokumen asalnya.
-        </ReadingNote>
-      </ReportSheet>
-    </>
+    <BukuBesarView
+      key={`${account.id}|${from}|${to}|${q}`}
+      account={{ id: account.id, code: account.code, name: account.name }}
+      accounts={accounts}
+      rows={rows}
+      opening={lg.opening}
+      closing={lg.closing}
+      debitUp={isDebitNormal(account.group)}
+      from={from}
+      to={to}
+      q={q}
+      filtered={filtered}
+      points={dailyBalances(from, to, lg.opening, lg.rows)}
+    />
   );
 }

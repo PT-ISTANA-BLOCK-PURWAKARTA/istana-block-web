@@ -1,12 +1,13 @@
 "use client";
 
-// Daftar Kas Keluar / Kas Masuk / Transfer gaya Zahir: Search · Update · Filter di atas, tabel histori,
+// Daftar Kas Keluar / Kas Masuk / Transfer gaya Zahir: ← Kembali · Search · Update · Filter di atas, tabel histori,
 // tombol Baru · Hapus (kiri bawah) dan Perincian · Cetak · Tutup (kanan bawah). Klik = pilih, klik ganda = buka.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteCash } from "@/app/akuntansi/actions/ledger";
 import { formatAmount, tgl } from "@/lib/erp/util";
+import { BackButton } from "./BackButton";
 import { CashFilter } from "./CashFilter";
 import type { CashListRow } from "@/lib/erp/cashList";
 
@@ -39,6 +40,7 @@ export function CashDaftar({ kind, rows, total, q, from, to }: { kind: keyof typ
   return (
     <div className="zd">
       <div className="zd-top">
+        <BackButton fallback="/akuntansi/menu/kas-bank" />
         <h1>{TITLE[kind]}</h1>
         <form method="get" className="zd-search" role="search">
           <input type="hidden" name="jenis" value={kind} />

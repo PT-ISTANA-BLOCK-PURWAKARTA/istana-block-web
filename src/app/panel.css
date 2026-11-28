@@ -1253,12 +1253,13 @@ table.signs6 img { max-height: 44px; max-width: 100%; display: block; margin: 0 
 
 .zd-top { display: flex; align-items: center; gap: 12px; }
 .zd-top h1 { margin: 0; font-size: 24px; font-weight: 500; color: #334155; }
+.zd-top h1, .zd-back { flex: none; white-space: nowrap; }
 .zd-search { margin-left: auto; width: min(360px, 50%); }
 .zd-search input { width: 100%; height: 34px; border: 1px solid #dbe3ec; background: #f1f5f9; border-radius: 6px; padding: 0 10px; font: inherit; }
 .zd-tools { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 8px 0; }
 .zd-tools > .muted { margin-right: auto; }
 .zd-table { max-height: 62vh; }
-.zd-row { display: grid; grid-template-columns: 100px 110px minmax(120px, .8fr) minmax(0, 2fr) 150px 52px; align-items: center; border-bottom: 1px solid #edf1f6; font-size: 13.5px; cursor: default; user-select: none; }
+.zd-row { display: grid; grid-template-columns: 112px 110px minmax(120px, .8fr) minmax(0, 2fr) 150px 52px; align-items: center; border-bottom: 1px solid #edf1f6; font-size: 13.5px; cursor: default; user-select: none; }
 .zd-row > span { padding: 8px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .zd-row:not(.zd-th):hover { background: #f3f8fe; }
 .zd-row.is-sel, .zp-row.is-sel { background: #29a3f0 !important; color: #fff; }
@@ -1303,14 +1304,58 @@ table.signs6 img { max-height: 44px; max-width: 100%; display: block; margin: 0 
   .zk-head > .zk-l { text-align: left; }
   .zk-row { grid-template-columns: 80px minmax(0, 1fr) 120px; }
   .zk-row > :nth-child(4) { grid-column: 1 / -1; border-top: 1px dashed #edf1f6; }
-  .zd-row { grid-template-columns: 82px minmax(0, 1fr) 110px; }
+  .zd-row { grid-template-columns: 100px minmax(0, 1fr) 110px; }
   .zd-row > :nth-child(2), .zd-row > :nth-child(6) { display: none; }
   .zd-row > .zd-memo { grid-column: 1 / -1; white-space: normal; padding-top: 0; color: #64748b; }
   .zd-search { width: 55%; }
+  .zd-back-txt { display: none; }
 }
 @media print {
-  .zd-tools, .zd-foot, .zd-search { display: none !important; }
+  .zd-tools, .zd-foot, .zd-search, .zd-back { display: none !important; }
   .zd, .zd-table { border: 0; box-shadow: none; max-height: none; overflow: visible; }
   .zd-th { position: static; background: #fff !important; color: #000; border-bottom: 2px solid #000; }
   .zd-row.is-sel { background: #fff !important; color: #000; }
+}
+/* ===== Buku Besar gaya Zahir (.bb): tabel histori di atas, grafik saldo berjalan setengah layar di bawah ===== */
+.bb .zd-tools { flex-wrap: wrap; justify-content: flex-start; }
+.bb-acc { display: inline-flex; align-items: baseline; gap: 6px; border: 0; background: none; padding: 2px 0; font: inherit; font-size: 15px; color: #1e3a5f; cursor: pointer; }
+.bb-acc b { font-weight: 600; }
+.bb-acc:hover b { text-decoration: underline; }
+.zd-tools .btn.is-on { background: #e8f2fd; border-color: #1e88e5; color: #1565c0; }
+.bb-table { max-height: max(260px, calc(100vh - 390px)); }
+.bb.has-chart .bb-table { max-height: max(170px, calc((100vh - 430px) * .55)); }
+.bb-row { grid-template-columns: 112px 44px 118px minmax(0, 2fr) 128px 128px 140px 84px; }
+.bb-row > .bb-mut { display: none; }
+.bb-contact { color: #64748b; }
+.zd-row.is-sel .bb-contact { color: inherit; }
+.bb-neg { color: #dc2626; }
+.zd-row.is-sel .bb-neg { color: #fff; }
+.bb-sum { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 28px; margin-top: 8px; padding: 8px 12px; background: #eef2f7; border-radius: 8px; font-size: 13.5px; }
+.bb-sum dl { display: grid; grid-template-columns: auto auto; gap: 2px 12px; margin: 0; align-items: baseline; }
+.bb-sum dl + dl { grid-template-columns: auto auto auto; }
+.bb-sum dt { color: #475569; }
+.bb-sum dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: #0f172a; }
+.bb-sum dd.bb-neg { color: #dc2626; }
+.bb-chart { margin-top: 14px; }
+.bb-chart-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; margin-bottom: 4px; }
+.bb-chart-head h2 { margin: 0; font-size: 16px; font-weight: 600; color: #334155; }
+.bb-chart-head span { font-size: 13px; color: #64748b; }
+.bb-chart-box { height: max(170px, calc((100vh - 430px) * .45)); }
+.balance-chart.is-fill { height: 100%; margin: 0; }
+.balance-chart.is-fill svg { width: 100%; height: 100%; }
+@media (max-width: 760px) {
+  .bb-row { grid-template-columns: 100px minmax(0, 1fr) 112px; }
+  .bb-row > span { padding-left: 6px; padding-right: 6px; }
+  .bb-row > :nth-child(2), .bb-row > :nth-child(5), .bb-row > :nth-child(6), .bb-row > :nth-child(7), .bb-row > :nth-child(8) { display: none; }
+  .bb-row > :nth-child(1) { grid-area: 1 / 1; }
+  .bb-row > :nth-child(3) { grid-area: 1 / 2; }
+  .bb-row > .bb-mut { display: block; grid-area: 1 / 3; }
+  .bb-row > .bb-memo { grid-area: 2 / 1 / 3 / -1; white-space: normal; padding-top: 0; color: #64748b; }
+  .bb-row.zd-th > .bb-memo { display: none; }
+  .zd-row.is-sel > .bb-memo { color: #fff; }
+  .bb.has-chart .bb-table { max-height: 42vh; }
+  .bb-chart-box { height: 32vh; }
+}
+@media print {
+  .bb .bb-table { max-height: none !important; overflow: visible; }
 }

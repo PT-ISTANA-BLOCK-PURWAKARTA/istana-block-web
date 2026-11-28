@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const W = 640;
 const PAD = { top: 18, right: 10, bottom: 26, left: 56 };
 
 function compact(n: number) {
@@ -25,11 +24,28 @@ function niceStep(range: number) {
 const dayLabel = (d: string) => { const [, m, day] = d.split("-"); return `${Number(day)}/${Number(m)}`; };
 const longLabel = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 
-/** Grafik saldo berjalan (seperti "Grafik Buku Besar Saldo Berjalan" di Zahir): saldo akhir tiap hari dalam periode. */
-export function BalanceChart({ points, label, height = 220 }: { points: { date: string; balance: number }[]; label: string; height?: number }) {
+/**
+ * Grafik saldo berjalan (seperti "Grafik Buku Besar Saldo Berjalan" di Zahir): saldo akhir tiap hari dalam periode.
+ * `fill`: mengisi kotak pembungkus (lebar & tinggi dari CSS, mis. setengah layar di Buku Besar); ukuran diukur
+ * supaya teks sumbu tidak ikut melar.
+ */
+export function BalanceChart({ points, label, height = 220, fill = false }: { points: { date: string; balance: number }[]; label: string; height?: number; fill?: boolean }) {
   const [hover, setHover] = useState<number | null>(null);
+  const box = useRef<HTMLElement>(null);
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (!fill || !el) return;
+    const ro = new ResizeObserver(([e]) => {
+      const w = Math.round(e.contentRect.width), h = Math.round(e.contentRect.height);
+      if (w > 0 && h > 0) setSize((s) => (s && s.w === w && s.h === h ? s : { w, h }));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [fill]);
   if (points.length === 0) return null;
-  const H = height;
+  const W = fill && size ? size.w : 640;
+  const H = fill && size ? size.h : height;
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
   const values = points.map((p) => p.balance);
@@ -42,11 +58,12 @@ export function BalanceChart({ points, label, height = 220 }: { points: { date: 
   const y = (v: number) => PAD.top + innerH - ((v - lo) / (hi - lo)) * innerH;
   const line = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.balance).toFixed(1)}`).join("");
   const area = `${line}L${x(points.length - 1).toFixed(1)},${y(Math.max(lo, 0))}L${x(0).toFixed(1)},${y(Math.max(lo, 0))}Z`;
-  const every = Math.max(1, Math.ceil(points.length / 10));
+  // Label tanggal secukupnya menurut lebar (±60 px per label).
+  const every = Math.max(1, Math.ceil(points.length / Math.max(4, Math.floor(innerW / 60))));
   const slot = innerW / Math.max(1, points.length - 1);
 
   return (
-    <figure className="chart balance-chart" style={{ margin: "4px 0 14px" }} onPointerLeave={() => setHover(null)}>
+    <figure ref={box} className={`chart balance-chart${fill ? " is-fill" : ""}`} style={fill ? undefined : { margin: "4px 0 14px" }} onPointerLeave={() => setHover(null)}>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
         <defs>
           <linearGradient id="bc-fill" x1="0" x2="0" y1="0" y2="1">
@@ -76,4 +93,3 @@ export function BalanceChart({ points, label, height = 220 }: { points: { date: 
     </figure>
   );
 }
-

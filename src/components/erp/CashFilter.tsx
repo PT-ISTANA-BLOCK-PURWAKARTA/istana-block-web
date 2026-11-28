@@ -1,6 +1,7 @@
 "use client";
 
 // Tombol "Filter" + jendela "Filter Data" seperti Zahir: Tanggal Dari → Hingga, pilihan cepat, Batal / OK.
+// Dipakai daftar Kas (jenis) dan Buku Besar (action + hidden akun).
 import { useRef, useState } from "react";
 import { DateField } from "@/components/ui";
 
@@ -21,16 +22,17 @@ function presets() {
   ];
 }
 
-export function CashFilter({ jenis, q, from, to }: { jenis: string; q: string; from: string; to: string }) {
+export function CashFilter({ jenis, q, from, to, action = "/akuntansi/kas", hidden = {} }: { jenis?: string; q: string; from: string; to: string; action?: string; hidden?: Record<string, string> }) {
   const dlg = useRef<HTMLDialogElement>(null);
   const [range, setRange] = useState({ from, to, v: 0 });
   return (
     <>
       <button type="button" className="btn btn-ghost btn-sm" onClick={() => dlg.current?.showModal()} title="Menampilkan filter dialog">Filter</button>
       <dialog ref={dlg} className="zf-dialog" aria-labelledby="zf-title">
-        <form method="get" action="/akuntansi/kas">
+        <form method="get" action={action}>
           <h2 id="zf-title">Filter Data</h2>
-          <input type="hidden" name="jenis" value={jenis} />
+          {jenis && <input type="hidden" name="jenis" value={jenis} />}
+          {Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
           {q && <input type="hidden" name="q" value={q} />}
           <div className="zf-row">
             <span className="zf-label">Tanggal :</span>
